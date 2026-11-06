@@ -18,6 +18,7 @@ updated: 2026-11-02
 > | akses | `access.mjs` | 34 | hak per pengguna dan modul (A-06 memuat sparepart) |
 > | produksi | `produksi.mjs` | 134 | multi work center, jadwal, laporan |
 > | sparepart | `sparepart.mjs` | 35 | sparepart SP-1 sampai SP-21, barang jadi dan SPK stok SP-17 sampai SP-35, nama penanda tangan SP-27 dan SP-28 |
+> | fitur | `fitur.mjs` | 13 | audit fitur: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname, unduhan Excel, jenis material ([[FEATURE_AUDIT]]) |
 > | tampilan | `sweep.mjs` | 72 | sapu tampilan semua modul |
 > | unit | `tests/unit/*.test.mjs` | 266 | berat, harga, produksi, kinerja, laporan, rencana, material, penawaran, Sales Order |
 >

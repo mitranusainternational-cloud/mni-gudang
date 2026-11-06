@@ -8,6 +8,17 @@ updated: 2026-11-02
 
 # Tiga versi: Development, Main, Docs
 
+> [!summary] Keadaan terkini (2026-11-06)
+> | Lingkungan | Isi |
+> |---|---|
+> | Production | Vercel `mni-gudang.vercel.app` dari `main` (ad73c89, surat jalan); Supabase `MNI Gudang - Production` (`lggqigmvtefkquqjrjsb`), migration 1 sampai 13, RLS di 22 tabel; baris: rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10 |
+> | Lokal | mock di `127.0.0.1:5173` (cabang `fitur/produksi-multi-wc`, 35bf7f7 dan di atasnya); belum di-push untuk commit terbaru |
+> | Draf database | migration 14 sampai 18 di `apps/platform/supabase/draft/`, belum diterapkan |
+> | Dev lama | `inldyqigewmziwazalun`, dipensiunkan |
+> | Advisor production | keamanan: 8 WARN fungsi bantu RLS (disengaja) dan proteksi password bocor belum aktif; performa: 3 WARN kebijakan permisif ganda, 22 indeks belum terpakai; tidak ada temuan kritis ([[T-060-review-security-dan-performance-advisor]]) |
+>
+> Peta sumber daya: [[SISTEM_MAP]]; peta modul: [[PETA_MODUL]]. Bagian di bawah memuat riwayat penyiapan 2026-11-02 sampai 2026-11-03.
+
 Jalur tahap lengkap: [[INTEGRATION_PATH]]. Pemetaan permintaan "3 environment" ke branch Git dan target deploy. Aturan branch lengkap ada di [[VERSION_STRATEGY]].
 
 | Versi | Branch GitHub | Tujuan | Deploy | Status |

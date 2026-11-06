@@ -51,7 +51,7 @@ Lalu buka <http://localhost:8003/>.
 
 ## Alur edit
 
-1. Kerjakan di branch `development`.
+1. Kerjakan di cabang `fitur/<nama>` yang dibuat dari `main` (sejak PR 14); `development` tertinggal. Setelah mengubah `app.js` atau `app.css`, jalankan `node scripts/extract-app.js` di `apps/platform` (membangun `public/app.*`) dan `node --check public/app.js`.
 2. Cari route/menu di daftar `VIEWS`, dan titik registri render di `assets/js/app.js` sebelum mengubahnya.
 3. Periksa apakah perubahan menyentuh data, status dokumen, perhitungan stok, atau write path sebelum mengedit.
 4. Pisahkan perubahan markup, styling, dan handler jika masuk akal; jangan mengubah file reference.
@@ -65,8 +65,9 @@ Lalu buka <http://localhost:8003/>.
 - [ ] Cek tampilan desktop/mobile dan navigasi relevan.
 - [ ] Untuk perubahan data, validasi hak akses, input, status, idempotensi, rekonsiliasi, dan audit di backend uji yang sah.
 - [ ] Capture screenshot bersih sesuai [[documentation/screenshots/README|aturan bukti visual]].
-- [ ] Perbarui progress dan dokumentasi.
+- [ ] Regresi penuh 0 FAIL: `cd apps/platform && node tests/e2e/run.mjs http://127.0.0.1:5173/` (mock: `VITE_LOCAL_MOCK=1 npx.cmd vite --host 127.0.0.1 --port 5173 --strictPort`), uji unit `tests/unit/*.test.mjs`; tambahkan uji untuk fitur baru (`tests/e2e/sparepart.mjs` untuk gudang dan SPK stok, `tests/e2e/fitur.mjs` untuk aksi UI lain).
+- [ ] Perbarui progress dan dokumentasi: catatan tugas, `documentation/PETA_MODUL.md`, PRD terkait, lalu `node scripts/sync-vault.mjs` hingga OK.
 
 ## Git/branch
 
-Peta versi ada di [[documentation/VERSION_STRATEGY|strategi branch]]. Gunakan pull request `development` → `main` setelah pemeriksaan dan persetujuan pada [[documentation/RELEASE_CHECKLIST|checklist rilis]]. Branch `docs` tidak menggantikan deployment situs dokumentasi.
+Peta versi ada di [[documentation/VERSION_STRATEGY|strategi branch]]. Gunakan pull request dari cabang `fitur/<nama>` → `main` setelah pemeriksaan dan persetujuan pada [[documentation/RELEASE_CHECKLIST|checklist rilis]]. Branch `docs` tidak menggantikan deployment situs dokumentasi.

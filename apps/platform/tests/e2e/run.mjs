@@ -12,6 +12,7 @@ import { runSweep } from './sweep.mjs';
 import { runProduksi } from './produksi.mjs';
 import { runPenawaran } from './penawaran.mjs';
 import { runSparepart } from './sparepart.mjs';
+import { runFitur } from './fitur.mjs';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173/';
 const only = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -24,7 +25,7 @@ try {
 
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['tampilan', runSweep]]) {
   if (only.length && !only.includes(name)) continue;
   if (name === 'penawaran' && penjualanOff) {
     console.log(`== ${name} ==\nDILEWATI: modul Penjualan disembunyikan (MODUL_PENJUALAN=false)\n`);

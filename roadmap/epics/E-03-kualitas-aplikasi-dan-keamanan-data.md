@@ -6,8 +6,8 @@ release: v1.0
 theme: Kualitas
 priority: P0
 status: active
-progress: 60
-tasks_total: 14
+progress: 57
+tasks_total: 15
 tasks_done: 8
 updated: 2026-11-06
 ---
@@ -41,5 +41,6 @@ Adapter meniru API Firestore di atas Postgres; perilaku realtime dan lock perlu 
 - [x] [[tasks/T-078-jalankan-migration-pembersihan-policy-role-lama|T-078]] Jalankan migration pembersihan policy role lama · done · P0 · 0.5 hari
 - [ ] [[tasks/T-079-uji-role-lewat-aplikasi-dengan-akun-uji-per-role|T-079]] Uji role lewat aplikasi dengan akun uji per role · review · P1 · 1 hari
 - [ ] [[tasks/T-162-selidiki-event-realtime-supabase-tidak-tiba|T-162]] Selidiki event Realtime Supabase yang tidak tiba · todo · P2 · 0.5 hari
+- [ ] [[tasks/T-210-audit-fitur-dan-suite-uji-fitur|T-210]] Audit fitur dan rencana, suite uji fitur (aksi UI yang belum diuji) · review · P1 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

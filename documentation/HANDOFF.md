@@ -18,7 +18,7 @@ Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak m
 - **Rilis ke production dijeda** atas permintaan pemilik (2026-11-06: fokus pemolesan lokal dahulu): [[T-203-rilis-paket-gudang-dan-produksi-ke-production]]. Rencananya: database dahulu (migration 14 lalu 18, hanya menambah; 17 tidak ikut), lalu PR ke `main`, deploy Vercel, verifikasi, dengan rollback Vercel siap.
 - **Hal yang harus diketahui sebelum rilis:** cabang ini membawa 175 berkas dari `main` (bukan hanya gudang), dan penjaga kirim ke customer mengubah perilaku di production (SPK lama yang produksinya tidak pernah dicatat tertahan sampai dicatat atau override dipakai).
 - Berikutnya (lokal): pemolesan modul per permintaan pemilik; tugas terbuka T-193 (monitoring estimasi lawan aktual, ditunda karena Penawaran disembunyikan), T-111 sampai T-113 (aturan Cek Data, opname terjadwal, validasi buffer).
-- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji: regresi 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72, unit 266 (2026-11-06).
+- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji: regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72, unit 266 (2026-11-06).
 
 ## 2. Yang HANYA ada di mesin ini (cadangkan sebelum ganti akun atau mesin)
 

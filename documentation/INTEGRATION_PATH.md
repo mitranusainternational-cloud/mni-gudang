@@ -10,17 +10,20 @@ updated: 2026-11-02
 
 Tujuan: sistem bisa dipakai secepat mungkin dengan integrasi data yang kuat dan setiap tahap punya gerbang yang dapat dibuktikan. Urutan yang Anda usulkan (lokal, Supabase, GitHub, Vercel, lalu VPS) dipakai, dengan dua penyesuaian di bagian 3. Status hidup ada di [[PROGRESS_SNAPSHOT]]; rencana go-live di [[GO_LIVE_PLAN]]; arah produk di [[roadmap/PRODUCT_ROADMAP]]; skill pendamping: `release-pipeline`.
 
-## 1. Peta tahap dan status (2026-11-02)
+## 1. Peta tahap dan status (diperbarui 2026-11-06)
 
 | Tahap | Isi | Status | Gerbang untuk lanjut |
 |---|---|---|---|
-| **S0 Lokal** | Pratinjau mock + regresi; Supabase lokal (Docker) bila tersedia | Mock selesai: 33/33 regresi. Docker menunggu BIOS (T-010) | Regresi 0 FAIL (tercapai) |
-| **S1 Supabase dev** | Project dev, migration, login nyata, uji adapter dan RLS | Project dan schema ada; login nyata belum (T-029) | T-029, T-021, T-022, T-028 selesai dengan bukti |
-| **S2 GitHub** | Repo, `main` terproteksi, CI build + regresi pada PR | Repo dan proteksi selesai; CI belum (T-046) | CI hijau wajib untuk merge ke `main` |
-| **S3 Vercel preview** | `development` → Supabase dev, URL preview | Belum (T-044, T-045) | Smoke test di URL preview |
-| **S4 UAT** | Data terimpor dan terekonsiliasi; process owner menguji | Belum (T-050 sampai T-053) | Sign-off tertulis |
-| **S5 Production** | Supabase prod terpisah + Vercel production dari `main` | Belum (T-043, T-063 sampai T-065) | [[RELEASE_CHECKLIST]] + persetujuan pemilik |
+| **S0 Lokal** | Pratinjau mock + regresi; Supabase lokal (Docker) bila tersedia | Mock berjalan: regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72 dan unit 266 (0 FAIL, 2026-11-06). Docker menunggu BIOS (T-010) | Regresi 0 FAIL (tercapai) |
+| **S1 Supabase dev** | Project dev, migration, login nyata, uji adapter dan RLS | Dev lama dipensiunkan; pengujian kini lewat production secara baca-saja dan transaksi rollback | selesai dengan bukti ([[T-079-uji-role-lewat-aplikasi-dengan-akun-uji-per-role|T-079]], [[T-172-riwayat-perubahan-database-dan-rapikan-tata-letak|T-172]]) |
+| **S2 GitHub** | Repo, `main` terproteksi, CI build + regresi pada PR | Selesai: PR 7 sampai 15 digabung, CI dua pemeriksaan wajib | CI hijau wajib untuk merge ke `main` (tercapai) |
+| **S3 Vercel preview** | cabang fitur → Preview | Belum untuk cabang fitur (T-044) | Smoke test di URL preview |
+| **S4 UAT** | Data terimpor dan terekonsiliasi; process owner menguji | Belum (T-050 sampai T-053); data awal bahan baku dan barang jadi sudah dimuat | Sign-off tertulis |
+| **S5 Production** | Supabase prod terpisah + Vercel production dari `main` | **Sudah tayang** (mni-gudang.vercel.app, migration 1 sampai 13, `main` ad73c89); rilis berikut dijeda ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]) | [[RELEASE_CHECKLIST]] + persetujuan pemilik |
 | **S6 VPS** | Opsional: self-host atau layanan pendamping | Belum; penilaian T-160 | Kriteria bagian 4 |
+
+> [!note] Pembaruan 2026-11-06
+> Alur sebenarnya berbeda dari urutan awal: production dipakai lebih cepat (S5 sebelum UAT) karena pemilik memakai data nyata sebagian; kerja fitur di cabang `fitur/<nama>` dan masuk ke `main` lewat PR. Peta modul dan status per lingkungan: [[PETA_MODUL]]. Audit: [[AUDIT_PROGRESS_2026-11-06]].
 
 ## 2. Aliran data (integrasi data yang kuat)
 

@@ -13,6 +13,9 @@ Rencana ini menjawab: apa yang harus terjadi agar sistem dipakai tim Operasional
 > [!info] Jalur tahap
 > Urutan tahap dan gerbang (S0 sampai S6) ada di [[INTEGRATION_PATH]]; plan ini merinci tugas menuju go-live (S0 sampai S5).
 
+> [!note] Keadaan 2026-11-06
+> Production sudah tayang dan dipakai pemilik dengan data nyata sebagian; go-live resmi (hypercare lima hari) menunggu jalur proses dan data (T-030 sampai T-036, UAT). Jalur kritis tetap 26,5 hari kerja. Audit lengkap: [[AUDIT_PROGRESS_2026-11-06]]; peta modul: [[PETA_MODUL]].
+
 ## 1. Definisi "siap dipakai"
 
 Go-live (T-065) hanya boleh terjadi bila semua ini benar dan ada buktinya:

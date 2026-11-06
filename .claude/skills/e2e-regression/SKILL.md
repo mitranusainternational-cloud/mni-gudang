@@ -5,7 +5,7 @@ description: Jalankan dan catat regresi UI penuh untuk pratinjau lokal mni-app (
 
 # Regresi E2E (mode mock)
 
-Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 35 (gudang bahan baku/barang jadi/sparepart, SPK stok, nama penanda tangan), tampilan 72; unit 266 (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
+Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 35 (gudang, SPK stok, nama penanda tangan), fitur 13 (aksi UI: koreksi, nonaktif, SPK terbit, opname, unduhan Excel, jenis material, alamat SJ; nama: fitur), tampilan 72; unit 266 (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
 
 ## Menjalankan
 
@@ -17,7 +17,7 @@ Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-1
 ## Menjalankan penuh (cara terbaru)
 
 - Server mock: `cd apps/platform && VITE_LOCAL_MOCK=1 npx.cmd vite --host 127.0.0.1 --port 5173 --strictPort` (nyalakan dengan `nohup` bila lewat Bash).
-- `node scripts/extract-app.js` setelah mengubah `apps/gudang-logistik`, lalu `node tests/e2e/run.mjs http://127.0.0.1:5173/` (semua suite, beberapa menit: jalankan di latar belakang). Satu suite: `ONLY=sparepart node tests/e2e/run.mjs http://127.0.0.1:5173/` (nama: regresi, role, akses, produksi, penawaran, sparepart, tampilan).
+- `node scripts/extract-app.js` setelah mengubah `apps/gudang-logistik`, lalu `node tests/e2e/run.mjs http://127.0.0.1:5173/` (semua suite, beberapa menit: jalankan di latar belakang). Satu suite: `ONLY=sparepart node tests/e2e/run.mjs http://127.0.0.1:5173/` (nama: regresi, role, akses, produksi, penawaran, sparepart, fitur, tampilan).
 - Unit: `for f in tests/unit/*.test.mjs; do node "$f"; done`.
 
 ## Menulis uji baru

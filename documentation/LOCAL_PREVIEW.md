@@ -51,3 +51,9 @@ Enam bahan baku, tiga barang jadi, dua SPK (satu sengaja lewat jatuh tempo), mas
 - Pengujian nyata tetap butuh Supabase lokal. Di mesin ini Docker Desktop tidak dapat start karena virtualisasi CPU nonaktif di BIOS (lihat [[tasks/T-010-aktifkan-docker-engine-di-windows|T-010]]).
 
 Hasil uji modul dan fitur: [[TEST_MATRIX]]. Bukti: [[screenshots/README]].
+
+## Pembaruan 2026-11-06 (pratinjau mock saat ini)
+
+- Mulai: `cd apps/platform && VITE_LOCAL_MOCK=1 npx.cmd vite --host 127.0.0.1 --port 5173 --strictPort`; setelah mengubah `apps/gudang-logistik`, jalankan `node scripts/extract-app.js`.
+- Login mock: `admin@mni.local`, OTP `123456` (juga ppic, gbb, gbj, logistik, produksi, viewer, sales @mni.local). Data tersimpan di `localStorage` (`mni-local-mock-db`); versi data `VERSION` di `local-supabase.js` (8) menimpa data lama bila dinaikkan. Hapus `localStorage` untuk data contoh baru.
+- Uji: `node tests/e2e/run.mjs http://127.0.0.1:5173/` (`ONLY=nama` untuk satu suite) dan `tests/unit/*.test.mjs`. Pratinjau mock bukan bukti Supabase.

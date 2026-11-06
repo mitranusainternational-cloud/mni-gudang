@@ -721,3 +721,12 @@ Permintaan pemilik: perbarui progress di Obsidian, cek mana yang belum dan sudah
 - **Bukti baru production (baca-saja):** advisor keamanan 8 WARN fungsi bantu RLS (disengaja) dan proteksi password bocor belum aktif; advisor performa 3 WARN kebijakan permisif ganda, INFO 22 indeks belum terpakai dan 4 tabel arsip tanpa kunci primer; tidak ada temuan kritis.
 - **Angka:** 130 tugas (37 done, 33 review, 6 doing, 1 blocked, 53 todo); selesai 37 dari 130 (28%), effort 40 dari 219,6 hari (18%); jalur kritis menuju go-live tetap 26,5 hari karena jalur proses dan data belum dimulai.
 - **Tes terakhir:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72 (329) dan unit 266, semua 0 FAIL.
+
+## 2026-11-06 · Audit fitur dan rencana, suite uji fitur (T-210)
+
+Permintaan pemilik: "update semua dan audit fitur dan plan". Laporan: [[FEATURE_AUDIT]].
+
+- **Audit fitur:** 167 aksi UI dibandingkan dengan uji otomatis; yang diacu langsung naik dari 77 (46%) ke 91 (54%) lewat suite baru `tests/e2e/fitur.mjs` (13 uji: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname bahan baku, unduhan Excel, jenis material, alamat surat jalan, tanpa pageerror), semua lulus; tidak ada bug fungsional baru. Prioritas uji berikut: editor SPK, Master Data (ganti nama, gabung), opname sparepart, dokumen kartu stok dan PR.
+- **Audit rencana:** deviasi, usul penyesuaian (fase P2b, walkthrough memakai modul jadi, rilis bertahap setelah backup, tutup T-011 sampai T-013, sesi tinjauan per modul, aturan lingkup), dan risiko aktif dicatat; keputusan di pemilik.
+- **Dokumen disegarkan:** GO_LIVE_PLAN, INTEGRATION_PATH (status S0 sampai S6), ENVIRONMENTS (keadaan terkini), RELEASE_CHECKLIST (rilis bertahap), VERSION_STRATEGY, USER_GUIDE (ditulis ulang per modul), INVENTORY, DEVELOPMENT, DATA_DICTIONARY (koleksi aplikasi), CHANGELOG (belum dirilis), LOCAL_PREVIEW, README, AUDIT_KESIAPAN, TEST_MATRIX, PETA_MODUL, HANDOFF, skill e2e-regression.
+- **Tes:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72 (342) dan unit 266.

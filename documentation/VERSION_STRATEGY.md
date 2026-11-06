@@ -12,6 +12,9 @@ updated: 2026-11-02
 
 Memisahkan pengembangan aplikasi, layanan yang dipakai pengguna, dan dokumentasi website. Struktur ini memudahkan pemeliharaan dan membuat perubahan dapat ditinjau sebelum menjadi rilis stabil.
 
+> [!note] Pembaruan 2026-11-06
+> Sejak PR 14 kerja fitur dilakukan di cabang `fitur/<nama>` yang dibuat dari `main` dan digabung lewat PR (1 approval dan 2 CI; pemilik admin boleh `--admin`). `development` dan `docs` tertinggal dan tidak dipakai harian. Cabang aktif: `fitur/produksi-multi-wc`. Cakupan cabang panjang harus diukur sebelum rilis ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+
 ## Peta versi
 
 | Nama | Branch | Fungsi | Aturan |

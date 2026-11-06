@@ -115,3 +115,20 @@ Observed fields: `Tanggal`, `Type (1)`, `Type (2)`, `Ukuran`, `Thk`, `Finishing`
 - [[OPERATIONAL_DISCOVERY|Discovery kebutuhan Operasional]]
 - [[PROJECT_PROGRESS|Log progress]]
 - [[ROADMAP|Roadmap]]
+
+## Koleksi dan field aplikasi (diperbarui 2026-11-06)
+
+Kamus di atas berasal dari workbook sumber (draf). Bagian ini mencatat bentuk data **di aplikasi** untuk modul gudang dan SPK stok. Tabel database: migration 1 sampai 13 (terpasang); `produksi_log` (draf 14), `sp` (draf 18). Field tanpa kolom disimpan di jsonb `data`.
+
+| Koleksi | Field penting | Catatan |
+|---|---|---|
+| `rm` (bahan baku) | item, ukuran, satuan, grade, tebal, lebar, panjang, stok_awal, min, buffer, lokasi, `data.aktif` | stok = stok awal + jumlah mutasi; nonaktif lewat `data.aktif=false` |
+| `fg` (barang jadi) | kategori, type, ukuran, panjang, finishing, tebal, satuan, stok_awal, `data.buffer` | buffer dijaga di jsonb |
+| `sp` (sparepart, draf 18) | kode, item, satuan, lokasi, min, buffer, stok_awal, tgl_stok_awal, aktif, ket | kode unik bila diisi |
+| `mutasi` | gudang (`rm`, `fg`, `sp`), item, jenis (masuk, keluar, opname, koreksi), delta, tgl, ref, spk, pihak, ket, noDok, stokSistem, stokFisik, koreksiDari, dikoreksi | satu baris per item per transaksi; nomor dokumen dipakai bersama oleh barisnya |
+| `pr` | noPR, tgl, supplier, items [{item, q, qTerima}], status (Diajukan, Dipesan, Selesai, Batal), butuh, `data.gudang` (`sp` untuk sparepart) | dipakai bahan baku dan sparepart |
+| `spk` | no, nomor, tgl, customer, po, due, lead, items [{d, g, q, u, w, prod, ket, `fg`}], status (Draft, Terbit, Batal), `data.stokReq`, terbitAt | `stokReq` menandai SPK stok; `fg` menautkan baris ke produk |
+| `kirim` | spk, customer, noSJ, tgl, items, status, `data.alamat`, nopol, driver | alamat pengiriman di jsonb |
+| `master/setting` | `dens` (massa jenis per jenis bawaan), `mats` (jenis buatan: nama, kunci, dens, dasar), `jenisOff` (jenis bawaan yang dihapus) | jenis material fleksibel |
+
+Nomor dokumen (`DOCFMT`): RCV, PK, BJ-M, BJ-K, SP-M, SP-K, SP-OPN, PR, OPN, SJ, SJ-V; counter per tahun dan bulan di tabel `master`. Aturan: [[PRD_GUDANG]]; peta modul: [[PETA_MODUL]].
