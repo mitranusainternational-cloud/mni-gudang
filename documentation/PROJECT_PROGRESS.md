@@ -699,3 +699,15 @@ Permintaan pemilik: opsi mengatur buffer (target stok) di sparepart dan barang j
 - SPK customer: kirim ke customer dibatasi ke hasil produksi yang siap (selesai produksi, kembali dari vendor). Ada centang "kirim lebih / sebelum produksi tercatat selesai" untuk kasus lapangan, wajib isi keterangan.
 - Catatan rilis: SPK lama yang produksinya tidak pernah dicatat akan tertahan di pengiriman sampai produksinya dicatat atau centang override dipakai.
 - Tes: SP-34 dan SP-35; sparepart.mjs 35 lulus.
+
+## 2026-11-06 · Audit dokumentasi dan peta modul hulu ke hilir (T-204)
+
+Atas permintaan pemilik ("kembali ke jalur", cross-check perencanaan, tugas, roadmap, dokumen, Obsidian, skill, dan agen; fokus lokal). Rilis ke production dijeda; tidak ada yang dideploy dan tidak ada migration diterapkan.
+
+- **Temuan:** dokumen status tertinggal (PRODUCT_ROADMAP menulis belum ada Supabase production; ROADMAP bertanggal 2026-11-02; CLAUDE.md hanya memuat 8 skill dan 6 agen, padahal ada 12 dan 10; tidak ada catatan tugas untuk surat jalan, gudang, sparepart, SPK stok; tiga rencana berjalan tanpa peta modul). Cabang `fitur/produksi-multi-wc` ternyata membawa 175 berkas (bukan hanya gudang) sehingga "rilis kecil" tidak dapat dipotong bersih.
+- **Dibuat:** [[PETA_MODUL]], [[PRD_GUDANG]], tugas T-195 sampai T-204; T-174 dikoreksi ke `review`.
+- **Diperbarui:** ROADMAP, PRODUCT_ROADMAP, SISTEM_MAP (migration dan draf), HANDOFF, Home, CLAUDE.md, TEAM_AND_SKILLS (matriks agen dan skill), DECISIONS (4 keputusan), TEST_MATRIX (status uji terkini).
+- **Skill dan agen:** skill `gudang-stok-flow` baru; `e2e-regression`, `adapter-contract`, `rls-roles`, `release-pipeline`, `vault-progress` dan agen `app-engineer`, `qa-regression`, `release-manager`, `progress-keeper`, `supabase-engineer` disegarkan.
+- **Git:** merge `main` (surat jalan) ke `fitur/produksi-multi-wc` dengan satu konflik di form surat jalan (digabung: alamat dan nomor otomatis dari main ditambah penjaga hasil produksi); regresi setelah merge 0 FAIL; commit lokal 4be17cd, f62c395, 35bf7f7; belum di-push.
+- **Pra-cek production (baca-saja):** baris rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10; kebijakan `pr` dan `mutasi` serta pemicu `trigger_<tabel>_updated_at` cocok dengan draf 18; draf 18 dilengkapi pemicu `updated_at` dan `table_stamps` memuat `sp`.
+- **Langkah berikut:** pemolesan modul sesuai arahan pemilik di lokal; rilis bertahap menunggu persetujuan ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).

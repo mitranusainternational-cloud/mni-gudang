@@ -22,8 +22,8 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 | Area | Kondisi | Detail |
 |---|---|---|
 | Aplikasi (live) | Tayang di https://mni-gudang.vercel.app dengan Supabase Production; versi stabil = `main` (PR 14) | [[documentation/SISTEM_MAP]] |
-| Aplikasi (lokal) | Belum tayang, branch `fitur/produksi-multi-wc`: produksi multi work center, ERP hulu (Penawaran, Sales Order, kebutuhan material); regresi penuh 0 FAIL di mock. Berikutnya T-193. Menunggu penilaian pemilik sebelum deploy | [[documentation/HANDOFF]] · [[documentation/PROJECT_PROGRESS]] · [[documentation/LOCAL_PREVIEW]] |
-| Database | Production `MNI Gudang - Production`: migration 1–13 terpasang, 22 tabel ber-RLS (dicek 2026-11-06). Migration 14–16 masih draf lokal. Dev lama dipensiunkan | [[documentation/ENVIRONMENTS]] · [[documentation/SISTEM_MAP]] |
+| Aplikasi (lokal) | Belum tayang, branch `fitur/produksi-multi-wc` (35bf7f7, sudah menggabung `main` terbaru): produksi multi work center, Gudang Bahan Baku, Barang Jadi, Sparepart, SPK stok, tren, dokumen bernama penanda tangan; Penawaran dan Sales Order disembunyikan. Regresi penuh 0 FAIL di mock. Rilis dijeda ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]). Menunggu penilaian pemilik sebelum deploy | [[documentation/HANDOFF]] · [[documentation/PROJECT_PROGRESS]] · [[documentation/LOCAL_PREVIEW]] |
+| Database | Production `MNI Gudang - Production`: migration 1–13 terpasang, 22 tabel ber-RLS (dicek 2026-11-06). Migration 14 sampai 18 masih draf lokal (17 ditunda). Dev lama dipensiunkan | [[documentation/ENVIRONMENTS]] · [[documentation/SISTEM_MAP]] |
 | Data | Enam workbook terprofil read-only; sumber resmi dan saldo belum direkonsiliasi | [[documentation/DATA_SOURCE_CATALOG]] |
 | Kebutuhan | Discovery bersama tim Operasional belum dimulai; pilot belum dipilih | [[documentation/OPERATIONAL_DISCOVERY]] |
 | GitHub | `main` terproteksi (PR + 1 approval, CI wajib); `fitur/produksi-multi-wc` sudah di-push, belum di-PR | [[documentation/GITHUB_MIGRATION]] |
@@ -34,6 +34,8 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 | Tujuan | Buka |
 |---|---|
 | Tahu apa yang dikerjakan berikutnya | [[PROGRESS_SNAPSHOT#Siap dikerjakan sekarang (dependensi terpenuhi)]] |
+| Melihat peta modul dari hulu ke hilir | [[documentation/PETA_MODUL]] |
+| Memahami aturan stok, buffer, SPK stok, dan dokumen gudang | [[documentation/PRD_GUDANG]] |
 | Melihat arah produk dan rilis | [[roadmap/PRODUCT_ROADMAP]] |
 | Melihat langkah menuju go-live | [[GO_LIVE_PLAN]] |
 | Melihat jalur integrasi lokal → Supabase → GitHub → Vercel → VPS | [[documentation/INTEGRATION_PATH]] |
@@ -58,7 +60,7 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 
 | Folder | Isi | Dikelola oleh |
 |---|---|---|
-| `roadmap/` | Roadmap produk dan catatan epic (E-01 sampai E-15) | Tangan (isi), skrip (status) |
+| `roadmap/` | Roadmap produk dan catatan epic (E-01 sampai E-16) | Tangan (isi), skrip (status) |
 | `tasks/` | Satu catatan per tugas, sumber status progress | Tangan |
 | `documentation/` | Rencana, progress, keputusan, panduan, template, screenshot, dashboard | Tangan; `PROGRESS_SNAPSHOT` dan `VAULT_HEALTH` oleh skrip |
 | `research/` | Riset bertanggal dengan sumber | Tangan |

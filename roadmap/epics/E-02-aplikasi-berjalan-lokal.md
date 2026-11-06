@@ -6,9 +6,9 @@ release: v0.9
 theme: Fondasi
 priority: P0
 status: active
-progress: 22
-tasks_total: 24
-tasks_done: 8
+progress: 20
+tasks_total: 28
+tasks_done: 9
 updated: 2026-11-06
 ---
 
@@ -38,7 +38,7 @@ Docker belum aktif di mesin kerja (T-010).
 - [ ] [[tasks/T-017-rapikan-identitas-pengguna-dan-teks-backend-di-mni|T-017]] Rapikan identitas pengguna dan teks backend di mni-app · todo · P2 · 0.5 hari
 - [ ] [[tasks/T-168-rapikan-dashboard-ringkasan-kpi-dan-analisis|T-168]] Rapikan dashboard: ringkasan kondisi, KPI bertingkat, funnel SPK · review · P1 · 0.5 hari
 - [ ] [[tasks/T-173-berat-otomatis-pada-spk-dari-kalkulator|T-173]] Berat otomatis pada SPK dari kalkulator penghitung berat · doing · P1 · 3 hari
-- [ ] [[tasks/T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]] Produksi multi work center: rute, antrian mesin, kapasitas, posisi, dan kualifikasi vendor · doing · P1 · 4 hari
+- [ ] [[tasks/T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]] Produksi multi work center: rute, antrian mesin, kapasitas, posisi, dan kualifikasi vendor · review · P1 · 4 hari
 - [x] [[tasks/T-175-impor-stok-barang-jadi-oktober-2026|T-175]] Impor stok barang jadi dari Stock Barang 2026 ke production (data saja) · done · P1 · 0.5 hari
 - [x] [[tasks/T-176-filter-type-gudang-barang-jadi|T-176]] Filter Type di Gudang Barang Jadi (STU, STC, SLU, SLW, SLHD) · done · P2 · 0.25 hari
 - [ ] [[tasks/T-177-skema-produksi-tiga-pintu-spk-berjalan|T-177]] Skema produksi tiga pintu: SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa (Tahap 1) · review · P1 · 1.5 hari
@@ -51,5 +51,9 @@ Docker belum aktif di mesin kerja (T-010).
 - [x] [[tasks/T-184-muat-data-bahan-baku-oktober-ke-production|T-184]] Muat data bahan baku (plat) 27 Oktober ke Supabase production · done · P1 · 1 hari
 - [ ] [[tasks/T-185-papan-jadwal-v3-interaktif-dan-urutan-tab-spk|T-185]] Papan jadwal v3 interaktif (tooltip, panel detail, zoom, geser, buka/lipat semua) dan urutan tab SPK · review · P1 · 1 hari
 - [x] [[tasks/T-186-jadwal-tampilan-progres-matriks-posisi-item|T-186]] Berjalan memuat matriks posisi item; Jadwal menjadi timeline bersih per SPK dengan perkiraan otomatis · done · P1 · 2 hari
+- [x] [[tasks/T-195-surat-jalan-alamat-partial-dan-penomoran-otomatis|T-195]] Surat jalan: alamat pengiriman, tabel partial, penomoran otomatis, dokumen baru · done · P1 · 1.5 hari
+- [ ] [[tasks/T-196-gudang-bahan-baku-dokumen-mutasi-dan-master-fleksibel|T-196]] Gudang Bahan Baku: dokumen semua mutasi, jenis material fleksibel, item nonaktif, kartu HP · review · P1 · 3 hari
+- [ ] [[tasks/T-197-gudang-sparepart-modul-baru|T-197]] Gudang Sparepart: modul baru dari tabel stok Excel (impor, opname, dokumen, buffer) · review · P1 · 3 hari
+- [ ] [[tasks/T-199-spk-stok-alur-ujung-ke-ujung|T-199]] SPK stok ujung ke ujung: ceklis produk, filter jenis SPK, terima di gudang barang jadi, penjaga hasil produksi · review · P1 · 2.5 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

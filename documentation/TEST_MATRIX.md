@@ -8,6 +8,23 @@ updated: 2026-11-02
 
 # Matriks uji modul dan fitur (pratinjau lokal mode mock)
 
+> [!summary] Status uji terkini (2026-11-06, cabang `fitur/produksi-multi-wc` di 35bf7f7, mock)
+> Semua suite 0 FAIL. Suite `penawaran` dilewati karena modul disembunyikan ([[T-202-sembunyikan-modul-penjualan-fokus-operasional]]). Jalankan: `cd apps/platform && node tests/e2e/run.mjs http://127.0.0.1:5173/` (`ONLY=<suite>` untuk satu suite).
+>
+> | Suite | Berkas | Lulus | Cakupan |
+> |---|---|---|---|
+> | regresi | `regression.mjs` | 42 | alur inti dan regresi bug lama |
+> | role | `roles.mjs` | 12 | penegakan peran |
+> | akses | `access.mjs` | 34 | hak per pengguna dan modul (A-06 memuat sparepart) |
+> | produksi | `produksi.mjs` | 134 | multi work center, jadwal, laporan |
+> | sparepart | `sparepart.mjs` | 35 | sparepart SP-1 sampai SP-21, barang jadi dan SPK stok SP-17 sampai SP-35, nama penanda tangan SP-27 dan SP-28 |
+> | tampilan | `sweep.mjs` | 72 | sapu tampilan semua modul |
+> | unit | `tests/unit/*.test.mjs` | 266 | berat, harga, produksi, kinerja, laporan, rencana, material, penawaran, Sales Order |
+>
+> Bukti database: tidak ada untuk migration 14 sampai 18 (belum diterapkan). Pra-cek production baca-saja 2026-11-06: nama kebijakan dan pemicu cocok dengan draf 18.
+
+Catatan di bawah adalah hasil uji 2026-11-02 yang dipertahankan sebagai riwayat.
+
 Hasil uji `apps/platform` di browser (Playwright) pada mode mock lokal: data sintetis di `localStorage`, tanpa Supabase. **Yang dibuktikan:** UI dan alur bisnis di sisi klien berjalan dan datanya tersimpan di penyimpanan lokal. **Yang tidak dibuktikan:** Supabase, Auth nyata, RLS, realtime antar pengguna, dan kinerja. Itu tetap tugas [[tasks/T-020-verifikasi-login-otp-end-to-end-lokal|T-020]], T-021, dan T-022 setelah Docker hidup ([[DOCKER_SETUP]]).
 
 Tanggal uji: 2026-11-02 · Cabang: `development` · Panduan menjalankan: [[LOCAL_PREVIEW]] · Skrip: `apps/platform/tests/e2e/`.

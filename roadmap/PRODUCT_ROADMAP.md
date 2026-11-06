@@ -1,7 +1,7 @@
 ---
 type: product-roadmap
 status: proposed
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -10,19 +10,19 @@ updated: 2026-11-02
 
 Roadmap ini mengurutkan **hasil** (bukan tanggal) dari kondisi sekarang sampai sistem dipakai dan berkembang. Status hidup dihitung otomatis dari catatan tugas: lihat [[PROGRESS_SNAPSHOT]] dan [[PROGRESS_DASHBOARD]]. Rencana operasional menuju rilis pertama: [[GO_LIVE_PLAN]]. Daftar periksa Now/Next/Later yang lebih rinci: [[ROADMAP]].
 
-## 1. Posisi sekarang (fakta, 2026-11-02)
+## 1. Posisi sekarang (fakta, 2026-11-06)
 
 | Aspek          | Kondisi                                                                                                                                                                    | Bukti                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Kode aplikasi  | Prototipe vanilla JS (sekitar 3.500 baris `app.js`) memakai 20 koleksi; scaffold `apps/platform` (Vite + Supabase + Vercel) memuatnya dan build lolos                      | [[documentation/ENVIRONMENTS]], [[documentation/DECISIONS]] |
-| Browser        | Halaman login dan shell aplikasi termuat tanpa error JS dengan environment dummy                                                                                           | [[documentation/screenshots/README]]                        |
-| Database       | Schema 20 tabel + RLS per role ada sebagai migration; belum pernah dijalankan; Docker belum bisa start (virtualisasi BIOS nonaktif); pratinjau lokal berjalan di mode mock | [[documentation/FOUNDATION_BASELINE]]                       |
-| Data           | Enam workbook operasional dibaca read-only; saldo antar file belum direkonsiliasi                                                                                          | [[documentation/DATA_SOURCE_CATALOG]]                       |
-| Kebutuhan      | Discovery bersama tim Operasional belum dilakukan; pilot belum dipilih                                                                                                     | [[documentation/OPERATIONAL_DISCOVERY]]                     |
-| Repo dan versi | 4 branch di GitHub, `development` dan `docs` terkini; `main` belum berisi pekerjaan baru                                                                                   | [[documentation/VERSION_STRATEGY]]                          |
-| Cloud          | Belum ada Supabase dev/prod, Vercel, CI, atau pengguna                                                                                                                     | [[documentation/PROJECT_PROGRESS]]                          |
+| Kode aplikasi  | Vite + Supabase + Vercel; UI vanilla JS (sekitar 776 KB `app.js` terbangun) dengan mesin berat, produksi, dan harga di `apps/platform/src/lib`; 17 uji unit (266 lulus) | [[documentation/PETA_MODUL]], [[documentation/ENVIRONMENTS]] |
+| Production     | **Tayang** di mni-gudang.vercel.app, Supabase Production migration 1 sampai 13, RLS per peran, riwayat perubahan, 10 pengguna; `main` ad73c89 (surat jalan)                | [[documentation/SISTEM_MAP]]                                |
+| Lokal          | Cabang `fitur/produksi-multi-wc`: produksi multi WC, Gudang Bahan Baku, Barang Jadi, Sparepart, SPK stok, tren, dokumen; Penawaran dan Sales Order disembunyikan; belum dirilis | [[documentation/PETA_MODUL]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]] |
+| Pengujian      | Regresi mock: 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72 (semua 0 FAIL, 2026-11-06); belum ada uji terhadap database nyata untuk migration 14 sampai 18   | [[documentation/TEST_MATRIX]]                               |
+| Data           | Data bahan baku (T-184) dan stok barang jadi (T-175) dimuat ke production; saldo antar workbook belum direkonsiliasi                                                       | [[documentation/DATA_SOURCE_CATALOG]]                       |
+| Kebutuhan      | Pemolesan berdasarkan masukan langsung pemilik; wawancara process owner bersama tim belum dilakukan; pilot memakai data nyata di production                                 | [[documentation/OPERATIONAL_DISCOVERY]], [[documentation/PRD_GUDANG]] |
+| Repo dan versi | `main` terproteksi (PR, 1 approval, CI); kerja fitur di cabang `fitur/*`; `development` dan `docs` tertinggal                                                          | [[documentation/VERSION_STRATEGY]]                          |
 
-Terverifikasi di mode mock (bukan Supabase): 10 modul UI dan 30 fitur ([[documentation/TEST_MATRIX]]). Belum diverifikasi: login OTP nyata, baca/tulis database, realtime, dan RLS.
+Terverifikasi di mode mock (bukan Supabase): modul UI dan alur lintas modul ([[documentation/TEST_MATRIX]]). Terverifikasi di production (baca-saja): skema, kebijakan, jumlah baris.
 
 > [!info] Jalur integrasi
 > Tahap S0 sampai S6 (lokal → Supabase dev → GitHub CI → Vercel preview → UAT → production → VPS opsional), gerbang tiap tahap, dan kriteria VPS ada di [[documentation/INTEGRATION_PATH]]. Agen dan skill proyek: [[documentation/TEAM_AND_SKILLS]].

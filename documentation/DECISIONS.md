@@ -136,3 +136,27 @@ updated: 2026-11-02
 - **Alasan:** tanpa tabel baru tidak ada migration dan tidak ada risiko reservasi menyimpang dari SPK; revisi, selesai, dan batal SPK otomatis tercermin.
 - **Konsekuensi:** keputusan pemilik tentang pengurangan stok otomatis saat SPK terbit masih terbuka; bila dipilih, reservasi diubah menjadi mutasi otomatis. Faktor 1,1 dan pemetaan per (bahan, tebal) bersifat sementara.
 - **Rujukan:** [[tasks/T-192-kebutuhan-material-dan-reservasi-stok|T-192]].
+
+## 2026-11-06 — SPK stok tidak dikirim ke customer; hanya hasil produksi selesai yang dapat diterima atau dikirim
+
+- **Konteks:** pemilik menemukan SPK stok yang belum diproduksi dan belum ke vendor sudah dapat "diterima" dan langsung menambah stok; SPK customer juga dapat langsung dikirim tanpa hasil produksi.
+- **Keputusan:** SPK stok (`spk.stokReq`, customer STOK MNI) berakhir di **Gudang Barang Jadi** lewat Terima di gudang barang jadi (BJ-M tertaut SPK), bukan surat jalan customer. Penerimaan dan pengiriman dibatasi ke hasil produksi siap = produksi efektif − di vendor + kembali dari vendor; SPK Draft tidak dapat menerima. Kirim ke customer memiliki override "kirim lebih" dengan keterangan wajib.
+- **Alasan:** stok hanya boleh bertambah bila barangnya benar ada; jejak SPK stok lawan SPK customer harus bisa dilacak.
+- **Konsekuensi:** SPK lama yang produksinya tidak pernah dicatat tertahan di pengiriman sampai dicatat atau override dipakai; catat saat rilis ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+- **Rujukan:** [[PRD_GUDANG]], [[T-199-spk-stok-alur-ujung-ke-ujung]].
+
+## 2026-11-06 — Modul Penjualan disembunyikan, fokus operasional
+
+- **Keputusan pemilik:** menu Penawaran dan Sales Order tidak tampil; kode, data, dan draf migration 15 dan 16 dipertahankan di balik saklar `MODUL_PENJUALAN`. T-193 ditunda.
+- **Rujukan:** [[T-202-sembunyikan-modul-penjualan-fokus-operasional]].
+
+## 2026-11-06 — Rilis bertahap, database dahulu, migration 17 tidak ikut
+
+- **Konteks:** cabang `fitur/produksi-multi-wc` membawa 175 berkas selain gudang (produksi multi WC dan lainnya), sehingga rilis gudang saja tidak dapat dipotong bersih.
+- **Keputusan:** rilis dilakukan bertahap: pra-cek baca-saja, merge `main` ke cabang dan regresi, migration 14 lalu 18 (hanya menambah; adapter memperlakukan `produksi_log` dan `sp` sebagai opsional), PR dan CI, deploy, verifikasi, rollback siap. Migration 17 (anti stok negatif) ditunda sampai diuji di branch database karena dapat menahan transaksi sah bila data lama memuat stok negatif. Pemilik menjeda rilis untuk memoles lokal terlebih dahulu.
+- **Rujukan:** [[T-203-rilis-paket-gudang-dan-produksi-ke-production]], [[SISTEM_MAP]].
+
+## 2026-11-06 — Nama penanda tangan dokumen disimpan per perangkat
+
+- **Keputusan:** dialog nama sebelum cetak atau unduh; nama dan jabatannya diingat di `localStorage` (`mni-signers`) sebagai saran dan isian otomatis. Belum dibagi antar pengguna karena memerlukan tabel baru dan persetujuan.
+- **Rujukan:** [[T-201-nama-penanda-tangan-dokumen]].

@@ -1,7 +1,7 @@
 ---
 type: team-operating-model
 status: active
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -87,3 +87,19 @@ Dibuat untuk alur kerja yang sudah terbukti di proyek ini; berada di `.claude/` 
 | `ops-monitor-analyst` | Definisi dan keakuratan monitoring operasional, estimasi lawan aktual (read-only) | `erp-flow-hulu-hilir` |
 
 Aturan bersama: bukti sebelum klaim, mock bukan bukti Supabase, tanpa secret atau data nyata, tindakan akun hanya setelah persetujuan pemilik. Tugas: [[tasks/T-075-bangun-agen-dan-skill-proyek-di-claude|T-075]].
+
+## Matriks agen dan skill Claude (2026-11-06)
+
+| Modul atau tugas | Skill | Agen |
+|---|---|---|
+| Status, tugas, roadmap, Obsidian | `vault-progress` | `progress-keeper` |
+| Mengubah UI atau adapter | `adapter-contract`, `gudang-stok-flow` (gudang dan SPK stok) | `app-engineer` |
+| Regresi penuh dan suite | `e2e-regression` | `qa-regression` |
+| Skema, migration, RLS, peran dan modul | `supabase-dev-ops`, `rls-roles` | `supabase-engineer` |
+| Rilis bertahap ke production | `release-pipeline` | `release-manager` |
+| Discovery proses | `discovery-session` | `ops-analyst` |
+| Monitoring estimasi lawan aktual | `erp-flow-hulu-hilir` | `ops-monitor-analyst` |
+| Penawaran, harga, Sales Order | `erp-quotation-engine`, `excel-model-extraction`, `erp-module-boundary` | `erp-architect`, `pricing-engineer`, `erp-integrator` |
+| Persiapan VPS | `vps-readiness` | `release-manager` |
+
+Peta modul yang dipakai agen sebagai konteks: [[PETA_MODUL]]. Aturan gudang: [[PRD_GUDANG]]. Setiap perubahan modul diakhiri skill `vault-progress` dan regresi penuh.

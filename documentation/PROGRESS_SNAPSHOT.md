@@ -11,11 +11,11 @@ generated: 2026-11-06
 
 ## Ringkasan
 
-- Tugas selesai: **33 / 115** (29%)
-- Bobot effort selesai: **34.25 / 195.84999999999997 hari kerja** (17%)
-- Sisa effort: **161.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
-- Cakupan go-live (fase P0-P7): **30 / 85** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
-- Diblokir: **1**, sedang dikerjakan: **5**
+- Tugas selesai: **36 / 125** (29%)
+- Bobot effort selesai: **37 / 213.59999999999997 hari kerja** (17%)
+- Sisa effort: **176.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
+- Cakupan go-live (fase P0-P7): **33 / 95** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
+- Diblokir: **1**, sedang dikerjakan: **4**
 - Estimasi effort bersifat indikatif dan belum memuat waktu tunggu pihak lain.
 
 ## Per fase
@@ -24,7 +24,7 @@ generated: 2026-11-06
 |---|---|---|---|
 | P0 Workspace dan tracking | 7/7 | 5/5 hari (100%) | selesai |
 | P1 Fondasi lokal | 2/8 | 1.5/4.7 hari (32%) | ada blocker |
-| P2 Aplikasi siap uji | 12/30 | 17.25/46.25 hari (37%) | berjalan |
+| P2 Aplikasi siap uji | 15/40 | 20/64 hari (31%) | berjalan |
 | P3 Data dan proses | 0/7 | 0/13.5 hari (0%) | belum mulai |
 | P4 Environment cloud | 6/9 | 3.5/6 hari (58%) | berjalan |
 | P5 UAT pilot | 2/12 | 2/15.899999999999999 hari (13%) | berjalan |
@@ -38,10 +38,10 @@ generated: 2026-11-06
 
 | Rilis | Tema | Tugas | Effort | Status |
 |---|---|---|---|---|
-| v0.9 | Fondasi | 15/32 | 11.25/33.45 hari (34%) | active |
-| v1.0 | Pilot go-live | 14/50 | 17.5/69.4 hari (25%) | active |
-| v1.1 | Stabilisasi, akses, kualitas data | 1/11 | 1/24.5 hari (4%) | active |
-| v1.2 | Integrasi dan pelaporan | 3/14 | 4.5/41.5 hari (11%) | active |
+| v0.9 | Fondasi | 16/36 | 12.75/43.45 hari (29%) | active |
+| v1.0 | Pilot go-live | 15/52 | 18.5/71.9 hari (26%) | active |
+| v1.1 | Stabilisasi, akses, kualitas data | 1/13 | 1/28.5 hari (4%) | active |
+| v1.2 | Integrasi dan pelaporan | 4/16 | 4.75/42.75 hari (11%) | active |
 | v2.0 | Modernisasi dan perluasan | 0/8 | 0/27 hari (0%) | planned |
 
 ## Per epic
@@ -49,21 +49,21 @@ generated: 2026-11-06
 | Epic | Rilis | Tugas | Progress | Status |
 |---|---|---|---|---|
 | [[roadmap/epics/E-01-fondasi-workspace-dan-repo\|E-01]] Fondasi workspace dan repo | v0.9 | 7/8 | 96% | active |
-| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 8/24 | 22% | active |
+| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 9/28 | 20% | active |
 | [[roadmap/epics/E-03-kualitas-aplikasi-dan-keamanan-data\|E-03]] Kualitas aplikasi dan keamanan data | v1.0 | 8/14 | 60% | active |
 | [[roadmap/epics/E-04-proses-data-dan-pilot\|E-04]] Proses, data, dan pilot | v1.0 | 0/7 | 0% | planned |
-| [[roadmap/epics/E-05-environment-cloud-dan-ci-cd\|E-05]] Environment cloud dan CI/CD | v1.0 | 5/10 | 55% | active |
+| [[roadmap/epics/E-05-environment-cloud-dan-ci-cd\|E-05]] Environment cloud dan CI/CD | v1.0 | 5/11 | 44% | active |
 | [[roadmap/epics/E-06-uat-hardening-dan-go-live\|E-06]] UAT, hardening, dan go-live | v1.0 | 1/13 | 2% | active |
-| [[roadmap/epics/E-07-dokumentasi-dan-situs-docs\|E-07]] Dokumentasi dan situs Docs | v1.0 | 0/4 | 0% | planned |
+| [[roadmap/epics/E-07-dokumentasi-dan-situs-docs\|E-07]] Dokumentasi dan situs Docs | v1.0 | 1/5 | 17% | active |
 | [[roadmap/epics/E-08-operasi-dan-dukungan\|E-08]] Operasi dan dukungan | v1.0 | 0/2 | 0% | planned |
 | [[roadmap/epics/E-09-akses-peran-dan-audit\|E-09]] Akses, peran, dan audit | v1.1 | 1/7 | 8% | active |
-| [[roadmap/epics/E-10-kualitas-data-dan-kontrol-stok\|E-10]] Kualitas data dan kontrol stok | v1.1 | 0/4 | 0% | planned |
+| [[roadmap/epics/E-10-kualitas-data-dan-kontrol-stok\|E-10]] Kualitas data dan kontrol stok | v1.1 | 0/6 | 0% | active |
 | [[roadmap/epics/E-11-integrasi-sumber-data\|E-11]] Integrasi sumber data | v1.2 | 0/3 | 0% | planned |
-| [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen\|E-12]] Pelaporan, notifikasi, dan dokumen | v1.2 | 0/3 | 0% | planned |
+| [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen\|E-12]] Pelaporan, notifikasi, dan dokumen | v1.2 | 0/4 | 0% | active |
 | [[roadmap/epics/E-13-modernisasi-frontend-dan-pengujian\|E-13]] Modernisasi frontend dan pengujian | v2.0 | 0/4 | 0% | planned |
 | [[roadmap/epics/E-14-multi-site-dan-mobile\|E-14]] Multi-site dan mobile | v2.0 | 0/2 | 0% | planned |
 | [[roadmap/epics/E-15-self-host-vps-dan-layanan-pendamping\|E-15]] Self-host VPS dan layanan pendamping | v2.0 | 0/2 | 0% | planned |
-| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 3/8 | 22% | active |
+| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 4/9 | 23% | active |
 
 ## Siap dikerjakan sekarang (dependensi terpenuhi)
 
@@ -87,7 +87,6 @@ generated: 2026-11-06
 - [[tasks/T-047-konfigurasi-auth-supabase-produksi|T-047]] Konfigurasi Auth Supabase produksi · dev
 - [[tasks/T-164-samakan-nama-folder-lokal-ke-mni-gudang|T-164]] Samakan nama folder lokal ke mni-gudang · pemilik + dev
 - [[tasks/T-173-berat-otomatis-pada-spk-dari-kalkulator|T-173]] Berat otomatis pada SPK dari kalkulator penghitung berat · dev + pemilik
-- [[tasks/T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]] Produksi multi work center: rute, antrian mesin, kapasitas, posisi, dan kualifikasi vendor · dev + pemilik
 
 ## Diblokir
 
@@ -101,6 +100,7 @@ generated: 2026-11-06
 - [[tasks/T-169-akun-saya-ganti-dan-lupa-password-dan-keluar|T-169]] Akun saya: ganti password, lupa password, dan tombol keluar · dev
 - [[tasks/T-170-kesiapan-pilot-cadangan-dan-impor-csv|T-170]] Kesiapan pilot: cadangan data dan impor CSV master dan stok awal · dev + pemilik
 - [[tasks/T-171-logo-perusahaan-di-sistem-dan-dokumen|T-171]] Logo PT Mitra Nusa Internasional di sistem dan semua dokumen · dev
+- [[tasks/T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]] Produksi multi work center: rute, antrian mesin, kapasitas, posisi, dan kualifikasi vendor · dev + pemilik
 - [[tasks/T-177-skema-produksi-tiga-pintu-spk-berjalan|T-177]] Skema produksi tiga pintu: SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa (Tahap 1) · dev + pemilik
 - [[tasks/T-178-kinerja-dan-analisa-produksi-tahap-2|T-178]] Kinerja & Analisa produksi (Tahap 2): per work center, produk, vendor, dan pengiriman · dev + pemilik
 - [[tasks/T-179-produksi-hari-ini-v2-dan-laporan-produksi|T-179]] Produksi Hari Ini v2 dan Laporan Produksi: input otomatis, analisa qty, tonase, kecepatan, produk bertingkat, KPI operator dan mesin · dev + pemilik
@@ -113,6 +113,12 @@ generated: 2026-11-06
 - [[tasks/T-191-muat-dari-penawaran-ke-spk-dan-snapshot-po|T-191]] Muat dari penawaran ke SPK dan snapshot PO · dev + pemilik
 - [[tasks/T-192-kebutuhan-material-dan-reservasi-stok|T-192]] Kebutuhan material dan reservasi stok · dev + pemilik
 - [[tasks/T-194-sales-order-penghubung-penawaran-dan-spk|T-194]] Sales Order: penghubung Penawaran dan SPK · dev + pemilik
+- [[tasks/T-196-gudang-bahan-baku-dokumen-mutasi-dan-master-fleksibel|T-196]] Gudang Bahan Baku: dokumen semua mutasi, jenis material fleksibel, item nonaktif, kartu HP · dev + pemilik
+- [[tasks/T-197-gudang-sparepart-modul-baru|T-197]] Gudang Sparepart: modul baru dari tabel stok Excel (impor, opname, dokumen, buffer) · dev + pemilik
+- [[tasks/T-198-barang-jadi-buffer-mutasi-berdokumen-dan-rencana-produksi|T-198]] Gudang Barang Jadi: buffer, mutasi berdokumen tertaut SPK, rencana produksi stok · dev + pemilik
+- [[tasks/T-199-spk-stok-alur-ujung-ke-ujung|T-199]] SPK stok ujung ke ujung: ceklis produk, filter jenis SPK, terima di gudang barang jadi, penjaga hasil produksi · dev + pemilik
+- [[tasks/T-200-tren-pergerakan-stok-dan-rencana-pembelian-sparepart|T-200]] Tren pergerakan stok (sparepart dan barang jadi) dan rencana pembelian PR sparepart · dev + pemilik
+- [[tasks/T-201-nama-penanda-tangan-dokumen|T-201]] Nama penanda tangan pada semua dokumen: ketik manual, saran dari nama yang pernah diketik · dev + pemilik
 
 ## Tugas P0 yang belum selesai
 

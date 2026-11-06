@@ -9,14 +9,16 @@ updated: 2026-11-06
 
 Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak memuat rahasia. Aturan kerja ada di [[AGENTS]] dan `CLAUDE.md`; dashboard di [[Home]]; peta koneksi di [[documentation/SISTEM_MAP]].
 
-## 1. Posisi proyek (2026-11-06)
+## 1. Posisi proyek (2026-11-06, setelah audit dokumentasi T-204)
 
-- Cabang kerja: `fitur/produksi-multi-wc`. **Sudah di-push ke GitHub** (diverifikasi 2026-11-06, sama dengan lokal, 41 commit di depan `development`). `development`, `main`, `docs`, `versi-awal` di GitHub masih versi lama yang sudah live; `main` di `43e8da2` (PR 14), Vercel dan CI sukses.
-- Validasi koneksi 2026-11-06 (baca-saja): GitHub, Supabase production (13 migration = repo 1–13), dan Vercel yang tayang saling cocok; detail di [[PROJECT_PROGRESS]] entri terbaru. Composio belum terverifikasi; variabel Vercel baru berlabel Production.
-- Semua pekerjaan terbaru **lokal, belum menyentuh production**: produksi multi WC (T-174 sampai T-186), ERP hulu E-16: mesin harga (T-189), Penawaran (T-190), muat ke SPK dan snapshot (T-191), Sales Order (T-194), kebutuhan material dan reservasi (T-192). Status `review`, menunggu pemilik.
-- Alur hulu ke hilir yang sudah jalan di mock: Penawaran, disetujui customer, Buat Sales Order (PO, due date, tebal, finishing), Konfirmasi, SPK Draft otomatis, terbit, produksi, vendor, kirim. Panel Kebutuhan material ada di Sales Order dan lembar SPK.
-- Berikutnya: **T-193** monitoring estimasi lawan aktual. Detail status per tugas ada di `tasks/` (sumber kebenaran).
-- Tingkat bukti: semua fitur baru `verified in browser` (mock). Belum ada bukti Supabase untuk migration 14, 15, 16.
+- **Production (live):** `main` di `ad73c89` (PR 15, surat jalan: alamat, tabel partial, penomoran otomatis). Supabase production: migration 1 sampai 13; baris rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10 (dicek baca-saja 2026-11-06). Vercel dan CI sukses.
+- **Cabang kerja:** `fitur/produksi-multi-wc` di `35bf7f7` (lokal; sudah menggabung `main` terbaru, regresi penuh hijau). Pekerjaan setelah push terakhir (gudang bahan baku, sparepart, SPK stok, tren, dokumen, nama penanda tangan, penjaga kirim) **belum di-push** dan belum menyentuh production.
+- **Pegangan utama:** [[PETA_MODUL]] (modul, hulu, hilir, migration, dokumen, status per lingkungan), [[PRD_GUDANG]] (aturan stok, buffer, SPK stok, penjaga, dokumen), [[PRD_PRODUKSI]], [[SISTEM_MAP]] (sumber daya).
+- **Selesai di lokal (status `review`, menunggu pemilik):** produksi multi WC (T-174, T-177 sampai T-186), ERP hulu (T-190 sampai T-194, **disembunyikan** lewat `MODUL_PENJUALAN=false`, T-202), gudang bahan baku (T-196), sparepart (T-197), barang jadi dengan buffer dan rencana produksi (T-198), SPK stok ujung ke ujung dan penjaga hasil produksi (T-199), tren dan PR sparepart (T-200), nama penanda tangan dokumen (T-201).
+- **Rilis ke production dijeda** atas permintaan pemilik (2026-11-06: fokus pemolesan lokal dahulu): [[T-203-rilis-paket-gudang-dan-produksi-ke-production]]. Rencananya: database dahulu (migration 14 lalu 18, hanya menambah; 17 tidak ikut), lalu PR ke `main`, deploy Vercel, verifikasi, dengan rollback Vercel siap.
+- **Hal yang harus diketahui sebelum rilis:** cabang ini membawa 175 berkas dari `main` (bukan hanya gudang), dan penjaga kirim ke customer mengubah perilaku di production (SPK lama yang produksinya tidak pernah dicatat tertahan sampai dicatat atau override dipakai).
+- Berikutnya (lokal): pemolesan modul per permintaan pemilik; tugas terbuka T-193 (monitoring estimasi lawan aktual, ditunda karena Penawaran disembunyikan), T-111 sampai T-113 (aturan Cek Data, opname terjadwal, validasi buffer).
+- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji: regresi 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72, unit 266 (2026-11-06).
 
 ## 2. Yang HANYA ada di mesin ini (cadangkan sebelum ganti akun atau mesin)
 
@@ -74,11 +76,11 @@ Commit lokal dengan identitas `mitranusainternational-cloud` / `mitranusainterna
 - ~~Push cabang `fitur/produksi-multi-wc`~~ sudah selesai (cabang fitur saja, bukan `main`).
 - Menerapkan draf migration 14 (produksi_log), 15 (penawaran), 16 (salesorder) di Supabase, urutannya 14, 15, 16, dimulai dari dev lalu production.
 - Menerapkan draf migration 17 (`supabase/draft/20240101000017_stok_tidak_negatif.sql`, pemicu anti stok negatif dan pengeluaran bersamaan). Belum pernah dijalankan di database mana pun; uji dulu di dev atau branch dengan 5 langkah uji di berkasnya, lalu production.
-- Menerapkan draf migration 18 (`supabase/draft/20240101000018_sparepart.sql`): tabel `sp`, kebijakan mutasi/PR untuk modul sparepart, peran gbb. Belum diterapkan; cocokkan nama pemicu stempel dengan migration 12 dulu. Tanpa ini sparepart dan PR sparepart tidak bisa jalan di production.
+- Menerapkan draf migration 18 (`supabase/draft/20240101000018_sparepart.sql`): tabel `sp`, kebijakan mutasi/PR untuk modul sparepart, peran gbb. Belum diterapkan; nama pemicu stempel dan kebijakan sudah dicocokkan dengan production (baca-saja 2026-11-06) dan draf memuat `table_stamps` dengan `sp`. Terapkan setelah migration 14. Tanpa ini sparepart dan PR sparepart tidak bisa jalan di production.
 - PR ke `main` (1 approval), deploy Vercel, DNS.
 - Menghapus skema cadangan `arsip_20261105` di production setelah pemilik puas.
 - Menjalankan skrip ganti nama folder (tutup Obsidian dan semua sesi/terminal di folder itu lebih dulu).
 
 ## 7. Kalimat pembuka untuk sesi baru
 
-> Baca `CLAUDE.md`, `AGENTS.md`, dan `documentation/HANDOFF.md`. Lanjutkan proyek MNI Gudang & Logistik dari tugas T-193 (monitoring estimasi lawan aktual), tetap lokal dan jangan menyentuh production tanpa persetujuan saya. Setiap perubahan diikuti regresi penuh 0 FAIL, vault diperbarui, dan `node scripts/sync-vault.mjs` OK sebelum commit.
+> Baca `CLAUDE.md`, `AGENTS.md`, dan `documentation/HANDOFF.md`. Baca juga `documentation/PETA_MODUL.md` dan `documentation/PRD_GUDANG.md`. Lanjutkan proyek MNI Gudang & Logistik dengan memoles modul sesuai permintaan saya (rilis ke production dijeda, lihat T-203), tetap lokal dan jangan menyentuh production tanpa persetujuan saya. Setiap perubahan diikuti regresi penuh 0 FAIL, vault diperbarui, dan `node scripts/sync-vault.mjs` OK sebelum commit.

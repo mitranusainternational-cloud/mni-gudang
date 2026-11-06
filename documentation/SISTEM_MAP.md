@@ -18,7 +18,7 @@ Satu halaman untuk menjawab "apa saja yang kita punya, namanya apa, dan di mana 
 | Slug (huruf kecil, tanda hubung) | **`mni-gudang`** untuk repo, project Vercel, dan folder kerja | `mni-gudang` |
 | Nama tampilan Supabase | **MNI Gudang - {Environment}** | MNI Gudang - Production, MNI Gudang - Dev |
 | Environment | Production, Staging (preview Vercel), Dev, Lokal (mock) | |
-| Branch | `main` (stabil, hanya lewat PR), `development` (kerja), `docs` (cermin dokumentasi), `versi-awal` (beku) | |
+| Branch | `main` (stabil, hanya lewat PR), `fitur/<nama>` (kerja fitur, dari `main`; dipakai sejak PR 14), `development` dan `docs` (tertinggal), `versi-awal` (beku) | `fitur/surat-jalan`, `fitur/produksi-multi-wc` |
 | Commit | kalimat perintah Bahasa Indonesia, jelas satu perubahan; trailer Co-Authored-By bila dibantu Claude | "Perbaiki B-018: muat ulang setelah login" |
 | Migration | `2024010100NNNN_nama_singkat.sql` berurutan, tidak mengubah yang sudah terpasang | `20240101000010_atomic_try_lock.sql` |
 | Tugas / bug / keputusan | `T-nnn` (vault `tasks/`), `B-nnn` (TEST_MATRIX), keputusan bertanggal di DECISIONS | T-162, B-018 |
@@ -126,7 +126,9 @@ Migration: file di `apps/platform/supabase/migrations/` (Git) lalu dipasang ke S
 | 2026-11-03 | Project Vercel | `mni-os-operational` | `mni-gudang` (domain baru `mni-gudang.vercel.app`) |
 | 2026-11-03 | Project Supabase production | "MNI-OS - Operational" | "MNI Gudang - Production" |
 
-## Peta menu aplikasi (2026-11-04, lokal)
+## Peta menu aplikasi
+
+Peta lengkap per modul (hulu, hilir, koleksi, migration, dokumen, status per lingkungan, tugas, uji) ada di [[PETA_MODUL]]; aturan gudang di [[PRD_GUDANG]]. Ringkasan produksi di bawah (2026-11-04).
 
 | Menu | Rute | Jenis | Sumber data |
 |---|---|---|---|
@@ -142,3 +144,15 @@ Kolom klasifikasi produk pada `produksi_log` (draf migration 14): `kelompok`, `t
 Tab Jadwal pada SPK Berjalan (`#spk`): bagan Gantt per SPK dari data yang sudah ada (SPK, `produksi_log`, vendor, kirim); mesin hitung `src/lib/produksi/jadwal.js`; tanpa tabel baru.
 
 Menu penjualan (lokal, belum tayang, 2026-11-06): **Penawaran** (`#penawaran`, draf migration 15) dan **Sales Order** (`#salesorder`, draf migration 16). SPK Draft dibuat otomatis dari konfirmasi Sales Order, dan panel Kebutuhan material ada di Sales Order dan lembar SPK. Alur lengkap: [[HANDOFF]].
+
+## Migration dan draf (2026-11-06)
+
+| Nomor | Isi | Status |
+|---|---|---|
+| 1 sampai 13 | skema, RLS, peran, hak per modul, penanda tabel, riwayat perubahan | terpasang di production |
+| 14 | `produksi_log` dan `table_stamps` | draf, rencana rilis ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]) |
+| 15, 16 | `penawaran`, `salesorder` | draf; modul disembunyikan, tidak ikut rilis |
+| 17 | pemicu anti stok negatif | draf ditunda; belum pernah diuji di database |
+| 18 | tabel `sp`, kebijakan `pr` dan `mutasi` untuk sparepart, `table_stamps` memuat `sp`, peran gbb | draf, nama pemicu dan kebijakan sudah dicocokkan dengan production (baca-saja) |
+
+Berkas draf ada di `apps/platform/supabase/draft/`; yang sudah terpasang ada di `supabase/migrations/`. Server lokal: 5173 mock; worktree surat jalan lama (5176) tidak dipakai lagi.

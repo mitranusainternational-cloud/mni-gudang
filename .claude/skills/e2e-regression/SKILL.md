@@ -1,11 +1,11 @@
 ---
 name: e2e-regression
-description: Jalankan dan catat regresi UI penuh untuk pratinjau lokal mni-app (login, 10 modul, 22 alur inti). Wajib setelah mengubah adapter Supabase, local-supabase.js, schema-columns.js, apps/gudang-logistik, atau index.html mni-app.
+description: Jalankan dan catat regresi UI penuh untuk pratinjau lokal mni-app (suite regresi, role, akses, produksi, sparepart/gudang/SPK stok, tampilan, plus uji unit). Wajib setelah mengubah adapter Supabase, local-supabase.js, schema-columns.js, apps/gudang-logistik, atau index.html mni-app.
 ---
 
 # Regresi E2E (mode mock)
 
-Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus (36 PASS, 0 FAIL pada 2026-11-02).
+Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 35 (gudang bahan baku/barang jadi/sparepart, SPK stok, nama penanda tangan), tampilan 72; unit 266 (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
 
 ## Menjalankan
 
@@ -13,6 +13,20 @@ Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus (36 PASS, 0 FAI
 2. Jalankan dev server mock di terminal terpisah: `npx.cmd vite --host 127.0.0.1 --port 5173 --no-open` (di PowerShell yang memblokir skrip pakai `npx.cmd`). `.env.local` berisi `VITE_LOCAL_MOCK=1`.
 3. Pakai **satu tab** browser. Setelah itu jalankan `runRoles(page, base)` dari `tests/e2e/roles.mjs` (penegakan role, 12 pemeriksaan). Jalankan `runRegression(page, 'http://127.0.0.1:5173/')` dari `apps/platform/tests/e2e/regression.mjs` lewat Playwright MCP (`browser_run_code_unsafe`) atau `node tests/e2e/run.mjs` bila paket `playwright` terpasang (T-077).
 4. Hasil harus `fail: 0`. Satu kegagalan = berhenti, cari penyebab, perbaiki, ulangi dari awal.
+
+## Menjalankan penuh (cara terbaru)
+
+- Server mock: `cd apps/platform && VITE_LOCAL_MOCK=1 npx.cmd vite --host 127.0.0.1 --port 5173 --strictPort` (nyalakan dengan `nohup` bila lewat Bash).
+- `node scripts/extract-app.js` setelah mengubah `apps/gudang-logistik`, lalu `node tests/e2e/run.mjs http://127.0.0.1:5173/` (semua suite, beberapa menit: jalankan di latar belakang). Satu suite: `ONLY=sparepart node tests/e2e/run.mjs http://127.0.0.1:5173/` (nama: regresi, role, akses, produksi, penawaran, sparepart, tampilan).
+- Unit: `for f in tests/unit/*.test.mjs; do node "$f"; done`.
+
+## Menulis uji baru
+
+- Suite gudang ada di `tests/e2e/sparepart.mjs` (data sintetis; nomor SP-n berurutan). Pakai pembantu yang ada: `submit()`, `tabClick()`, `docOf(pola, nama)` (cetak dokumen lewat dialog nama penanda tangan), `releaseSpk(id)` (menerbitkan SPK dan menandai produksi selesai lewat `localStorage`, lalu memuat ulang).
+- Teks yang dicetak huruf besar oleh CSS (judul kolom) terbaca huruf besar lewat `innerText`: cocokkan dengan `/i`.
+- Mengubah data mock lewat `localStorage` (`mni-local-mock-db`) hanya terbaca setelah `page.reload()`.
+- Alur dokumen: dialog nama (`#mform [name^=sg]`) muncul sebelum PDF atau Excel; uji harus mengisi lalu submit.
+- Setiap fitur gudang baru: satu uji untuk jalan normal dan satu untuk penolakan (stok tidak cukup, SPK Draft, melebihi hasil produksi siap).
 
 ## Setelah selesai
 

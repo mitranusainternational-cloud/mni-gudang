@@ -6,9 +6,9 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 22
-tasks_total: 8
-tasks_done: 3
+progress: 23
+tasks_total: 9
+tasks_done: 4
 updated: 2026-11-06
 ---
 
@@ -35,5 +35,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-192-kebutuhan-material-dan-reservasi-stok|T-192]] Kebutuhan material dan reservasi stok · review · P2 · 3 hari
 - [ ] [[tasks/T-193-monitoring-estimasi-lawan-aktual|T-193]] Monitoring estimasi lawan aktual · todo · P2 · 3 hari
 - [ ] [[tasks/T-194-sales-order-penghubung-penawaran-dan-spk|T-194]] Sales Order: penghubung Penawaran dan SPK · review · P2 · 3 hari
+- [x] [[tasks/T-202-sembunyikan-modul-penjualan-fokus-operasional|T-202]] Sembunyikan modul Penawaran dan Sales Order, fokus ke operasional · done · P2 · 0.25 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

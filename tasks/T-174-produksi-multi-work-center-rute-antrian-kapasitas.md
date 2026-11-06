@@ -5,13 +5,13 @@ title: "Produksi multi work center: rute, antrian mesin, kapasitas, posisi, dan 
 phase: P2
 epic: E-02
 release: v0.9
-status: doing
+status: review
 priority: P1
 env: dev
 effort_days: 4
 depends: [T-167]
 owner: "dev + pemilik"
-updated: 2026-11-04
+updated: 2026-11-06
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
