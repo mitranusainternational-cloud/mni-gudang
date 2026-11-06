@@ -1710,7 +1710,7 @@ function sjPreview(k,s){
  const totalQty=sumBy(items,i=>+i.q||0);
  const metaRows=[
   ['Kepada',k.customer||'-'],
-  ['Alamat',cu.alamat||'-'],
+  ['Alamat',k.alamat||cu.alamat||'-'],
   ['Tanggal',tglLong(k.tgl)],
   ['No PO',s&&s.po||'-'],
   ['Ref SPK',s?(s.nomor||(s.no?String(s.no):'-')):'-'],
@@ -1723,7 +1723,7 @@ function sjPreview(k,s){
    <div class="sj-prev-title"><div class="sj-prev-doctitle">SURAT JALAN</div><div class="sj-prev-docno">No: ${esc(k.noSJ||'-')}</div></div>
   </div>
   <table class="sj-prev-meta">
-   ${metaRows.map(([l,v])=>`<tr><td>${esc(l)}</td><td>:</td><td>${esc(v)}</td></tr>`).join('')}
+   ${metaRows.map(([l,v])=>`<tr><td>${esc(l)}</td><td>:</td><td style="white-space:pre-line">${esc(v)}</td></tr>`).join('')}
   </table>
   <table class="sj-prev-tbl">
    <thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th style="width:12%">Qty</th><th style="width:10%">Satuan</th><th style="width:18%">Keterangan</th></tr></thead>
@@ -1732,6 +1732,7 @@ function sjPreview(k,s){
     <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="2"></td></tr>
    </tbody>
   </table>
+  ${sjPartialHtml(k)}
   ${k.ket?`<div class="sj-prev-note">Catatan: ${esc(k.ket)}</div>`:''}
   ${k.batal?`<div class="sj-prev-note" style="color:var(--red)">DIBATALKAN: ${esc(k.batal.alasan)}</div>`:''}
   <div class="sj-prev-signs">
@@ -1747,7 +1748,7 @@ function kirimDrawer(id){openDrawer(()=>{const k=byId('kirim',id);if(!k)return n
  ${k.batal?`<div class="ro">Dibatalkan ${fd(k.batal.at)} oleh ${who(k.batal.by)}: ${esc(k.batal.alasan)}</div>`:''}
  <div class="sec-lbl">Preview Dokumen</div>
  ${sjPreview(k,s)}
- <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="docn">Surat Jalan</span><button class="btn sm ghost" data-act="doc" data-kind="sjc" data-ref="${id}" data-fmt="xlsx">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="doc" data-kind="sjc" data-ref="${id}" data-fmt="pdf">${ic('file')}PDF</button></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px"><span class="docn">Surat Jalan</span><button class="btn sm ghost" data-act="doc" data-kind="sjc" data-ref="${id}" data-fmt="xlsx">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="doc" data-kind="sjc" data-ref="${id}" data-fmt="pdf">${ic('file')}PDF</button>${k.status!=='Batal'?`<button class="btn sm ghost" data-act="sjalamat" data-id="${id}">Ubah alamat</button>`:''}</div>
  ${k.status!=='Batal'?`<div style="display:flex;gap:8px"><button class="btn sm danger" data-act="void" data-c="kirim" data-id="${id}">Batalkan surat jalan</button></div>`:''}`}})}
 
 function spkDrawer(id){openDrawer(()=>{const s=byId('spk',id);if(!s)return null;const x=calc().spk[id];
@@ -1940,19 +1941,26 @@ function setVendorForm(id){const v=byId('vendor',id);openModal(`Isi nama vendor 
 function kirimForm(spk){
  openModal('Buat surat jalan ke customer',fld('SPK',spkSelect(spk||'',true,true,true),true)+`<div class="full" id="m-lines">${linesTable(spk,'kirim')}</div>`+
   `<label class="ck full"><input type="checkbox" name="over" id="m-over"> Kirim lebih dari yang siap (ganti reject / bonus, atau produksi belum tercatat selesai) — wajib isi keterangan</label>`+
-  fld('Tanggal',inp('tgl',today(),'date'))+fld('No surat jalan',inp('noSJ','','text','placeholder="Kosongkan = otomatis SJ/'+today().slice(0,4)+'/'+today().slice(5,7)+'/…"'))+
+  fld('Tanggal',inp('tgl',today(),'date'))+fld('No surat jalan',inp('noSJ','','text','placeholder="Kosongkan = otomatis '+sjMniNext(today())+'"'))+
+  fld('Alamat pengiriman',`<textarea class="inp" name="alamat" id="m-alamat" rows="2" placeholder="Alamat tujuan / lokasi proyek (otomatis dari data customer bila sudah ada)"></textarea>`,true)+`<label class="ck full"><input type="checkbox" name="simpanAlamat" id="m-simpan-alamat"> Simpan juga sebagai alamat customer di Master Data</label>`+
   armadaFields()+fld('Status',`<select class="sel" name="status" id="m-status"><option>Disiapkan</option><option>Dalam Perjalanan</option><option>Diterima</option></select>`)+fld('Keterangan',inp('ket'),true)+
   dockCk('Masukkan ke antrian Loading di Bongkar Muat'),
   async (d,form)=>{if(!d.spk)throw new Error('Pilih SPK.');checkCap(d.spk,d,'kirim');if(d.over&&!String(d.ket).trim())throw new Error('Isi keterangan untuk kirim lebih.');
    const items=pickLines(d.spk,d);if(!items.length)throw new Error('Isi qty minimal satu item.');
    const nopolK=getNopol(d);
    if(!nopolK&&d.status!=='Disiapkan')throw new Error('Pilih armada atau isi no polisi kendaraan.');
-   const s=byId('spk',d.spk);const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=await nextDocNo('SJ',t);
-   await addDoc('kirim',{spk:d.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items,ket:d.ket||'',lebih:!!d.over});
+   const s=byId('spk',d.spk);const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=sjMniNext(t);
+   await addDoc('kirim',{spk:d.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items,ket:d.ket||'',alamat:String(d.alamat||'').trim(),lebih:!!d.over});
+   await simpanAlamatCustomer(s.customer,d.alamat,!!d.simpanAlamat);
    if(d.dock)await queueDock({jenis:'Loading',muatan:'Barang Jadi',pihak:s.customer,ref:`${noSJ} · SPK ${s.no}`,nopol:nopolK,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'kirim',noSJ}});
    rememberArmada(nopolK,d.kendaraan,d.driver);toast(`${noSJ} tersimpan`)},
-  {submit:'Buat surat jalan',done:' ',mount:f=>{f.spk.addEventListener('change',()=>{$('#m-lines').innerHTML=linesTable(f.spk.value,'kirim')});bindArmada(f)}});
+  {submit:'Buat surat jalan',done:' ',mount:f=>{const fillAl=()=>{const s=byId('spk',f.spk.value),cu=s?mList('customer').find(x=>x.nama===s.customer):null;if(!f.alamat.dataset.dirty){f.alamat.value=(cu&&cu.alamat)||'';}const sa=f.querySelector('#m-simpan-alamat');if(sa)sa.checked=!(cu&&cu.alamat)}; f.alamat.addEventListener('input',()=>{f.alamat.dataset.dirty='1'});f.spk.addEventListener('change',()=>{$('#m-lines').innerHTML=linesTable(f.spk.value,'kirim');fillAl()});fillAl();bindArmada(f)}});
 }
+async function simpanAlamatCustomer(nama,alamat,paksa){const a=String(alamat||'').trim();if(!a||!nama)return;const cu=mList('customer').find(x=>x.nama===nama);try{if(cu&&cu._id&&(paksa||!String(cu.alamat||'').trim()))await updDoc('mcustomer',cu._id,{alamat:a})}catch(e){}}
+function sjAlamatForm(id){const k=byId('kirim',id);if(!k)return;const cu=mList('customer').find(x=>x.nama===k.customer)||{};
+ openModal(`Alamat pengiriman · ${esc(k.noSJ||'')}`,fld('Alamat pengiriman',`<textarea class="inp" name="alamat" rows="3" placeholder="Alamat tujuan / lokasi proyek">${esc(k.alamat||cu.alamat||'')}</textarea>`,true)+`<label class="ck full"><input type="checkbox" name="simpanAlamat" ${cu.alamat?'':'checked'}> Simpan juga sebagai alamat customer di Master Data</label><div class="note full">Alamat ini hanya tampil di dokumen surat jalan. Status pengiriman tidak berubah.</div>`,
+  async d=>{const a=String(d.alamat||'').trim();await updDoc('kirim',id,{alamat:a});await simpanAlamatCustomer(k.customer,a,!!d.simpanAlamat);toast('Alamat disimpan')},{submit:'Simpan alamat',done:' '})}
+
 function printBmChecklist(id){
  const b=byId('bongkar',id);if(!b)return;
  /* ambil items dari dokumen sumber */
@@ -5247,7 +5255,8 @@ function docModel(kind,ref){
    note:[r.ket,r.est?'Data penerimaan lama: tanggal diestimasi dari surat jalan customer pertama setelahnya.':''].filter(Boolean).join(' · '),signs:['Diserahkan,\n'+(v.vendor||'Vendor'),'Diterima,\nGudang MNI','Diperiksa,\nQC']}}
  if(kind==='sjc'){const k=byId('kirim',ref);if(!k)return null;const s=byId('spk',k.spk)||{};const cu=mList('customer').find(x=>x.nama===k.customer)||{};
   return {file:`Surat Jalan ${k.noSJ||''} - ${k.customer||''}`,title:'SURAT JALAN',no:k.noSJ||'',date:k.tgl,
-   meta:[['Kepada',k.customer||'-'],['Alamat',cu.alamat||'-'],['Tanggal',tglLong(k.tgl)],['No PO',s.po||'-'],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Kendaraan',[k.kendaraan,k.nopol].filter(Boolean).join(' · ')||'-'],['Driver',k.driver||'-'],['Status',k.status+(k.tglTerima?' '+tglLong(k.tglTerima):'')]],
+   sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:s.po||'',spk:s.nomor||(s.no?String(s.no):''),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:k.items||[],ket:k.ket||'',batal:k.batal||null,partial:sjPartial(k)},
+   meta:[['Kepada',k.customer||'-'],['Alamat',k.alamat||cu.alamat||'-'],['Tanggal',tglLong(k.tgl)],['No PO',s.po||'-'],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Kendaraan',[k.kendaraan,k.nopol].filter(Boolean).join(' · ')||'-'],['Driver',k.driver||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',72,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',28,'l']],rows:(k.items||[]).map((i,n2)=>[n2+1,i.d,+i.q||0,i.u||'','']),foot:['','TOTAL',sumBy(k.items||[],i=>i.q),'','']}],
    note:[k.ket,k.batal?'DIBATALKAN: '+k.batal.alasan:''].filter(Boolean).join(' · '),signs:['Hormat kami,\nPT Mitra Nusa Internasional','Pengemudi','Diterima oleh,\n'+(k.customer||'Customer')]}}
  if(kind==='kpi'){const K=spkKpi(F.spk.p);
@@ -5330,6 +5339,147 @@ async function spkSheetPdf(id){
  doc.addImage(cv.toDataURL('image/jpeg',.92),'JPEG',(PW-w)/2,M,w,h);
  return new Uint8Array(doc.output('arraybuffer'));
 }
+/* ---------- Surat Jalan ke customer: tata letak khusus (PDF dan Excel), tanpa status ---------- */
+/* Penomoran surat jalan format MNI: {tahun 2 digit}/{bulan romawi}/MNI/{nomor urut}, mis. 26/XI/MNI/1799.
+   Dikosongkan = otomatis melanjutkan nomor urut terbesar yang pernah dipakai (surat jalan batal ikut dihitung agar tidak dipakai ulang). */
+const ROMAWI=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+const SJ_MNI_RE=/^\s*#?\s*(\d{1,4})\/([IVX]+)\/([A-Za-z]+)\/(\d+)\s*$/;
+function sjMniNext(t){
+ let best=null;S.kirim.forEach(k=>{const m=SJ_MNI_RE.exec(String(k.noSJ||''));if(m){const seq=+m[4];if(!best||seq>best.seq)best={seq,w:m[4].length,kode:m[3]}}});
+ const d=new Date((t||today())+'T00:00:00'),yy=String(d.getFullYear()).slice(2),bl=ROMAWI[d.getMonth()];
+ let seq=best?best.seq+1:1;const mk=q=>`${yy}/${bl}/${best?best.kode:'MNI'}/${String(q).padStart(best?best.w:1,'0')}`;
+ while(sjTaken(mk(seq)))seq++;return mk(seq);
+}
+/* Rincian pengiriman partial: muncul hanya bila barang pada surat jalan ini dikirim bertahap (ada pengiriman sebelumnya
+   atau jumlah belum memenuhi order SPK). Dihitung sampai dengan surat jalan ini, per barang. */
+function sjPartial(k){
+ if(!k||k.status==='Batal')return null;const s=byId('spk',k.spk);if(!s)return null;
+ const key=x=>String(x.d||'').trim().toLowerCase();
+ const ord=x=>String(x.created_at||x.createdAt||x.at||'');
+ const all=S.kirim.filter(x=>x.spk===k.spk&&x.status!=='Batal').sort((a,b)=>String(a.tgl).localeCompare(String(b.tgl))||ord(a).localeCompare(ord(b))||String(a.noSJ).localeCompare(String(b.noSJ),undefined,{numeric:true}));
+ let idx=all.findIndex(x=>x._id===k._id);if(idx<0){all.push(k);idx=all.length-1}
+ const upto=all.slice(0,idx+1),rows=[];
+ (k.items||[]).forEach(it=>{
+  const o=(s.items||[]).find(x=>key(x)===key(it));const order=o?(+o.q||0):0;if(!(order>0))return;
+  const seq=upto.map(x=>sumBy((x.items||[]).filter(y=>key(y)===key(it)),y=>+y.q||0)).filter(v=>v>0);
+  const total=sumBy(seq,v=>v);if(!(total<order||seq.length>1))return;
+  rows.push({d:it.d,u:it.u||(o&&o.u)||'',order,seq,total,sisa:Math.max(0,order-total)});
+ });
+ if(!rows.length)return null;
+ const maxLen=Math.max(...rows.map(r=>r.seq.length)),CAP=4;
+ const mergeN=maxLen>CAP?maxLen-(CAP-1):0;
+ const heads=mergeN?['Partial 1–'+mergeN,...Array.from({length:CAP-1},(_,i)=>'Partial '+(mergeN+1+i))]:Array.from({length:maxLen},(_,i)=>'Partial '+(i+1));
+ rows.forEach(r=>{const L=r.seq.length;let cells;
+  if(mergeN){const m=sumBy(r.seq.slice(0,Math.min(L,mergeN)),v=>v);cells=[m,...r.seq.slice(mergeN)];r.cur=L<=mergeN?0:1+(L-mergeN-1)}
+  else{cells=r.seq.slice();r.cur=L-1}
+  while(cells.length<heads.length)cells.push('');r.cells=cells});
+ return {heads,rows};
+}
+function sjPartialHtml(k){
+ const P=sjPartial(k);if(!P)return '';
+ const th=P.heads.map(h=>`<th>${esc(h)}</th>`).join('');
+ const body=P.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(r.d)}${r.u?' ('+esc(r.u)+')':''}</td><td style="text-align:right">${n(r.order)}</td>${r.cells.map((v,j)=>`<td style="text-align:right;${j===r.cur?'background:#fff3cd;font-weight:700':''}">${v===''?'-':n(v)}</td>`).join('')}<td style="text-align:right;font-weight:600">${n(r.total)}</td><td style="text-align:right;font-weight:700;${r.sisa>0?'color:#b32020':''}">${n(r.sisa)}</td></tr>`).join('');
+ return `<div style="font-weight:700;margin:12px 0 4px;font-size:11px;letter-spacing:.03em">RINCIAN PENGIRIMAN PARTIAL</div><table class="sj-prev-tbl"><thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th>Order</th>${th}<th>Total terkirim</th><th>Sisa</th></tr></thead><tbody>${body}</tbody></table><div class="sj-prev-note">Partial dihitung per barang. Kolom berwarna kuning = pengiriman pada surat jalan ini.</div>`;
+}
+const sjFx=v=>String(v==null?'':v).replace(/→/g,'->').replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/×/g,'x');
+async function sjPdf(d){
+ const jsPDF=await loadPdf();const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+ const PW=doc.internal.pageSize.getWidth(),PH=doc.internal.pageSize.getHeight(),M=14,W=PW-2*M,NAVY=[31,58,110],GR=[110,110,110],LN=[205,214,230];
+ const T=(s,x,y,o)=>doc.text(sjFx(s),x,y,o);
+ doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',M,10,46,12.3);
+ doc.setTextColor(...NAVY);doc.setFont('helvetica','bold');doc.setFontSize(13);T(CO.nama,PW-M,14,{align:'right'});
+ doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GR);T(CO.a1,PW-M,18.5,{align:'right'});T(CO.a2,PW-M,22,{align:'right'});
+ doc.setDrawColor(...NAVY);doc.setLineWidth(.8);doc.line(M,26,PW-M,26);
+ doc.setTextColor(...NAVY);doc.setFont('helvetica','bold');doc.setFontSize(21);T('SURAT JALAN',M,40);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...GR);T('Delivery Order',M,45);
+ const bw=80,bx=PW-M-bw;doc.setFillColor(244,247,252);doc.setDrawColor(...LN);doc.setLineWidth(.2);doc.roundedRect(bx,31,bw,17,1.5,1.5,'FD');
+ doc.setFontSize(7);doc.setTextColor(...GR);T('NO. SURAT JALAN',bx+4,36.2);T('TANGGAL',bx+45,36.2);
+ doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(10.5);T(d.noSJ||'-',bx+4,43);doc.setFontSize(9.5);T(tglLong(d.tgl),bx+45,43);
+ /* kotak Kepada dan Detail pengiriman */
+ const y0=54,wl=W*.52,wr=W-wl-4,x2=M+wl+4;
+ doc.setFont('helvetica','normal');doc.setFontSize(9);
+ const al=doc.splitTextToSize(sjFx(String(d.alamat||'').trim()||'-'),wl-8);
+ const det=[['No. PO',d.po||'-'],['Ref. SPK',d.spk||'-'],['Kendaraan',d.kendaraan||'-'],['No. Polisi',d.nopol||'-'],['Driver',d.driver||'-']];
+ const H=Math.max(17.5+al.length*4.3+3,12+det.length*5.4+3,32);
+ doc.setDrawColor(...LN);doc.setLineWidth(.25);doc.rect(M,y0,wl,H,'S');doc.rect(x2,y0,wr,H,'S');
+ doc.setFillColor(...NAVY);doc.rect(M,y0,wl,6.2,'F');doc.rect(x2,y0,wr,6.2,'F');
+ doc.setTextColor(255);doc.setFont('helvetica','bold');doc.setFontSize(7.5);T('KEPADA',M+4,y0+4.3);T('DETAIL PENGIRIMAN',x2+4,y0+4.3);
+ doc.setTextColor(20);doc.setFontSize(11);T(d.customer||'-',M+4,y0+12.5);
+ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60);doc.text(al,M+4,y0+17.8);
+ det.forEach(([k,v],i)=>{const yy=y0+12.2+i*5.4;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...GR);T(k,x2+4,yy);doc.setTextColor(20);doc.setFont('helvetica','bold');T(': '+v,x2+27,yy)});
+ /* tabel barang */
+ const items=d.items||[];const tq=sumBy(items,i=>+i.q||0);const body=items.map((i,k)=>[String(k+1),sjFx(i.d),n(i.q),sjFx(i.u||''),'']);while(body.length<8)body.push(['','','','','']);
+ doc.autoTable({startY:y0+H+7,head:[['No','Nama Barang','Qty','Satuan','Keterangan']],body,foot:[['','TOTAL',n(tq),'','']],theme:'grid',showFoot:'lastPage',
+  styles:{fontSize:9,cellPadding:{top:2.4,bottom:2.4,left:2.2,right:2.2},lineColor:LN,lineWidth:.2,textColor:20,overflow:'linebreak',minCellHeight:8},
+  headStyles:{fillColor:NAVY,textColor:255,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[234,239,248],textColor:NAVY,fontStyle:'bold'},alternateRowStyles:{fillColor:[248,250,253]},
+  columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:22,halign:'right'},3:{cellWidth:22,halign:'center'},4:{cellWidth:42}},margin:{left:M,right:M}});
+ let y=doc.lastAutoTable.finalY+6;
+ if(d.partial){const Pt=d.partial;if(y>PH-90){doc.addPage();y=20}
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...NAVY);T('RINCIAN PENGIRIMAN PARTIAL',M,y);
+  doc.autoTable({startY:y+2,head:[['No','Nama Barang','Order',...Pt.heads,'Total terkirim','Sisa']],body:Pt.rows.map((q,i)=>[String(i+1),sjFx(q.d)+(q.u?' ('+sjFx(q.u)+')':''),n(q.order),...q.cells.map(v=>v===''?'-':n(v)),n(q.total),n(q.sisa)]),theme:'grid',
+   styles:{fontSize:8.5,cellPadding:1.8,lineColor:LN,lineWidth:.2,textColor:20},headStyles:{fillColor:[70,95,140],textColor:255,fontStyle:'bold',halign:'center'},
+   columnStyles:{0:{cellWidth:10,halign:'center'},1:{cellWidth:'auto'}},margin:{left:M,right:M},
+   didParseCell:h=>{if(h.section==='body'){if(h.column.index>=2)h.cell.styles.halign='right';const q=Pt.rows[h.row.index];if(q&&h.column.index===3+q.cur){h.cell.styles.fillColor=[255,243,205];h.cell.styles.fontStyle='bold'}if(q&&h.column.index===h.table.columns.length-1&&q.sisa>0){h.cell.styles.textColor=[170,30,30];h.cell.styles.fontStyle='bold'}}}});
+  doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(...GR);T('Partial dihitung per barang. Kolom berwarna kuning = pengiriman pada surat jalan ini.',M,doc.lastAutoTable.finalY+4);y=doc.lastAutoTable.finalY+10}
+ if(d.batal){doc.setFillColor(253,236,236);doc.setDrawColor(200,60,60);doc.rect(M,y,W,8,'FD');doc.setTextColor(170,30,30);doc.setFont('helvetica','bold');doc.setFontSize(9);T('DIBATALKAN: '+(d.batal.alasan||'-'),M+3,y+5.4);y+=12}
+ if(d.ket){doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(20);T('Catatan:',M,y);doc.setFont('helvetica','normal');const ln=doc.splitTextToSize(sjFx(d.ket),W-20);doc.text(ln,M+16,y);y+=Math.max(1,ln.length)*4.2+3}
+ doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...GR);T('Barang tersebut diterima dalam keadaan baik dan jumlah sesuai dengan surat jalan ini.',M,y+2);y+=8;
+ if(y>PH-62){doc.addPage();y=20}
+ const sw=W/3,sh=46;doc.setDrawColor(...LN);doc.setLineWidth(.25);doc.rect(M,y,W,sh,'S');doc.line(M+sw,y,M+sw,y+sh);doc.line(M+2*sw,y,M+2*sw,y+sh);
+ [['Hormat kami,','PT Mitra Nusa Internasional',''],['Pengemudi','',d.driver||''],['Diterima oleh,',d.customer||'','']].forEach(([lb,org,nm],i)=>{const cx=M+sw*i+sw/2;
+  doc.setTextColor(20);doc.setFont('helvetica','bold');doc.setFontSize(9);T(lb,cx,y+6,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GR);if(org)doc.text(doc.splitTextToSize(sjFx(org),sw-8),cx,y+10.5,{align:'center'});
+  doc.setDrawColor(120);doc.setLineWidth(.2);doc.line(cx-24,y+34,cx+24,y+34);doc.setTextColor(20);T('( '+(nm||'                                  ')+' )',cx,y+39,{align:'center'});
+  if(i===2){doc.setFontSize(7.5);doc.setTextColor(...GR);T('Tanggal terima: ........................',cx,y+43.5,{align:'center'})}});
+ const np=doc.getNumberOfPages();for(let i=1;i<=np;i++){doc.setPage(i);doc.setDrawColor(...LN);doc.setLineWidth(.2);doc.line(M,PH-11,PW-M,PH-11);doc.setFont('helvetica','italic');doc.setFontSize(7);doc.setTextColor(140);T(`Dicetak dari MNI Gudang & Logistik · ${new Date().toLocaleString('id-ID')}`,M,PH-7);T(`Hal ${i}/${np}`,PW-M,PH-7,{align:'right'})}
+ return new Uint8Array(doc.output('arraybuffer'));
+}
+async function sjXlsx(d){
+ const X=await loadExcelJS();const wb=new X.Workbook();wb.creator='MNI Gudang & Logistik';
+ const ws=wb.addWorksheet('Surat Jalan',{pageSetup:{paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.4,right:.4,top:.5,bottom:.6,header:.2,footer:.25}},views:[{showGridLines:false}],headerFooter:{oddFooter:'&L&8Dicetak dari MNI Gudang & Logistik&R&8Hal &P/&N'}});
+ [5,28,10,10,10,10,10,11,11].forEach((w,i)=>ws.getColumn(i+1).width=w);const NC=9,NAVY='FF1F3A6E',LN='FFCDD6E6';
+ const ln={style:'thin',color:{argb:LN}},box={top:ln,left:ln,bottom:ln,right:ln};
+ const F_=(o={})=>({name:'Arial',size:o.sz||10,bold:!!o.b,italic:!!o.i,color:{argb:o.c||'FF111111'}});
+ const put=(r,c,v,o={})=>{const x=ws.getCell(r,c);x.value=v;x.font=F_(o);x.alignment={horizontal:o.h||'left',vertical:o.v||'middle',wrapText:o.wrap!==false};if(o.box)x.border=box;if(o.fill)x.fill={type:'pattern',pattern:'solid',fgColor:{argb:o.fill}};if(o.nf)x.numFmt=o.nf;return x};
+ const mg=(r1,c1,r2,c2)=>{if(r1!==r2||c1!==c2)ws.mergeCells(r1,c1,r2,c2)};
+ const bx=(r1,c1,r2,c2)=>{for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)ws.getCell(r,c).border=box};
+ const img=wb.addImage({base64:LOGO_B64,extension:'png'});ws.addImage(img,{tl:{col:0.1,row:0.15},ext:{width:170,height:45}});
+ ws.getRow(1).height=22;ws.getRow(2).height=15;ws.getRow(3).height=15;
+ mg(1,3,1,NC);put(1,3,CO.nama,{b:true,sz:14,h:'right',c:NAVY});mg(2,3,2,NC);put(2,3,CO.a1,{sz:9,h:'right',c:'FF666666'});mg(3,3,3,NC);put(3,3,CO.a2,{sz:9,h:'right',c:'FF666666'});
+ for(let c=1;c<=NC;c++)ws.getCell(4,c).border={bottom:{style:'medium',color:{argb:NAVY}}};
+ ws.getRow(6).height=30;mg(6,1,6,4);put(6,1,'SURAT JALAN',{b:true,sz:22,c:NAVY});mg(6,5,6,NC);put(6,5,'No: '+(d.noSJ||'-'),{b:true,sz:12,h:'right'});
+ mg(7,1,7,4);put(7,1,'Delivery Order',{sz:9,c:'FF666666'});mg(7,5,7,NC);put(7,5,'Tanggal: '+tglLong(d.tgl),{sz:10,h:'right'});
+ /* kotak Kepada (A:C) dan Detail pengiriman (D:I) */
+ const r0=9;mg(r0,1,r0,3);put(r0,1,'KEPADA',{b:true,sz:9,c:'FFFFFFFF',fill:NAVY});bx(r0,1,r0,3);mg(r0,4,r0,NC);put(r0,4,'DETAIL PENGIRIMAN',{b:true,sz:9,c:'FFFFFFFF',fill:NAVY});bx(r0,4,r0,NC);
+ mg(r0+1,1,r0+1,3);put(r0+1,1,d.customer||'-',{b:true,sz:12});bx(r0+1,1,r0+1,3);ws.getRow(r0+1).height=24;
+ mg(r0+2,1,r0+5,3);put(r0+2,1,String(d.alamat||'').trim()||'-',{sz:10,v:'top',c:'FF444444'});bx(r0+2,1,r0+5,3);
+ const det=[['No. PO',d.po||'-'],['Ref. SPK',d.spk||'-'],['Kendaraan',d.kendaraan||'-'],['No. Polisi',d.nopol||'-'],['Driver',d.driver||'-']];
+ det.forEach(([k,v],i)=>{const r=r0+1+i;put(r,4,k,{sz:9,c:'FF666666'});ws.getCell(r,4).border=box;mg(r,5,r,NC);put(r,5,v,{b:true});bx(r,5,r,NC)});
+ for(let k=2;k<=5;k++)ws.getRow(r0+k).height=18;
+ /* tabel barang */
+ let r=r0+8;
+ put(r,1,'No',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,2,'Nama Barang',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,3,'Qty',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,4,'Satuan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});mg(r,5,r,NC);put(r,5,'Keterangan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});bx(r,1,r,NC);ws.getRow(r).height=22;r++;
+ const items=d.items||[];const rows=items.map((i,k)=>[k+1,i.d,+i.q||0,i.u||'']);while(rows.length<8)rows.push(['','','','']);
+ rows.forEach((row,k)=>{const fill=k%2?'FFF8FAFD':undefined;row.forEach((v,j)=>put(r,j+1,v,{fill,h:j===0||j===3?'center':j===2?'right':'left',nf:j===2&&typeof v==='number'?'#,##0.##':undefined}));mg(r,5,r,NC);put(r,5,'',{fill});bx(r,1,r,NC);ws.getRow(r).height=21;r++});
+ mg(r,1,r,2);put(r,1,'TOTAL',{b:true,c:NAVY,fill:'FFEAEFF8',h:'right'});put(r,3,sumBy(items,i=>+i.q||0),{b:true,c:NAVY,fill:'FFEAEFF8',h:'right',nf:'#,##0.##'});mg(r,4,r,NC);put(r,4,'',{fill:'FFEAEFF8'});bx(r,1,r,NC);r+=2;
+ /* rincian partial: hanya muncul bila pengiriman ini bagian dari kiriman partial */
+ if(d.partial){const P=d.partial,p=P.heads.length;
+  mg(r,1,r,NC);put(r,1,'RINCIAN PENGIRIMAN PARTIAL',{b:true,sz:10,c:NAVY});r++;
+  const base=Math.floor(4/p),spans=P.heads.map((_,i)=>i===p-1?4-base*(p-1):base);const starts=[];let c0=4;spans.forEach(sp=>{starts.push(c0);c0+=sp});
+  const hd={b:true,c:'FFFFFFFF',fill:'FF465F8C',h:'center'};
+  put(r,1,'No',hd);put(r,2,'Nama Barang',hd);put(r,3,'Order',hd);P.heads.forEach((h,i)=>{mg(r,starts[i],r,starts[i]+spans[i]-1);put(r,starts[i],h,hd)});put(r,8,'Total terkirim',hd);put(r,9,'Sisa',hd);bx(r,1,r,NC);ws.getRow(r).height=30;r++;
+  P.rows.forEach((row,i)=>{put(r,1,i+1,{h:'center'});put(r,2,row.d+(row.u?' ('+row.u+')':''),{});put(r,3,row.order,{h:'right',nf:'#,##0.##'});
+   row.cells.slice(0,p).forEach((v,j)=>{mg(r,starts[j],r,starts[j]+spans[j]-1);put(r,starts[j],v===''?'-':v,{h:'right',nf:'#,##0.##',b:j===row.cur,fill:j===row.cur?'FFFFF3CD':undefined})});
+   put(r,8,row.total,{h:'right',b:true,nf:'#,##0.##'});put(r,9,row.sisa,{h:'right',b:row.sisa>0,c:row.sisa>0?'FFAA1E1E':undefined,nf:'#,##0.##'});bx(r,1,r,NC);ws.getRow(r).height=20;r++});
+  mg(r,1,r,NC);put(r,1,'Partial dihitung per barang. Kolom berwarna kuning = pengiriman pada surat jalan ini.',{i:true,sz:8.5,c:'FF666666'});r+=2}
+ if(d.batal){mg(r,1,r,NC);put(r,1,'DIBATALKAN: '+(d.batal.alasan||'-'),{b:true,c:'FFAA1E1E',fill:'FFFDECEC'});bx(r,1,r,NC);r+=2}
+ if(d.ket){mg(r,1,r,NC);put(r,1,'Catatan: '+d.ket,{i:true,sz:9,v:'top'});ws.getRow(r).height=Math.max(18,13*(String(d.ket).split('\n').length+1));r+=2}
+ mg(r,1,r,NC);put(r,1,'Barang tersebut diterima dalam keadaan baik dan jumlah sesuai dengan surat jalan ini.',{i:true,sz:8.5,c:'FF666666'});r+=2;
+ const sg=[[1,2,'Hormat kami,','PT Mitra Nusa Internasional',''],[3,6,'Pengemudi','',d.driver||''],[7,9,'Diterima oleh,',d.customer||'','']];
+ sg.forEach(([c1,c2,lb,org,nm])=>{mg(r,c1,r,c2);put(r,c1,lb,{b:true,h:'center'});mg(r+1,c1,r+1,c2);put(r+1,c1,org,{sz:9,c:'FF666666',h:'center'});mg(r+2,c1,r+5,c2);mg(r+6,c1,r+6,c2);put(r+6,c1,'( '+(nm||'                              ')+' )',{h:'center'});bx(r,c1,r+6,c2)});
+ mg(r+7,7,r+7,9);put(r+7,7,'Tanggal terima: ....................',{sz:8.5,c:'FF666666',h:'center'});
+ return new Uint8Array(await wb.xlsx.writeBuffer());
+}
 async function downloadDoc(kind,ref,fmt){
  if(!DLS){toast('Unduhan tidak tersedia di tampilan ini.');return}
  const m0=docModel(kind,ref);if(!m0){toast('Data dokumen tidak ditemukan.');return}
@@ -5341,6 +5491,7 @@ async function downloadDoc0(m,names,ref,fmt){
  toast(`Menyiapkan ${fmt==='pdf'?'PDF':'Excel'}…`);
  try{let data;
   if(m.special==='spk'){if(fmt==='xlsx'){await exportSpkXlsx(ref);return}data=await spkSheetPdf(ref)}
+  else if(m.sj)data=fmt==='pdf'?await sjPdf(m.sj):await sjXlsx(m.sj);
   else data=fmt==='pdf'?await docPdf(m):await docXlsx(m);
   await DLS.save({filename:fnSafe(m.file)+(fmt==='pdf'?'.pdf':'.xlsx'),data});
  }catch(e){if(e.code!=='declined')toast('Gagal membuat dokumen: '+(e.message||e.code))}
@@ -5483,6 +5634,7 @@ document.addEventListener('click',async e=>{
   case 'upw':pwForm(ds.uid);break;
   case 'uinvite':inviteForm();break;
   case 'doc':await downloadDoc(ds.kind,ds.ref,ds.fmt);break;
+  case 'sjalamat':sjAlamatForm(ds.id);break;
   case 'spktarget':spkTargetForm();break;
   case 'kpivendor':kpiVendor(ds.v);break;
   case 'pmpilih':{F.mesin.mesin=ds.m;lsSet('mni-mesin',ds.m);renderTools();renderBody();break}
