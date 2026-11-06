@@ -13,7 +13,7 @@ import { TABLE_COLS, STRICT_COLS } from './schema-columns.js';
 
 const STORE_KEY = 'mni-local-mock-db';
 const SESSION_KEY = 'mni-local-mock-session';
-const VERSION = 7; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
+const VERSION = 8; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
 // Kode masuk untuk pratinjau lokal. Bukan rahasia dan tidak berlaku di environment lain.
 export const LOCAL_OTP = '123456';
 
@@ -68,7 +68,7 @@ function seed() {
       items: [{ d: 'Pipa Bulat 2in t1.2 ELG', g: 'Pipa', q: 3, u: 'Btg', w: 0, ket: '', catatan: '', prod: 0 }],
       prod_log: [], catatan: 'Data sintetis, sengaja lewat jatuh tempo', terbit_at: now, terbit_by: 'admin@mni.local' }),
   ];
-  for (const t of ['mutasi', 'rmhist', 'vendor', 'pr', 'kirim', 'bongkar', 'opname', 'log', 'ureq', 'uinv', 'penawaran', 'salesorder']) db[t] = [];
+  for (const t of ['mutasi', 'rmhist', 'vendor', 'pr', 'kirim', 'bongkar', 'opname', 'log', 'ureq', 'uinv', 'penawaran', 'salesorder', 'sp']) db[t] = [];
   db.master = [['app_name', 'MNI Gudang'], ['app_version', '1.0.0-lokal'], ['spk_counter', 1002], ['pr_counter', 1]]
     .map(([key, value]) => ({ id: uid(), key, value, ket: 'seed', updated_at: now }));
   return { v: VERSION, tables: db };
@@ -89,8 +89,8 @@ function save(state) {
 }
 
 // Meniru fungsi SQL mod_level/can_view: hak per modul (muser.data.modul) atau, bila kosong, peta peran bawaan.
-const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', penawaran: 'penawaran', salesorder: 'penawaran' };
-const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk'], gbb: ['bahan-baku', 'bongkar-muat'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['pengiriman', 'bongkar-muat'], sales: ['penawaran'] };
+const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', penawaran: 'penawaran', salesorder: 'penawaran', sp: 'sparepart' };
+const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk'], gbb: ['bahan-baku', 'bongkar-muat', 'sparepart'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['pengiriman', 'bongkar-muat'], sales: ['penawaran'] };
 const levelOf = (u, m) => {
   if (!u || u.aktif === false) return null;
   if (u.role === 'admin') return 'ubah';
@@ -235,7 +235,7 @@ export function createLocalClient() {
         const sess = readSession();
         if (sess && sess.user) {
           const me = state.tables.muser.find((r) => r.email === String(sess.user.email).toLowerCase());
-          const modFor = (r) => (this.t === 'mutasi' ? (r.gudang === 'rm' ? 'bahan-baku' : 'barang-jadi') : MOD_OF[this.t]);
+          const modFor = (r) => (this.t === 'mutasi' ? (r.gudang === 'rm' ? 'bahan-baku' : r.gudang === 'sp' ? 'sparepart' : 'barang-jadi') : MOD_OF[this.t]);
           if (MOD_OF[this.t] || this.t === 'mutasi') out = out.filter((r) => levelOf(me, modFor(r)));
         }
         if (this.ord) {

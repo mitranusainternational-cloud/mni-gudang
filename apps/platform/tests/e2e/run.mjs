@@ -1,6 +1,8 @@
 // Runner mandiri regresi mock: node tests/e2e/run.mjs [url]
 // Menjalankan regresi penuh (regression.mjs) lalu uji penegakan role (roles.mjs) dan hak per modul (access.mjs) di Chromium headless.
 // Butuh dev server mock (VITE_LOCAL_MOCK=1) dan `npx playwright install chromium`.
+// Opsi: ONLY=tampilan,produksi node tests/e2e/run.mjs   -> hanya rangkaian yang disebut.
+// Rangkaian Penawaran dilewati otomatis bila modul Penjualan disembunyikan (MODUL_PENJUALAN=false di app.js).
 
 import { chromium } from 'playwright';
 import { runRegression } from './regression.mjs';
@@ -9,16 +11,35 @@ import { runAccess } from './access.mjs';
 import { runSweep } from './sweep.mjs';
 import { runProduksi } from './produksi.mjs';
 import { runPenawaran } from './penawaran.mjs';
+import { runSparepart } from './sparepart.mjs';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173/';
+const only = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
+
+let penjualanOff = false;
+try {
+  const src = await (await fetch(new URL('app.js', base))).text();
+  penjualanOff = /const MODUL_PENJUALAN=false/.test(src);
+} catch { /* abaikan: anggap modul aktif */ }
+
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['tampilan', runSweep]]) {
+  if (only.length && !only.includes(name)) continue;
+  if (name === 'penawaran' && penjualanOff) {
+    console.log(`== ${name} ==\nDILEWATI: modul Penjualan disembunyikan (MODUL_PENJUALAN=false)\n`);
+    continue;
+  }
   const page = await browser.newPage({ acceptDownloads: true });
-  const { pass, fail, detail } = await run(page, base);
+  try {
+    const { pass, fail, detail } = await run(page, base);
+    console.log(`== ${name} ==\n${detail.join('\n')}\n${pass} PASS, ${fail} FAIL\n`);
+    totalFail += fail;
+  } catch (e) {
+    console.log(`== ${name} ==\nFAIL rangkaian berhenti karena galat: ${String(e && e.message || e).split('\n')[0]}\n0 PASS, 1 FAIL\n`);
+    totalFail += 1;
+  }
   await page.close();
-  console.log(`== ${name} ==\n${detail.join('\n')}\n${pass} PASS, ${fail} FAIL\n`);
-  totalFail += fail;
 }
 await browser.close();
 process.exit(totalFail ? 1 : 0);

@@ -1147,3 +1147,115 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .pq-sn-h{margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
 .sh-pnw{display:inline-block;padding:1px 8px;border-radius:999px;background:rgba(80,120,200,.12);font-size:11px}
 .pq-tf{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pq-tf .sel{min-width:0;flex:1 1 90px;font-size:12px}
+
+/* ---- Pemakaian di HP (2026-11-06): tabel stok jadi kartu, baris item di form bertumpuk, tombol lebih besar ---- */
+@media (max-width:700px){
+ .btn.sm{min-height:36px;padding-left:12px;padding-right:12px}
+ .btn,.sel,.inp{min-height:40px}
+ /* form Terima / Pakai: material di atas, qty dan stok di bawahnya, tidak terpotong */
+ table.lines.mvl thead{display:none}
+ table.lines.mvl,table.lines.mvl tbody{display:block;width:100%}
+ table.lines.mvl tr{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;grid-template-areas:"item item del" "qty stk stk";gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+ table.lines.mvl td{display:block;padding:0;border:0;min-width:0}
+ table.lines.mvl td:nth-child(1){grid-area:item}
+ table.lines.mvl td:nth-child(2){grid-area:qty}
+ table.lines.mvl td:nth-child(3){grid-area:stk;align-self:center}
+ table.lines.mvl td:nth-child(3):not(:empty)::before{content:'stok ';color:var(--muted)}
+ table.lines.mvl td:nth-child(4){grid-area:del;justify-self:end;align-self:start}
+ table.lines.mvl .inp{width:100%}
+ /* Posisi stok: satu kartu per item */
+ table.rmt thead{display:none}
+ table.rmt,table.rmt tbody{display:block;width:100%}
+ table.rmt tr.grp,table.rmt tr.grp td{display:block}
+ table.rmt tr:not(.grp){display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n s" "st k" "a a";gap:6px 12px;padding:12px;border-bottom:1px solid var(--line)}
+ table.rmt tr:not(.grp) td{display:block;padding:0;border:0;min-width:0}
+ table.rmt td:nth-child(1){grid-area:n}
+ table.rmt td:nth-child(5){grid-area:s;text-align:right;font-size:22px;line-height:1.1}
+ table.rmt td:nth-child(5)::after{content:' lbr';font-size:12px;font-weight:500;color:var(--muted)}
+ table.rmt td:nth-child(6){grid-area:k;text-align:right;color:var(--muted)}
+ table.rmt td:nth-child(6)::after{content:' kg'}
+ table.rmt td:nth-child(10){grid-area:st}
+ table.rmt td:nth-child(11){grid-area:a;display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+ table.rmt td:nth-child(11) .btn{flex:1 1 0;justify-content:center}
+ table.rmt td:nth-child(2),table.rmt td:nth-child(3),table.rmt td:nth-child(4),table.rmt td:nth-child(7),table.rmt td:nth-child(8),table.rmt td:nth-child(9){display:none!important}
+ /* Stock opname: kolom hitung fisik selalu terlihat */
+ table.opn thead{display:none}
+ table.opn,table.opn tbody{display:block;width:100%}
+ table.opn tr{display:grid;grid-template-columns:minmax(0,1fr) 120px;grid-template-areas:"n n" "s i" "d d";gap:6px 12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+ table.opn td{display:block;padding:0;border:0;min-width:0}
+ table.opn td:nth-child(1){grid-area:n}
+ table.opn td:nth-child(2){display:none}
+ table.opn td:nth-child(3){grid-area:s;align-self:center;text-align:left}
+ table.opn td:nth-child(3)::before{content:'Stok sistem: ';color:var(--muted)}
+ table.opn td:nth-child(4){grid-area:i}
+ table.opn td:nth-child(4) .inp{width:100%}
+ table.opn td:nth-child(5){grid-area:d;text-align:left}
+ table.opn td:nth-child(5):not(:empty)::before{content:'Selisih: ';color:var(--muted)}
+ table.opn td:nth-child(6){display:none}
+ /* Form surat jalan dan kirim vendor: item sebagai kartu, qty tidak terpotong */
+ #m-lines table.lines thead{display:none}
+ #m-lines table.lines,#m-lines table.lines tbody{display:block;width:100%}
+ #m-lines table.lines tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"i i i" "o t s" "q q q";gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+ #m-lines table.lines td{display:block;padding:0;border:0;min-width:0;text-align:left}
+ #m-lines table.lines td::before{content:attr(data-l);display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+ #m-lines table.lines td:nth-child(1){grid-area:i;font-weight:600}
+ #m-lines table.lines td:nth-child(1)::before{content:none}
+ #m-lines table.lines td:nth-child(2){grid-area:o}
+ #m-lines table.lines td:nth-child(3){grid-area:t}
+ #m-lines table.lines td:nth-child(4){grid-area:s}
+ #m-lines table.lines td:nth-child(5){grid-area:q}
+ #m-lines table.lines td:nth-child(5) .inp{width:100%}
+}
+
+/* ---- Gudang Sparepart di HP: kartu per barang dan opname yang tidak terpotong ---- */
+@media (max-width:700px){
+ table.spt thead{display:none}
+ table.spt,table.spt tbody{display:block;width:100%}
+ table.spt tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n s" "st u" "k b" "a a";gap:4px 12px;padding:12px;border-bottom:1px solid var(--line)}
+ table.spt td{display:block;padding:0;border:0;min-width:0}
+ table.spt td:nth-child(1),table.spt td:nth-child(4),table.spt td:nth-child(5),table.spt td:nth-child(6){display:none}
+ table.spt td:nth-child(2){grid-area:n}
+ table.spt td:nth-child(7){grid-area:s;text-align:right;font-size:22px;line-height:1.1}
+ table.spt td:nth-child(3){grid-area:u;text-align:right;color:var(--muted);font-size:12px}
+ table.spt td:nth-child(11){grid-area:st}
+ table.spt td:nth-child(8){grid-area:k;color:var(--muted);font-size:12px}
+ table.spt td:nth-child(9){grid-area:b;text-align:right;color:var(--muted);font-size:12px}
+ table.spt td:nth-child(9):not(:empty)::before{content:'Buffer ';}
+ table.spt td:nth-child(8):not(:empty)::before{content:'Minimum ';}
+ table.spt td.nomin{display:none}
+ table.spt td:nth-child(12){grid-area:a;display:flex;gap:8px;flex-wrap:wrap;padding-top:4px}
+ table.spt td:nth-child(12) .btn{flex:1 1 0;justify-content:center}
+ table.spt td:nth-child(10){display:none}
+ table.spo thead{display:none}
+ table.spo,table.spo tbody{display:block;width:100%}
+ table.spo tr{display:grid;grid-template-columns:minmax(0,1fr) 120px;grid-template-areas:"n n" "s i" "d d";gap:6px 12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+ table.spo td{display:block;padding:0;border:0;min-width:0}
+ table.spo td:nth-child(1),table.spo td:nth-child(3){display:none}
+ table.spo td:nth-child(2){grid-area:n}
+ table.spo td:nth-child(4){grid-area:s;align-self:center;text-align:left}
+ table.spo td:nth-child(4)::before{content:'Stok sistem: ';color:var(--muted)}
+ table.spo td:nth-child(5){grid-area:i}
+ table.spo td:nth-child(5) .inp{width:100%}
+ table.spo td:nth-child(6){grid-area:d;text-align:left}
+ table.spo td:nth-child(6):not(:empty)::before{content:'Selisih: ';color:var(--muted)}
+}
+
+/* ---- Gudang Barang Jadi di HP: kartu per produk dengan kotak ceklis SPK stok ---- */
+@media (max-width:700px){
+ table.fgt thead{display:none}
+ table.fgt,table.fgt tbody{display:block;width:100%}
+ table.fgt tr{display:grid;grid-template-columns:28px auto auto auto auto minmax(0,1fr);grid-template-areas:"c n n n n s" "c u p f t s" "c st st st st b";gap:4px 10px;padding:12px;border-bottom:1px solid var(--line);align-items:center}
+ table.fgt td{display:block;padding:0;border:0;min-width:0;text-align:left;color:var(--muted);font-size:12px}
+ table.fgt td:nth-child(1){grid-area:c}
+ table.fgt td:nth-child(2){grid-area:n;color:inherit;font-size:inherit}
+ table.fgt td:nth-child(3){grid-area:u}
+ table.fgt td:nth-child(4){grid-area:p}
+ table.fgt td:nth-child(5){grid-area:f}
+ table.fgt td:nth-child(6){grid-area:t}
+ table.fgt td:nth-child(6)::before{content:"t ";}
+ table.fgt td:nth-child(8){grid-area:s;text-align:right;font-size:22px;line-height:1.1;color:inherit}
+ table.fgt td:nth-child(7){grid-area:b;text-align:right}
+ table.fgt td:nth-child(7):not(:empty)::before{content:"Buffer ";}
+ table.fgt td:nth-child(9),table.fgt td:nth-child(10){display:none}
+ table.fgt td:nth-child(11){grid-area:st;color:inherit}
+}

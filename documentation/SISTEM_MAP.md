@@ -1,7 +1,7 @@
 ---
 type: registry
 status: active
-updated: 2026-11-03
+updated: 2026-11-06
 ---
 
 <img src="assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -59,7 +59,7 @@ Satu halaman untuk menjawab "apa saja yang kita punya, namanya apa, dan di mana 
 | Akun / organisasi | mitranusainternational, "Software Devellopment" | akun pribadi pemilik (dipensiunkan setelah production terbukti) |
 | Region | eu-central-1 (Frankfurt) | ap-southeast-1 (Singapura) |
 | Konektor Claude | konektor Supabase kedua (id `72053749-…`) | konektor `plugin_supabase` |
-| Isi | skema bersih migration 1–10, satu admin | data uji saja |
+| Isi | migration 1–13 terpasang (dicek 2026-11-06), 22 tabel ber-RLS, data operasional nyata | data uji saja |
 
 Project lain di akun-akun itu (`MNI - Operational`, `MNI OS`, `MNI OS - Operational`, `Marketing OS - NIJ`) bukan bagian sistem ini: jangan disentuh.
 
@@ -67,7 +67,7 @@ Project lain di akun-akun itu (`MNI - Operational`, `MNI OS`, `MNI OS - Operatio
 
 | Item | Nilai |
 |---|---|
-| Folder kerja (repo dan vault) | `D:\Sistem Kerja\01_Kerja\01_Proyek_Aktif\12. Sistem MNI\mni-gudang\` (nama baku; rujukan lama `mni-os`, penggantian nama lewat skrip `ganti-nama-ke-mni-gudang.ps1` di folder induk, lihat [[T-164-samakan-nama-folder-lokal-ke-mni-gudang]]) |
+| Folder kerja (repo dan vault) | saat ini masih `D:\Sistem Kerja\01_Kerja\01_Proyek_Aktif\12. Sistem MNI\mni-os\`; nama baku tujuan `mni-gudang\` (belum diganti karena folder masih dipakai proses lain; penggantian nama lewat skrip `ganti-nama-ke-mni-gudang.ps1` di folder induk, lihat [[T-164-samakan-nama-folder-lokal-ke-mni-gudang]]) |
 | Arsip | `12. Sistem MNI\_Arsip\` (folder lama, tidak dikerjakan) |
 | Server lokal | 5173 mock (data sintetis), 5174 Supabase dev lama, 5175 Supabase production; env di `apps/platform/.env.*.local` (tidak di Git) |
 | Obsidian | vault = folder kerja; mulai dari [[Home]] |
@@ -79,7 +79,8 @@ Project lain di akun-akun itu (`MNI - Operational`, `MNI OS`, `MNI OS - Operatio
 | GitHub | mitranusainternational-cloud (login `gh`) |
 | Vercel | mitranusainternational-8337 lewat Chrome pemilik; konektor Vercel Claude terhubung ke tim lain: jangan dipakai |
 | Supabase production | akun mitranusainternational (konektor kedua) |
-| Supabase dev lama | akun pribadi pemilik (konektor `plugin_supabase`) |
+| Supabase dev lama | akun pribadi pemilik (konektor `plugin_supabase`, dipensiunkan: jangan dipakai untuk production) |
+| Composio | belum terverifikasi untuk akun ini (2026-11-06); jangan dipakai sebelum dicocokkan |
 
 ## Alur data antar-lapisan
 
@@ -139,3 +140,5 @@ Kebutuhan dan pemetaan data: [[PRD_PRODUKSI]]. Nama menu lama (Monitoring SPK, D
 Kolom klasifikasi produk pada `produksi_log` (draf migration 14): `kelompok`, `tipe`, `material`, `finishing`, diisi otomatis dari judul section SPK. Dipakai Laporan Produksi untuk pengelompokan Cable Tray, Cable Ladder, Cable Duct, Cover, dan Aksesoris beserta type dan material.
 
 Tab Jadwal pada SPK Berjalan (`#spk`): bagan Gantt per SPK dari data yang sudah ada (SPK, `produksi_log`, vendor, kirim); mesin hitung `src/lib/produksi/jadwal.js`; tanpa tabel baru.
+
+Menu penjualan (lokal, belum tayang, 2026-11-06): **Penawaran** (`#penawaran`, draf migration 15) dan **Sales Order** (`#salesorder`, draf migration 16). SPK Draft dibuat otomatis dari konfirmasi Sales Order, dan panel Kebutuhan material ada di Sales Order dan lembar SPK. Alur lengkap: [[HANDOFF]].

@@ -11,7 +11,8 @@ Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak m
 
 ## 1. Posisi proyek (2026-11-06)
 
-- Cabang kerja: `fitur/produksi-multi-wc`. **Belum ada di GitHub**: sekitar 30 commit (sejak produksi multi work center, T-174) hanya ada di mesin ini. `development`, `main`, `docs`, `versi-awal` di GitHub masih versi lama yang sudah live.
+- Cabang kerja: `fitur/produksi-multi-wc`. **Sudah di-push ke GitHub** (diverifikasi 2026-11-06, sama dengan lokal, 41 commit di depan `development`). `development`, `main`, `docs`, `versi-awal` di GitHub masih versi lama yang sudah live; `main` di `43e8da2` (PR 14), Vercel dan CI sukses.
+- Validasi koneksi 2026-11-06 (baca-saja): GitHub, Supabase production (13 migration = repo 1–13), dan Vercel yang tayang saling cocok; detail di [[PROJECT_PROGRESS]] entri terbaru. Composio belum terverifikasi; variabel Vercel baru berlabel Production.
 - Semua pekerjaan terbaru **lokal, belum menyentuh production**: produksi multi WC (T-174 sampai T-186), ERP hulu E-16: mesin harga (T-189), Penawaran (T-190), muat ke SPK dan snapshot (T-191), Sales Order (T-194), kebutuhan material dan reservasi (T-192). Status `review`, menunggu pemilik.
 - Alur hulu ke hilir yang sudah jalan di mock: Penawaran, disetujui customer, Buat Sales Order (PO, due date, tebal, finishing), Konfirmasi, SPK Draft otomatis, terbit, produksi, vendor, kirim. Panel Kebutuhan material ada di Sales Order dan lembar SPK.
 - Berikutnya: **T-193** monitoring estimasi lawan aktual. Detail status per tugas ada di `tasks/` (sumber kebenaran).
@@ -70,8 +71,10 @@ Commit lokal dengan identitas `mitranusainternational-cloud` / `mitranusainterna
 
 ## 6. Tindakan yang menunggu persetujuan eksplisit pemilik
 
-- Push cabang `fitur/produksi-multi-wc` ke GitHub (disarankan segera sebagai cadangan; hanya mendorong cabang fitur, bukan `main`).
+- ~~Push cabang `fitur/produksi-multi-wc`~~ sudah selesai (cabang fitur saja, bukan `main`).
 - Menerapkan draf migration 14 (produksi_log), 15 (penawaran), 16 (salesorder) di Supabase, urutannya 14, 15, 16, dimulai dari dev lalu production.
+- Menerapkan draf migration 17 (`supabase/draft/20240101000017_stok_tidak_negatif.sql`, pemicu anti stok negatif dan pengeluaran bersamaan). Belum pernah dijalankan di database mana pun; uji dulu di dev atau branch dengan 5 langkah uji di berkasnya, lalu production.
+- Menerapkan draf migration 18 (`supabase/draft/20240101000018_sparepart.sql`): tabel `sp`, kebijakan mutasi/PR untuk modul sparepart, peran gbb. Belum diterapkan; cocokkan nama pemicu stempel dengan migration 12 dulu. Tanpa ini sparepart dan PR sparepart tidak bisa jalan di production.
 - PR ke `main` (1 approval), deploy Vercel, DNS.
 - Menghapus skema cadangan `arsip_20261105` di production setelah pemilik puas.
 - Menjalankan skrip ganti nama folder (tutup Obsidian dan semua sesi/terminal di folder itu lebih dulu).

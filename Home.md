@@ -1,9 +1,9 @@
 ---
-project: MNI OS Operational
+project: MNI Gudang & Logistik
 type: project-dashboard
 status: active
-active-version: development
-updated: 2026-11-03
+active-version: fitur/produksi-multi-wc
+updated: 2026-11-06
 ---
 
 <img src="documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -21,12 +21,13 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 
 | Area | Kondisi | Detail |
 |---|---|---|
-| Aplikasi | Pratinjau lokal (mock, 6 role) dan mode Supabase dev berjalan; 10 modul lulus; regresi 36 dan uji role 12 PASS (Playwright) | [[documentation/TEST_MATRIX]] · [[documentation/LOCAL_PREVIEW]] |
-| Database | Supabase dev `MNI Gudang - Dev`: 20 tabel, RLS per role aplikasi (migration 1–4, 6, 7 terpasang), advisor tanpa ERROR; uji role di tingkat SQL lulus | [[documentation/ENVIRONMENTS]] · [[documentation/UJI_SUPABASE_DEV]] |
+| Aplikasi (live) | Tayang di https://mni-gudang.vercel.app dengan Supabase Production; versi stabil = `main` (PR 14) | [[documentation/SISTEM_MAP]] |
+| Aplikasi (lokal) | Belum tayang, branch `fitur/produksi-multi-wc`: produksi multi work center, ERP hulu (Penawaran, Sales Order, kebutuhan material); regresi penuh 0 FAIL di mock. Berikutnya T-193. Menunggu penilaian pemilik sebelum deploy | [[documentation/HANDOFF]] · [[documentation/PROJECT_PROGRESS]] · [[documentation/LOCAL_PREVIEW]] |
+| Database | Production `MNI Gudang - Production`: migration 1–13 terpasang, 22 tabel ber-RLS (dicek 2026-11-06). Migration 14–16 masih draf lokal. Dev lama dipensiunkan | [[documentation/ENVIRONMENTS]] · [[documentation/SISTEM_MAP]] |
 | Data | Enam workbook terprofil read-only; sumber resmi dan saldo belum direkonsiliasi | [[documentation/DATA_SOURCE_CATALOG]] |
 | Kebutuhan | Discovery bersama tim Operasional belum dimulai; pilot belum dipilih | [[documentation/OPERATIONAL_DISCOVERY]] |
-| GitHub | `development` dan `docs` ter-push; `main` dan `versi-awal` baseline; `main` terproteksi (PR + 1 approval) | [[documentation/GITHUB_MIGRATION]] |
-| Deploy | Berikutnya: CI GitHub (T-046, T-077) lalu Vercel preview; Supabase prod dan VPS belum | [[documentation/INTEGRATION_PATH]] · [[GO_LIVE_PLAN]] |
+| GitHub | `main` terproteksi (PR + 1 approval, CI wajib); `fitur/produksi-multi-wc` sudah di-push, belum di-PR | [[documentation/GITHUB_MIGRATION]] |
+| Deploy | Vercel Production aktif; variabel lingkungan baru berlabel Production (Preview belum). **Tidak ada deploy atau perubahan production tanpa persetujuan pemilik** | [[documentation/INTEGRATION_PATH]] · [[GO_LIVE_PLAN]] |
 
 ## 2. Saya ingin…
 

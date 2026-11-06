@@ -62,7 +62,7 @@ async function toDbId(id) {
 // Kolom spk.no bertipe TEXT di database, tetapi app memperlakukannya sebagai angka
 // (parseInt, perbandingan !==). Tanpa konversi, mengedit SPK dianggap "ganti nomor".
 // Tabel yang boleh belum ada di database (migration draf belum diterapkan): dibaca sebagai kosong, bukan galat.
-const OPSIONAL = new Set(['produksi_log', 'penawaran', 'salesorder']);
+const OPSIONAL = new Set(['produksi_log', 'penawaran', 'salesorder', 'sp']);
 const numericNo = (table, row) => {
   if (table === 'spk' && row && row.no !== undefined && row.no !== null && /^\d+$/.test(String(row.no))) row.no = Number(row.no);
   return row;
@@ -492,7 +492,7 @@ async function makeUserAdapter() {
     })),
     // Cadangan: semua tabel mentah (urutan aman untuk pemulihan). Hanya super admin yang membaca semuanya (RLS).
     exportAll: async () => {
-      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'penawaran', 'salesorder'];
+      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'penawaran', 'salesorder', 'sp'];
       const out = {};
       for (const t of tables) {
         const rows = [];
