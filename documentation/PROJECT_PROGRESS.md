@@ -711,3 +711,13 @@ Atas permintaan pemilik ("kembali ke jalur", cross-check perencanaan, tugas, roa
 - **Git:** merge `main` (surat jalan) ke `fitur/produksi-multi-wc` dengan satu konflik di form surat jalan (digabung: alamat dan nomor otomatis dari main ditambah penjaga hasil produksi); regresi setelah merge 0 FAIL; commit lokal 4be17cd, f62c395, 35bf7f7; belum di-push.
 - **Pra-cek production (baca-saja):** baris rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10; kebijakan `pr` dan `mutasi` serta pemicu `trigger_<tabel>_updated_at` cocok dengan draf 18; draf 18 dilengkapi pemicu `updated_at` dan `table_stamps` memuat `sp`.
 - **Langkah berikut:** pemolesan modul sesuai arahan pemilik di lokal; rilis bertahap menunggu persetujuan ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+
+## 2026-11-06 · Audit silang kedua: selesai vs belum, semua terdeteksi (T-204)
+
+Permintaan pemilik: perbarui progress di Obsidian, cek mana yang belum dan sudah dikerjakan, pastikan semua terdeteksi. Laporan lengkap: [[AUDIT_PROGRESS_2026-11-06]].
+
+- **Terdeteksi baru:** T-205 audit mandiri dan perbaikan HP, T-206 draf migration 17, T-207 Master Data bahan baku, T-208 pustaka PDF/Excel lokal, T-209 Posisi stok dan opname bahan baku (melengkapi T-195 sampai T-204).
+- **Status dikoreksi:** T-102 done (dipenuhi T-172); T-103, T-101, T-023, T-060 ke review dengan bukti; T-133 dan T-143 ke doing; catatan keadaan terbaru pada T-011 sampai T-013, T-017, T-020, T-027, T-044, T-045, T-047, T-061, T-064, T-065, T-142, T-199, T-203.
+- **Bukti baru production (baca-saja):** advisor keamanan 8 WARN fungsi bantu RLS (disengaja) dan proteksi password bocor belum aktif; advisor performa 3 WARN kebijakan permisif ganda, INFO 22 indeks belum terpakai dan 4 tabel arsip tanpa kunci primer; tidak ada temuan kritis.
+- **Angka:** 130 tugas (37 done, 33 review, 6 doing, 1 blocked, 53 todo); selesai 37 dari 130 (28%), effort 40 dari 219,6 hari (18%); jalur kritis menuju go-live tetap 26,5 hari karena jalur proses dan data belum dimulai.
+- **Tes terakhir:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72 (329) dan unit 266, semua 0 FAIL.

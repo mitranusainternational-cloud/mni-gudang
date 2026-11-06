@@ -40,3 +40,6 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 ## Catatan
 
 - Urutan aman: database dahulu (tambahan saja, adapter memperlakukan `produksi_log` dan `sp` sebagai opsional), lalu kode. Rollback kode: Vercel promote deploy sebelumnya; rollback database: `DROP TABLE` kosong plus kembalikan kebijakan (lihat bagian rollback di berkas draf). Dampak perilaku bagi tim: penjaga kirim ke customer dan terima SPK stok (T-199).
+
+> [!note] Audit 2026-11-06
+> Koreksi 2026-11-06: pra-cek production menunjukkan tidak ada stok negatif saat ini; migration 17 tetap ditunda karena belum diuji (T-206). Cakupan rilis: cabang membawa 175 berkas dari `main`, tidak hanya gudang.

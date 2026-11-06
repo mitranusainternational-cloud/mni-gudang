@@ -11,7 +11,7 @@ env: development
 effort_days: 1.5
 depends: [T-026]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-027 Uji sisa UI mock: void, koreksi, PR, dan role
@@ -35,3 +35,6 @@ Bergantung pada: T-026
 ## Catatan
 
 Dikerjakan di mock; role sungguhan menunggu T-022.
+
+> [!note] Audit 2026-11-06
+> Sebagian tercakup: Batal dan koreksi gudang diuji di regresi dan sparepart (SP-6, opname, koreksi), PR di SP-19 sampai SP-21 (sparepart), role di roles.mjs dan access.mjs, mobile di sweep.mjs. Belum ada uji bongkar muat void dan koreksi serta tab KPI & Analisa dan ekspor XLSX semua modul. Keluarkan daftar sisa dari [[TEST_MATRIX]] sebelum dikerjakan.

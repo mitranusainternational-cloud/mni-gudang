@@ -11,7 +11,7 @@ env: main
 effort_days: 1
 depends: [T-043]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-061 Backup, restore drill, dan rencana rollback
@@ -32,3 +32,6 @@ Bergantung pada: T-043
 ## Catatan
 
 -
+
+> [!note] Audit 2026-11-06
+> Belum ada restore drill. Panduan ada di [[BACKUP_RESTORE]] dan cadangan data aplikasi lewat T-170. Backup terjadwal Supabase dan uji pulih adalah aksi pemilik; wajib sebelum rilis besar T-203 sebagai jaring pengaman (minimal ekspor tabel inti).

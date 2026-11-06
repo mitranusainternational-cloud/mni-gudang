@@ -11,7 +11,7 @@ env: main
 effort_days: 5
 depends: [T-064, T-063, T-047]
 owner: "dev + tim"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-065 Go-live dan hypercare lima hari
@@ -32,3 +32,6 @@ Bergantung pada: T-064, T-063, T-047
 ## Catatan
 
 -
+
+> [!note] Audit 2026-11-06
+> Production sudah tayang dan dipakai pemilik dengan data nyata sebagian (T-175, T-184), tetapi go-live resmi dengan hypercare lima hari belum karena jalur proses dan data (T-030 sampai T-036) belum dimulai.

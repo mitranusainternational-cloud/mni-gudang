@@ -32,7 +32,7 @@ Adapter meniru API Firestore di atas Postgres; perilaku realtime dan lock perlu 
 - [ ] [[tasks/T-020-verifikasi-login-otp-end-to-end-lokal|T-020]] Verifikasi login OTP end-to-end (lokal) · todo · P0 · 1 hari
 - [x] [[tasks/T-021-verifikasi-crud-dan-realtime-semua-koleksi|T-021]] Verifikasi CRUD dan realtime semua koleksi · done · P0 · 3 hari
 - [x] [[tasks/T-022-uji-rls-per-role-dengan-skenario-negatif|T-022]] Uji RLS per role dengan skenario negatif · done · P0 · 2 hari
-- [ ] [[tasks/T-023-smoke-test-playwright|T-023]] Smoke test Playwright · todo · P1 · 2 hari
+- [ ] [[tasks/T-023-smoke-test-playwright|T-023]] Smoke test Playwright · review · P1 · 2 hari
 - [ ] [[tasks/T-024-perbaikan-bug-hasil-verifikasi-buffer|T-024]] Perbaikan bug hasil verifikasi (buffer) · todo · P1 · 3 hari
 - [x] [[tasks/T-026-uji-lanjutan-ui-mock-fitur-yang-belum-tercakup|T-026]] Uji lanjutan UI mock: fitur yang belum tercakup · done · P1 · 3 hari
 - [ ] [[tasks/T-027-uji-sisa-ui-mock-void-koreksi-pr-dan-role|T-027]] Uji sisa UI mock: void, koreksi, PR, dan role · todo · P2 · 1.5 hari

@@ -11,7 +11,7 @@ env: main
 effort_days: 1
 depends: [T-041, T-042]
 owner: "dev"
-updated: 2026-11-03
+updated: 2026-11-06
 ---
 
 # T-044 Vercel: preview dari development, production dari main
@@ -36,3 +36,6 @@ Bergantung pada: T-041, T-042
 Team Vercel NIJ sudah ada dengan 0 project (2026-11-02). Menghubungkan repo organisasi GitHub butuh izin aplikasi Vercel pada organisasi tersebut; dilakukan pemilik akun.
 
 -
+
+> [!note] Audit 2026-11-06
+> Production dari `main` aktif. Sisa: variabel Vercel untuk Preview dan pemetaan cabang fitur ke Preview. Cabang kerja kini `fitur/<nama>` (bukan `development`).

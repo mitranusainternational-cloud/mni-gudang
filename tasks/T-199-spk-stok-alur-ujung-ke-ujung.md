@@ -40,3 +40,6 @@ Bergantung pada: T-198, T-174
 ## Catatan
 
 - Penjaga kirim mengubah perilaku di production begitu dirilis: SPK yang produksinya belum dicatat tertahan sampai dicatat atau override dipakai. Hitungan: siap = produksi efektif - di vendor + kembali dari vendor.
+
+> [!note] Audit 2026-11-06
+> Keputusan pemilik terbuka: perlakuan SPK lama yang produksinya tidak pernah dicatat saat penjaga kirim aktif di production.

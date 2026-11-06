@@ -11,7 +11,7 @@ env: development
 effort_days: 0.5
 depends: [T-011, T-005]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-012 Hubungkan mni-app ke Supabase lokal
@@ -32,3 +32,6 @@ Bergantung pada: T-011, T-005
 ## Catatan
 
 -
+
+> [!note] Audit 2026-11-06
+> Terhalang Docker (T-010, virtualisasi BIOS nonaktif) dan kini tidak lagi di jalur kritis: aplikasi diuji di mock dan di Supabase production (baca-saja serta transaksi rollback). Usul: tutup sebagai digantikan atau biarkan menunggu keputusan pemilik atas jalur lokal.

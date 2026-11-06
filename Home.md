@@ -35,6 +35,7 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 |---|---|
 | Tahu apa yang dikerjakan berikutnya | [[PROGRESS_SNAPSHOT#Siap dikerjakan sekarang (dependensi terpenuhi)]] |
 | Melihat peta modul dari hulu ke hilir | [[documentation/PETA_MODUL]] |
+| Melihat audit selesai vs belum dan keputusan pemilik | [[documentation/AUDIT_PROGRESS_2026-11-06]] |
 | Memahami aturan stok, buffer, SPK stok, dan dokumen gudang | [[documentation/PRD_GUDANG]] |
 | Melihat arah produk dan rilis | [[roadmap/PRODUCT_ROADMAP]] |
 | Melihat langkah menuju go-live | [[GO_LIVE_PLAN]] |
