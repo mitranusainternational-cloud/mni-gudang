@@ -84,6 +84,28 @@ ALTER POLICY pr_upd_v2 ON public.pr USING (public.can_mod('bahan-baku') OR publi
 -- peran Gudang Bahan Baku mengelola sparepart (pemilik dapat menyesuaikan per pengguna di Pengguna & Akses)
 INSERT INTO public.role_modules (role, module) VALUES ('gbb', 'sparepart') ON CONFLICT DO NOTHING;
 
+-- Sinkron antar pengguna: ikutkan sp dalam penanda perubahan (table_stamps). Daftar ini memuat produksi_log (migration 14)
+-- sehingga aman diterapkan setelah migration 14.
+CREATE OR REPLACE FUNCTION public.table_stamps()
+RETURNS JSONB LANGUAGE plpgsql STABLE SECURITY INVOKER SET search_path = public, pg_temp AS $$
+DECLARE
+  t TEXT;
+  v TEXT;
+  res JSONB := '{}'::jsonb;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['rm','fg','mutasi','spk','vendor','kirim','bongkar','master','mvendor','mcustomer',
+                           'msupplier','marmada','rmhist','pr','opname','muser','log','mwc','produksi_log','sp'] LOOP
+    EXECUTE format(
+      'SELECT count(*)::text || ''|'' || COALESCE(max(COALESCE(to_jsonb(x) ->> ''updated_at'', to_jsonb(x) ->> ''created_at'', to_jsonb(x) ->> ''at'')), '''') FROM public.%I x', t)
+      INTO v;
+    res := res || jsonb_build_object(t, v);
+  END LOOP;
+  RETURN res;
+END;
+$$;
+REVOKE EXECUTE ON FUNCTION public.table_stamps() FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.table_stamps() TO authenticated;
+
 -- Batalkan (rollback), hanya bila belum ada data:
 --   DROP TABLE IF EXISTS public.sp;
 --   (kembalikan tiga ALTER POLICY mutasi ke ekspresi tanpa cabang 'sp'; hapus baris role_modules gbb/sparepart)
