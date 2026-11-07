@@ -17,7 +17,7 @@ Roadmap ini mengurutkan **hasil** (bukan tanggal) dari kondisi sekarang sampai s
 | Kode aplikasi  | Vite + Supabase + Vercel; UI vanilla JS (sekitar 776 KB `app.js` terbangun) dengan mesin berat, produksi, dan harga di `apps/platform/src/lib`; 17 uji unit (266 lulus) | [[documentation/PETA_MODUL]], [[documentation/ENVIRONMENTS]] |
 | Production     | **Tayang** di mni-gudang.vercel.app, Supabase Production migration 1 sampai 13, RLS per peran, riwayat perubahan, 10 pengguna; `main` ad73c89 (surat jalan)                | [[documentation/SISTEM_MAP]]                                |
 | Lokal          | Cabang `fitur/produksi-multi-wc`: produksi multi WC, Gudang Bahan Baku, Barang Jadi, Sparepart, SPK stok, tren, dokumen; Penawaran dan Sales Order disembunyikan; belum dirilis | [[documentation/PETA_MODUL]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]] |
-| Pengujian      | Regresi mock: 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72 (semua 0 FAIL, 2026-11-06); belum ada uji terhadap database nyata untuk migration 14 sampai 18   | [[documentation/TEST_MATRIX]]                               |
+| Pengujian      | Regresi mock 2026-11-07 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, penawaran 42, sparepart 38, fitur 18, keamanan 8, aksesibilitas 3, menyeluruh 24, editor 17, tampilan 72; unit 266; lint 0 galat. Belum ada uji terhadap database nyata untuk migration 14 sampai 18 | [[documentation/TEST_MATRIX]]                               |
 | Data           | Data bahan baku (T-184) dan stok barang jadi (T-175) dimuat ke production; saldo antar workbook belum direkonsiliasi                                                       | [[documentation/DATA_SOURCE_CATALOG]]                       |
 | Kebutuhan      | Pemolesan berdasarkan masukan langsung pemilik; wawancara process owner bersama tim belum dilakukan; pilot memakai data nyata di production                                 | [[documentation/OPERATIONAL_DISCOVERY]], [[documentation/PRD_GUDANG]] |
 | Repo dan versi | `main` terproteksi (PR, 1 approval, CI); kerja fitur di cabang `fitur/*`; `development` dan `docs` tertinggal                                                          | [[documentation/VERSION_STRATEGY]]                          |
@@ -43,11 +43,11 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
  (sedang jalan)   (hasil utama)          (akses, kualitas)     (otomasi, nilai manajemen)     (teknik, hipotesis kebutuhan)
 ```
 
-### v0.9 Fondasi (sedang berjalan)
+### v0.9 Fondasi (dilampaui kenyataan: production sudah tayang tanpa Docker lokal)
 **Tujuan:** pengembang dapat menjalankan, menguji, dan melacak pekerjaan dengan andal.
 **Epic:** [[roadmap/epics/E-01-fondasi-workspace-dan-repo|E-01]] workspace dan repo, [[roadmap/epics/E-02-aplikasi-berjalan-lokal|E-02]] aplikasi berjalan lokal.
 **Keluar bila:** Supabase lokal hidup dengan 20 tabel, mni-app tersambung dan dapat login dengan user seed, `main` terproteksi.
-**Blocker:** virtualisasi BIOS untuk Docker (T-010, panduan [[documentation/DOCKER_SETUP]]). Proteksi `main` (T-041) sudah selesai. Pratinjau lokal mock tersedia ([[documentation/LOCAL_PREVIEW]]).
+**Catatan kenyataan (2026-11-07):** Docker lokal (T-010) tetap terblokir virtualisasi BIOS dan tidak lagi di jalur kritis karena production Supabase dipakai langsung; T-011, T-012, T-013 menunggu keputusan pemilik apakah ditutup sebagai digantikan. Proteksi `main` (T-041) selesai. Pratinjau lokal mock tersedia ([[documentation/LOCAL_PREVIEW]]).
 
 ### v1.0 Pilot go-live (rilis utama)
 **Tujuan:** satu alur Operasional dipakai nyata oleh user awal di production.
@@ -78,8 +78,8 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
 
 | Kolom | Isi | Pemicu pindah |
 |---|---|---|
-| **Sekarang** | E-01, E-02; mulai paralel T-030/T-032 (proses dan data), T-040 selesai, T-041 sisa proteksi `main` | Docker aktif membuka E-02 dan E-03 |
-| **Berikutnya** | E-03, E-04, E-05 | Seed dan lokal siap; pilot dipilih |
+| **Sekarang** | Pemolesan modul lokal atas permintaan pemilik (E-02, E-03, E-10); jalur proses dan data (T-030 sampai T-036) belum dimulai dan tetap penentu go-live; rilis paket gudang dan produksi dijeda ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]) | Persetujuan pemilik untuk rilis bertahap; jadwal walkthrough |
+| **Berikutnya** | E-04, E-05 (hardening: T-044, T-047, T-061), lalu E-06 | Pilot dipilih; cadangan dan uji pulih (T-061) siap |
 | **Lalu** | E-06, E-07, E-08 | UAT disetujui |
 | **Kemudian** | E-09 sampai E-12 | Go-live dan hypercare |
 | **Hipotesis** | E-13, E-14 | Keputusan dan bukti kebutuhan |

@@ -60,8 +60,7 @@ const FIELD_MAP = {
   noSJ:         'no_sj',
   // bongkar
   noDO:         'no_do',
-  // vendor
-  noSJ:         'no_sj',
+  // vendor memakai kolom no_sj yang sama dengan kirim (pemetaan noSJ di atas)
   // common audit
   at:           'created_at',
   by:           'created_by',

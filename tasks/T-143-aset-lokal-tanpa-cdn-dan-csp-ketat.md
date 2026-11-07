@@ -11,7 +11,7 @@ env: main
 effort_days: 2
 depends: [T-065]
 owner: "dev"
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # T-143 Aset lokal tanpa CDN dan CSP ketat
@@ -21,8 +21,9 @@ Bergantung pada: T-065
 
 ## Kriteria selesai
 
-- [ ] Font dan pustaka ekspor dibundel
-- [ ] CSP diterapkan tanpa melonggarkan sumber eksternal
+- [x] Pustaka ekspor (ExcelJS, jsPDF, AutoTable, html2canvas) dibundel di `public/vendor/` (selesai lewat [[T-208-pustaka-pdf-dan-excel-dari-aplikasi-sendiri|T-208]])
+- [ ] Font dibundel (belum dicek: font tampilan dan dokumen)
+- [ ] CSP diterapkan tanpa `unsafe-inline` dan tanpa domain CDN (skrip inline, 12 penangan inline, halaman cetak; temuan [[T-211-audit-kerangka-dan-standar-industri|T-211]])
 
 ## Bukti
 

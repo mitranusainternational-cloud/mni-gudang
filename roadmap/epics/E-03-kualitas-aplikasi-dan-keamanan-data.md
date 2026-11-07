@@ -6,10 +6,10 @@ release: v1.0
 theme: Kualitas
 priority: P0
 status: active
-progress: 57
-tasks_total: 15
+progress: 51
+tasks_total: 17
 tasks_done: 8
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # E-03 Kualitas aplikasi dan keamanan data
@@ -42,5 +42,7 @@ Adapter meniru API Firestore di atas Postgres; perilaku realtime dan lock perlu 
 - [ ] [[tasks/T-079-uji-role-lewat-aplikasi-dengan-akun-uji-per-role|T-079]] Uji role lewat aplikasi dengan akun uji per role · review · P1 · 1 hari
 - [ ] [[tasks/T-162-selidiki-event-realtime-supabase-tidak-tiba|T-162]] Selidiki event Realtime Supabase yang tidak tiba · todo · P2 · 0.5 hari
 - [ ] [[tasks/T-210-audit-fitur-dan-suite-uji-fitur|T-210]] Audit fitur dan rencana, suite uji fitur (aksi UI yang belum diuji) · review · P1 · 1 hari
+- [ ] [[tasks/T-211-audit-kerangka-dan-standar-industri|T-211]] Audit kerangka dan standar industri: keamanan, aksesibilitas, kode, data, bug · review · P1 · 1.5 hari
+- [ ] [[tasks/T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug|T-212]] Uji menyeluruh semua modul hulu ke hilir dan perbaikan bug yang ditemukan · review · P1 · 1.5 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

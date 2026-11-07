@@ -17,9 +17,14 @@ updated: 2026-11-02
 > | role | `roles.mjs` | 12 | penegakan peran |
 > | akses | `access.mjs` | 34 | hak per pengguna dan modul (A-06 memuat sparepart) |
 > | produksi | `produksi.mjs` | 134 | multi work center, jadwal, laporan |
-> | sparepart | `sparepart.mjs` | 35 | sparepart SP-1 sampai SP-21, barang jadi dan SPK stok SP-17 sampai SP-35, nama penanda tangan SP-27 dan SP-28 |
-> | fitur | `fitur.mjs` | 13 | audit fitur: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname, unduhan Excel, jenis material ([[FEATURE_AUDIT]]) |
+> | sparepart | `sparepart.mjs` | 36 | sparepart SP-1 sampai SP-21, barang jadi dan SPK stok SP-17 sampai SP-35, nama penanda tangan SP-27 dan SP-28 |
+> | fitur | `fitur.mjs` | 18 | audit fitur: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname, unduhan Excel, jenis material ([[FEATURE_AUDIT]]) |
+> | menyeluruh | `menyeluruh.mjs` | 24 | Master Data (ganti nama berantai, gabung, hapus), bahan baku, unduhan, bongkar muat, kendala SPK, work center, invarian, pemindai kejanggalan ([[T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug]]) |
+> | keamanan | `keamanan.mjs` | 8 | uji XSS: payload di 53 bidang teks, semua menu, laci, lembar, kartu, dokumen ([[STANDAR_INDUSTRI]]) |
+> | aksesibilitas | `aksesibilitas.mjs` | 3 | axe-core WCAG 2 A dan AA: 16 menu x 2 tema, 11 form, laci, kartu x 2 tema |
 > | tampilan | `sweep.mjs` | 72 | sapu tampilan semua modul |
+>
+> Pemindai kejanggalan (`kejanggalan.mjs`: teks undefined, NaN, null, gambar rusak, meluap di HP, tabel tanpa keterangan, galat konsol di 16 menu desktop dan HP) dijalankan di suite fitur (F-19) dan menyeluruh (M-24). Invarian data (`invarian.mjs`, 10 invarian: stok tidak minus, nomor unik, tautan sah, koreksi, SPK stok) dijalankan di akhir suite sparepart (SP-36) dan fitur (F-15). Lint: `npm run lint` (0 galat, 43 peringatan); unit di CI: `npm run test:unit` (11 berkas, 214 uji tanpa katalog privat; total unit 266 termasuk berat dan harga yang butuh katalog lokal).
 > | unit | `tests/unit/*.test.mjs` | 266 | berat, harga, produksi, kinerja, laporan, rencana, material, penawaran, Sales Order |
 >
 > Bukti database: tidak ada untuk migration 14 sampai 18 (belum diterapkan). Pra-cek production baca-saja 2026-11-06: nama kebijakan dan pemicu cocok dengan draf 18.
@@ -96,6 +101,13 @@ Kriteria PASS: judul benar, isi tampil, tidak ada `pageerror`. Skrip: `tests/e2e
 
 | ID | Temuan | Penyebab | Perbaikan | Status |
 |---|---|---|---|---|
+| B-019 | Work Center yang dilewati rute SPK aktif atau sudah punya catatan produksi bisa dihapus permanen; dialog menyatakan "tidak dipakai SPK aktif manapun" | Pengecekan memakai kode WC bawaan lama (`WC-CT-01` dan sebagainya) dan kecocokan teks tahap, bukan rute item; data nyata memakai kode lain sehingga selalu lolos | `wcPakai()` membaca rute tiap item SPK aktif, catatan `produksi_log`, dan aturan rute standar; bila terpakai tawarkan Nonaktifkan; hapus hanya bila belum dipakai | Selesai; uji E-10, E-11, E-13 (`editor.mjs`) |
+| B-020 | Mengganti nama Work Center yang dipakai memutus rute dan catatan produksi (rute dan log mengacu nama) | Form ubah WC menulis nama baru tanpa memeriksa pemakaian | Nama tidak bisa diubah selama WC terpakai; pesan menyarankan WC baru atau nonaktif | Selesai; uji E-12 |
+| B-021 | Hapus permanen yang ditolak kebijakan database tampak berhasil di UI | Supabase tidak mengembalikan galat untuk DELETE yang diblokir RLS (hanya nol baris); adapter tidak memeriksa; mock tidak meniru migration 13 | Adapter memeriksa baris yang terhapus dan melempar galat jelas; mock meniru penolakan pada tabel yang kebijakan DELETE-nya dicabut; hapus item bahan baku jatuh ke Nonaktifkan | Selesai (laten: tombol hapus item belum ada di UI, `rmdel` kode yatim); tanpa uji klik |
+| B-022 | Modal dan laci tanpa pengelolaan fokus: Tab keluar ke halaman di belakang, fokus tidak pindah ke laci, fokus tidak kembali ke tombol pemicu (WCAG 2.4.3) | Dialog hanya memfokuskan isian pertama modal; tidak ada perangkap fokus; axe tidak mendeteksi ini | Perangkap fokus untuk modal, laci, lembar, dan editor; fokus kembali ke pemicu saat ditutup | Selesai; uji E-14, E-15 |
+| B-023 | Rangkaian uji Penawaran dilewati otomatis saat modul disembunyikan, sehingga Penawaran, Sales Order, dan kebutuhan material berstatus `review` tanpa regresi | Runner melewati suite bila `MODUL_PENJUALAN=false` | Mock menyalakan modul lewat kunci uji `mni-uji-penjualan` (production tetap tersembunyi); suite berjalan lagi (42 lulus) | Selesai |
+| B-025 | Panel Kebutuhan material memberi status "Tanpa item RM" untuk jenis material kustom Master Data (mis. A5052) sehingga kebutuhan aluminium tidak dicocokkan ke stoknya | Pemetaan bahan hanya mengenal nama bawaan; jenis kustom dipakai apa adanya | `bahanDariJenis()` (murni, diuji K-13) memetakan jenis kustom lewat keluarga dasar, massa jenis, dan nama | Selesai; uji unit K-13 |
+| B-024 | Tugas `done` tanpa bagian Bukti (T-046, T-175, T-176) dan kriteria sama dihitung di dua tugas (T-133, T-143, T-208, T-211) | Catatan ditulis di bagian lain atau dirujuk silang tanpa pemilik tunggal | Bukti dibaca ulang (API GitHub, tahap CI) dan ditulis; satu pemilik per kriteria; T-180 dan T-185 ditutup sebagai digantikan T-186 | Selesai |
 | B-001 | `USER.profiles is not a function` pada setiap render | Adapter user tidak menyediakan `profiles()` yang dipanggil app | `profiles(ids)` ditambahkan di `claude-adapter.js` | Selesai |
 | B-002 | Sidebar tetap "Tamu" setelah login | app.js membaca user sekali saat boot (sebelum login) | `index.html` memuat ulang halaman saat `SIGNED_IN`/`SIGNED_OUT` | Selesai |
 | B-003 | SPK baru bernomor `1` dan seed tidak terbaca | `no` harus numerik (`nextNo` memakai `+s.no`); seed memakai `SPK-1001` | Seed mock memakai `1001`, `1002` | Selesai (seed). Catatan: schema `spk.no` bertipe TEXT, jadi jangan diisi non-numerik |

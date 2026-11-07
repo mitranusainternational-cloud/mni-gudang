@@ -31,6 +31,11 @@ Fase: P2
 - [x] Cable Cage: tebal `D5` disimpan sebagai tebal 5 dengan keterangan "Diameter kawat 5 mm (D5)" karena kolom `tebal` numerik
 - [x] Semua baris bertanda `created_by = import-stok-2026-11-04` (mudah dicabut bila perlu); audit trigger mencatat 92 baris
 
+## Bukti
+
+- `verified in database` (2026-11-04, kriteria di atas) dan pra-cek baca-saja 2026-11-06: tabel `fg` production berisi 92 baris (lihat [[HANDOFF]]).
+- Penandaan `created_by = import-stok-2026-11-04` memungkinkan pencabutan terukur; jejak audit mencatat 92 baris.
+
 ## Catatan
 
 - Workbook sumber tidak disalin ke repo (aturan data privat).

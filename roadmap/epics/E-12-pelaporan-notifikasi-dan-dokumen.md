@@ -9,7 +9,7 @@ status: active
 progress: 0
 tasks_total: 4
 tasks_done: 0
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # E-12 Pelaporan, notifikasi, dan dokumen

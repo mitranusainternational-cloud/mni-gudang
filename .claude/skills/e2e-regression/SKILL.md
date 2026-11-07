@@ -5,7 +5,7 @@ description: Jalankan dan catat regresi UI penuh untuk pratinjau lokal mni-app (
 
 # Regresi E2E (mode mock)
 
-Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 35 (gudang, SPK stok, nama penanda tangan), fitur 13 (aksi UI: koreksi, nonaktif, SPK terbit, opname, unduhan Excel, jenis material, alamat SJ; nama: fitur), tampilan 72; unit 266 (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
+Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 36 (gudang, SPK stok, nama penanda tangan, invarian), fitur 18 (aksi UI, pembaca angka, koreksi SPK stok, Dashboard), penawaran 42 (mock menyalakan modul lewat kunci uji), editor 17 (editor SPK, Work Center, fokus dan keyboard), menyeluruh 24 (Master Data, bongkar muat, unduhan, kendala, pemindai kejanggalan), keamanan 8 (XSS), aksesibilitas 3 (axe-core), tampilan 72; unit 266; lint `npm run lint` 0 galat (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
 
 ## Menjalankan
 
@@ -17,7 +17,7 @@ Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-1
 ## Menjalankan penuh (cara terbaru)
 
 - Server mock: `cd apps/platform && VITE_LOCAL_MOCK=1 npx.cmd vite --host 127.0.0.1 --port 5173 --strictPort` (nyalakan dengan `nohup` bila lewat Bash).
-- `node scripts/extract-app.js` setelah mengubah `apps/gudang-logistik`, lalu `node tests/e2e/run.mjs http://127.0.0.1:5173/` (semua suite, beberapa menit: jalankan di latar belakang). Satu suite: `ONLY=sparepart node tests/e2e/run.mjs http://127.0.0.1:5173/` (nama: regresi, role, akses, produksi, penawaran, sparepart, fitur, tampilan).
+- `node scripts/extract-app.js` setelah mengubah `apps/gudang-logistik`, lalu `node tests/e2e/run.mjs http://127.0.0.1:5173/` (semua suite, beberapa menit: jalankan di latar belakang). Satu suite: `ONLY=sparepart node tests/e2e/run.mjs http://127.0.0.1:5173/` (nama: regresi, role, akses, produksi, penawaran, sparepart, fitur, menyeluruh, keamanan, aksesibilitas, tampilan).
 - Unit: `for f in tests/unit/*.test.mjs; do node "$f"; done`.
 
 ## Menulis uji baru
@@ -38,3 +38,12 @@ Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-1
 - Mock meniru batasan Postgres (id UUID, kolom tak dikenal, pengurutan kolom) tetapi bukan Supabase. Bug yang hanya muncul di Postgres nyata (mis. B-007 sampai B-011) ditemukan lewat uji di Supabase dev: lihat skill `supabase-dev-ops`.
 - Jangan menyimpan unduhan (`*.csv`, `*.xlsx`, `*.pdf`) atau tangkapan layar di repo kecuali sebagai bukti yang diindeks di `documentation/screenshots/README.md`.
 - Data hanya sintetis.
+
+## Lapisan uji tambahan (2026-11-06)
+
+- `keamanan.mjs`: menyuntik markup ke semua bidang teks bebas lalu membuka semua menu, laci, lembar, kartu, dan dokumen; tidak boleh ada eksekusi atau elemen suntikan. Ada kontrol positif (payload tampil sebagai teks).
+- `aksesibilitas.mjs`: axe-core (dev dependency) pada semua menu dan form di tema gelap dan terang; target 0 pelanggaran WCAG 2 A dan AA. Perbaikan otomatis nama dan label ada di `a11yFix()` di `app.js`.
+- `kejanggalan.mjs` (`pindaiKejanggalan(page)`): memindai semua menu desktop dan HP untuk teks undefined, NaN, null, gambar rusak, meluap, tabel tanpa keterangan, galat konsol; panggil di akhir suite yang kaya data.
+- `invarian.mjs` (`periksaInvarian(page)`): dipanggil di akhir suite yang membuat banyak transaksi; tambahkan invarian baru di sini bila ada aturan data baru.
+- Alur SPK ujung ke ujung: `node tests/e2e/alur-spk.mjs http://127.0.0.1:5173/ "$TEMP/alur-shots"` (folder tangkapan di luar repo agar dokumentasi tidak berubah).
+- Jangan menulis kode berisi regex lewat heredoc atau `node -e` di Bash: garis miring terbalik hilang; pakai alat Edit atau Write, atau `String.fromCharCode`. Uji fungsi yang diubah dengan mengevaluasinya di halaman.

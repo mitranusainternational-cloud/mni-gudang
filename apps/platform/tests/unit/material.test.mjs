@@ -1,5 +1,5 @@
 // Uji kebutuhan material dan reservasi.  node tests/unit/material.test.mjs
-import { FAKTOR_SISA_DEFAULT, faktorSisa, bahanTebal, kunciMaterial, kelompokKebutuhan, reservasiAktif, rencanaMaterial, usulanPr } from '../../src/lib/erp/material.js';
+import { bahanDariJenis, FAKTOR_SISA_DEFAULT, faktorSisa, bahanTebal, kunciMaterial, kelompokKebutuhan, reservasiAktif, rencanaMaterial, usulanPr } from '../../src/lib/erp/material.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 
@@ -42,6 +42,8 @@ ok('K-11 reservasi aktif: sisa = bruto - keluar (tidak negatif), SPK tidak aktif
 const rc5 = rencanaMaterial(kel, rm, { reservasiLain: { 'SPHC|1.2': 100 }, dipesan: { 'SPHC|1.2': 19 } });
 const rc6 = rencanaMaterial(kel, rm, { reservasiLain: { 'SPHC|1.2': 100 }, dipesan: { 'SPHC|1.2': 5 } });
 ok('K-12 PR terbuka menutup kekurangan (status Sudah dipesan, tidak masuk usulan PR); PR sebagian hanya mengurangi kekurangan', rc5[0].status === 'Sudah dipesan' && rc5[0].kurangKg === 0 && usulanPr(rc5).length === 0 && rc6[0].status === 'Kurang' && rc6[0].kurangKg === 14 && usulanPr(rc6)[0].q === 1);
+
+ok('K-13 jenis material bawaan dan kustom dipetakan ke bahan SPK: A5052 (massa jenis 2,68) dan AL6061 ke Aluminium, SUS304L dan 316L ke stainless, SPCC dan Lainnya ke SPHC', bahanDariJenis('A5052', 2.68) === 'Aluminium' && bahanDariJenis('AL6061', 0) === 'Aluminium' && bahanDariJenis('A1100', 0) === 'Aluminium' && bahanDariJenis('SUS304L', 7.93) === 'SS304' && bahanDariJenis('SS316L', 7.98) === 'SS316' && bahanDariJenis('SPCC') === 'SPHC' && bahanDariJenis('Lainnya') === 'SPHC' && bahanDariJenis('Aluminium') === 'Aluminium' && bahanDariJenis('Baja Karbon', 7.85) === 'SPHC' && bahanDariJenis('', 0) === 'SPHC');
 
 const gagal = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n')); console.log(`${R.length - gagal} PASS, ${gagal} FAIL`);

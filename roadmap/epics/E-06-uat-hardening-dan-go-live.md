@@ -9,7 +9,7 @@ status: active
 progress: 2
 tasks_total: 13
 tasks_done: 1
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # E-06 UAT, hardening, dan go-live

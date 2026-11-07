@@ -11,7 +11,7 @@ env: dev
 effort_days: 1
 depends: [T-204]
 owner: "dev + pemilik"
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -28,7 +28,7 @@ Bergantung pada: T-204
 - [x] Suite `tests/e2e/fitur.mjs` (13 uji, F-1 sampai F-14): koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname bahan baku, unduhan Excel, jenis material, alamat surat jalan; terdaftar di `run.mjs`
 - [x] Audit rencana: deviasi, usul penyesuaian, dan risiko di [[FEATURE_AUDIT]]
 - [x] Dokumen rencana dan panduan disegarkan (GO_LIVE_PLAN, INTEGRATION_PATH, ENVIRONMENTS, RELEASE_CHECKLIST, VERSION_STRATEGY, USER_GUIDE, INVENTORY, DEVELOPMENT, DATA_DICTIONARY, CHANGELOG, LOCAL_PREVIEW, README, AUDIT_KESIAPAN)
-- [ ] Uji editor SPK (tambah baris, section, urut), Master Data (ganti nama, gabung), opname sparepart, dokumen kartu stok dan PR bahan baku
+- [x] Uji editor SPK, Master Data (ganti nama, gabung), opname sparepart, dokumen kartu stok dan PR bahan baku: diselesaikan di [[T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug|T-212]] (`menyeluruh.mjs`, `editor.mjs`, `sparepart.mjs`); aksi UI yang belum diacu uji turun dari 76 menjadi 43 dan tersisa terutama katalog Item SPK, Judul section, dan kontrol mesin Produksi Hari Ini
 
 ## Bukti
 

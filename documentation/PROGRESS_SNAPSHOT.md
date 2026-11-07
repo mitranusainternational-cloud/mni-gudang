@@ -1,8 +1,8 @@
 ---
 type: progress-snapshot
 status: generated
-updated: 2026-11-06
-generated: 2026-11-06
+updated: 2026-11-07
+generated: 2026-11-07
 ---
 
 # Snapshot progress
@@ -11,10 +11,10 @@ generated: 2026-11-06
 
 ## Ringkasan
 
-- Tugas selesai: **37 / 131** (28%)
-- Bobot effort selesai: **40 / 220.59999999999997 hari kerja** (18%)
-- Sisa effort: **180.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
-- Cakupan go-live (fase P0-P7): **33 / 101** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
+- Tugas selesai: **39 / 133** (29%)
+- Bobot effort selesai: **42 / 223.59999999999997 hari kerja** (19%)
+- Sisa effort: **181.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
+- Cakupan go-live (fase P0-P7): **35 / 103** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
 - Diblokir: **1**, sedang dikerjakan: **6**
 - Estimasi effort bersifat indikatif dan belum memuat waktu tunggu pihak lain.
 
@@ -24,7 +24,7 @@ generated: 2026-11-06
 |---|---|---|---|
 | P0 Workspace dan tracking | 7/7 | 5/5 hari (100%) | selesai |
 | P1 Fondasi lokal | 2/8 | 1.5/4.7 hari (32%) | ada blocker |
-| P2 Aplikasi siap uji | 15/46 | 20/71 hari (28%) | berjalan |
+| P2 Aplikasi siap uji | 17/48 | 22/74 hari (30%) | berjalan |
 | P3 Data dan proses | 0/7 | 0/13.5 hari (0%) | belum mulai |
 | P4 Environment cloud | 6/9 | 3.5/6 hari (58%) | berjalan |
 | P5 UAT pilot | 2/12 | 2/15.899999999999999 hari (13%) | berjalan |
@@ -38,8 +38,8 @@ generated: 2026-11-06
 
 | Rilis | Tema | Tugas | Effort | Status |
 |---|---|---|---|---|
-| v0.9 | Fondasi | 16/39 | 12.75/47.45 hari (27%) | active |
-| v1.0 | Pilot go-live | 15/53 | 18.5/72.9 hari (25%) | active |
+| v0.9 | Fondasi | 18/39 | 14.75/47.45 hari (31%) | active |
+| v1.0 | Pilot go-live | 15/55 | 18.5/75.9 hari (24%) | active |
 | v1.1 | Stabilisasi, akses, kualitas data | 2/14 | 4/30 hari (13%) | active |
 | v1.2 | Integrasi dan pelaporan | 4/16 | 4.75/42.75 hari (11%) | active |
 | v2.0 | Modernisasi dan perluasan | 0/9 | 0/27.5 hari (0%) | active |
@@ -49,8 +49,8 @@ generated: 2026-11-06
 | Epic | Rilis | Tugas | Progress | Status |
 |---|---|---|---|---|
 | [[roadmap/epics/E-01-fondasi-workspace-dan-repo\|E-01]] Fondasi workspace dan repo | v0.9 | 7/8 | 96% | active |
-| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 9/31 | 18% | active |
-| [[roadmap/epics/E-03-kualitas-aplikasi-dan-keamanan-data\|E-03]] Kualitas aplikasi dan keamanan data | v1.0 | 8/15 | 57% | active |
+| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 11/31 | 23% | active |
+| [[roadmap/epics/E-03-kualitas-aplikasi-dan-keamanan-data\|E-03]] Kualitas aplikasi dan keamanan data | v1.0 | 8/17 | 51% | active |
 | [[roadmap/epics/E-04-proses-data-dan-pilot\|E-04]] Proses, data, dan pilot | v1.0 | 0/7 | 0% | planned |
 | [[roadmap/epics/E-05-environment-cloud-dan-ci-cd\|E-05]] Environment cloud dan CI/CD | v1.0 | 5/11 | 44% | active |
 | [[roadmap/epics/E-06-uat-hardening-dan-go-live\|E-06]] UAT, hardening, dan go-live | v1.0 | 1/13 | 2% | active |
@@ -108,11 +108,9 @@ generated: 2026-11-06
 - [[tasks/T-177-skema-produksi-tiga-pintu-spk-berjalan|T-177]] Skema produksi tiga pintu: SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa (Tahap 1) · dev + pemilik
 - [[tasks/T-178-kinerja-dan-analisa-produksi-tahap-2|T-178]] Kinerja & Analisa produksi (Tahap 2): per work center, produk, vendor, dan pengiriman · dev + pemilik
 - [[tasks/T-179-produksi-hari-ini-v2-dan-laporan-produksi|T-179]] Produksi Hari Ini v2 dan Laporan Produksi: input otomatis, analisa qty, tonase, kecepatan, produk bertingkat, KPI operator dan mesin · dev + pemilik
-- [[tasks/T-180-jadwal-spk-gantt|T-180]] Jadwal SPK (Gantt): garis waktu SPK berjalan dari terbit, produksi, vendor, kirim sampai due date · dev + pemilik
 - [[tasks/T-181-uji-alur-spk-awal-sampai-akhir|T-181]] Uji alur lengkap SPK dari terbit sampai selesai, dengan tangkapan layar dan dokumentasi · dev + pemilik
 - [[tasks/T-182-papan-jadwal-v2-dan-rapikan-layout-spk|T-182]] Papan jadwal v2 (per SPK dan per mesin) dan perapian layout Berjalan, KPI & Analisa, Target waktu proses · dev + pemilik
 - [[tasks/T-183-produksi-hari-ini-papan-mesin-dan-kapasitas-aktual|T-183]] Produksi Hari Ini: papan mesin dan kapasitas aktual (output, laju, pemakaian mesin, proyeksi, tren) · dev + pemilik
-- [[tasks/T-185-papan-jadwal-v3-interaktif-dan-urutan-tab-spk|T-185]] Papan jadwal v3 interaktif (tooltip, panel detail, zoom, geser, buka/lipat semua) dan urutan tab SPK · dev + pemilik
 - [[tasks/T-190-modul-penawaran-lokal|T-190]] Modul Penawaran lokal (daftar, lembar, revisi, cetak) · dev + pemilik
 - [[tasks/T-191-muat-dari-penawaran-ke-spk-dan-snapshot-po|T-191]] Muat dari penawaran ke SPK dan snapshot PO · dev + pemilik
 - [[tasks/T-192-kebutuhan-material-dan-reservasi-stok|T-192]] Kebutuhan material dan reservasi stok · dev + pemilik
@@ -128,6 +126,8 @@ generated: 2026-11-06
 - [[tasks/T-208-pustaka-pdf-dan-excel-dari-aplikasi-sendiri|T-208]] Pustaka PDF dan Excel dilayani dari aplikasi sendiri (tanpa bergantung CDN) · dev + pemilik
 - [[tasks/T-209-gudang-bahan-baku-posisi-stok-dan-stock-opname-dipoles|T-209]] Gudang Bahan Baku: Posisi stok, lembar hitung opname, dan berita acara opname · dev + pemilik
 - [[tasks/T-210-audit-fitur-dan-suite-uji-fitur|T-210]] Audit fitur dan rencana, suite uji fitur (aksi UI yang belum diuji) · dev + pemilik
+- [[tasks/T-211-audit-kerangka-dan-standar-industri|T-211]] Audit kerangka dan standar industri: keamanan, aksesibilitas, kode, data, bug · dev + pemilik
+- [[tasks/T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug|T-212]] Uji menyeluruh semua modul hulu ke hilir dan perbaikan bug yang ditemukan · dev + pemilik
 
 ## Tugas P0 yang belum selesai
 

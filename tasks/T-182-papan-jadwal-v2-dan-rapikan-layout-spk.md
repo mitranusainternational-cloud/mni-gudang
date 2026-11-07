@@ -11,7 +11,7 @@ env: dev
 effort_days: 1
 depends: [T-180, T-181]
 owner: "dev + pemilik"
-updated: 2026-11-05
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -35,7 +35,7 @@ Masukan pemilik setelah melihat tampilan: jadwal terlalu kaku dan perlu mengikut
 - [x] Target waktu proses: dua kelompok, tiap isian dengan keterangan dan satuan hari kerja
 - [x] Mesin hitung `langkahItem` dan `susunMesin` dengan uji J-18 sampai J-21
 - [x] Uji e2e M-137 sampai M-142 dan penyesuaian M-131, M-135; regresi penuh 0 FAIL
-- [ ] Ditinjau pemilik
+- [ ] Ditinjau pemilik: KPI & Analisa dan Target waktu proses (bagian Berjalan dan Jadwal sudah dinyatakan sesuai lewat T-186, 2026-11-05)
 
 ## Bukti
 

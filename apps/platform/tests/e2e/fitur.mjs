@@ -1,3 +1,5 @@
+import { pindaiKejanggalan } from './kejanggalan.mjs';
+import { periksaInvarian } from './invarian.mjs';
 // Uji fitur yang sebelumnya tidak diacu langsung oleh uji lain (audit fitur 2026-11-06, mock, data sintetis):
 // koreksi transaksi, nonaktif item, SPK Draft terbit, ceklis produk jadi SPK stok, baris tambahan di form mutasi,
 // opname bahan baku (isi, kosongkan, lembar hitung), unduhan Excel, jenis material, alamat surat jalan.
@@ -68,6 +70,26 @@ export async function runFitur(page, base) {
   const pub = (await rows('spk')).find((s) => s.id === draft.id);
   ok('F-4 ceklis produk menjadi SPK stok Draft (qty 4), lalu Terbitkan mengubah status dan mencatat waktu terbit', draft.status === 'Draft' && (draft.items || [])[0].q === 4 && pub.status === 'Terbit' && !!(pub.terbitAt || pub.terbit_at), `${draft.status}→${pub.status} q=${JSON.stringify((draft.items || []).map((i) => i.q))} terbit=${pub.terbitAt || pub.terbit_at}`);
 
+  // F-17 koreksi barang masuk gudang jadi dari SPK stok: progres SPK ikut berkurang (koreksi membalik transaksi masuk)
+  await page.evaluate((id) => { const db = JSON.parse(localStorage.getItem('mni-local-mock-db')); const s = db.tables.spk.find((x) => x.id === id); const o = s.items ? s : s.data; o.items.forEach((it) => { it.prod = it.q; }); localStorage.setItem('mni-local-mock-db', JSON.stringify(db)); }, draft.id);
+  await page.reload(); await page.waitForTimeout(2500); await go('#barang-jadi');
+  await act('mv', { g: 'fg', j: 'masuk', item: (draft.items || [])[0].fg }); await page.waitForTimeout(700);
+  await page.evaluate((id) => { const f = document.querySelector('#mform'); f.querySelector('[name^="qty_"]').value = '3'; f.spk.value = id; f.spk.dispatchEvent(new Event('change', { bubbles: true })); f.pihak.value = 'Produksi'; }, draft.id);
+  await submit(); await page.waitForTimeout(900);
+  const kir1 = await page.evaluate((id) => calc().spk[id].kir, draft.id);
+  // F-18 Dashboard: SPK stok (customer STOK MNI) tidak masuk peringkat customer dan funnel pengiriman customer
+  await go('#dashboard');
+  const topTxt = await page.evaluate(() => { const p = [...document.querySelectorAll('section.panel')].find((x) => /Top customer/.test(x.innerText)); return p ? p.innerText : ''; });
+  ok('F-18 peringkat Top customer di Dashboard tidak memuat STOK MNI walau SPK stok sudah menerima barang', topTxt.length > 0 && !/STOK MNI/.test(topTxt), topTxt.replace(/\s+/g, ' ').slice(0, 90));
+  await go('#barang-jadi');
+  const mFg = (await rows('mutasi')).filter((m) => m.gudang === 'fg' && m.jenis === 'masuk' && m.spk === draft.id).pop();
+  await act('koreksi', { id: mFg.id }); await page.waitForTimeout(600);
+  await page.evaluate(() => { document.querySelector('#mform [name="ket"]').value = 'salah catat uji'; });
+  await submit(); await page.waitForTimeout(900);
+  const kir2 = await page.evaluate(([id, fg]) => ({ kir: calc().spk[id].kir, got: fgGot(id, fg), pend: fgPending(fg) }), [draft.id, (draft.items || [])[0].fg]);
+  ok('F-17 koreksi barang masuk SPK stok: sebelum koreksi tercatat 3 masuk gudang, sesudahnya progres kembali 0 dan yang sedang diproduksi kembali penuh', kir1 === 3 && kir2.kir === 0 && kir2.got === 0 && kir2.pend >= 4, JSON.stringify({ kir1, kir2 }));
+
+
   // F-5 opname bahan baku: isi semua = sistem, kosongkan, dan lembar hitung kosong
   await go('#bahan-baku'); await tab('Stock opname'); await page.waitForTimeout(700);
   await act('opnfill'); await page.waitForTimeout(500);
@@ -135,10 +157,18 @@ export async function runFitur(page, base) {
   };
   await go('#bahan-baku');
   const d12 = await unduh('opnsheetxlsx');
-  ok('F-12 lembar hitung opname kosong dapat diunduh sebagai Excel', !!(await d12) && /.xlsx$/i.test((await d12).suggestedFilename()), d12 ? (await d12).suggestedFilename() : 'tidak ada unduhan');
+  ok('F-12 lembar hitung opname kosong dapat diunduh sebagai Excel', !!(await d12) && /\.xlsx$/i.test((await d12).suggestedFilename()), d12 ? (await d12).suggestedFilename() : 'tidak ada unduhan');
   const d13 = await unduh('mvxlsx', { no: m1.noDok || m1.no_dok || '', j: 'masuk', id: m1.id });
-  ok('F-13 dokumen penerimaan bahan baku dapat diunduh sebagai Excel', !!(await d13) && /.xlsx$/i.test((await d13).suggestedFilename()), d13 ? (await d13).suggestedFilename() : 'tidak ada unduhan');
+  ok('F-13 dokumen penerimaan bahan baku dapat diunduh sebagai Excel', !!(await d13) && /\.xlsx$/i.test((await d13).suggestedFilename()), d13 ? (await d13).suggestedFilename() : 'tidak ada unduhan');
 
+  // F-16 pembaca angka (isian dan tempelan): koma desimal, pemisah ribuan, format en, dan teks bukan angka
+  const ang = await page.evaluate(() => ({ a: num0('1,5'), b: num0('1.500,75'), c: num0('1.000.000'), d: num0('1,500.75'), e: num0('1.5'), f: num0('abc'), g: num0(''), h: num0(null), i: num0('-3'), j: n(1234567.891), k: n(NaN), l: addDays('2026-12-31', 1), m: addWorkdays('2026-11-06', 5), o: days('2026-11-01', '2026-11-06') }));
+  ok('F-16 num0 membaca 1,5 / 1.500,75 / 1.000.000 / 1,500.75 dengan benar; teks bukan angka jadi 0; format angka dan tanggal', ang.a === 1.5 && ang.b === 1500.75 && ang.c === 1000000 && ang.d === 1500.75 && ang.e === 1.5 && ang.f === 0 && ang.g === 0 && ang.h === 0 && ang.i === -3 && ang.j === '1.234.567,89' && ang.k === '0' && ang.l === '2027-01-01' && ang.m === '2026-11-13' && ang.o === 5, JSON.stringify(ang));
+
+  const inv = await periksaInvarian(page);
+  ok('F-15 invarian data hulu ke hilir (stok tidak minus, nomor unik, tautan sah, koreksi menolakkan, SPK stok) tanpa pelanggaran', inv.pelanggaran.length === 0, inv.pelanggaran.slice(0, 6).join(' ; ') || JSON.stringify(inv.jumlah));
+  const kej = await pindaiKejanggalan(page);
+  ok('F-19 pemindai kejanggalan: semua menu desktop dan HP tanpa teks undefined, NaN, null, gambar rusak, meluap, tabel kosong tanpa keterangan, dan galat konsol', kej.temuan.length === 0 && kej.galat.length === 0, (kej.temuan.concat(kej.galat)).slice(0, 8).join(' ; ') || String(kej.jumlahMenu) + ' menu');
   ok('F-14 tanpa pageerror', errs.length === 0, errs.join(' | '));
   const fail = R.filter((x) => x.startsWith('FAIL')).length;
   return { pass: R.length - fail, fail, detail: R };

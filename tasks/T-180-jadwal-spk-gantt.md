@@ -5,13 +5,13 @@ title: "Jadwal SPK (Gantt): garis waktu SPK berjalan dari terbit, produksi, vend
 phase: P2
 epic: E-02
 release: v0.9
-status: review
+status: done
 priority: P1
 env: dev
 effort_days: 1
 depends: [T-179]
 owner: "dev + pemilik"
-updated: 2026-11-04
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -32,7 +32,7 @@ Kebutuhan: [[PRD_PRODUKSI]] bagian 12
 - [x] Skala per minggu dan per bulan, filter status, pencarian, tombol Ke hari ini; di HP garis waktu bergulir di dalam kotaknya
 - [x] Mesin hitung murni `src/lib/produksi/jadwal.js` dengan uji unit 17
 - [x] Uji e2e M-129 sampai M-136; regresi penuh 0 FAIL (mock, `verified in browser`, bukan bukti Supabase)
-- [ ] Ditinjau pemilik di pratinjau lokal
+- [x] Ditinjau pemilik: Gantt v1 digantikan timeline bersih T-186 yang dinyatakan sesuai (2026-11-05); Gantt rinci per item tetap tersedia sebagai pilihan
 
 ## Bukti
 

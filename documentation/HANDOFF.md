@@ -7,6 +7,8 @@ updated: 2026-11-06
 
 # Serah terima: melanjutkan proyek dengan akun Claude lain
 
+Prompt siap tempel untuk akun lain: [[SERTIJOB]].
+
 Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak memuat rahasia. Aturan kerja ada di [[AGENTS]] dan `CLAUDE.md`; dashboard di [[Home]]; peta koneksi di [[documentation/SISTEM_MAP]].
 
 ## 1. Posisi proyek (2026-11-06, setelah audit dokumentasi T-204)
@@ -18,7 +20,7 @@ Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak m
 - **Rilis ke production dijeda** atas permintaan pemilik (2026-11-06: fokus pemolesan lokal dahulu): [[T-203-rilis-paket-gudang-dan-produksi-ke-production]]. Rencananya: database dahulu (migration 14 lalu 18, hanya menambah; 17 tidak ikut), lalu PR ke `main`, deploy Vercel, verifikasi, dengan rollback Vercel siap.
 - **Hal yang harus diketahui sebelum rilis:** cabang ini membawa 175 berkas dari `main` (bukan hanya gudang), dan penjaga kirim ke customer mengubah perilaku di production (SPK lama yang produksinya tidak pernah dicatat tertahan sampai dicatat atau override dipakai).
 - Berikutnya (lokal): pemolesan modul per permintaan pemilik; tugas terbuka T-193 (monitoring estimasi lawan aktual, ditunda karena Penawaran disembunyikan), T-111 sampai T-113 (aturan Cek Data, opname terjadwal, validasi buffer).
-- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji: regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72, unit 266 (2026-11-06).
+- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji (2026-11-07, semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, penawaran 42, sparepart 38, fitur 18, keamanan 8, aksesibilitas 3, menyeluruh 24, editor 17, tampilan 72, unit 266, lint 0 galat dan 42 peringatan (batas CI 43). Audit silang: [[AUDIT_PROGRESS_2026-11-07]].
 
 ## 2. Yang HANYA ada di mesin ini (cadangkan sebelum ganti akun atau mesin)
 
@@ -53,7 +55,8 @@ node scripts/extract-app.js            # wajib setelah mengubah apps/gudang-logi
 for f in tests/unit/*.test.mjs; do node "$f"; done
 node tests/e2e/run.mjs http://127.0.0.1:5173/   # regresi penuh; lama, bisa dipecah per suite
 node tests/e2e/alur-spk.mjs                      # alur SPK lama
-node tests/e2e/alur-penawaran.mjs                # alur hulu ke hilir
+node tests/e2e/alur-penawaran.mjs                # alur hulu ke hilir (Penawaran, Sales Order, SPK)
+ONLY=editor node tests/e2e/run.mjs http://127.0.0.1:5173/   # satu suite; Penawaran dinyalakan mock lewat kunci uji localStorage mni-uji-penjualan (production tetap tersembunyi)
 cd ../.. && node scripts/sync-vault.mjs          # harus berakhir OK sebelum commit
 ```
 

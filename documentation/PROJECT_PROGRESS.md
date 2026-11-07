@@ -730,3 +730,35 @@ Permintaan pemilik: "update semua dan audit fitur dan plan". Laporan: [[FEATURE_
 - **Audit rencana:** deviasi, usul penyesuaian (fase P2b, walkthrough memakai modul jadi, rilis bertahap setelah backup, tutup T-011 sampai T-013, sesi tinjauan per modul, aturan lingkup), dan risiko aktif dicatat; keputusan di pemilik.
 - **Dokumen disegarkan:** GO_LIVE_PLAN, INTEGRATION_PATH (status S0 sampai S6), ENVIRONMENTS (keadaan terkini), RELEASE_CHECKLIST (rilis bertahap), VERSION_STRATEGY, USER_GUIDE (ditulis ulang per modul), INVENTORY, DEVELOPMENT, DATA_DICTIONARY (koleksi aplikasi), CHANGELOG (belum dirilis), LOCAL_PREVIEW, README, AUDIT_KESIAPAN, TEST_MATRIX, PETA_MODUL, HANDOFF, skill e2e-regression.
 - **Tes:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72 (342) dan unit 266.
+
+## 2026-11-06 · Audit kerangka dan standar industri (T-211)
+
+Permintaan pemilik: cek kerangka dan setiap fitur dari hulu ke hilir sampai tidak ada bug, kejanggalan, atau hal kurang bagus; jadikan sistem standar industri; kerjakan di lokal, buka di Playwright, dan pakai Context7. Laporan: [[STANDAR_INDUSTRI]].
+
+- **Kerangka:** dokumentasi supabase-js dan Vite diperiksa lewat Context7; `npm audit --omit=dev` 0 kerentanan; 4 temuan hanya di alat pengembangan (CLI Supabase memakai `tar` rentan).
+- **Keamanan:** uji XSS permanen `keamanan.mjs` (8 uji) lulus tanpa celah. CSP production masih `unsafe-inline`; rencana ada di T-211.
+- **Aksesibilitas:** axe-core menemukan 5 kelas pelanggaran WCAG 2 A dan AA (kontras dua tema, select tanpa nama, isian tanpa label, tabel gulir tanpa fokus keyboard, avatar); semua dibenahi dan dikunci oleh `aksesibilitas.mjs` (0 pelanggaran).
+- **Kualitas kode:** ESLint dipasang (0 galat, 43 peringatan kode mati), `npm run lint` dan `npm run test:unit` masuk CI; `kartu()` tidak lagi ditimpa; dua kunci ganda dibuang.
+- **Bug fungsional (2):** pembaca angka berpemisah ribuan (F-16); koreksi barang masuk SPK stok tidak mengurangi progres (F-17).
+- **Invarian data:** 10 invarian hulu ke hilir lulus pada data uji; alur SPK ujung ke ujung (alur-spk.mjs) 15 lulus bersama penjaga hasil produksi.
+- **Dicoba dan dibuang:** minifikasi `app.js` (hemat 9 persen saja).
+- **Kesenjangan standar industri** dan rencana pemenuhan: lihat [[STANDAR_INDUSTRI]] bagian 3 dan 5.
+
+## 2026-11-07 · Uji menyeluruh semua modul hulu ke hilir (T-212)
+
+Permintaan pemilik: buka di Playwright dan uji semuanya dari hulu ke hilir, semua modul dan fitur, sampai tidak ada bug. Laporan: [[STANDAR_INDUSTRI]] bagian 2.3, tugas [[T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug]].
+
+- **Suite baru:** `menyeluruh.mjs` (24 uji) untuk aksi yang belum diacu uji lain; pemindai kejanggalan `kejanggalan.mjs` (16 menu desktop dan HP) di suite fitur dan menyeluruh; fitur bertambah ke 18 uji.
+- **Bug ditemukan dan diperbaiki (4 kelompok, selain 2 dari T-211):** supplier diganti nama tidak mengikutkan PR; hitungan pemakaian master tidak lengkap sehingga supplier atau customer terpakai dapat terhapus permanen; ganti nama customer tidak mengikutkan Penawaran dan Sales Order; Dashboard memasukkan SPK stok ke Top customer, funnel pengiriman, dan hitungan telat.
+- **Penelusuran visual Playwright:** Dashboard, Bahan Baku, Barang Jadi, Sparepart, SPK, Produksi Hari Ini ditinjau di tema terang; tidak ada kejanggalan lain. Alur SPK ujung ke ujung (15) lulus.
+- **Catatan:** data contoh mock memakai nama material generik sehingga tampil "Belum dikenali" (bukan bug production).
+
+## 2026-11-07 · Audit silang ketiga dan perbaikan bug (T-212)
+
+Permintaan pemilik setelah berganti akun: audit fitur, cari bug hulu ke hilir, pastikan tidak ada tugas ganda dan status sesuai roadmap. Laporan: [[AUDIT_PROGRESS_2026-11-07]].
+
+- **Verifikasi ulang:** seluruh angka uji sesi sebelumnya cocok; suite Penawaran yang terlewati dihidupkan (42 lulus).
+- **Bug (7):** B-019 sampai B-025 ([[TEST_MATRIX]]): Work Center terpakai bisa dihapus dan diganti nama, penolakan hapus oleh database tampak berhasil, dialog tanpa perangkap fokus, jenis material kustom tak dikenali kebutuhan material, suite Penawaran terlewati, tugas selesai tanpa bukti.
+- **Uji baru:** `editor.mjs` 17 uji, opname sparepart; aksi UI belum diuji turun dari 76 ke 43.
+- **Tugas dan roadmap:** bukti ditulis (T-046, T-175, T-176, T-178); T-180 dan T-185 ditutup (digantikan T-186); kriteria ganda dirapikan; dependensi T-034 dilepas dari Docker; roadmap diselaraskan.
+- **Belum:** keputusan pemilik di [[AUDIT_PROGRESS_2026-11-07]] bagian 4; semua bukti masih mock.

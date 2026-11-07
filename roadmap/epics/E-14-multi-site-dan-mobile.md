@@ -9,7 +9,7 @@ status: planned
 progress: 0
 tasks_total: 2
 tasks_done: 0
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # E-14 Multi-site dan mobile

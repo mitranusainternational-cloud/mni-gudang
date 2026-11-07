@@ -24,6 +24,20 @@ export function bahanTebal(judul, tebalSpk = 0) {
   const tebal = m ? angka(m[1]) : angka(tebalSpk);
   return { bahan, tebal };
 }
+/** Bahan penentu pencocokan dari jenis material item bahan baku. Jenis bawaan dan jenis kustom Master Data (mis. A5052)
+ *  dipetakan ke empat bahan yang dikenal judul SPK: SPHC, SS304, SS316, Aluminium. Massa jenis di bawah 4 g/cm3 = Aluminium. */
+export function bahanDariJenis(nama, massaJenis) {
+  const n = String(nama || '').toUpperCase().trim();
+  if (['', 'SPHC', 'SPCC', 'LAINNYA'].includes(n)) return 'SPHC';
+  if (n === 'SS304' || n === 'SS316') return n;
+  if (n === 'ALUMINIUM') return 'Aluminium';
+  const d = angka(massaJenis);
+  if (d > 0 && d < 4) return 'Aluminium';
+  if (/316/.test(n)) return 'SS316';
+  if (/304|SUS|STAINLESS|^SS/.test(n)) return 'SS304';
+  if (/ALU|^AL ?\d|^A\d{4}/.test(n)) return 'Aluminium';
+  return 'SPHC';
+}
 export const kunciMaterial = (bahan, tebal) => `${bahan}|${r3(angka(tebal))}`;
 
 /** Kelompokkan item SPK/SO per (bahan, tebal). item = { d, g (judul section), q, w (kg per pcs) }.

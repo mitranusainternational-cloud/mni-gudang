@@ -27,7 +27,7 @@ Bergantung pada: -
 - [x] ExcelJS 4.4.0, jsPDF 2.5.1, jsPDF-AutoTable 3.8.2, html2canvas 1.4.1 disimpan di `apps/platform/public/vendor/` (identik byte demi byte dengan CDN; versi, lisensi, hash di `README.md`)
 - [x] Pemuat mencoba `/vendor/` lebih dulu, CDN sebagai cadangan (CSP production hanya mengizinkan cdnjs)
 - [x] Unduhan Excel dan PDF berhasil memakai berkas lokal
-- [ ] CSP ketat tanpa domain CDN (lanjutan di T-143)
+- [x] Lanjutan CSP ketat dipindah ke [[T-143-aset-lokal-tanpa-cdn-dan-csp-ketat|T-143]] (satu pemilik kriteria agar tidak dihitung dua kali)
 
 ## Bukti
 

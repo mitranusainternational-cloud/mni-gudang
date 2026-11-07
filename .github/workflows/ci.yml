@@ -49,6 +49,10 @@ jobs:
           cache-dependency-path: apps/platform/package-lock.json
       - name: Pasang dependensi
         run: npm ci --ignore-scripts
+      - name: Lint (galat nyata)
+        run: npm run lint
+      - name: Uji unit (tanpa katalog privat)
+        run: npm run test:unit
       - name: Ekstrak UI
         run: npm run extract
       - name: Build

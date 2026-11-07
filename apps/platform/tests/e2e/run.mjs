@@ -2,7 +2,7 @@
 // Menjalankan regresi penuh (regression.mjs) lalu uji penegakan role (roles.mjs) dan hak per modul (access.mjs) di Chromium headless.
 // Butuh dev server mock (VITE_LOCAL_MOCK=1) dan `npx playwright install chromium`.
 // Opsi: ONLY=tampilan,produksi node tests/e2e/run.mjs   -> hanya rangkaian yang disebut.
-// Rangkaian Penawaran dilewati otomatis bila modul Penjualan disembunyikan (MODUL_PENJUALAN=false di app.js).
+// Rangkaian Penawaran menyalakan modul lewat kunci uji localStorage (hanya mock); production tetap menyembunyikannya.
 
 import { chromium } from 'playwright';
 import { runRegression } from './regression.mjs';
@@ -13,19 +13,19 @@ import { runProduksi } from './produksi.mjs';
 import { runPenawaran } from './penawaran.mjs';
 import { runSparepart } from './sparepart.mjs';
 import { runFitur } from './fitur.mjs';
+import { runKeamanan } from './keamanan.mjs';
+import { runAksesibilitas } from './aksesibilitas.mjs';
+import { runMenyeluruh } from './menyeluruh.mjs';
+import { runEditor } from './editor.mjs';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173/';
 const only = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
 
-let penjualanOff = false;
-try {
-  const src = await (await fetch(new URL('app.js', base))).text();
-  penjualanOff = /const MODUL_PENJUALAN=false/.test(src);
-} catch { /* abaikan: anggap modul aktif */ }
+const penjualanOff = false;
 
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['tampilan', runSweep]]) {
   if (only.length && !only.includes(name)) continue;
   if (name === 'penawaran' && penjualanOff) {
     console.log(`== ${name} ==\nDILEWATI: modul Penjualan disembunyikan (MODUL_PENJUALAN=false)\n`);

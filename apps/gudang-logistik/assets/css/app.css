@@ -2,10 +2,10 @@
 /* Layout: app shell — navy rail on the left (top strip on phones), live work area on the right */
 :root{
   --bg:#EEF2F8; --surface:#FFFFFF; --surface-2:#F5F7FB; --line:#DCE3EE; --line-2:#C7D1E0;
-  --fg:#12203A; --muted:#5B6B85; --faint:#8A97AD;
+  --fg:#12203A; --muted:#5B6B85; --faint:#5F6D86;
   --rail:#FFFFFF; --rail-2:#EAF0FB; --rail-fg:#4A5A78; --rail-active:#0E2A5C; --rail-line:#DCE3EE; --rail-cnt:#E6ECF6;
   --accent:#1F5FD6; --accent-soft:#E3ECFC; --accent-fg:#FFFFFF;
-  --ok:#14804A; --ok-soft:#DFF3E8; --warn:#B26A00; --warn-soft:#FDF0D9; --crit:#C2302B; --crit-soft:#FBE3E2; --info:#2F6FB0; --info-soft:#E1EEFA;
+  --ok:#0F6E3E; --ok-soft:#DFF3E8; --warn:#8F5500; --warn-soft:#FDF0D9; --crit:#B02722; --crit-soft:#FBE3E2; --info:#255E99; --info-soft:#E1EEFA;
   --shadow:0 1px 2px rgba(16,32,58,.06),0 4px 16px rgba(16,32,58,.06);
   --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -15,14 +15,14 @@
   --bg:#0A1426; --surface:#111E36; --surface-2:#0E1A2F; --line:#1F3052; --line-2:#2A3E66;
   --fg:#E6ECF7; --muted:#9AA9C4; --faint:#6E7F9E;
   --rail:#060E1D; --rail-2:#0E1B33; --rail-fg:#A9B8D3; --rail-active:#FFFFFF; --rail-line:#13213D; --rail-cnt:rgba(255,255,255,.08);
-  --accent:#5B8EF0; --accent-soft:#18305C; --accent-fg:#06122A;
+  --accent:#7BA5F5; --accent-soft:#18305C; --accent-fg:#06122A;
   --ok:#4CC587; --ok-soft:#0F3324; --warn:#F0B048; --warn-soft:#3A2A0C; --crit:#F2716B; --crit-soft:#401816; --info:#6FA8E6; --info-soft:#132D4D;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0A1426; --surface:#111E36; --surface-2:#0E1A2F; --line:#1F3052; --line-2:#2A3E66;
   --fg:#E6ECF7; --muted:#9AA9C4; --faint:#6E7F9E;
   --rail:#060E1D; --rail-2:#0E1B33; --rail-fg:#A9B8D3; --rail-active:#FFFFFF; --rail-line:#13213D; --rail-cnt:rgba(255,255,255,.08);
-  --accent:#5B8EF0; --accent-soft:#18305C; --accent-fg:#06122A;
+  --accent:#7BA5F5; --accent-soft:#18305C; --accent-fg:#06122A;
   --ok:#4CC587; --ok-soft:#0F3324; --warn:#F0B048; --warn-soft:#3A2A0C; --crit:#F2716B; --crit-soft:#401816; --info:#6FA8E6; --info-soft:#132D4D;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark}
 *{box-sizing:border-box}
@@ -1259,3 +1259,12 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
  table.fgt td:nth-child(9),table.fgt td:nth-child(10){display:none}
  table.fgt td:nth-child(11){grid-area:st;color:inherit}
 }
+
+/* ---- Aksesibilitas: kontras teks kecil (WCAG AA 4,5:1), diaudit dengan axe-core 2026-11-06 ---- */
+.nav .sec{opacity:1;color:var(--muted)}
+.mi small{opacity:1;color:var(--muted)}
+.mebtn .mi b{color:var(--fg)}
+.rail .foot{opacity:1}
+.foot .muted{opacity:1!important;color:var(--muted)}
+.av{background-image:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2))}
+.brand small{opacity:1}

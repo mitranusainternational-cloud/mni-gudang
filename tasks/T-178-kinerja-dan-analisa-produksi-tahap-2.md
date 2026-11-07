@@ -11,7 +11,7 @@ env: dev
 effort_days: 3
 depends: [T-177]
 owner: "dev + pemilik"
-updated: 2026-11-04
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -31,6 +31,11 @@ Kebutuhan: [[PRD_PRODUKSI]]
 - [x] Tab **Pengiriman**: lama tunggu dan proses loading dan unloading per jenis muatan dan per pihak. Hasil cek: antrian Bongkar Muat sudah menyimpan jam masuk, mulai, dan selesai, jadi **tidak perlu isian baru**
 - [x] Uji unit analisa 21 lulus; e2e produksi 74, regresi 42, role 12, akses 34, tampilan 71 (mock, `verified in browser`, bukan bukti Supabase); PRD dan dokumen diperbarui
 - [ ] Ditinjau pemilik di pratinjau lokal
+
+## Bukti
+
+- `verified in browser` (mock, Playwright) dan unit: unit analisa 21 lulus; regresi 42, role 12, akses 34 dan produksi 134 lulus pada regresi penuh 2026-11-07.
+- Bukan bukti Supabase (migration 14 belum diterapkan).
 
 ## Catatan
 

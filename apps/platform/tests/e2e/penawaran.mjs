@@ -20,7 +20,7 @@ export async function runPenawaran(page, base) {
   const tab = (t) => page.evaluate((t) => JSON.parse(localStorage.getItem('mni-local-mock-db')).tables[t], t);
   const login = async (email) => {
     await page.goto(base);
-    await page.evaluate(() => localStorage.removeItem('mni-local-mock-session'));
+    await page.evaluate(() => { localStorage.removeItem('mni-local-mock-session'); localStorage.setItem('mni-uji-penjualan', '1'); });
     await page.reload();
     await page.fill('#auth-email', email); await page.click('#auth-btn');
     await page.waitForSelector('#auth-otp', { state: 'visible' }); await page.fill('#auth-otp', '123456');
@@ -30,7 +30,6 @@ export async function runPenawaran(page, base) {
   };
   const buka = async () => { await page.evaluate(() => { location.hash = '#penawaran'; }); await page.waitForTimeout(600); };
   const toast = () => page.evaluate(() => document.getElementById('toast').textContent);
-  const tutupModal = async () => { await page.evaluate(() => { document.querySelector('#modal [data-act="closemodal"]')?.click(); }); await page.waitForTimeout(250); };
   const kirimModal = async () => { await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(1200); };
   const status = () => page.evaluate(() => (document.querySelector('.pq-tt .chip') || {}).textContent);
   const nomor = () => page.evaluate(() => document.querySelector('.pq-tt b').textContent.replace('Penawaran ', '').trim());

@@ -346,8 +346,10 @@ function makeDoc(path) {
         const { error } = await supabase.from(table).update({ status: 'Batal' }).eq('id', id);
         if (error) throw new Error(`[softDel:${table}:${id}] ${error.message}`);
       } else {
-        const { error } = await supabase.from(table).delete().eq('id', id);
+        // Kebijakan RLS yang menolak DELETE tidak mengembalikan galat, hanya nol baris: tanpa pemeriksaan ini UI melaporkan sukses palsu.
+        const { data, error } = await supabase.from(table).delete().eq('id', id).select('id');
         if (error) throw new Error(`[delete:${table}:${id}] ${error.message}`);
+        if (!data || !data.length) throw new Error('Penghapusan permanen ditolak database (larangan hapus permanen, migration 13). Gunakan Nonaktifkan atau koreksi dengan transaksi pembalik.');
       }
       notifyWrite(table);
     },

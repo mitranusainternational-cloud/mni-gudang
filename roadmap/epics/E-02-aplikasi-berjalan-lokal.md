@@ -6,10 +6,10 @@ release: v0.9
 theme: Fondasi
 priority: P0
 status: active
-progress: 18
+progress: 23
 tasks_total: 31
-tasks_done: 9
-updated: 2026-11-06
+tasks_done: 11
+updated: 2026-11-07
 ---
 
 # E-02 Aplikasi berjalan lokal
@@ -44,12 +44,12 @@ Docker belum aktif di mesin kerja (T-010).
 - [ ] [[tasks/T-177-skema-produksi-tiga-pintu-spk-berjalan|T-177]] Skema produksi tiga pintu: SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa (Tahap 1) · review · P1 · 1.5 hari
 - [ ] [[tasks/T-178-kinerja-dan-analisa-produksi-tahap-2|T-178]] Kinerja & Analisa produksi (Tahap 2): per work center, produk, vendor, dan pengiriman · review · P1 · 3 hari
 - [ ] [[tasks/T-179-produksi-hari-ini-v2-dan-laporan-produksi|T-179]] Produksi Hari Ini v2 dan Laporan Produksi: input otomatis, analisa qty, tonase, kecepatan, produk bertingkat, KPI operator dan mesin · review · P1 · 2 hari
-- [ ] [[tasks/T-180-jadwal-spk-gantt|T-180]] Jadwal SPK (Gantt): garis waktu SPK berjalan dari terbit, produksi, vendor, kirim sampai due date · review · P1 · 1 hari
+- [x] [[tasks/T-180-jadwal-spk-gantt|T-180]] Jadwal SPK (Gantt): garis waktu SPK berjalan dari terbit, produksi, vendor, kirim sampai due date · done · P1 · 1 hari
 - [ ] [[tasks/T-181-uji-alur-spk-awal-sampai-akhir|T-181]] Uji alur lengkap SPK dari terbit sampai selesai, dengan tangkapan layar dan dokumentasi · review · P1 · 1 hari
 - [ ] [[tasks/T-182-papan-jadwal-v2-dan-rapikan-layout-spk|T-182]] Papan jadwal v2 (per SPK dan per mesin) dan perapian layout Berjalan, KPI & Analisa, Target waktu proses · review · P1 · 1 hari
 - [ ] [[tasks/T-183-produksi-hari-ini-papan-mesin-dan-kapasitas-aktual|T-183]] Produksi Hari Ini: papan mesin dan kapasitas aktual (output, laju, pemakaian mesin, proyeksi, tren) · review · P1 · 1 hari
 - [x] [[tasks/T-184-muat-data-bahan-baku-oktober-ke-production|T-184]] Muat data bahan baku (plat) 27 Oktober ke Supabase production · done · P1 · 1 hari
-- [ ] [[tasks/T-185-papan-jadwal-v3-interaktif-dan-urutan-tab-spk|T-185]] Papan jadwal v3 interaktif (tooltip, panel detail, zoom, geser, buka/lipat semua) dan urutan tab SPK · review · P1 · 1 hari
+- [x] [[tasks/T-185-papan-jadwal-v3-interaktif-dan-urutan-tab-spk|T-185]] Papan jadwal v3 interaktif (tooltip, panel detail, zoom, geser, buka/lipat semua) dan urutan tab SPK · done · P1 · 1 hari
 - [x] [[tasks/T-186-jadwal-tampilan-progres-matriks-posisi-item|T-186]] Berjalan memuat matriks posisi item; Jadwal menjadi timeline bersih per SPK dengan perkiraan otomatis · done · P1 · 2 hari
 - [x] [[tasks/T-195-surat-jalan-alamat-partial-dan-penomoran-otomatis|T-195]] Surat jalan: alamat pengiriman, tabel partial, penomoran otomatis, dokumen baru · done · P1 · 1.5 hari
 - [ ] [[tasks/T-196-gudang-bahan-baku-dokumen-mutasi-dan-master-fleksibel|T-196]] Gudang Bahan Baku: dokumen semua mutasi, jenis material fleksibel, item nonaktif, kartu HP · review · P1 · 3 hari

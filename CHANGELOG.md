@@ -27,6 +27,17 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ### Diperbaiki (lokal)
 - Teks progres "N dari M item dikirim" di laci SPK selalu 0; kini memakai jumlah terkirim sebenarnya.
+- Pembaca angka salah untuk teks berpemisah ribuan (`1.500,75` terbaca 1,5): kini mengenali koma desimal, titik ribuan, dan format en.
+- Koreksi barang masuk gudang jadi dari SPK stok tidak mengurangi progres SPK dan jumlah yang sedang diproduksi; kini ikut berkurang.
+- Mengganti nama supplier di Master Data kini mengubah supplier pada PR; hitungan pemakaian master memuat sparepart, PR, dan barang jadi keluar (supplier atau customer yang dipakai tidak bisa dihapus permanen); ganti nama customer mengikutkan Penawaran dan Sales Order.
+- Dashboard: SPK stok tidak lagi masuk Top customer, funnel pengiriman customer, dan hitungan telat.
+- Work Center yang dilewati rute SPK aktif, punya catatan produksi, atau ada di aturan rute tidak lagi bisa dihapus (ditawarkan Nonaktifkan) dan tidak bisa diganti nama.
+- Modal dan laci mengelola fokus keyboard: Tab tetap di dalam dialog, fokus kembali ke tombol pemicu saat ditutup.
+- Penghapusan yang ditolak kebijakan database kini menampilkan galat, bukan sukses palsu.
+
+### Aksesibilitas dan kualitas (lokal)
+- Kontras warna tema gelap dan terang memenuhi WCAG 2 AA; pilihan, isian, dan tabel yang dapat digulir diberi nama dan dapat diakses keyboard; avatar berkontras cukup.
+- Pemeriksaan otomatis: ESLint (`npm run lint`), uji unit di CI, uji XSS, uji aksesibilitas (axe-core), dan pemeriksa invarian data.
 
 ### Direncanakan sebelum dipakai tim
 - Database production terpisah dan terverifikasi di Supabase (akun mitranusainternational), akun admin dan role tim, Auth (Site URL, Redirect URL, sign-up dimatikan).

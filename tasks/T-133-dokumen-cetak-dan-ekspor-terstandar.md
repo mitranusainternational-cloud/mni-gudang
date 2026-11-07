@@ -11,7 +11,7 @@ env: development
 effort_days: 3
 depends: [T-143]
 owner: "dev"
-updated: 2026-11-06
+updated: 2026-11-07
 ---
 
 # T-133 Dokumen cetak dan ekspor terstandar
@@ -22,7 +22,7 @@ Bergantung pada: T-143
 ## Kriteria selesai
 
 - [ ] PDF SPK dan surat jalan sesuai format perusahaan
-- [ ] Tidak bergantung CDN saat cetak
+- [x] Tidak bergantung CDN saat cetak: pustaka PDF dan Excel dilayani dari aplikasi sendiri ([[T-208-pustaka-pdf-dan-excel-dari-aplikasi-sendiri|T-208]]); sisa CSP ada di [[T-143-aset-lokal-tanpa-cdn-dan-csp-ketat|T-143]]
 
 ## Bukti
 

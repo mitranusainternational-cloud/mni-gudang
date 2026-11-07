@@ -8,7 +8,7 @@ updated: 2026-11-06
 
 # Peta modul: dari hulu ke hilir
 
-Satu halaman untuk menjawab "modul apa saja, dari mana datanya, ke mana mengalir, sudah di mana (lokal atau production), dan tugas serta ujinya apa". Peta sumber daya (GitHub, Vercel, Supabase) ada di [[SISTEM_MAP]]. Aturan stok dan dokumen gudang: [[PRD_GUDANG]]. Aturan produksi: [[PRD_PRODUKSI]]. Status tugas: [[PROGRESS_SNAPSHOT]]. Diperbarui setiap modul berubah (skill `vault-progress`).
+Satu halaman untuk menjawab "modul apa saja, dari mana datanya, ke mana mengalir, sudah di mana (lokal atau production), dan tugas serta ujinya apa". Peta sumber daya (GitHub, Vercel, Supabase) ada di [[SISTEM_MAP]]. Aturan stok dan dokumen gudang: [[PRD_GUDANG]]. Audit kerangka dan standar industri: [[STANDAR_INDUSTRI]]. Aturan produksi: [[PRD_PRODUKSI]]. Status tugas: [[PROGRESS_SNAPSHOT]]. Diperbarui setiap modul berubah (skill `vault-progress`).
 
 ## Alur utama
 

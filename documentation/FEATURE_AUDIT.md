@@ -114,3 +114,9 @@ Prioritas berikutnya (urut risiko): editor SPK, Master Data (ganti nama, gabung)
 | Tanpa backup terjadwal dan uji pulih | kehilangan data tidak dapat dipulihkan | T-061 sebelum rilis besar |
 | Bukti hanya di mock untuk 14 dan 18 | bug khusus Postgres baru tampak di production | pra-cek baca-saja selesai; uji pada branch database bila disetujui |
 | Cakupan uji aksi UI 54% | regresi pada editor SPK dan Master Data tidak terdeteksi | prioritas di bagian 1.3 |
+
+## 3. Pembaruan 2026-11-07 (audit silang ketiga)
+
+- Aksi UI berbeda 188 (hitungan memakai `data-act` dan `case`); **belum diacu uji: 43** (sebelumnya 76). Tersisa: katalog Item SPK (`katedit`, `katdel`, `katmerge`, `katauto`, `katgo`), Judul section (`grupedit`, `grupdel`), kontrol mesin Produksi Hari Ini (`mesinmsn`, `mesinop`, `mesinwc`, `papanbuka`), `prodfix`, `upw`, `setcat`, `wcmesinseed`, laporan (`kpiuser`, `kpivendor`, `lapf`), serta aksi Penawaran dan Sales Order yang tersembunyi (`pqsalin`, `pqtolak`, `pqvarian`, `sobatal`, `sohapus`, `sopnw`).
+- Ditutup: editor SPK (`ed-addline`, `ed-delline`, `ed-addsec`, `ed-delsec`, `ed-up`, `ed-down`, `ed-addacc`), Work Center (`wcedit`, `wcdel`), opname sparepart (`spopnfill`, `spopnclear`, `spopnsave`) lewat `editor.mjs` dan `sparepart.mjs`.
+- Bug nyata ditemukan dari uji itu: [[TEST_MATRIX]] B-019 sampai B-025. `rmdel` adalah kode yatim (tidak ada tombolnya); keputusan: dibiarkan aman (jatuh ke Nonaktifkan) sampai ada keputusan menambah atau menghapusnya.

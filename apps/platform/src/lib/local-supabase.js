@@ -89,6 +89,7 @@ function save(state) {
 }
 
 // Meniru fungsi SQL mod_level/can_view: hak per modul (muser.data.modul) atau, bila kosong, peta peran bawaan.
+const HAPUS_DITOLAK = new Set(['spk', 'vendor', 'kirim', 'bongkar', 'pr', 'mutasi', 'opname', 'rmhist', 'rm', 'fg']);
 const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', penawaran: 'penawaran', salesorder: 'penawaran', sp: 'sparepart' };
 const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk'], gbb: ['bahan-baku', 'bongkar-muat', 'sparepart'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['pengiriman', 'bongkar-muat'], sales: ['penawaran'] };
 const levelOf = (u, m) => {
@@ -260,7 +261,8 @@ export function createLocalClient() {
       } else if (this.op === 'update') {
         for (const r of rows.filter((x) => this.match(x))) { Object.assign(r, this.payload, has('updated_at') ? { updated_at: stamp } : {}); out.push(r); emit(this.t, 'UPDATE', r); }
       } else if (this.op === 'delete') {
-        for (const r of rows.filter((x) => this.match(x))) { rows.splice(rows.indexOf(r), 1); out.push(r); emit(this.t, 'DELETE', r); }
+        // Production (migration 13) mencabut kebijakan DELETE pada tabel ini: baris tidak terhapus dan tidak ada galat (nol baris).
+        if (!HAPUS_DITOLAK.has(this.t)) for (const r of rows.filter((x) => this.match(x))) { rows.splice(rows.indexOf(r), 1); out.push(r); emit(this.t, 'DELETE', r); }
       }
       if (this.op !== 'select') save(state);
       const copy = out.map((r) => JSON.parse(JSON.stringify(r)));

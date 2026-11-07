@@ -35,6 +35,7 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 |---|---|
 | Tahu apa yang dikerjakan berikutnya | [[PROGRESS_SNAPSHOT#Siap dikerjakan sekarang (dependensi terpenuhi)]] |
 | Melihat peta modul dari hulu ke hilir | [[documentation/PETA_MODUL]] |
+| Melihat audit kerangka, keamanan, aksesibilitas, dan standar industri | [[documentation/STANDAR_INDUSTRI]] |
 | Melihat audit selesai vs belum dan keputusan pemilik | [[documentation/AUDIT_PROGRESS_2026-11-06]] |
 | Memahami aturan stok, buffer, SPK stok, dan dokumen gudang | [[documentation/PRD_GUDANG]] |
 | Melihat arah produk dan rilis | [[roadmap/PRODUCT_ROADMAP]] |
@@ -50,7 +51,7 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 | Mempelajari cara memakai aplikasi | [[apps/gudang-logistik/docs/USER_GUIDE]] |
 | Melihat bukti (screenshot) | [[documentation/screenshots/README]] |
 | Mengetahui nama dan lokasi semua sumber daya (GitHub, Vercel, Supabase, lokal) | [[documentation/SISTEM_MAP]] |
-| Melanjutkan proyek dengan sesi atau akun Claude baru | [[documentation/HANDOFF]] |
+| Melanjutkan proyek dengan sesi atau akun Claude baru | [[documentation/SERTIJOB]] (prompt siap tempel) dan [[documentation/HANDOFF]] |
 | Memeriksa kesiapan dipakai tim | [[documentation/AUDIT_KESIAPAN]] |
 | Melihat riwayat perubahan per versi | [[CHANGELOG]] |
 | Merilis ke pengguna | [[documentation/RELEASE_CHECKLIST]] |

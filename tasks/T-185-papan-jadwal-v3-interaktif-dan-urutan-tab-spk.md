@@ -5,13 +5,13 @@ title: "Papan jadwal v3 interaktif (tooltip, panel detail, zoom, geser, buka/lip
 phase: P2
 epic: E-02
 release: v0.9
-status: review
+status: done
 priority: P1
 env: dev
 effort_days: 1
 depends: [T-182]
 owner: "dev + pemilik"
-updated: 2026-11-05
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -36,7 +36,7 @@ Masukan pemilik: (1) urutan tab SPK menjadi Daftar SPK, Jadwal, Berjalan, KPI & 
 - [x] Buka semua dan Lipat semua item
 - [x] Geser garis waktu dengan drag mouse; baris menyala saat disorot
 - [x] Uji e2e M-105, M-105b, M-148 sampai M-153; regresi penuh 0 FAIL
-- [ ] Ditinjau pemilik
+- [x] Ditinjau pemilik: papan v3 digantikan timeline bersih T-186 yang dinyatakan sesuai (2026-11-05); tampilan Rinci dan Per mesin tetap tersedia
 
 ## Bukti
 

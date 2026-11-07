@@ -1,3 +1,4 @@
+import { periksaInvarian } from './invarian.mjs';
 // Uji Gudang Sparepart (mock): menu, impor dari Excel (data sintetis, bukan data perusahaan), stok dan status,
 // pengeluaran dengan penolakan stok kurang, penerimaan, opname, dokumen, nonaktif, dan impor ulang yang tidak menggandakan.
 export async function runSparepart(page, base) {
@@ -96,6 +97,22 @@ export async function runSparepart(page, base) {
   await page.evaluate(() => [...document.querySelectorAll('.tabs button')].find((b) => b.textContent.includes('Posisi stok')).click()); await page.waitForTimeout(500);
   const stokOp = [await stok('Baut uji B'), await stok('Oli uji A')];
   ok('SP-9 opname menyesuaikan stok barang pertama (Baut 4 → 5)', stokOp[0] === '5' || stokOp[1] === '5', stokOp.join('/'));
+
+  // opname: tombol Isi semua = sistem, Kosongkan, dan simpan tanpa selisih (tidak membuat mutasi)
+  await page.evaluate(() => [...document.querySelectorAll('.tabs button')].find((b) => b.textContent.includes('Stock opname')).click()); await page.waitForTimeout(600);
+  const mutAwal = (await page.evaluate(() => JSON.parse(localStorage.getItem('mni-local-mock-db')).tables.mutasi.length));
+  await page.evaluate(() => document.querySelector('[data-act="spopnfill"]').click()); await page.waitForTimeout(400);
+  const terisi = await page.evaluate(() => { const a = [...document.querySelectorAll('input[data-spopn]')]; return { n: a.length, kosong: a.filter((i) => i.value === '').length }; });
+  await page.evaluate(() => document.querySelector('[data-act="spopnsave"]').click()); await page.waitForTimeout(700);
+  const toastTanpaSelisih = await page.evaluate(() => document.getElementById('toast').textContent);
+  const mutSetelahIsi = (await page.evaluate(() => JSON.parse(localStorage.getItem('mni-local-mock-db')).tables.mutasi.length));
+  ok('SP-9b opname Isi semua = sistem mengisi setiap barang; menyimpan tanpa selisih tidak membuat mutasi dan memberi tahu', terisi.n > 0 && terisi.kosong === 0 && /tidak ada penyesuaian/i.test(toastTanpaSelisih) && mutSetelahIsi === mutAwal, JSON.stringify({ terisi, toastTanpaSelisih: toastTanpaSelisih.slice(0, 80), mutAwal, mutSetelahIsi }));
+  await page.evaluate(() => document.querySelector('[data-act="spopnclear"]').click()); await page.waitForTimeout(400);
+  const kosongkan = await page.evaluate(() => [...document.querySelectorAll('input[data-spopn]')].filter((i) => i.value !== '').length);
+  await page.evaluate(() => document.querySelector('[data-act="spopnsave"]').click()); await page.waitForTimeout(500);
+  const toastKosong = await page.evaluate(() => document.getElementById('toast').textContent);
+  ok('SP-9c opname Kosongkan menghapus semua isian; menyimpan tanpa isian ditolak dengan penjelasan', kosongkan === 0 && /minimal satu/i.test(toastKosong), JSON.stringify({ kosongkan, toastKosong: toastKosong.slice(0, 80) }));
+  await page.evaluate(() => [...document.querySelectorAll('.tabs button')].find((b) => b.textContent.includes('Posisi stok')).click()); await page.waitForTimeout(500);
 
   // nonaktif: hilang dari daftar dan dari pilihan form, aktif kembali
   await page.evaluate(() => { window.confirm = () => true; });
@@ -268,6 +285,8 @@ export async function runSparepart(page, base) {
   ok('SP-13 di HP daftar sparepart berupa kartu tanpa gulir samping', !hp.over && hp.thead === 'none', JSON.stringify(hp));
   await page.setViewportSize({ width: 1280, height: 800 });
 
+  const inv = await periksaInvarian(page);
+  ok('SP-36 invarian data hulu ke hilir (stok tidak minus, nomor unik, tautan sah, koreksi menolakkan, SPK stok) tanpa pelanggaran', inv.pelanggaran.length === 0, inv.pelanggaran.slice(0, 6).join(' ; ') || JSON.stringify(inv.jumlah));
   ok('SP-14 tanpa pageerror', errs.length === 0, errs.join(' | '));
   const fail = R.filter((x) => x.startsWith('FAIL')).length;
   return { pass: R.length - fail, fail, detail: R };
