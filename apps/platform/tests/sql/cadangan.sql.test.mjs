@@ -103,7 +103,7 @@ ok('S2-05 baris baru pada SPK terbit dengan stok tidak cukup ditolak; cukup dite
 await db.query(`INSERT INTO mutasi (gudang, item_id, jenis, delta, data) VALUES ('rm', $1, 'keluar', -30, $2)`, [rmA, JSON.stringify({ spk: d1 })]);
 const m3 = (await mat(d1)).find((m) => m.rm_id === rmA);
 ok('S2-06 mutasi keluar bertanda SPK menaikkan qty_keluar; tersedia tetap (stok turun, cadangan sisa turun sama besar)', m3.k === 30 && (await stok(rmA)) === 70 && (await tersedia(rmA)) === 0, JSON.stringify(m3) + ' ' + (await tersedia(rmA)));
-const kor = (await q(`INSERT INTO mutasi (gudang, item_id, jenis, delta, data) VALUES ('rm', $1, 'koreksi', 10, $2) RETURNING id`, [rmA, JSON.stringify({ spk: d1 })]))[0].id;
+await q(`INSERT INTO mutasi (gudang, item_id, jenis, delta, data) VALUES ('rm', $1, 'koreksi', 10, $2) RETURNING id`, [rmA, JSON.stringify({ spk: d1 })]);
 const m4 = (await mat(d1)).find((m) => m.rm_id === rmA);
 ok('S2-07 koreksi pembalik mengurangi qty_keluar kembali (30 -> 20)', m4.k === 20 && (await tersedia(rmA)) === 0, JSON.stringify(m4));
 await db.query(`INSERT INTO mutasi (gudang, item_id, jenis, delta, data) VALUES ('rm', $1, 'keluar', -50, $2)`, [rmA, JSON.stringify({ spk: d1 })]);
@@ -251,12 +251,12 @@ ok('W-01 hari_ini() mengikuti zona Asia/Jakarta', (await q(`SELECT public.hari_i
 // bahan baku: status per rumus aplikasi
 await db.exec(`INSERT INTO master (key, value) VALUES ('setting', '{"leadBeli": 7, "cover": 30}')`);
 const rmS = async (nama, ukuran, awal, extra = {}) => (await q(`INSERT INTO rm (item, ukuran, stok_awal, buffer, tgl_stok_awal, data) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, [nama, ukuran, awal, extra.buffer || 0, extra.tgl || null, JSON.stringify(extra.data || {})]))[0].id;
-const wA = await rmS('W-Habis', 'a', 0, { buffer: 10 });
-const wB = await rmS('W-Kritis', 'b', 5, { data: { min: 10 } });
+await rmS('W-Habis', 'a', 0, { buffer: 10 });
+await rmS('W-Kritis', 'b', 5, { data: { min: 10 } });
 const wC = await rmS('W-Order', 'c', 20, { buffer: 30 });
-const wD = await rmS('W-Aman', 'd', 100, { buffer: 10 });
-const wE = await rmS('W-Kosong', 'e', 0);
-const wF = await rmS('W-Nonaktif', 'f', 0, { buffer: 10, data: { aktif: false } });
+await rmS('W-Aman', 'd', 100, { buffer: 10 });
+await rmS('W-Kosong', 'e', 0);
+await rmS('W-Nonaktif', 'f', 0, { buffer: 10, data: { aktif: false } });
 const wG = await rmS('W-Pakai', 'g', 97, { tgl: await hari(-80) });
 await db.query(`INSERT INTO pr (status, items) VALUES ('Dipesan', $1), ('Batal', $2), ('Selesai', $2)`, [JSON.stringify([{ item: wC, q: 6, qTerima: 2 }]), JSON.stringify([{ item: wC, q: 100, qTerima: 0 }])]);
 await db.query(`INSERT INTO mutasi (gudang, item_id, jenis, delta, tgl, data) VALUES ('rm', $1, 'keluar', -60, $2, '{}'), ('rm', $1, 'keluar', -30, $3, '{}')`, [wG, await hari(-10), await hari(-5)]);
