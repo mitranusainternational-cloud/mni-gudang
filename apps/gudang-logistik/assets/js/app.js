@@ -128,7 +128,7 @@ function calc(){
  const spk={};
  for(const s of S.spk){
   let q=0,prod=0,kir=0,vo=0,vb=0;
-  const lines=(s.items||[]).map((it,ix)=>{const v=vIdx[s._id+'|'+it.d]||{out:0,back:0};const k=s.stokReq?(fgIdx[s._id+'|'+it.fg]||0):(kIdx[s._id+'|'+it.d]||0);const iq=+it.q||0;const evP=prodFromEvents(s,it,ix);const pe=evP!=null?Math.max(Math.min(evP,iq),Math.min(v.out,iq)):Math.max(Math.min(+it.prod||0,iq),Math.min(v.out,iq));q+=iq;prod+=pe;kir+=Math.min(k,iq);vo+=v.out;vb+=v.back;const stv=PXL()?itemState(s,it,ix):null;const vSiap=stv&&stv.ev.length?PXL().siapKirimVendor(stv.rute,stv.kum):null;/* Rute dengan langkah vendor: yang boleh dikirim ke customer atau diterima gudang hanyalah yang sudah KEMBALI dari vendor (bukan produksi dikurangi yang di vendor: barang yang belum pernah dikirim ke vendor belum difinishing). */const rv=stv&&stv.ev.length&&PXL().langkahVendor&&stv.rute.some(PXL().langkahVendor);const siapKirim=rv?Math.min(iq,Math.max(0,stv.kum[stv.rute[stv.rute.length-1]]||0)):null;return {...it,prodEff:pe,vOut:v.out,vBack:v.back,kirim:k,vSiap,siapKirim}});
+  const lines=(s.items||[]).map((it,ix)=>{const v=vIdx[s._id+'|'+it.d]||{out:0,back:0};const k=s.stokReq?(fgIdx[s._id+'|'+fgDariItem(it)]||0):(kIdx[s._id+'|'+it.d]||0);const iq=+it.q||0;const evP=prodFromEvents(s,it,ix);const pe=evP!=null?Math.max(Math.min(evP,iq),Math.min(v.out,iq)):Math.max(Math.min(+it.prod||0,iq),Math.min(v.out,iq));q+=iq;prod+=pe;kir+=Math.min(k,iq);vo+=v.out;vb+=v.back;const stv=PXL()?itemState(s,it,ix):null;const vSiap=stv&&stv.ev.length?PXL().siapKirimVendor(stv.rute,stv.kum):null;/* Rute dengan langkah vendor: yang boleh dikirim ke customer atau diterima gudang hanyalah yang sudah KEMBALI dari vendor (bukan produksi dikurangi yang di vendor: barang yang belum pernah dikirim ke vendor belum difinishing). */const rv=stv&&stv.ev.length&&PXL().langkahVendor&&stv.rute.some(PXL().langkahVendor);const siapKirim=rv?Math.min(iq,Math.max(0,stv.kum[stv.rute[stv.rute.length-1]]||0)):null;return {...it,prodEff:pe,vOut:v.out,vBack:v.back,kirim:k,vSiap,siapKirim}});
   const pK=pct(kir,q),pP=pct(prod,q);
   let st='Proses',late=0;
   if(s.status==='Batal')st='Batal';else if((s.status||'Terbit')==='Draft')st='Draft';else if(pK>=1)st='Selesai';else if(s.due&&s.due<t){st='Terlambat';late=days(s.due,t)}
@@ -836,10 +836,10 @@ function pgItems(s,x,ses){
   const evs=evIdx()[s._id+'|'+ix]||[];const last=evs.reduce((m,e)=>{const d=evTgl(e);return d&&d>m?d:m},'');
   let pos,label,nada;
   if(cur){pos=cur.key;if(cur.vend){label=cur.out>cur.val?'Di '+cur.w:'Menunggu '+cur.w;nada=cur.out>cur.val?'warn':'plain'}else{const mulai=cur.live||cur.val>0;label=(mulai?'Di ':'Antri di ')+cur.w;nada=mulai?'run':'plain'}}
-  else if(kir>=qq&&qq>0){pos='Terkirim';label='Terkirim ke customer';nada='ok'}
-  else{pos='Siap kirim';label='Siap kirim';nada='info'}
+  else if(kir>=qq&&qq>0){pos='Terkirim';label=s.stokReq?'Masuk gudang barang jadi':'Terkirim ke customer';nada='ok'}
+  else{pos='Siap kirim';label=s.stokReq?'Siap masuk gudang':'Siap kirim';nada='info'}
   const diam=(cur&&last&&!steps.some(z=>z.live))?Math.max(0,days(last,t)):0;
-  return {it,ix,q:qq,steps,kir,cur,pos,label,nada,diam,pct:qq?Math.min(1,(l.prodEff||0)/qq):0};
+  return {it,ix,q:qq,stok:!!s.stokReq,steps,kir,cur,pos,label,nada,diam,pct:qq?Math.min(1,(l.prodEff||0)/qq):0};
  });
 }
 function pgKolom(daftar){
@@ -856,13 +856,13 @@ function pgBaris(i,kolom){
  const P=PXL();
  const info=`<div class="pg-it"><b title="${esc(i.it.d)}">${esc(i.it.d)}</b><small>${n(i.q)} ${esc(i.it.u||'')} · ${i.cur?`langkah ${i.steps.indexOf(i.cur)+1} dari ${i.steps.length}`:'semua langkah selesai'}</small><div class="pg-tg"><span class="pg-pos ${i.nada}">${esc(i.label)}</span>${i.diam>=2?`<span class="pg-dm ${i.diam>=4?'crit':'warn'}" title="Tidak ada catatan produksi baru sejak ${esc(fdp2(P.geserHari(today(),-i.diam)))}">Diam ${i.diam} hari</span>`:''}</div></div>`;
  const sel=kolom.map(k=>{
-  if(k==='Kirim'){const kk=i.kir,cur=i.pos==='Siap kirim';return pgSel(kk,i.q,{cur,tip:`Terkirim ke customer ${n(kk)} dari ${n(i.q)}`,sub:kk>=i.q&&i.q>0?'surat jalan customer':kk>0?'kirim sebagian':(i.pos==='Siap kirim'?'siap dikirim':'menunggu produksi')})}
+  if(k==='Kirim'){const kk=i.kir,cur=i.pos==='Siap kirim';return pgSel(kk,i.q,{cur,tip:i.stok?`Masuk gudang barang jadi ${n(kk)} dari ${n(i.q)}`:`Terkirim ke customer ${n(kk)} dari ${n(i.q)}`,sub:i.stok?(kk>=i.q&&i.q>0?'diterima di gudang barang jadi':kk>0?'masuk sebagian':(i.pos==='Siap kirim'?'siap masuk gudang':'menunggu produksi')):(kk>=i.q&&i.q>0?'surat jalan customer':kk>0?'kirim sebagian':(i.pos==='Siap kirim'?'siap dikirim':'menunggu produksi'))})}
   const z=i.steps.find(z=>z.key===k);if(!z)return '<div class="pg-c none" title="Tidak ada di rute item ini">–</div>';
   const sub=z.vend?(z.out?`dikirim ${n(z.out)}`:'belum dikirim'):(z.live?'berjalan'+(z.mesin.length?' · '+esc(z.mesin.join(', ')):''):'');
   return pgSel(z.val,i.q,{cur:i.cur===z,live:z.live,sub,tip:`${z.w}: ${n(z.val)} dari ${n(i.q)}${z.vend?' (kembali dari vendor, dikirim '+n(z.out)+')':''}${z.live?' · sedang dikerjakan':''}`})}).join('');
  return `<div class="pg-r">${info}${sel}</div>`;
 }
-const pgMatriks=(items,kolom)=>`<div class="pg-r pg-hd"><div class="pg-it">Item</div>${kolom.map(k=>`<div class="pg-h">${esc(k)}</div>`).join('')}</div>${items.map(i=>pgBaris(i,kolom)).join('')}`;
+const pgMatriks=(items,kolom)=>`<div class="pg-r pg-hd"><div class="pg-it">Item</div>${kolom.map(k=>`<div class="pg-h">${esc(k==='Kirim'&&items.some(i=>i.stok)?'Kirim / masuk gudang':k)}</div>`).join('')}</div>${items.map(i=>pgBaris(i,kolom)).join('')}`;
 
 function spkBerjalan(){
  const P=PXL();const c=calc(),f=F.spk,q=(f.q||'').toLowerCase(),t=today();
@@ -1739,7 +1739,7 @@ function mvForm(g,j,item,prId){
    if(g==='fg'&&j==='masuk'&&d.spk){const sk=byId('spk',d.spk);if(sk&&sk.stokReq){
     if(sk.status==='Draft')throw new Error('SPK stok ini masih Draft. Terbitkan SPK dan selesaikan produksinya sebelum barang diterima.');
     const rdy=fgSiapMap(sk),need={};lines.forEach(l=>need[l.item]=(need[l.item]||0)+l.q);
-    for(const [it,q] of Object.entries(need)){const ix=(sk.items||[]).findIndex(z=>z.fg===it);if(ix<0)throw new Error(`${fgLabel(byId('fg',it))} tidak ada di SPK ${sk.no}.`);const got=fgGot(sk._id,it),can=Math.max(0,rdy[ix]-got);
+    for(const [it,q] of Object.entries(need)){const ix=(sk.items||[]).findIndex(z=>fgDariItem(z)===it);if(ix<0)throw new Error(`${fgLabel(byId('fg',it))} tidak ada di SPK ${sk.no}.`);const got=fgGot(sk._id,it),can=Math.max(0,rdy[ix]-got);
      if(q>can)throw new Error(`${fgLabel(byId('fg',it))}: yang siap diterima ${n(can)} (selesai produksi ${n(rdy[ix])}, sudah masuk gudang ${n(got)}), diminta ${n(q)}.`)}}}
    if(needSpk&&!d.spk&&!String(d.ket).trim())throw new Error('Pemakaian tanpa SPK wajib diberi keterangan (mis. sample, perbaikan).');
    if(j==='keluar'){const tot={};lines.forEach(l=>tot[l.item]=(tot[l.item]||0)+l.q);for(const [it,q] of Object.entries(tot)){const cur=calc().stock[g][it];if(q>cur)throw new Error(`Stok ${g==='rm'?rmLabel(byId('rm',it)):g==='sp'?spLabel(byId('sp',it)):fgLabel(byId('fg',it))} tidak cukup: tersedia ${n(cur)}, diminta ${n(q)}.`)}}
@@ -1751,7 +1751,7 @@ function mvForm(g,j,item,prId){
    if(PRD){const got={};lines.forEach(l=>got[l.item]=(got[l.item]||0)+l.q);const items=PRD.items.map(i=>({...i,qTerima:(+i.qTerima||0)+(got[i.item]||0)}));const done=items.every(i=>i.qTerima>=i.q);await updDoc('pr',prId,{items,status:done?'Selesai':PRD.status==='Diajukan'?'Dipesan':PRD.status,supplier:PRD.supplier||pihak})}
    if(d.dock){const nopolM=getNopol(d);await queueDock({jenis:'Unloading',muatan:'Bahan Baku',pihak,ref:[noDok,d.ref].filter(Boolean).join(' · '),nopol:nopolM,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'mutasi',noDok}});rememberArmada(nopolM,d.kendaraan,d.driver)}
    toast(`${noDok} tersimpan · ${lines.length} item`);
-  },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(sk&&!String(f.pihak.value||'').trim()&&!(sk.stokReq))f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
+  },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(!sk)return;if(sk.stokReq&&j==='masuk'){fgIsiDariSpk(f,sk)}else if(!String(f.pihak.value||'').trim())f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
 }
 function linesTable(spkId,mode){
  if(!spkId)return '<div class="note">Pilih SPK untuk menampilkan item.</div>';
@@ -2655,7 +2655,7 @@ function jejakHtml(id){
    else{const per={};evi.filter(e=>P.indeksLangkah(st.rute,st.alt,e.wc)===i).forEach(e=>{const m=e.mesin||e.wc;per[m]=(per[m]||0)+(+e.qty||0)});sub=Object.entries(per).map(([m,v])=>`${esc(m)} ${n(v)}`).join(' · ');const rj=evi.filter(e=>P.indeksLangkah(st.rute,st.alt,e.wc)===i).reduce((a,e)=>a+(+e.reject||0),0);if(rj)sub+=(sub?' · ':'')+`reject ${n(rj)}`}
    return `<div class="jstep ${pct>=1?'ok':val>0?'run':''}"><div class="jn">${esc(w)}</div><div class="jb"><i style="width:${Math.round(pct*100)}%"></i></div><div class="jq">${n(val)} / ${n(q)}</div><div class="note">${sub||'belum ada'}</div></div>`}).join('<span class="rarr">›</span>');
   const kir=Math.min(l.kirim||0,q);const pk=q?kir/q:0;
-  const akhir=`<span class="rarr">›</span><div class="jstep ${pk>=1?'ok':kir>0?'run':''}"><div class="jn">Terkirim ke customer</div><div class="jb"><i style="width:${Math.round(pk*100)}%"></i></div><div class="jq">${n(kir)} / ${n(q)}</div><div class="note">surat jalan customer</div></div>`;
+  const akhir=`<span class="rarr">›</span><div class="jstep ${pk>=1?'ok':kir>0?'run':''}"><div class="jn">${s.stokReq?'Masuk gudang barang jadi':'Terkirim ke customer'}</div><div class="jb"><i style="width:${Math.round(pk*100)}%"></i></div><div class="jq">${n(kir)} / ${n(q)}</div><div class="note">${s.stokReq?'diterima di gudang barang jadi':'surat jalan customer'}</div></div>`;
   const ton=evi.reduce((a,e)=>a+(+e.tonase||0),0),mn=evi.reduce((a,e)=>a+(+e.menit||0),0);
   const rsv=teksReservasi({s,it,ix,st});
   const lama=(rsv?`<div class="note">Sedang dikerjakan: ${rsv}</div>`:'')+(!evi.length&&(+it.prod||0)>0?'<div class="note">Progres dari angka manual lama (belum ada catatan per mesin).</div>':'');
@@ -3506,21 +3506,31 @@ function trenPanel(g){
 /* ---------- SPK stok: terima di gudang barang jadi, pilih produk, filter jenis SPK (2026-11-06) ---------- */
 const spkJn=s=>{const j=F.spk.jn||'all';return j==='all'||(j==='stok')===!!s.stokReq};
 const stLbl=(s,g)=>s&&s.stokReq?({'Siap kirim':'Siap masuk gudang','Kirim sebagian':'Masuk sebagian',Terkirim:'Masuk gudang'}[g]||g):g;
+/* Produk gudang barang jadi dari item SPK stok. Tautan item.fg bisa hilang pada SPK yang pernah disimpan ulang di editor (sebelum perbaikan 2026-11-07);
+   bila hilang, dipulihkan lewat kecocokan nama item dengan nama SPK produk (hanya bila tepat satu produk cocok). */
+function fgDariItem(it){if(!it)return '';if(it.fg&&byId('fg',it.fg))return it.fg;if(!it.d)return '';const c=S.fg.filter(r=>fgSpkDesc(r)===it.d);return c.length===1?c[0]._id:''}
 /* barang masuk gudang jadi dari satu SPK per produk: transaksi masuk ditambah koreksi yang membalik transaksi masuk */
 const fgGot=(spkId,fgId)=>{const by={};S.mutasi.forEach(m=>{by[m._id]=m});return S.mutasi.filter(m=>m.gudang==='fg'&&m.item===fgId&&m.spk===spkId&&(m.jenis==='masuk'||(m.jenis==='koreksi'&&(by[m.koreksiDari]||{}).jenis==='masuk'))).reduce((a,m)=>a+(+m.delta||0),0)};
 /* hasil produksi yang siap diterima gudang barang jadi per baris SPK: selesai produksi, dikurangi yang masih di vendor finishing */
 function fgSiapMap(s){const x=calc().spk[s._id];return (s.items||[]).map((it,ix)=>{const l=x&&x.lines[ix];if(!l)return 0;return l.siapKirim!=null?l.siapKirim:Math.max(0,Math.min(+it.q||0,l.prodEff-l.vOut+l.vBack))})}
+/* Baris penerimaan otomatis: tiap produk gudang dari item SPK stok dengan jumlah yang sudah selesai (dan kembali dari vendor) dikurangi yang sudah diterima. */
+function fgBarisTerima(s){const rdy=fgSiapMap(s);return (s.items||[]).map((i,ix)=>({fg:fgDariItem(i),ix})).filter(x=>x.fg&&byId('fg',x.fg)).map(x=>({item:x.fg,sisa:Math.max(0,rdy[x.ix]-fgGot(s._id,x.fg))})).filter(x=>x.sisa>0)}
+function fgAlasanKosong(s){const its=s.items||[];if(its.length&&its.every(i=>!fgDariItem(i)))return 'Item SPK ini belum terhubung ke produk di Gudang Barang Jadi (nama item tidak cocok dengan produk mana pun). Tambahkan produknya di Gudang Barang Jadi dengan nama yang sama, atau buat SPK stok dari tombol SPK stok.';
+ const rdy=fgSiapMap(s);if(its.some((i,ix)=>fgDariItem(i)&&rdy[ix]>0))return 'Semua hasil produksi SPK ini sudah diterima di Gudang Barang Jadi.';
+ return 'Belum ada hasil produksi yang siap diterima. Barang bisa diterima setelah selesai diproduksi, atau setelah kembali dari vendor finishing.'}
+/* Isi form Barang masuk dari SPK stok yang dipilih: produk dan jumlahnya otomatis, bisa diubah pengguna */
+function fgIsiDariSpk(f,sk,paksa){/* isian pengguna yang sudah ada (produk dan jumlah) tidak ditimpa kecuali dipaksa (tombol Terima di SPK) */
+ if(!paksa&&[...document.querySelectorAll('#m-mvl tr')].some(tr=>{const s=tr.querySelector('select'),q=tr.querySelector('input');return s&&s.value&&q&&parseFloat(q.value)>0}))return;
+ const lines=fgBarisTerima(sk);if(!lines.length){toast(fgAlasanKosong(sk));return}
+ const box=$('#m-mvl');if(!box)return;box.innerHTML=lines.map((l,k)=>mvLine('fg',k,l.item,l.sisa)).join('');
+ f.pihak.value='Produksi / finishing · SPK '+sk.no;const sel=f.querySelector('#m-mvl select');if(sel)sel.dispatchEvent(new Event('change',{bubbles:true}))}
 function fgTerimaSpk(id){
  const s=byId('spk',id);if(!s)return;
  if(s.status==='Draft'){toast('SPK stok ini masih Draft. Terbitkan SPK dan produksi dulu sebelum barang diterima di gudang.');return}
- const rdy=fgSiapMap(s);
- const lines=(s.items||[]).map((i,ix)=>({i,ix})).filter(({i})=>i.fg&&byId('fg',i.fg)).map(({i,ix})=>({item:i.fg,sisa:Math.max(0,rdy[ix]-fgGot(id,i.fg))})).filter(x=>x.sisa>0);
- if(!lines.length){toast('Belum ada hasil produksi yang siap diterima. Barang bisa diterima setelah selesai diproduksi, atau setelah kembali dari vendor finishing.');return}
+ if(!fgBarisTerima(s).length){toast(fgAlasanKosong(s));return}
  mvForm('fg','masuk');
  const f=$('#mform');if(!f)return;
- $('#m-mvl').innerHTML=lines.map((l,k)=>mvLine('fg',k,l.item,l.sisa)).join('');
- f.spk.value=id;f.pihak.value='Produksi / finishing · SPK '+s.no;
- f.querySelector('#m-mvl select').dispatchEvent(new Event('change',{bubbles:true}));
+ f.spk.value=id;fgIsiDariSpk(f,s,true);
 }
 F['barang-jadi'].pick=F['barang-jadi'].pick||{};
 function fgPickBar(){const el=document.querySelector('#fgpick-bar');if(!el)return;const k=Object.values(F['barang-jadi'].pick).filter(Boolean).length;el.hidden=!k;const b=el.querySelector('b');if(b)b.textContent=k}
@@ -3602,7 +3612,7 @@ function fgStok(){
 function fgPending(id){
  let p=0;const c=calc();
  S.spk.forEach(s=>{if(!s.stokReq||s.status==='Batal')return;const st=(c.spk[s._id]||{}).st;if(st==='Selesai'||st==='Batal')return;
-  (s.items||[]).forEach(it=>{if(it.fg!==id)return;const got=fgGot(s._id,id);p+=Math.max(0,(+it.q||0)-got)})});
+  (s.items||[]).forEach(it=>{if(fgDariItem(it)!==id)return;const got=fgGot(s._id,id);p+=Math.max(0,(+it.q||0)-got)})});
  return p;
 }
 function fgSug(){
@@ -4288,7 +4298,7 @@ function revisiGuard(o,items,oiList){
  }
  return '';
 }
-function edFrom(s,copy){let oiN=0;const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({oi:copy?undefined:oiN++,d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{}),...(it.vv?{vv:it.vv}:{})}))}));
+function edFrom(s,copy){let oiN=0;const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({oi:copy?undefined:oiN++,d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{}),...(it.vv?{vv:it.vv}:{}),...((it.fg||s.stokReq)&&(it.fg||fgDariItem(it))?{fg:it.fg||fgDariItem(it)}:{})}))}));
  if(!secs.length)secs.push({h:'',lines:[blankLine()]});
  return {id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||OPSI().dist).slice(),signProc:s.signProc||OPSI().signProc,signPpic:s.signPpic||OPSI().signPpic,status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
 function edAuto(){const e=ED;if(e.dueAuto&&leadMax(e.lead))e.due=addWorkdays(e.tgl,leadMax(e.lead));if(e.noteAuto)e.note=e.due?'NOTE : ESTIMASI KIRIM '+tglLong(e.due).toUpperCase():'';
@@ -4452,7 +4462,7 @@ async function saveEditor(mode){
  const e=ED,err=$('#ed-err');err.textContent='';
  try{need('spk');
   const no=parseInt(e.no);if(!no)throw new Error('Isi No SPK.');if(!String(e.customer).trim())throw new Error('Isi nama customer.');e.customer=cleanName(e.customer);{const sim=similarTo('customer',e.customer);if(sim){e.customer=sim.nama;const ci=$('#ed-cust');if(ci)ci.value=sim.nama;throw new Error(`Customer disamakan ke "${sim.nama}" (sudah terdaftar). Klik simpan lagi.`)}}if(!e.tgl)throw new Error('Isi tanggal SPK.');
-  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
+  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.fg?{fg:l.fg}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
   if(!items.length)throw new Error('Tambahkan minimal satu item.');
   const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
   if(editTerbit&&!String(e.revAlasan).trim())throw new Error('Isi alasan revisi.');

@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — SPK stok ke Gudang Barang Jadi (B-036..B-038, lokal)
+Penyebab SPK stok tidak bisa diterima: editor SPK menghilangkan tautan `fg` pada item. Diperbaiki, tautan lama dipulihkan, form Barang masuk terisi otomatis dari SPK stok, label SPK stok disesuaikan. Bukti: `verified in browser` (mock) suite baru `stokflow` SF-01..SF-08. Permintaan lanjutan pemilik (SPK customer memakai stok sebagian, tata letak Bongkar Muat dengan foto dan ceklis terintegrasi surat jalan, surat jalan vendor gabungan beberapa SPK) dikerjakan bertahap, belum dimulai.
+
 ### 2026-11-07 — Snapshot rute per item saat SPK terbit (T-215, lokal)
 Rute dan alt disalin ke `items[].rute` dan `items[].alt` saat terbit atau revisi; item bercatatan mempertahankan snapshot lama; guard perubahan rute master hanya untuk SPK lama tanpa snapshot. Draf 22 menghitung mesin alternatif langkah terakhir. Bukti: `verified in browser` (mock) AF-11a..d dan regresi penuh; unit R-96; SQL lokal 86 PASS. Belum diuji di Supabase.
 

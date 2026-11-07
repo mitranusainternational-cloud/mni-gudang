@@ -7,7 +7,7 @@ theme: Nilai pengguna
 priority: P2
 status: active
 progress: 0
-tasks_total: 4
+tasks_total: 5
 tasks_done: 0
 updated: 2026-11-07
 ---
@@ -31,5 +31,6 @@ Kanal notifikasi belum dipilih; modul kinerja tim disembunyikan di prototipe.
 - [ ] [[tasks/T-132-notifikasi-spk-jatuh-tempo-dan-stok-di-bawah-buffe|T-132]] Notifikasi SPK jatuh tempo dan stok di bawah buffer · todo · P2 · 4 hari
 - [ ] [[tasks/T-133-dokumen-cetak-dan-ekspor-terstandar|T-133]] Dokumen cetak dan ekspor terstandar · doing · P2 · 3 hari
 - [ ] [[tasks/T-201-nama-penanda-tangan-dokumen|T-201]] Nama penanda tangan pada semua dokumen: ketik manual, saran dari nama yang pernah diketik · review · P2 · 1 hari
+- [ ] [[tasks/T-217-bongkar-muat-tata-letak-foto-dan-ceklis-terintegrasi|T-217]] Bongkar Muat: tata letak rapi, foto bukti, dan ceklis terintegrasi surat jalan · todo · P1 · 4 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

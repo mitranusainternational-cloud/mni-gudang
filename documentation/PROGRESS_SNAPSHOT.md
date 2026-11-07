@@ -11,9 +11,9 @@ generated: 2026-11-07
 
 ## Ringkasan
 
-- Tugas selesai: **39 / 136** (29%)
-- Bobot effort selesai: **42 / 228.59999999999997 hari kerja** (18%)
-- Sisa effort: **186.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
+- Tugas selesai: **39 / 139** (28%)
+- Bobot effort selesai: **42 / 239.59999999999997 hari kerja** (18%)
+- Sisa effort: **197.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
 - Cakupan go-live (fase P0-P7): **35 / 105** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
 - Diblokir: **1**, sedang dikerjakan: **6**
 - Estimasi effort bersifat indikatif dan belum memuat waktu tunggu pihak lain.
@@ -31,7 +31,7 @@ generated: 2026-11-07
 | P6 Hardening dan rilis | 1/7 | 0.5/9.5 hari (5%) | berjalan |
 | P7 Operasi dan dokumentasi | 0/5 | 0/5.5 hari (0%) | belum mulai |
 | P8 v1.1 Stabilisasi, akses, kualitas data | 1/8 | 3/21 hari (14%) | berjalan |
-| P9 v1.2 Integrasi dan pelaporan | 3/15 | 4.5/43.5 hari (10%) | berjalan |
+| P9 v1.2 Integrasi dan pelaporan | 3/18 | 4.5/54.5 hari (8%) | berjalan |
 | P10 v2.0 Modernisasi dan perluasan | 0/8 | 0/27 hari (0%) | belum mulai |
 
 ## Per rilis
@@ -41,7 +41,7 @@ generated: 2026-11-07
 | v0.9 | Fondasi | 18/41 | 14.75/50.45 hari (29%) | active |
 | v1.0 | Pilot go-live | 15/55 | 18.5/75.9 hari (24%) | active |
 | v1.1 | Stabilisasi, akses, kualitas data | 2/14 | 4/30 hari (13%) | active |
-| v1.2 | Integrasi dan pelaporan | 4/17 | 4.75/44.75 hari (11%) | active |
+| v1.2 | Integrasi dan pelaporan | 4/20 | 4.75/55.75 hari (9%) | active |
 | v2.0 | Modernisasi dan perluasan | 0/9 | 0/27.5 hari (0%) | active |
 
 ## Per epic
@@ -59,11 +59,11 @@ generated: 2026-11-07
 | [[roadmap/epics/E-09-akses-peran-dan-audit\|E-09]] Akses, peran, dan audit | v1.1 | 2/7 | 32% | active |
 | [[roadmap/epics/E-10-kualitas-data-dan-kontrol-stok\|E-10]] Kualitas data dan kontrol stok | v1.1 | 0/7 | 0% | active |
 | [[roadmap/epics/E-11-integrasi-sumber-data\|E-11]] Integrasi sumber data | v1.2 | 0/3 | 0% | planned |
-| [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen\|E-12]] Pelaporan, notifikasi, dan dokumen | v1.2 | 0/4 | 0% | active |
+| [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen\|E-12]] Pelaporan, notifikasi, dan dokumen | v1.2 | 0/5 | 0% | active |
 | [[roadmap/epics/E-13-modernisasi-frontend-dan-pengujian\|E-13]] Modernisasi frontend dan pengujian | v2.0 | 0/5 | 0% | active |
 | [[roadmap/epics/E-14-multi-site-dan-mobile\|E-14]] Multi-site dan mobile | v2.0 | 0/2 | 0% | planned |
 | [[roadmap/epics/E-15-self-host-vps-dan-layanan-pendamping\|E-15]] Self-host VPS dan layanan pendamping | v2.0 | 0/2 | 0% | planned |
-| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 4/10 | 21% | active |
+| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 4/12 | 16% | active |
 
 ## Siap dikerjakan sekarang (dependensi terpenuhi)
 
