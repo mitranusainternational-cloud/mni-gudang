@@ -69,8 +69,9 @@ export function finishingDari(judul) {
 
 // Rute untuk sebuah item: dari kolom rute item bila sudah diatur (snapshot), selain itu dari aturan khusus, selain itu rute produk.
 // opsi.vendor: bila true dan finishing dikenali dari judul section, ditambahkan langkah akhir "Vendor <finishing>" (rute item yang diatur tidak diubah).
-export function tentukanRute({ judulSection, deskripsi, ruteItem }, rute = RUTE_STANDAR, aturan = ATURAN_KHUSUS, opsi = {}) {
-  if (Array.isArray(ruteItem) && ruteItem.length) return { rute: ruteItem.slice(), sumber: 'item' };
+export function tentukanRute({ judulSection, deskripsi, ruteItem, altItem }, rute = RUTE_STANDAR, aturan = ATURAN_KHUSUS, opsi = {}) {
+  // snapshot di item (disalin saat SPK terbit): rute dan mesin alternatifnya (alt) ikut tersimpan
+  if (Array.isArray(ruteItem) && ruteItem.length) return { rute: ruteItem.slice(), sumber: 'item', alt: altItem && typeof altItem === 'object' ? altItem : {} };
   const p = produkDari(judulSection, rute);
   const k = aturan.find((a) => a.cocok.test(String(deskripsi || '')) && (!a.produk || a.produk.test(String(judulSection || '').toUpperCase())));
   let hasil = { rute: [], sumber: 'belum' };

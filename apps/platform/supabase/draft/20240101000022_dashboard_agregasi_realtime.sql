@@ -35,7 +35,7 @@ DECLARE
 BEGIN
   IF to_regclass('public.produksi_log') IS NOT NULL THEN
     v_ev := $q$COALESCE((SELECT SUM(p.qty) FROM public.produksi_log p
-                          WHERE p.spk_id = s.id AND p.item_idx = (e.ord - 1)::int AND p.jenis = 'hasil' AND p.wc = r.last_wc
+                          WHERE p.spk_id = s.id AND p.item_idx = (e.ord - 1)::int AND p.jenis = 'hasil' AND (p.wc = r.last_wc OR (jsonb_typeof(e.it -> 'alt') = 'object' AND COALESCE(e.it -> 'alt' -> r.last_wc, '[]'::jsonb) ? p.wc))
                             AND NOT EXISTS (SELECT 1 FROM public.produksi_log vv WHERE vv.jenis = 'void' AND vv.ref = p.id::text)), 0)$q$;
   ELSE
     v_ev := '0';

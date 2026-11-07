@@ -88,6 +88,11 @@ const jd = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
 ok('R-94 rute khusus bentuk mengalahkan rute produk; bentuk lain tetap rute produk; vendor tetap ditambahkan', eq(tentukanRute({ judulSection: jd, deskripsi: 'x' }, peta, undefined, { vendor: true, bentuk: 'ELBOW' }).rute, ['Shearing', 'Bending', 'Vendor ELG']) && eq(tentukanRute({ judulSection: jd, deskripsi: 'x' }, peta, undefined, { vendor: true, bentuk: 'STRAIGHT' }).rute, ['Shearing', 'Punching', 'Bending', 'Vendor ELG']));
 ok('R-95 kunci rute khusus bentuk tidak dianggap produk; vv tanpa vendor menghapus langkah vendor', eq(tentukanRute({ judulSection: 'CABLE TRAY 1.2 ELECTRO', deskripsi: 'x' }, peta, undefined, { vendor: true, vv: 'tidak' }).rute, ['Shearing', 'Punching', 'Bending']));
 
+// Snapshot rute di item membawa mesin alternatif; master yang berubah tidak memengaruhi item bersnapshot
+const snapRute = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Hanger Beam W100' }, RUTE_STANDAR, undefined, { vendor: true });
+const dariSnap = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Hanger Beam W100', ruteItem: snapRute.rute, altItem: snapRute.alt }, { 'ACCS TRAY': ['Welding'] }, undefined, { vendor: true });
+ok('R-96 snapshot membawa rute dan alt (Hanger: CNC Laser dengan alternatif Shearing); rute master yang berubah tidak memengaruhinya', eq(dariSnap.rute, ['CNC Laser', 'Bending']) && eq(dariSnap.alt, { 'CNC Laser': ['Shearing'] }) && dariSnap.sumber === 'item', JSON.stringify(dariSnap));
+
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n') + `\n${R.length - fail} PASS, ${fail} FAIL`);
 process.exit(fail ? 1 : 0);

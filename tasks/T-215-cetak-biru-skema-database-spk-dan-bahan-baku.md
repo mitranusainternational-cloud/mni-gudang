@@ -35,12 +35,13 @@ Rancangan: [[BLUEPRINT_DB_ERP]]
 - [ ] Keputusan pemilik K-2 (SPK lama dengan nama customer tidak cocok master) dan K-4 (penerapan)
 - [ ] Uji draf di project dev atau branch Supabase (bukan production), lalu regresi aplikasi
 - [x] Langkah 4 draf `supabase/draft/20240101000022_dashboard_agregasi_realtime.sql` (view ringkasan dashboard, status dan progres SPK, bahan baku, OTD, Realtime) diuji di Postgres lokal; total 85 PASS
-- [ ] Simpan snapshot rute per item saat SPK terbit (aplikasi) agar progres produksi di view akurat, lalu bandingkan angka view dengan layar di project dev
+- [x] Snapshot rute (dan alt) per item saat SPK terbit atau direvisi di aplikasi; perubahan rute master tidak lagi menggeser SPK berjalan; e2e AF-11a..d, unit R-96, SQL W-18 (mock dan Postgres lokal)
+- [ ] Bandingkan angka view dengan layar di project dev setelah SPK terbit memuat snapshot
 - [ ] Integrasi aplikasi: frontend membaca view dan berlangganan Realtime (setelah keputusan penerapan K-4)
 
 ## Bukti
 
-- `verified in database` (Postgres lokal PGlite): `tests/sql/cadangan.sql.test.mjs` 85 PASS untuk draf 17, 19, 20, 21, 22. Belum di Supabase dev atau production.
+- `verified in database` (Postgres lokal PGlite): `tests/sql/cadangan.sql.test.mjs` 86 PASS untuk draf 17, 19, 20, 21, 22. Belum di Supabase dev atau production.
 - Tinjauan adversarial empat sudut: 21 temuan, 19 nyata, semua diperbaiki dan dikunci dengan uji.
 
 ## Catatan

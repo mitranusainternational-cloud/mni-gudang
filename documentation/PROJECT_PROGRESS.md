@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Snapshot rute per item saat SPK terbit (T-215, lokal)
+Rute dan alt disalin ke `items[].rute` dan `items[].alt` saat terbit atau revisi; item bercatatan mempertahankan snapshot lama; guard perubahan rute master hanya untuk SPK lama tanpa snapshot. Draf 22 menghitung mesin alternatif langkah terakhir. Bukti: `verified in browser` (mock) AF-11a..d dan regresi penuh; unit R-96; SQL lokal 86 PASS. Belum diuji di Supabase.
+
 ### 2026-11-07 — Langkah 4 database: view dashboard dan Realtime (T-215, draf lokal)
 Draf migration 22: `v_dash_ringkas`, `v_spk_status`, `v_dash_bahan_baku`, `v_spk_otd`, `v_item_produksi`, `hari_ini()` (Jakarta), Realtime untuk produksi_log dan spk_materials. Postgres lokal (PGlite) 85 PASS. Progres produksi akurat hanya bila item membawa snapshot rute (belum ada di aplikasi); frontend belum diubah; belum di Supabase. Rangkaian empat langkah blueprint selesai sebagai draf.
 

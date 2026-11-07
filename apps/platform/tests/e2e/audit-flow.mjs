@@ -1,10 +1,19 @@
 // Uji audit alur: revisi SPK terbit yang sudah punya catatan, dan pembatalan SPK. Mock, data sintetis.
 export async function runAuditFlow(page, base) {
   const R = [];
+  try { return await isi(page, base, R); } catch (e) {
+    R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
+    const fail = R.filter((x) => x.startsWith('FAIL')).length;
+    return { pass: R.length - fail, fail, detail: R };
+  }
+}
+
+async function isi(page, base, R) {
   const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
   const errs = [];
   page.on('pageerror', (e) => errs.push(String(e.message).slice(0, 160)));
   page.on('dialog', (d) => d.accept());
+  page.setDefaultTimeout(12000);
   const wait = (ms = 400) => page.waitForTimeout(ms);
   const go = async (h) => { await page.evaluate(() => { document.querySelector('#modal [data-act="closemodal"]')?.click(); document.querySelector('[data-act="sheet-close"]')?.click(); }); await page.evaluate((h) => { location.hash = h; }, h); await wait(800); };
   const act = (name, data = {}) => page.evaluate(([n, d]) => { const b = document.createElement('button'); b.dataset.act = n; Object.entries(d).forEach(([k, v]) => { b.dataset[k] = v; }); document.body.appendChild(b); b.click(); b.remove(); }, [name, data]);
@@ -97,12 +106,24 @@ export async function runAuditFlow(page, base) {
   const tolak = await page.evaluate(() => (document.querySelector('#modal .err, #m-err, #modal [role="alert"]') || { textContent: '' }).textContent);
   ok('AF-10 SPK yang sudah punya surat jalan aktif ditolak dibatalkan dengan alasan jelas', /surat jalan vendor\/customer yang aktif/.test(tolak) && (await page.evaluate((b) => byId('spk', b).status !== 'Batal', b)), tolak);
 
-  // ---------- rute produk tidak boleh digeser di bawah SPK yang sedang berjalan ----------
+  // ---------- snapshot rute: perubahan rute produk tidak menggeser SPK berjalan; item lama tanpa snapshot tetap dijaga ----------
+  const snap = await page.evaluate((a) => byId('spk', a).items.map((i) => (i.rute || []).join('>')), a);
+  ok('AF-11a SPK yang diterbitkan lewat editor membawa snapshot rute di tiap item', snap.length === 4 && snap.every((x) => x === 'Shearing>Punching>Bending'), JSON.stringify(snap));
   await go('#master-data');
   await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(600);
   await page.click('#rute-tabel input[data-rk="CABLE TRAY"][value="Punching"]'); await wait(900);
+  const bebas = await page.evaluate((a) => { const s = byId('spk', a); const st = itemState(s, s.items[1], 1); return { master: ruteStd()['CABLE TRAY'].join('>'), itemRute: itemRute(s.items[1]).join('>'), kumPunching: st.kum.Punching }; }, a);
+  ok('AF-11b rute master Cable Tray diubah (Punching dihapus) tanpa ditolak karena SPK berjalan memakai snapshot; rute dan progres SPK itu tidak bergeser', !/Punching/.test(bebas.master) && bebas.itemRute === 'Shearing>Punching>Bending' && bebas.kumPunching === 12, JSON.stringify(bebas));
+  await page.click('#rute-tabel input[data-rk="CABLE TRAY"][value="Punching"]'); await wait(900);
+  await page.evaluate(async (a) => { const s = byId('spk', a); await updDoc('spk', a, { items: s.items.map((i) => { const { rute: _r, alt: _a, ...sisa } = i; return sisa; }) }); }, a);
+  await wait(700);
+  await page.click('#rute-tabel input[data-rk="CABLE TRAY"][value="Punching"]'); await wait(900);
   const tolakRute = await page.evaluate(() => ({ toast: document.getElementById('toast').textContent, rute: ruteStd()['CABLE TRAY'].join('>'), cek: document.querySelector('#rute-tabel input[data-rk="CABLE TRAY"][value="Punching"]').checked }));
-  ok('AF-11 menghapus Punching dari rute Cable Tray ditolak karena SPK aktif sudah punya catatan di Punching; rute dan centang tidak berubah', /Rute tidak diubah/.test(tolakRute.toast) && /Punching/.test(tolakRute.rute) && tolakRute.cek === true, JSON.stringify(tolakRute));
+  ok('AF-11c item lama tanpa snapshot yang sudah punya catatan di Punching tetap dijaga: perubahan rute ditolak, rute dan centang tidak berubah', /Rute tidak diubah/.test(tolakRute.toast) && /Punching/.test(tolakRute.rute) && tolakRute.cek === true, JSON.stringify(tolakRute));
+  await go('#spk'); await act('spkedit', { id: a }); await page.waitForSelector('#ed-secs'); await wait(600);
+  await page.fill('#ed-rev', 'bekukan rute'); await page.click('#editor button:has-text("Simpan revisi")'); await wait(1500);
+  ok('AF-11d menyimpan revisi membekukan rute item lama (snapshot dibuat dari rute berlaku; progres tidak berubah)', await page.evaluate((a) => { const s = byId('spk', a); const st = itemState(s, s.items[1], 1); return s.items.every((i) => Array.isArray(i.rute) && i.rute.length === 3) && st.kum.Punching === 12; }, a));
+  await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(600);
   await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(900);
   ok('AF-12 rute produk yang tidak dipakai SPK berjalan tetap bebas diubah', await page.evaluate(() => !ruteStd()['CABLE DUCT'].includes('Punching')));
 

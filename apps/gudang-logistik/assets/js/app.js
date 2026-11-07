@@ -2215,11 +2215,11 @@ function ruteTab(){const peta=ruteStd();const wcs=wcInternal();
    catatan produksi ditolak (progres dan antrian akan bergeser); item tanpa catatan boleh mengikuti rute baru. */
 function ruteDampak(petaBaru){const P=PXL();const hit=new Set();if(!P)return [];
  S.spk.forEach(s=>{const x=calc().spk[s._id];if(!x||x.st==='Selesai'||x.st==='Draft'||x.st==='Batal')return;
-  (s.items||[]).forEach((it,ix)=>{const st=itemState(s,it,ix);if(!st||!(st.ev.length||(+it.prod||0)>0))return;
+  (s.items||[]).forEach((it,ix)=>{if(Array.isArray(it.rute)&&it.rute.length)return;/* item bersnapshot tidak terpengaruh perubahan master */const st=itemState(s,it,ix);if(!st||!(st.ev.length||(+it.prod||0)>0))return;
    const baru=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},petaBaru,P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''}).rute;
    if(baru.join('>')!==st.rute.join('>'))hit.add(s.no)})});
  return [...hit].sort((a,b)=>a-b)}
-const ruteTolak=d=>'Rute tidak diubah: '+d.length+' SPK aktif sudah punya catatan produksi dengan rute lama (SPK '+d.slice(0,5).join(', ')+(d.length>5?' dan lainnya':'')+'). Selesaikan atau batalkan SPK itu dulu.';
+const ruteTolak=d=>'Rute tidak diubah: '+d.length+' SPK lama (tanpa snapshot rute) sudah punya catatan produksi dengan rute lama (SPK '+d.slice(0,5).join(', ')+(d.length>5?' dan lainnya':'')+'). Selesaikan atau batalkan SPK itu dulu.';
 async function ruteSimpan(peta){const cur=byId('master','rute_produksi');if(cur)await updDoc('master','rute_produksi',{rute:peta});else{need();await DB.doc('master/rute_produksi').set({rute:peta})}}
 async function ruteCentang(el){const rk=el.dataset.rk;const wcs=wcInternal();const peta={...ruteStd()};const baris=[...document.querySelectorAll('#rute-tabel input[data-rk]')].filter(x=>x.dataset.rk===rk);const pilih=wcs.map(w=>w.nama).filter(n=>baris.some(x=>x.value===n&&x.checked));
  if(!pilih.length){el.checked=true;toast('Rute minimal satu work center.');return}
@@ -2297,7 +2297,15 @@ let EVX=null;
 const PXL=()=>window.MNIProduksi||null;
 function evIdx(){if(EVX)return EVX;EVX={};for(const e of evData()){if(e.jenis==='mulai'||e.jenis==='batal')continue;const k=e.spk_id+'|'+e.item_idx;(EVX[k]=EVX[k]||[]).push(e)}return EVX}
 const ruteStd=()=>{const m=byId('master','rute_produksi');return (m&&m.rute)||PXL().RUTE_STANDAR};
-function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});return {rute:r.rute,alt:r.alt||{}}}
+function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute,altItem:it.alt},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});return {rute:r.rute,alt:r.alt||{}}}
+/* Snapshot rute: rute dan mesin alternatif disalin ke tiap item saat SPK diterbitkan (atau direvisi, untuk item tanpa catatan) supaya perubahan
+   rute produk di Master Data tidak menggeser SPK berjalan dan database bisa menghitung progres produksi dari rute yang sama. */
+function itemAktif(s,idx){const it=(s.items||[])[idx];if(!it)return false;const st=itemState(s,it,idx);const ln=((calc().spk[s._id]||{}).lines||[])[idx]||{};return !!((st&&st.ev.length)||(+it.prod||0)>0||(+ln.vOut||0)>0||(+ln.kirim||0)>0)}
+function snapItems(items,orig,oiList){const P=PXL();if(!P)return items;
+ return items.map((it,k)=>{const oi=orig&&oiList?oiList[k]:null;const oit=oi!=null&&orig?(orig.items||[])[oi]:null;const {rute:_r0,alt:_a0,...dasar}=it;
+  if(oit&&Array.isArray(oit.rute)&&oit.rute.length&&itemAktif(orig,oi))return {...dasar,rute:oit.rute.slice(),...(oit.alt&&Object.keys(oit.alt).length?{alt:oit.alt}:{})};
+  const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:null},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});
+  return r.rute.length?{...dasar,rute:r.rute,...(r.alt&&Object.keys(r.alt).length?{alt:r.alt}:{})}:dasar})}
 const itemRute=it=>itemRuteInfo(it).rute;
 /* Keadaan item: rute, kumulatif per langkah, qty. Tanpa kejadian: progres lama (item.prod) dianggap sudah melewati semua langkah. */
 function itemState(s,it,idx){
@@ -4274,6 +4282,7 @@ function revisiGuard(o,items,oiList){
   if(pos!==k)return `Item "${it.d}" sudah punya catatan; urutannya tidak boleh berubah (semula baris ${k+1}, sekarang ${pos+1}). Jangan menghapus atau memindahkan item di atasnya.`;
   const ni=items[pos];
   if(ni.d!==it.d||(ni.g||'')!==(it.g||''))return `Item "${it.d}" sudah punya catatan; nama dan section-nya tidak boleh diubah. Untuk item baru, tambahkan baris baru.`;
+  if((ni.vv||'')!==(it.vv||''))return `Pengecualian vendor "${it.d}" tidak bisa diubah setelah item punya catatan produksi, vendor, atau pengiriman.`;
   const min=Math.max(kmax,+l.prodEff||0,+l.vOut||0,+l.kirim||0);
   if(ni.q<min)return `Qty "${it.d}" tidak boleh di bawah ${n(min)} (sudah diproduksi atau dikirim ke vendor/customer).`;
  }
@@ -4449,7 +4458,7 @@ async function saveEditor(mode){
   if(editTerbit&&!String(e.revAlasan).trim())throw new Error('Isi alasan revisi.');
   if(editTerbit){const gl=revisiGuard(e.orig,items,oiList);if(gl)throw new Error(gl)}
   const status=mode==='terbit'?'Terbit':'Draft';const now=new Date().toISOString();
-  const data={no,nomor:`${no}/SPK/${String(e.tgl).slice(0,4)}/WS`,tgl:e.tgl,customer:String(e.customer).trim(),po:String(e.po||'').trim(),sales:String(e.sales||'').trim(),lead:String(e.lead||'').trim(),due:e.due||'',material:e.material||'',tebal:e.tebal||'',type:e.type||'',note:e.note||'',dist:e.dist,signProc:e.signProc||'',signPpic:e.signPpic||'',items,status,...(e.penawaran?{penawaran:e.penawaran}:{}),...(e.so?{so:e.so}:{})};
+  const data={no,nomor:`${no}/SPK/${String(e.tgl).slice(0,4)}/WS`,tgl:e.tgl,customer:String(e.customer).trim(),po:String(e.po||'').trim(),sales:String(e.sales||'').trim(),lead:String(e.lead||'').trim(),due:e.due||'',material:e.material||'',tebal:e.tebal||'',type:e.type||'',note:e.note||'',dist:e.dist,signProc:e.signProc||'',signPpic:e.signPpic||'',items:status==='Terbit'?snapItems(items,e.id&&e.orig?e.orig:null,oiList):items,status,...(e.penawaran?{penawaran:e.penawaran}:{}),...(e.so?{so:e.so}:{})};
   const btns=document.querySelectorAll('#editor [data-act=ed-save]');btns.forEach(b=>b.disabled=true);
   try{
    if(!e.id||(e.orig&&e.orig.no!==no)){
@@ -4592,7 +4601,7 @@ async function exportSpkXlsx(id){
  catch(e){if(e.code!=='declined')toast('Gagal membuat Excel: '+(e.message||e.code))}
 }
 async function publishDraft(id){const s=byId('spk',id);if(!s)return;const items=(s.items||[]);if(!items.length){toast('SPK belum punya item.');return}
- const now=new Date().toISOString();await updDoc('spk',id,{status:'Terbit',terbitAt:now,terbitBy:ME||null});toast(`SPK ${s.no} terbit · tim langsung melihat`)}
+ const now=new Date().toISOString();await updDoc('spk',id,{status:'Terbit',terbitAt:now,terbitBy:ME||null,items:snapItems(items,null,null)});toast(`SPK ${s.no} terbit · tim langsung melihat`)}
 
 /* ---------- events ---------- */
 let delArm=null;

@@ -310,6 +310,12 @@ const o4 = await ring();
 ok('W-13 OTD: 7201 penuh dua kali kirim (tanggal penuh = kirim kedua) tepat waktu; 7202 penuh setelah due (terlambat); 7203 belum penuh tidak dihitung', o4.otd_terkirim_90 - o0.otd_terkirim_90 === 2 && o4.otd_tepat_90 - o0.otd_tepat_90 === 1 && o4.otd_persen_90 !== null, JSON.stringify([o0.otd_terkirim_90, o4.otd_terkirim_90, o4.otd_tepat_90, o4.otd_persen_90]));
 ok('W-14 item_per_posisi memuat hitungan per posisi (JSON)', typeof r1.item_per_posisi === 'object' && Object.values(r1.item_per_posisi).every((n) => Number(n) > 0));
 
+// W-18 mesin alternatif pada langkah terakhir ikut dihitung (items[].alt)
+await db.query(`INSERT INTO spk (no, customer, po, status, customer_id, items, due) VALUES ('7301', 'PT Contoh Satu', 'PO-A1', 'Terbit', $1, $2, $3)`, [cid, JSON.stringify([{ d: 'W Alt', q: 40, rute: ['Shearing', 'Bending'], alt: { Bending: ['CNC Laser'] } }]), await hari(10)]);
+const wAlt = await spkId('7301');
+await db.query(`INSERT INTO produksi_log (spk_id, item_idx, jenis, wc, qty) VALUES ($1,0,'hasil','Bending',10), ($1,0,'hasil','CNC Laser',15), ($1,0,'hasil','Shearing',40), ($1,0,'hasil','Welding',99)`, [wAlt]);
+ok('W-18 langkah terakhir Bending dengan alternatif CNC Laser: 10 + 15 = 25 dihitung; Shearing dan WC di luar rute tidak', (await q(`SELECT qty_produksi::float qp FROM v_spk_status WHERE spk_id = $1`, [wAlt]))[0].qp === 25);
+
 // view: security invoker dan Realtime
 const rel = await q(`SELECT relname, reloptions FROM pg_class WHERE relname IN ('v_item_produksi','v_spk_status','v_dash_bahan_baku','v_spk_otd','v_dash_ringkas')`);
 ok('W-15 semua view dashboard SECURITY INVOKER', rel.length === 5 && rel.every((x) => (x.reloptions || []).includes('security_invoker=true')), JSON.stringify(rel.map((x) => x.relname)));
