@@ -73,7 +73,7 @@ Commit lokal dengan identitas `mitranusainternational-cloud` / `mitranusainterna
 5. Faktor sisa potong sebenarnya per produk (sementara 1,1) dan pencatatan sisa potongan.
 6. Jam kerja dan target KPI per work center (T-183).
 7. Tinjauan tampilan Penawaran dan Sales Order.
-8. Input SPK terstruktur ([[INPUT_SPK_TERSTRUKTUR]] bagian 4): default lubang per produk (Perforated = full hole?), full hole bentuk lain, dan tahap routing (rute per produk dan bentuk di Master Data, aturan vendor per material: SPHC wajib, stainless dan aluminium tanpa, pengecualian per item).
+8. Input SPK terstruktur ([[INPUT_SPK_TERSTRUKTUR]] bagian 4): full hole bentuk lain (default Perforated = full hole sudah diputuskan dan dibangun 2026-11-07), dan tahap routing (rute per produk dan bentuk di Master Data, aturan vendor per material: SPHC wajib, stainless dan aluminium tanpa, pengecualian per item).
 9. Unggah ulang katalog berat dari workbook baru di production (Master Data, Katalog berat) agar full hole muncul.
 
 ## 6. Tindakan yang menunggu persetujuan eksplisit pemilik

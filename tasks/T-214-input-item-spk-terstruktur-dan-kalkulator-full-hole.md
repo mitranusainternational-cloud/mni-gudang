@@ -31,9 +31,10 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - [x] Modul murni `berat/bentuk.js`: bentuk per produk, dimensi per bentuk, nama item otomatis, berat dengan pilihan full hole; unit 11 lulus dengan katalog sintetis
 - [x] Editor SPK: kolom Bentuk dan nama item, Spesifikasi otomatis, Ukuran (mm) dinamis, berat per pcs, berat per item, dan tonase otomatis; Teks bebas tetap tersedia; section berubah menghitung ulang; berat manual tidak ditimpa
 - [x] Penyimpanan: item membawa bentuk, ukuran, dan lubang; baris tidak lengkap menolak simpan dengan pesan; baris kosong dilewati; membuka SPK untuk diubah memulihkan keadaan terstruktur; lembar SPK menampilkan nama dan berat
-- [x] E2E `spk-terstruktur.mjs` 18 lulus; regresi penuh 0 FAIL
+- [x] E2E `spk-terstruktur.mjs` 20 lulus (S-19: Perforated Cable Tray otomatis Full hole, pilihan manual dipertahankan); regresi penuh 0 FAIL
+- [x] Keputusan pemilik 2026-11-07: Perforated Cable Tray otomatis Full hole
 - [ ] Unggah ulang katalog berat dari workbook baru di production (Master Data, Katalog berat; tindakan super admin) agar full hole muncul
-- [ ] Keputusan pemilik: default lubang per produk, full hole bentuk lain, dan tahap routing (lihat [[INPUT_SPK_TERSTRUKTUR]] bagian 4)
+- [ ] Keputusan pemilik yang masih terbuka: full hole bentuk lain dan tahap routing (lihat [[INPUT_SPK_TERSTRUKTUR]] bagian 4)
 
 ## Bukti
 

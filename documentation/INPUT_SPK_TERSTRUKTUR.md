@@ -43,10 +43,10 @@ Uji CI memakai katalog sintetis `tests/e2e/fixtures/katalog-berat-uji.json` (buk
 
 ## 4. Keputusan yang menunggu pemilik
 
-1. **Default lubang:** sekarang Bawah untuk semua. Apakah Perforated Cable Tray otomatis Full hole, atau selalu dipilih manual?
+1. ~~Default lubang~~ **Diputuskan 2026-11-07:** Perforated Cable Tray otomatis **Full hole** (pada bentuk yang punya kolom full hole: Straight STU/STC); produk lain Bawah. Pengguna tetap bisa mengganti ke Bawah; pilihan manual dipertahankan saat section diganti produk dan saat SPK dibuka lagi. Uji S-19.
 2. **Full hole untuk bentuk selain Straight** (Elbow, Tee, dan seterusnya): kalkulator belum memilikinya; perlu rumusnya bila dibutuhkan.
 3. **Tahap berikutnya (routing)**: rute produksi per produk dan per bentuk diatur di Master Data (work center yang dilewati), aturan vendor per material (SPHC wajib vendor, stainless dan aluminium tidak), dan pengecualian per item. Bagian ini menutup kriteria terbuka [[T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]]; pertanyaan yang perlu dijawab ada di [[HANDOFF]] bagian 5.
 
 ## 5. Uji
 
-Unit: `tests/unit/bentuk.test.mjs` (11). E2E: `tests/e2e/spk-terstruktur.mjs` (18): bentuk per produk, nama dan berat otomatis, full hole, ganti bentuk, ganti tebal, finishing, type, produk, berat manual, simpan dan buka lagi, aksesori, produk tanpa kalkulator, lembar SPK.
+Unit: `tests/unit/bentuk.test.mjs` (11). E2E: `tests/e2e/spk-terstruktur.mjs` (20): bentuk per produk, nama dan berat otomatis, full hole, ganti bentuk, ganti tebal, finishing, type, produk, berat manual, simpan dan buka lagi, aksesori, produk tanpa kalkulator, lembar SPK.

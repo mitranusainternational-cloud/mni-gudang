@@ -137,6 +137,22 @@ export async function runSpkTerstruktur(page, base) {
   const sheetTeks = await page.evaluate(async () => { const id = S.spk.find((s) => s.customer === 'PT Struktur Uji')._id; openSheet(id); await new Promise((r) => setTimeout(r, 900)); return (document.getElementById('sheet') || { innerText: '' }).innerText.replace(/\s+/g, ' '); });
   ok('S-17 lembar SPK memuat nama item otomatis, berat per pcs dan berat per item dari kalkulator', /Cable Tray W100xH50xL3000 Full Hole/.test(sheetTeks) && sheetTeks.includes(full.beratSPK.toFixed(2)) && sheetTeks.includes((Math.round(full.beratSPK * 1000) / 1000 * 10).toFixed(2)), sheetTeks.slice(Math.max(0, sheetTeks.indexOf('Cable Tray') - 150), Math.max(0, sheetTeks.indexOf('Cable Tray')) + 350));
 
+  // ---------- S-19 Perforated Cable Tray: otomatis Full hole, tetap bisa diganti manual ----------
+  await page.reload(); await wait(3000); await pasangKatalog(kat);
+  await bukaBaru();
+  const cekBawaan = async (prod) => { await page.selectOption('#ed-hp-0', prod); await wait(500); return page.evaluate(() => (document.getElementById('ed-lb-0-0') || { value: null }).value); };
+  const lbCT = await cekBawaan('CABLE TRAY');
+  const lbPCT = await cekBawaan('PERFORATED CABLE TRAY');
+  await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '2'); await wait(300);
+  const stdP = berat('STU', 'STRAIGHT_STU', { w: 100, h: 50, l: 3000 }, 1.2, 'SPHC / ELG', 'standar');
+  const fullP = berat('STU', 'STRAIGHT_STU', { w: 100, h: 50, l: 3000 }, 1.2, 'SPHC / ELG', 'full');
+  const namaP = await teks('ed-nm-0-0'); const beratP = +(await nilai('ed-w-0-0'));
+  ok('S-19a Perforated Cable Tray langsung Full hole (Cable Tray biasa tetap Bawah); nama memuat Full Hole dan berat memakai kolom full hole', lbCT === 'standar' && lbPCT === 'full' && /Full Hole/.test(namaP) && dekat(beratP, fullP.beratSPK), JSON.stringify({ lbCT, lbPCT, namaP, beratP }));
+  await page.selectOption('#ed-lb-0-0', 'standar'); await wait(300);
+  await page.selectOption('#ed-hp-0', 'CABLE TRAY'); await wait(300); await page.selectOption('#ed-hp-0', 'PERFORATED CABLE TRAY'); await wait(500);
+  const lbManual = await page.evaluate(() => document.getElementById('ed-lb-0-0').value);
+  ok('S-19b pilihan Bawah yang dibuat pengguna dipertahankan walau section diganti produk lalu kembali; berat memakai kolom standar', lbManual === 'standar' && dekat(+(await nilai('ed-w-0-0')), stdP.beratSPK), JSON.stringify({ lbManual, w: await nilai('ed-w-0-0') }));
+
   ok('S-18 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   void tutupEditorBatal;
   const fail = R.filter((x) => x.startsWith('FAIL')).length;
