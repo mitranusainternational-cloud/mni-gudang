@@ -81,6 +81,7 @@ Commit lokal dengan identitas `mitranusainternational-cloud` / `mitranusainterna
 - ~~Push cabang `fitur/produksi-multi-wc`~~ sudah selesai (cabang fitur saja, bukan `main`).
 - Menerapkan draf migration 14 (produksi_log), 15 (penawaran), 16 (salesorder) di Supabase, urutannya 14, 15, 16, dimulai dari dev lalu production.
 - Menerapkan draf migration 17 (`supabase/draft/20240101000017_stok_tidak_negatif.sql`, pemicu anti stok negatif dan pengeluaran bersamaan). Belum pernah dijalankan di database mana pun; uji dulu di dev atau branch dengan 5 langkah uji di berkasnya, lalu production.
+- Menerapkan draf migration 23 (`supabase/draft/20240101000023_bongkar_foto_storage.sql`, bucket privat foto bongkar muat) hanya bersama penyambungan foto ke Storage di aplikasi; belum diuji di Supabase.
 - Menerapkan draf migration 18 (`supabase/draft/20240101000018_sparepart.sql`): tabel `sp`, kebijakan mutasi/PR untuk modul sparepart, peran gbb. Belum diterapkan; nama pemicu stempel dan kebijakan sudah dicocokkan dengan production (baca-saja 2026-11-06) dan draf memuat `table_stamps` dengan `sp`. Terapkan setelah migration 14. Tanpa ini sparepart dan PR sparepart tidak bisa jalan di production.
 - PR ke `main` (1 approval), deploy Vercel, DNS.
 - Menghapus skema cadangan `arsip_20261105` di production setelah pemilik puas.

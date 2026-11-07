@@ -5,7 +5,7 @@ title: "Bongkar Muat: tata letak rapi, foto bukti, dan ceklis terintegrasi surat
 phase: P9
 epic: E-12
 release: v1.2
-status: todo
+status: review
 priority: P1
 env: dev
 effort_days: 4
@@ -24,16 +24,23 @@ Bergantung pada: T-152
 
 ## Kriteria selesai
 
-- [ ] Tata letak antrian bongkar muat tetap rapi saat data banyak (pengelompokan, pencarian, penumpukan dibatasi, tampilan ringkas dan rinci)
-- [ ] Ambil foto atau unggah foto bukti di proses bongkar muat, jumlah foto bebas per kendaraan
-- [ ] Foto muncul sebagai lampiran di surat jalan vendor dan customer saat dicetak, jumlahnya dapat dipilih pengguna
-- [ ] Ceklis barang tidak terpisah dari surat jalan: centang digital di Bongkar Muat langsung muncul di surat jalan vendor atau customer yang dicetak
-- [ ] Penyimpanan foto aman (bucket privat, ukuran dibatasi) dan uji unggah di mock dan Supabase
+- [x] Tata letak antrian bongkar muat tetap rapi saat data banyak (pengelompokan, pencarian, penumpukan dibatasi, tampilan ringkas dan rinci)
+- [x] Ambil foto atau unggah foto bukti di proses bongkar muat, jumlah foto bebas per kendaraan
+- [x] Foto muncul sebagai lampiran di surat jalan vendor dan customer saat dicetak, jumlahnya dapat dipilih pengguna
+- [x] Ceklis barang tidak terpisah dari surat jalan: centang digital di Bongkar Muat langsung muncul di surat jalan vendor atau customer yang dicetak
+- [ ] Penyimpanan foto aman (bucket privat, ukuran dibatasi) dan uji unggah di mock dan Supabase (mock selesai; bucket privat baru berupa draf migration 23, belum diterapkan dan belum diuji di Supabase)
 
 ## Bukti
 
-(belum ada)
+Tingkat bukti: `verified in browser` (mock lokal), bukan Supabase.
+
+- Ceklis digital disimpan di catatan bongkar muat (`ceklis`, per butir, dengan waktu dan pengguna), tidak lagi hilang saat drawer ditutup; tombol Centang semua; konfirmasi bila Selesai dengan ceklis belum lengkap.
+- Foto bukti: ambil dari kamera atau unggah banyak berkas; dikompres di peramban (sisi terpanjang 1280 px, JPEG), keterangan per foto, pilihan "Sertakan di surat jalan" per foto, hapus; maksimal 24 foto per kendaraan.
+- Surat jalan vendor dan customer (pratinjau, PDF, Excel): kolom Cek (✓) muncul bila ada catatan bongkar muat yang terhubung, foto terpilih menjadi lampiran (halaman terakhir PDF, lembar "Lampiran Foto" di Excel). Surat jalan tanpa catatan bongkar muat tidak berubah.
+- Antrian: kartu ringkas dengan lencana Cek n/m dan jumlah foto, pencarian (plat, pihak, SJ, driver), kolom Selesai menampilkan 8 terbaru dengan "Tampilkan semua", kolom bergulir sendiri.
+- Uji: suite e2e baru `bongkarmuat` BM-01..BM-14 (15 PASS) di `tests/e2e/bongkar-muat.mjs`; regresi penuh dan lint tercatat di PROJECT_PROGRESS.
+- Draf `supabase/draft/20240101000023_bongkar_foto_storage.sql` (bucket privat `bongkar-foto` dan kebijakan). Belum diterapkan dan belum diuji; PGlite tidak punya skema storage.
 
 ## Catatan
 
-Permintaan pemilik 2026-11-07. Foto memerlukan penyimpanan file (Supabase Storage di production, penyimpanan lokal di mock) dan kebijakan akses; dirancang sebelum dibangun.
+Permintaan pemilik 2026-11-07. Sisa: sambungkan foto ke Supabase Storage (FOTO.mode = storage, URL bertanda tangan) dan uji di dev; sampai itu foto disimpan inline di kolom data dokumen bongkar, yang berat bila banyak foto. Catatan awal: foto memerlukan penyimpanan file (Supabase Storage di production, penyimpanan lokal di mock) dan kebijakan akses; dirancang sebelum dibangun.

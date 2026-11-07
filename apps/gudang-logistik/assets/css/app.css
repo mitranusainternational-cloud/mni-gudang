@@ -1296,3 +1296,22 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .opsi-g .fld.full{grid-column:auto}
 .opsi-g textarea.inp{width:100%;resize:vertical;font-family:inherit;font-size:13px;line-height:1.5}
 .opsi-g small{display:block;margin-top:4px;font-size:11px}
+
+/* ---- Bongkar Muat (T-217): kanban ringkas, galeri foto bukti, lampiran di pratinjau surat jalan ---- */
+.bm-kanban .col-body{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 240px);overflow-y:auto;padding-right:2px}
+.bm-card{padding:9px 10px;gap:4px}
+.bm-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bm-badges{display:flex;gap:5px;align-items:center;flex-wrap:wrap;min-height:0}
+.bm-badges:empty{display:none}
+.bm-foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0}
+.bm-foto{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+.bm-foto img{width:100%;height:120px;object-fit:cover;display:block;background:var(--surface-2)}
+.bm-foto figcaption{padding:6px;display:flex;flex-direction:column;gap:5px}
+.bm-foto-ket{font-size:11px;padding:3px 6px;height:26px}
+.bm-foto-bar{display:flex;justify-content:space-between;align-items:center;gap:4px;font-size:11px}
+.bm-foto-bar .ck{font-size:11px;gap:4px}
+.bm-prev-foto{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.bm-prev-foto figure{margin:0;border:1px solid #ccc;padding:3px}
+.bm-prev-foto img{width:100%;max-height:220px;object-fit:contain;display:block}
+.bm-prev-foto figcaption{font-size:9px;color:#555;padding-top:2px}
+@media (max-width:760px){.bm-kanban .col-body{max-height:none}.bm-prev-foto{grid-template-columns:minmax(0,1fr)}}

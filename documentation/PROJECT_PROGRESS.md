@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 — Bongkar Muat: ceklis, foto bukti, dan surat jalan terintegrasi (T-217, lokal)
+Ceklis digital tersimpan dan tampil sebagai ✓ di surat jalan vendor/customer; foto bukti (kamera atau unggah, dikompres, dipilih per foto) menjadi lampiran di cetak (pratinjau, PDF, Excel); antrian dirapikan (kartu ringkas, pencarian, Selesai dibatasi). Bukti: `verified in browser` (mock) suite `bongkarmuat` BM-01..BM-14 (15 PASS); regresi penuh 0 FAIL di semua 18 suite (role diulang sekali setelah galat jaringan lokal ERR_NO_BUFFER_SPACE), unit 34 PASS, lint 0 error. Belum diuji di Supabase; foto masih inline di dokumen, bucket privat baru draf migration 23. Berikutnya: T-216 (SPK customer memakai stok sebagian) dan T-218 (surat jalan gabungan beberapa SPK, ceklis per SPK).
+
 ### 2026-11-07 — SPK stok ke Gudang Barang Jadi (B-036..B-038, lokal)
 Penyebab SPK stok tidak bisa diterima: editor SPK menghilangkan tautan `fg` pada item. Diperbaiki, tautan lama dipulihkan, form Barang masuk terisi otomatis dari SPK stok, label SPK stok disesuaikan. Bukti: `verified in browser` (mock) suite baru `stokflow` SF-01..SF-08. Permintaan lanjutan pemilik (SPK customer memakai stok sebagian, tata letak Bongkar Muat dengan foto dan ceklis terintegrasi surat jalan, surat jalan vendor gabungan beberapa SPK) dikerjakan bertahap, belum dimulai.
 

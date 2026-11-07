@@ -55,7 +55,7 @@ const loaded=new Set();
 let DB=null,USER=null,DLS=null,ME=null,CAN=true,LIVE='wait',LAST=null,C=null;
 const F={ /* per-view filters, kept for the session */
  'barang-jadi':{q:'',kat:'',type:'',fin:'',tab:'stok'},
- 'bongkar-muat':{range:'7',jenis:''},
+ 'bongkar-muat':{range:'7',jenis:'',q:'',all:false},
  'vendor':{st:'aktif',vendor:'',q:''},
  'pengiriman':{st:'',q:''},
  'penawaran':{q:'',st:'',id:null},
@@ -424,7 +424,7 @@ function whBody(g){
 B['barang-jadi']=()=>whBody('fg');
 
 /* ---------- BONGKAR MUAT ---------- */
-T['bongkar-muat']=()=>`${segBtns('bongkar-muat','range',[['0','Hari ini'],['7','7 hari'],['all','Semua']])}${segBtns('bongkar-muat','jenis',[['','Semua'],['Loading','Loading'],['Unloading','Unloading']])}<span class="grow"></span><button class="btn primary" data-act="newbm">${ic('plus')}Kendaraan masuk</button><button class="btn ghost" data-act="csv" data-what="bongkar">${ic('dl')}CSV</button>`;
+T['bongkar-muat']=()=>`${segBtns('bongkar-muat','range',[['0','Hari ini'],['7','7 hari'],['all','Semua']])}${segBtns('bongkar-muat','jenis',[['','Semua'],['Loading','Loading'],['Unloading','Unloading']])}<input class="inp search" id="q-bongkar-muat" placeholder="Cari plat, pihak, SJ…" value="${esc(F['bongkar-muat'].q||'')}" data-act="q" data-view="bongkar-muat"><span class="grow"></span><button class="btn primary" data-act="newbm">${ic('plus')}Kendaraan masuk</button><button class="btn ghost" data-act="csv" data-what="bongkar">${ic('dl')}CSV</button>`;
 const dur=(a,b)=>{if(!a||!b)return '';const[x,y]=a.split(':').map(Number),[p,q]=b.split(':').map(Number);let m=p*60+q-(x*60+y);if(m<0)m+=1440;return m>=60?`${Math.floor(m/60)} j ${m%60} m`:`${m} mnt`};
 /* ---------- VENDOR ---------- */
 T['vendor']=()=>`${segBtns('vendor','st',[['aktif','Masih di vendor'],['selesai','Selesai'],['','Semua']])}<select class="sel" id="f-vendor" data-act="filtsel" data-view="vendor" data-key="vendor"><option value="">Semua vendor</option>${[...new Set(S.vendor.map(v=>v.vendor))].sort().map(v=>`<option ${F.vendor.vendor===v?'selected':''}>${esc(v)}</option>`).join('')}</select><input class="inp search" id="q-vendor" placeholder="Cari SPK, SJ, customer…" value="${esc(F.vendor.q)}" data-act="q" data-view="vendor"><span class="grow"></span><button class="btn primary" data-act="newvendor">${ic('outb')}Kirim ke vendor</button><button class="btn ghost" data-act="csv" data-what="vendor">${ic('dl')}CSV</button>`;
@@ -1487,17 +1487,23 @@ const getNopol=d=>String(d.nopol_m||d.nopol||'').toUpperCase().trim();
 
 /* ---------- BONGKAR MUAT board ---------- */
 B['bongkar-muat']=()=>{
- const f=F['bongkar-muat'],t=today();
- const list=S.bongkar.filter(b=>{if(b.status==='Batal')return false;if(f.jenis&&b.jenis!==f.jenis)return false;if(f.range==='0')return b.tgl===t||b.status!=='Selesai';if(f.range==='7')return days(b.tgl,t)<=7||b.status!=='Selesai';return true}).sort((a,b)=>(b.tgl+(b.jamMasuk||'')).localeCompare(a.tgl+(a.jamMasuk||'')));
+ const f=F['bongkar-muat'],t=today(),q=String(f.q||'').toLowerCase().trim();
+ const list=S.bongkar.filter(b=>{if(b.status==='Batal')return false;if(f.jenis&&b.jenis!==f.jenis)return false;
+  if(q&&!`${b.nopol} ${b.pihak} ${b.ref} ${b.muatan} ${b.driver} ${b.kendaraan} ${b.link&&(b.link.noSJ||b.link.noDok)||''}`.toLowerCase().includes(q))return false;
+  if(f.range==='0')return b.tgl===t||b.status!=='Selesai';if(f.range==='7')return days(b.tgl,t)<=7||b.status!=='Selesai';return true}).sort((a,b)=>(b.tgl+(b.jamMasuk||'')).localeCompare(a.tgl+(a.jamMasuk||'')));
  if(!S.bongkar.filter(b=>b.status!=='Batal').length)return `<section class="panel">${empty('Belum ada catatan bongkar muat','Surat jalan ke vendor, ke customer, dan penerimaan material otomatis masuk antrian di sini. Truk lain bisa dicatat manual. Status Antri → Proses → Selesai terlihat realtime oleh semua orang.',`<button class="btn primary" data-act="newbm">${ic('plus')}Catat kendaraan</button>`)}</section>`;
- const col=(st)=>{const xs=list.filter(b=>b.status===st);return `<div class="col"><h3>${st}${chip(String(xs.length),st==='Antri'?'warn':st==='Proses'?'info':'ok')}</h3>${xs.length?xs.map(b=>`<div class="card click" data-act="openbm" data-id="${b._id}"><div class="row"><span class="dir ${b.jenis==='Unloading'?'in':'out'}">${b.jenis==='Unloading'?'↓ UNLOADING':'↑ LOADING'}</span><span class="plate">${esc(b.nopol||'—')}</span>${b.auto?'<span class="chip plain" title="Dibuat otomatis dari dokumen">auto</span>':''}<span class="muted" style="margin-left:auto">${fd(b.tgl)}</span></div>
-  <div><b>${esc(b.muatan)}</b> · ${esc(b.pihak||'')}</div>
-  <div class="note">${esc(b.kendaraan||'')}${b.driver?' · '+esc(b.driver):''}${b.ref?' · Ref '+esc(b.ref):''}</div>
-  <div class="note">${b.jamMasuk?'Masuk '+esc(b.jamMasuk):'Belum tiba'}${b.jamMulai?' · mulai '+esc(b.jamMulai):''}${b.jamSelesai?' · selesai '+esc(b.jamSelesai)+' ('+dur(b.jamMulai||b.jamMasuk,b.jamSelesai)+')':''}</div>
-  ${b.ket?`<div class="note">${esc(b.ket)}</div>`:''}
+ const CAP=8;
+ const kartu=(b,st)=>{const cs=bmCekStat(b),nf=(b.foto||[]).length,ref=b.link&&(b.link.noSJ||b.link.noDok)||b.ref||'';
+  return `<div class="card bm-card click" data-act="openbm" data-id="${b._id}"><div class="row"><span class="dir ${b.jenis==='Unloading'?'in':'out'}">${b.jenis==='Unloading'?'↓ UNLOADING':'↑ LOADING'}</span><span class="plate">${esc(b.nopol||'—')}</span>${b.auto?'<span class="chip plain" title="Dibuat otomatis dari dokumen">auto</span>':''}<span class="muted" style="margin-left:auto">${fd(b.tgl)}</span></div>
+  <div class="bm-line"><b>${esc(b.muatan)}</b> · ${esc(b.pihak||'')}</div>
+  <div class="note bm-line">${b.jamMasuk?'Masuk '+esc(b.jamMasuk):'Belum tiba'}${b.jamMulai?' · mulai '+esc(b.jamMulai):''}${b.jamSelesai?' · selesai '+esc(b.jamSelesai)+' ('+dur(b.jamMulai||b.jamMasuk,b.jamSelesai)+')':''}</div>
+  <div class="bm-badges">${cs.n?chip('Cek '+cs.done+'/'+cs.n,cs.done===cs.n?'ok':cs.done?'warn':'plain'):''}${nf?chip(nf+' foto','info'):''}${ref?`<span class="mono note" title="Referensi">${esc(ref)}</span>`:''}</div>
   ${st!=='Selesai'?`<div class="acts">${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Proses">Mulai ${b.jenis.toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Selesai">${ic('chk')}Selesai</button>`}<button class="btn sm ghost" data-act="void" data-c="bongkar" data-id="${b._id}">Batalkan</button></div>`:''}
- </div>`).join(''):`<div class="note" style="padding:6px 4px">Kosong</div>`}</div>`};
- return `<div class="kanban">${col('Antri')}${col('Proses')}${col('Selesai')}</div>`;
+ </div>`};
+ const col=(st)=>{const xs=list.filter(b=>b.status===st);const lim=st==='Selesai'&&!f.all&&xs.length>CAP;const tampil=lim?xs.slice(0,CAP):xs;
+  const more=st==='Selesai'&&xs.length>CAP?`<button class="btn sm ghost" data-act="filt" data-view="bongkar-muat" data-key="all" data-val="${f.all?'false':'true'}">${f.all?'Ringkas (tampilkan '+CAP+' terbaru)':'Tampilkan semua ('+xs.length+')'}</button>`:'';
+  return `<div class="col"><h3>${st}${chip(String(xs.length),st==='Antri'?'warn':st==='Proses'?'info':'ok')}</h3><div class="col-body">${tampil.length?tampil.map(b=>kartu(b,st)).join(''):`<div class="note" style="padding:6px 4px">${q?'Tidak ada yang cocok':'Kosong'}</div>`}</div>${more}</div>`};
+ return `<div class="kanban bm-kanban">${col('Antri')}${col('Proses')}${col('Selesai')}</div>`;
 };
 
 /* ---------- VENDOR list ---------- */
@@ -1554,12 +1560,13 @@ function sjvPreview(v,s){
    ${metaRows.map(([l,val])=>`<tr><td>${esc(l)}</td><td>:</td><td>${esc(val)}</td></tr>`).join('')}
   </table>
   <table class="sj-prev-tbl">
-   <thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th style="width:12%">Qty</th><th style="width:10%">Satuan</th><th style="width:18%">Keterangan</th></tr></thead>
+   <thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th style="width:12%">Qty</th><th style="width:10%">Satuan</th><th style="width:18%">Keterangan</th>${bmPrev('vendor',v).th}</tr></thead>
    <tbody>
-    ${items.map((i,idx)=>`<tr><td style="text-align:center">${idx+1}</td><td>${esc(i.d)}</td><td style="text-align:right">${n(i.q)}</td><td style="text-align:center">${esc(i.u||'')}</td><td></td></tr>`).join('')}
-    <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="2"></td></tr>
+    ${items.map((i,idx)=>`<tr><td style="text-align:center">${idx+1}</td><td>${esc(i.d)}</td><td style="text-align:right">${n(i.q)}</td><td style="text-align:center">${esc(i.u||'')}</td><td></td>${bmPrev('vendor',v).td(idx)}</tr>`).join('')}
+    <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="${bmPrev('vendor',v).cs}"></td></tr>
    </tbody>
   </table>
+  ${bmPrev('vendor',v).foto}
   ${v.ket?`<div class="sj-prev-note">Catatan: ${esc(v.ket)}</div>`:''}
   ${v.batal?`<div class="sj-prev-note" style="color:var(--crit)">DIBATALKAN: ${esc(v.batal.alasan)}</div>`:''}
   <div class="sj-prev-signs">
@@ -1591,13 +1598,14 @@ function sjPreview(k,s){
    ${metaRows.map(([l,v])=>`<tr><td>${esc(l)}</td><td>:</td><td style="white-space:pre-line">${esc(v)}</td></tr>`).join('')}
   </table>
   <table class="sj-prev-tbl">
-   <thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th style="width:12%">Qty</th><th style="width:10%">Satuan</th><th style="width:18%">Keterangan</th></tr></thead>
+   <thead><tr><th style="width:6%">No</th><th>Nama Barang</th><th style="width:12%">Qty</th><th style="width:10%">Satuan</th><th style="width:18%">Keterangan</th>${bmPrev('kirim',k).th}</tr></thead>
    <tbody>
-    ${items.map((i,idx)=>`<tr><td style="text-align:center">${idx+1}</td><td>${esc(i.d)}</td><td style="text-align:right">${n(i.q)}</td><td style="text-align:center">${esc(i.u||'')}</td><td></td></tr>`).join('')}
-    <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="2"></td></tr>
+    ${items.map((i,idx)=>`<tr><td style="text-align:center">${idx+1}</td><td>${esc(i.d)}</td><td style="text-align:right">${n(i.q)}</td><td style="text-align:center">${esc(i.u||'')}</td><td></td>${bmPrev('kirim',k).td(idx)}</tr>`).join('')}
+    <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="${bmPrev('kirim',k).cs}"></td></tr>
    </tbody>
   </table>
   ${sjPartialHtml(k)}
+  ${bmPrev('kirim',k).foto}
   ${k.ket?`<div class="sj-prev-note">Catatan: ${esc(k.ket)}</div>`:''}
   ${k.batal?`<div class="sj-prev-note" style="color:var(--red)">DIBATALKAN: ${esc(k.batal.alasan)}</div>`:''}
   <div class="sj-prev-signs">
@@ -1826,6 +1834,89 @@ function sjAlamatForm(id){const k=byId('kirim',id);if(!k)return;const cu=mList('
  openModal(`Alamat pengiriman · ${esc(k.noSJ||'')}`,fld('Alamat pengiriman',`<textarea class="inp" name="alamat" rows="3" placeholder="Alamat tujuan / lokasi proyek">${esc(k.alamat||cu.alamat||'')}</textarea>`,true)+`<label class="ck full"><input type="checkbox" name="simpanAlamat" ${cu.alamat?'':'checked'}> Simpan juga sebagai alamat customer di Master Data</label><div class="note full">Alamat ini hanya tampil di dokumen surat jalan. Status pengiriman tidak berubah.</div>`,
   async d=>{const a=String(d.alamat||'').trim();await updDoc('kirim',id,{alamat:a});await simpanAlamatCustomer(k.customer,a,!!d.simpanAlamat);toast('Alamat disimpan')},{submit:'Simpan alamat',done:' '})}
 
+/* ---------- Bongkar Muat: ceklis digital dan foto bukti, terhubung ke surat jalan vendor/customer ---------- */
+/* Sumber item (dokumen yang dibongkar/dimuat) untuk satu catatan bongkar muat. */
+function bmSrc(b){
+ let items=[],label='',ref='';const l=b&&b.link;
+ if(l){
+  if(l.c==='mutasi'){const m=S.mutasi.find(x=>x.noDok===l.noDok);items=m?(m.items||[]):[];label='Penerimaan Bahan Baku';ref=l.noDok||''}
+  else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);items=v?(v.items||[]):[];label='SJ Vendor';ref=l.noSJ||''}
+  else if(l.c==='kirim'){const k=S.kirim.find(x=>x.noSJ===l.noSJ);items=k?(k.items||[]):[];label='SJ Customer';ref=l.noSJ||''}
+ }
+ return {items,label,ref};
+}
+const bmCekMap=b=>(b&&b.ceklis)||{};
+function bmCekStat(b){const m=bmCekMap(b),it=bmSrc(b).items;return {n:it.length,done:it.filter((_,i)=>m[i]&&m[i].ok).length}}
+/* Catatan bongkar muat yang terhubung ke satu surat jalan vendor ('vendor') atau customer ('kirim'). */
+function bmFor(c,doc){if(!doc)return null;return S.bongkar.find(b=>b.status!=='Batal'&&b.link&&b.link.c===c&&((b.link.id&&b.link.id===doc._id)||(b.link.noSJ&&b.link.noSJ===doc.noSJ)))||null}
+const bmFotoCetak=b=>((b&&b.foto)||[]).filter(x=>x.data&&x.cetak!==false);
+function bmCekCatatan(b){const s=bmCekStat(b);return s.n?`Ceklis bongkar muat: ${s.done} dari ${s.n} item dicek digital (✓ di kolom Cek)`:''}
+/* Kolom Cek dan lampiran foto pada pratinjau surat jalan di layar. */
+function bmPrev(c,doc){
+ const b=bmFor(c,doc);if(!b)return {th:'',td:()=>'',cs:2,foto:''};
+ const m=bmCekMap(b),ft=bmFotoCetak(b);
+ return {th:'<th style="width:8%">Cek</th>',td:i=>`<td style="text-align:center;font-weight:700;color:#1e783c">${m[i]&&m[i].ok?'✓':''}</td>`,cs:3,
+  foto:ft.length?`<div style="font-weight:700;margin:12px 0 4px;font-size:11px;letter-spacing:.03em">LAMPIRAN BUKTI BONGKAR MUAT</div><div class="bm-prev-foto">${ft.map((x,i)=>`<figure><img src="${x.data}" alt="Foto bukti ${i+1}"><figcaption>Foto ${i+1}${x.ket?' · '+esc(x.ket):''}</figcaption></figure>`).join('')}</div>`:''};
+}
+/* Penyimpanan foto: sekarang disimpan langsung (data URL terkompres) di dokumen bongkar. Untuk Supabase disiapkan bucket privat
+   (lihat draft migration 23); sampai bucket dipasang dan diuji, mode tetap 'inline'. */
+const FOTO={mode:'inline',maks:1280,mutu:.72,batas:24,
+ async baca(file){
+  if(!/^image\//.test(file.type||''))throw new Error('Berkas "'+file.name+'" bukan gambar.');
+  const url=await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=()=>rej(new Error('Gagal membaca foto.'));rd.readAsDataURL(file)});
+  const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('Foto "'+file.name+'" tidak bisa dibuka.'));i.src=url});
+  const k=Math.min(1,FOTO.maks/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*k)),h=Math.max(1,Math.round(img.naturalHeight*k));
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0,w,h);
+  return {data:cv.toDataURL('image/jpeg',FOTO.mutu),w,h};
+ }};
+async function bmCek(id,idx,ok){
+ const b=byId('bongkar',id);if(!b||b.status==='Batal')return;
+ const m={...bmCekMap(b)};if(ok)m[idx]={ok:true,by:ME||null,at:new Date().toISOString()};else delete m[idx];
+ await updDoc('bongkar',id,{ceklis:m});
+}
+async function bmCekSemua(id,ok){
+ const b=byId('bongkar',id);if(!b||b.status==='Batal')return;const it=bmSrc(b).items,m={};
+ if(ok)it.forEach((_,i)=>{m[i]={ok:true,by:ME||null,at:new Date().toISOString()}});
+ await updDoc('bongkar',id,{ceklis:m});
+}
+async function bmFotoAdd(id,files){
+ const b=byId('bongkar',id);if(!b)return;const lama=b.foto||[];
+ if(lama.length+files.length>FOTO.batas){toast('Maksimal '+FOTO.batas+' foto per kendaraan.');return}
+ toast('Memproses '+files.length+' foto…');
+ const baru=[];
+ try{for(const fl of files){const x=await FOTO.baca(fl);baru.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',cetak:true})}}
+ catch(e){toast(e.message||'Gagal memproses foto.');if(!baru.length)return}
+ try{await updDoc('bongkar',id,{foto:[...lama,...baru]});toast(baru.length+' foto tersimpan')}catch(e){toast('Foto gagal disimpan (penyimpanan penuh?): '+(e.message||''))}
+}
+async function bmFotoUbah(id,fid,p){const b=byId('bongkar',id);if(!b)return;await updDoc('bongkar',id,{foto:(b.foto||[]).map(x=>x.id===fid?{...x,...p}:x)})}
+async function bmFotoHapus(id,fid){const b=byId('bongkar',id);if(!b)return;await updDoc('bongkar',id,{foto:(b.foto||[]).filter(x=>x.id!==fid)})}
+document.addEventListener('change',async e=>{const el=e.target;if(el&&el.dataset&&el.dataset.act==='bmfotoket'){await bmFotoUbah(el.dataset.id,el.dataset.fid,{ket:el.value.trim()});return}if(!el||!el.classList||!el.classList.contains('bm-foto-in'))return;const fl=[...(el.files||[])];const id=el.dataset.id;el.value='';if(fl.length)await bmFotoAdd(id,fl)});
+/* Tanda centang di PDF (huruf ✓ tidak ada di font standar PDF, jadi digambar). */
+function pdfCek(doc,c){const cx=c.x+c.width/2,cy=c.y+c.height/2;doc.setDrawColor(30,120,60);doc.setLineWidth(.55);doc.line(cx-1.7,cy+.1,cx-.5,cy+1.4);doc.line(cx-.5,cy+1.4,cx+1.9,cy-1.5);doc.setDrawColor(0);doc.setLineWidth(.2)}
+const pdfCekHooks={didParseCell:h=>{if(h.section==='body'&&h.cell.raw==='✓')h.cell.text=['']},didDrawCell:h=>{if(h.section==='body'&&h.cell.raw==='✓')pdfCek(h.doc,h.cell)}};
+/* Lampiran foto di akhir PDF: dua kolom, proporsi asli. */
+function pdfFoto(doc,foto,judul){
+ if(!foto||!foto.length)return;const PW=doc.internal.pageSize.getWidth(),PH=doc.internal.pageSize.getHeight(),M=12,G=6,cw=(PW-2*M-G)/2,mh=100;
+ const fit=x=>{const k=Math.min(cw/(x.w||4),mh/(x.h||3));return {w:(x.w||4)*k,h:(x.h||3)*k}};let y=0;
+ const head=()=>{doc.addPage();doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20);doc.text(sjFx(judul),M,16);doc.setDrawColor(31,58,110);doc.setLineWidth(.5);doc.line(M,18.5,PW-M,18.5);y=24};
+ head();
+ for(let i=0;i<foto.length;i+=2){
+  const row=foto.slice(i,i+2).map(x=>({x,...fit(x)})),rh=Math.max(...row.map(q=>q.h))+9;
+  if(y+rh>PH-14)head();
+  row.forEach((q,j)=>{const px=M+j*(cw+G);doc.addImage(q.x.data,'JPEG',px,y,q.w,q.h);doc.setDrawColor(190);doc.setLineWidth(.2);doc.rect(px,y,q.w,q.h);doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(90);doc.text(sjFx('Foto '+(i+j+1)+(q.x.ket?' · '+q.x.ket:'')+' · '+new Date(q.x.at).toLocaleString('id-ID')),px,y+q.h+4,{maxWidth:cw})});
+  y+=rh;
+ }
+}
+/* Lampiran foto di Excel: lembar kedua. */
+function xlsxFoto(wb,foto,judul){
+ if(!foto||!foto.length)return;const ws=wb.addWorksheet('Lampiran Foto',{views:[{showGridLines:false}]});ws.getColumn(1).width=3;
+ ws.getCell(1,2).value=judul;ws.getCell(1,2).font={name:'Arial',bold:true,size:12};let r=3;
+ foto.forEach((x,i)=>{const k=Math.min(480/(x.w||4),320/(x.h||3)),w=Math.round((x.w||4)*k),h=Math.round((x.h||3)*k);
+  const id=wb.addImage({base64:String(x.data).split(',')[1],extension:'jpeg'});
+  ws.getCell(r,2).value='Foto '+(i+1)+(x.ket?' · '+x.ket:'')+' · '+new Date(x.at).toLocaleString('id-ID');ws.getCell(r,2).font={name:'Arial',size:9,italic:true};
+  ws.addImage(id,{tl:{col:1,row:r},ext:{width:w,height:h}});r+=Math.ceil(h/20)+3});
+}
+
 function printBmChecklist(id){
  const b=byId('bongkar',id);if(!b)return;
  /* ambil items dari dokumen sumber */
@@ -1837,7 +1928,7 @@ function printBmChecklist(id){
   else if(lc==='kirim'){const kd=S.kirim.find(x=>x.noSJ===b.link.noSJ);items=kd?(kd.items||[]):[];docLabel='SJ Customer';docRef=b.link.noSJ||'';}
  }
  const totalQty=sumBy(items,i=>+i.q||0);
- const rows=items.map((i,idx)=>`<tr><td class="pck-no">${idx+1}</td><td>${(i.d||i.item||'').replace(/</g,'&lt;')}</td><td class="pck-num">${+i.q||0}</td><td class="pck-u">${(i.u||'').replace(/</g,'&lt;')}</td><td class="pck-ck">☐</td></tr>`).join('');
+ const rows=items.map((i,idx)=>`<tr><td class="pck-no">${idx+1}</td><td>${(i.d||i.item||'').replace(/</g,'&lt;')}</td><td class="pck-num">${+i.q||0}</td><td class="pck-u">${(i.u||'').replace(/</g,'&lt;')}</td><td class="pck-ck">${b.ceklis&&b.ceklis[idx]&&b.ceklis[idx].ok?'✓':'☐'}</td></tr>`).join('');
  const win=window.open('','_blank','width=794,height=1123');
  if(!win)return toast('Aktifkan popup untuk print checklist');
  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Checklist ${b.jenis} · ${b.nopol||''}</title><style>
@@ -1940,6 +2031,7 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
  else tl.push(`<div class="bm-tl-row"><span class="bm-tl-dot muted"></span><div><b class="muted">Belum selesai</b></div></div>`);
  const st=b.status;
  const stColor=st==='Selesai'?'ok':st==='Proses'?'info':'warn';
+ const cm=bmCekMap(b),cst=bmCekStat(b),fotos=b.foto||[],bisaUbah=st!=='Batal';
  const body=`
   <div class="dw-meta-grid">
    <div class="dw-meta-card"><span>Tanggal</span><b>${fd(b.tgl)}</b></div>
@@ -1960,13 +2052,13 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
   ${srcItems.length?`<div>
    <div class="dw-section-title" style="display:flex;justify-content:space-between;align-items:center">
     <span>Detail Barang (${srcItems.length} item)</span>
-    <button class="btn sm ghost" data-act="printbm" data-id="${id}" style="font-size:11px">${ic('file')} Print Checklist</button>
+    <span style="display:flex;gap:6px"><button class="btn sm ghost" data-act="bmckall" data-id="${id}" data-on="${cst.done<cst.n?1:0}" style="font-size:11px" ${bisaUbah?'':'disabled'}>${cst.done<cst.n?'Centang semua':'Kosongkan'}</button><button class="btn sm ghost" data-act="printbm" data-id="${id}" style="font-size:11px">${ic('file')} Print Checklist</button></span>
    </div>
    <div class="tbl-wrap">
     <table class="bm-checklist-tbl">
      <thead><tr><th style="width:32px"></th><th>Item / Barang</th><th class="num">Qty</th><th style="width:60px;text-align:center">Satuan</th></tr></thead>
      <tbody>${srcItems.map((i,idx)=>`<tr>
-      <td style="text-align:center"><input type="checkbox" class="bm-ck" id="bmck-${idx}"></td>
+      <td style="text-align:center"><input type="checkbox" class="bm-ck" id="bmck-${idx}" data-act="bmck" data-id="${id}" data-idx="${idx}" ${cm[idx]&&cm[idx].ok?'checked':''} ${bisaUbah?'':'disabled'}></td>
       <td><label for="bmck-${idx}" style="cursor:pointer;display:block">${esc(i.d||i.item||'')}</label></td>
       <td class="num">${n(i.q)}</td>
       <td style="text-align:center">${esc(i.u||'')}</td>
@@ -1974,8 +2066,12 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
      <tr class="sj-prev-foot"><td></td><td style="font-weight:600;font-size:11.5px">TOTAL</td><td class="num" style="font-weight:600">${n(sumBy(srcItems,i=>+i.q||0))}</td><td></td></tr>
     </tbody></table>
    </div>
-   <div class="bm-ck-note" id="bm-ck-status-${id}"></div>
+   <div class="bm-ck-note" id="bm-ck-status-${id}">${chip(cst.done+' dari '+cst.n+' item dicek',cst.done===cst.n?'ok':cst.done?'warn':'plain')} Centang ini otomatis muncul (✓) di surat jalan ${b.link&&b.link.c==='vendor'?'vendor':b.link&&b.link.c==='kirim'?'customer':'terkait'} saat dicetak.</div>
   </div>`:''}
+  <div>
+   <div class="dw-section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>Foto bukti (${fotos.length})</span>${bisaUbah?`<span style="display:flex;gap:6px"><label class="btn sm primary" style="cursor:pointer">${ic('plus')} Ambil foto<input type="file" accept="image/*" capture="environment" class="bm-foto-in" data-id="${id}" hidden></label><label class="btn sm" style="cursor:pointer">${ic('inb')} Unggah foto<input type="file" accept="image/*" multiple class="bm-foto-in" data-id="${id}" hidden></label></span>`:''}</div>
+   ${fotos.length?`<div class="bm-foto-grid">${fotos.map((x,i)=>`<figure class="bm-foto"><img src="${x.data}" alt="Foto bukti ${i+1}" loading="lazy"><figcaption><input class="inp bm-foto-ket" placeholder="Keterangan foto…" value="${esc(x.ket||'')}" data-act="bmfotoket" data-id="${id}" data-fid="${x.id}" maxlength="80"><div class="bm-foto-bar"><label class="ck"><input type="checkbox" data-act="bmfotocetak" data-id="${id}" data-fid="${x.id}" ${x.cetak!==false?'checked':''}> Sertakan di surat jalan</label>${bisaUbah?`<button class="btn sm ghost" data-act="bmfotodel" data-id="${id}" data-fid="${x.id}">Hapus</button>`:''}</div></figcaption></figure>`).join('')}</div><div class="note">${fotos.filter(x=>x.cetak!==false).length} dari ${fotos.length} foto ikut dicetak sebagai lampiran surat jalan ${b.link&&b.link.c==='vendor'?'vendor':b.link&&b.link.c==='kirim'?'customer':''}. Foto dikompres otomatis (sisi terpanjang 1280 px).</div>`:`<div class="note">Belum ada foto. Ambil foto dengan kamera atau unggah dari galeri; jumlahnya bebas. Foto yang dicentang ikut dicetak di lampiran surat jalan.</div>`}
+  </div>
   <div><div class="dw-section-title">Aksi</div><div class="dw-btns">
    ${st!=='Selesai'&&st!=='Batal'?`${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Proses">Mulai ${b.jenis.toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Selesai">${ic('chk')}Selesai</button>`}`:''}
    <button class="btn sm ghost" data-act="bmkoreksi" data-id="${id}">${ic('edit')} Koreksi jam &amp; petugas</button>
@@ -5269,10 +5365,11 @@ function docModel(kind,ref){
      rows:log.length?log.map(e=>[fdS(e.tgl),e.at?new Date(e.at).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'',sumBy(e.items||[],i=>i.qw!=null?i.qw:i.q),(e.by&&e.sumber==='mesin'?e.by+' · ':'')+(e.ket||'')]):[['-','-','-','Belum ada update bertanggal. Update berikutnya lewat tombol Update progres produksi akan tercatat di sini.']]}],
    note:s.alasan?'Kendala: '+s.alasan:'',signs:['Dibuat oleh,\nAdmin Produksi','Diperiksa,\nKepala Produksi','Mengetahui,\nPPIC']}}
  if(kind==='sjv'){const v=byId('vendor',ref);if(!v)return null;const s=byId('spk',v.spk)||{};const tgt=v.target||addWorkdays(v.tgl,T[vKey(v.proses)]);
-  return {file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
+  const bm=bmFor('vendor',v),ck=bm?bmCekMap(bm):null;
+  return {foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(v.noSJ||''),file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
    meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Customer akhir',s.customer||'-'],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
-   tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l']],rows:(v.items||[]).map((i,k)=>[k+1,i.d,+i.q||0,i.u||'',v.rework?'Rework':'']),foot:['','TOTAL',sumBy(v.items||[],i=>i.q),'','']}],
-   note:[v.ket,v.batal?'DIBATALKAN: '+v.batal.alasan:''].filter(Boolean).join(' · '),signs:['Pengirim,\nGudang MNI','Pengemudi','Penerima,\n'+(v.vendor||'Vendor')]}}
+   tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l'],...(ck?[['Cek',8,'c']]:[])],rows:(v.items||[]).map((i,k)=>[k+1,i.d,+i.q||0,i.u||'',v.rework?'Rework':'',...(ck?[ck[k]&&ck[k].ok?'✓':'']:[])]),foot:['','TOTAL',sumBy(v.items||[],i=>i.q),'','',...(ck?['']:[])]}],
+   note:[v.ket,v.batal?'DIBATALKAN: '+v.batal.alasan:'',bm?bmCekCatatan(bm):''].filter(Boolean).join(' · '),signs:['Pengirim,\nGudang MNI','Pengemudi','Penerima,\n'+(v.vendor||'Vendor')]}}
  if(kind==='btb'){const [vid,k]=String(ref).split('|');const v=byId('vendor',vid);if(!v)return null;const R=vReturns(v);const r=R.find(x=>String(x.k)===String(k));if(!r)return null;const s=byId('spk',v.spk)||{};
   const idx=r.k>=0?r.k+1:0;
   return {file:`BTB ${v.noSJ||''}-${idx||'lama'} - ${v.vendor||''}`,title:'BUKTI TERIMA BARANG DARI VENDOR',no:`BTB/${v.noSJ||''}/${idx||'-'}`,date:r.tgl,
@@ -5282,8 +5379,9 @@ function docModel(kind,ref){
     foot:['','TOTAL','',sumBy(Object.values(r.items||{}),q=>q),sumBy(Object.values(r.rej||{}),q=>q),'','']}],
    note:[r.ket,r.est?'Data penerimaan lama: tanggal diestimasi dari surat jalan customer pertama setelahnya.':''].filter(Boolean).join(' · '),signs:['Diserahkan,\n'+(v.vendor||'Vendor'),'Diterima,\nGudang MNI','Diperiksa,\nQC']}}
  if(kind==='sjc'){const k=byId('kirim',ref);if(!k)return null;const s=byId('spk',k.spk)||{};const cu=mList('customer').find(x=>x.nama===k.customer)||{};
+  const bm=bmFor('kirim',k),ck=bm?bmCekMap(bm):null;
   return {file:`Surat Jalan ${k.noSJ||''} - ${k.customer||''}`,title:'SURAT JALAN',no:k.noSJ||'',date:k.tgl,
-   sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:s.po||'',spk:s.nomor||(s.no?String(s.no):''),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:k.items||[],ket:k.ket||'',batal:k.batal||null,partial:sjPartial(k)},
+   sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:s.po||'',spk:s.nomor||(s.no?String(s.no):''),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:k.items||[],ket:k.ket||'',batal:k.batal||null,partial:sjPartial(k),cek:ck?(k.items||[]).map((_,i)=>!!(ck[i]&&ck[i].ok)):null,foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(k.noSJ||'')},
    meta:[['Kepada',k.customer||'-'],['Alamat',k.alamat||cu.alamat||'-'],['Tanggal',tglLong(k.tgl)],['No PO',s.po||'-'],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Kendaraan',[k.kendaraan,k.nopol].filter(Boolean).join(' · ')||'-'],['Driver',k.driver||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',72,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',28,'l']],rows:(k.items||[]).map((i,n2)=>[n2+1,i.d,+i.q||0,i.u||'','']),foot:['','TOTAL',sumBy(k.items||[],i=>i.q),'','']}],
    note:[k.ket,k.batal?'DIBATALKAN: '+k.batal.alasan:''].filter(Boolean).join(' · '),signs:['Hormat kami,\nPT Mitra Nusa Internasional','Pengemudi','Diterima oleh,\n'+(k.customer||'Customer')]}}
@@ -5324,6 +5422,7 @@ async function docXlsx(m){
  if(m.note){ws.mergeCells(r,1,r,nc);put(r,1,'Catatan: '+m.note,{i:true,sz:9});ws.getRow(r).height=30;r+=2}
  if(m.signs){const per=Math.max(1,Math.floor(nc/m.signs.length));m.signs.forEach((sg,i)=>{const c0=1+i*per,c1=i===m.signs.length-1?nc:c0+per-1;if(c1>c0){ws.mergeCells(r,c0,r,c1);ws.mergeCells(r+4,c0,r+4,c1)}put(r,c0,sg,{h:'center',sz:9.5});ws.getRow(r).height=28;put(r+4,c0,m.names&&m.names[i]?`( ${m.names[i]} )`:'( ............................ )',{h:'center'})});r+=6}
  ws.mergeCells(r,1,r,nc);put(r,1,`Dicetak dari MNI Gudang & Logistik · ${new Date().toLocaleString('id-ID')}`,{sz:8,c:'FF888888',i:true});
+ xlsxFoto(wb,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  return new Uint8Array(await wb.xlsx.writeBuffer());
 }
 let PDFL=null,H2C=null;
@@ -5348,12 +5447,13 @@ async function docPdf(m){
   const cs={};t.cols.forEach((c,i)=>cs[i]={cellWidth:c[1]/tw*avail,halign:c[2]==='r'?'right':c[2]==='c'?'center':'left'});
   const fmt=v=>typeof v==='number'?n(v):String(v??'');
   doc.autoTable({startY:y,head:[t.cols.map(c=>c[0])],body:t.rows.map(r=>r.map(fmt)),foot:t.foot?[t.foot.map(fmt)]:undefined,theme:'grid',
-   styles:{fontSize:8.5,cellPadding:1.6,lineColor:[60,60,60],lineWidth:.15,textColor:20,overflow:'linebreak'},headStyles:{fillColor:[220,229,244],textColor:20,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[242,244,248],textColor:20,fontStyle:'bold'},columnStyles:cs,margin:{left:M,right:M},showFoot:'lastPage'});
+   styles:{fontSize:8.5,cellPadding:1.6,lineColor:[60,60,60],lineWidth:.15,textColor:20,overflow:'linebreak'},headStyles:{fillColor:[220,229,244],textColor:20,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[242,244,248],textColor:20,fontStyle:'bold'},columnStyles:cs,margin:{left:M,right:M},showFoot:'lastPage',...pdfCekHooks});
   y=doc.lastAutoTable.finalY+6;
  }
  const PH=doc.internal.pageSize.getHeight();
  if(m.note){doc.setFont('helvetica','italic');doc.setFontSize(8.5);const ln=doc.splitTextToSize('Catatan: '+m.note,PW-2*M);if(y+ln.length*4>PH-40){doc.addPage();y=20}doc.text(ln,M,y);y+=ln.length*4+4}
  if(m.signs){if(y>PH-42){doc.addPage();y=20}const w=(PW-2*M)/m.signs.length;doc.setFont('helvetica','normal');doc.setFontSize(9);m.signs.forEach((sg,i)=>{const cx=M+w*i+w/2;doc.text(sg.split('\n'),cx,y+3,{align:'center'});doc.text(m.names&&m.names[i]?`( ${m.names[i]} )`:'( .............................. )',cx,y+28,{align:'center'})})}
+ pdfFoto(doc,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  const np=doc.getNumberOfPages();for(let i=1;i<=np;i++){doc.setPage(i);doc.setFont('helvetica','italic');doc.setFontSize(7);doc.setTextColor(140);doc.text(`Dicetak dari MNI Gudang & Logistik · ${new Date().toLocaleString('id-ID')} · Hal ${i}/${np}`,M,PH-6)}
  return new Uint8Array(doc.output('arraybuffer'));
 }
@@ -5436,11 +5536,11 @@ async function sjPdf(d){
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60);doc.text(al,M+4,y0+17.8);
  det.forEach(([k,v],i)=>{const yy=y0+12.2+i*5.4;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...GR);T(k,x2+4,yy);doc.setTextColor(20);doc.setFont('helvetica','bold');T(': '+v,x2+27,yy)});
  /* tabel barang */
- const items=d.items||[];const tq=sumBy(items,i=>+i.q||0);const body=items.map((i,k)=>[String(k+1),sjFx(i.d),n(i.q),sjFx(i.u||''),'']);while(body.length<8)body.push(['','','','','']);
- doc.autoTable({startY:y0+H+7,head:[['No','Nama Barang','Qty','Satuan','Keterangan']],body,foot:[['','TOTAL',n(tq),'','']],theme:'grid',showFoot:'lastPage',
+ const items=d.items||[];const tq=sumBy(items,i=>+i.q||0);const ck=d.cek;const body=items.map((i,k)=>[String(k+1),sjFx(i.d),n(i.q),sjFx(i.u||''),'',...(ck?[ck[k]?'✓':'']:[])]);while(body.length<8)body.push(['','','','','',...(ck?['']:[])]);
+ doc.autoTable({startY:y0+H+7,head:[['No','Nama Barang','Qty','Satuan','Keterangan',...(ck?['Cek']:[])]],body,foot:[['','TOTAL',n(tq),'','',...(ck?['']:[])]],theme:'grid',showFoot:'lastPage',
   styles:{fontSize:9,cellPadding:{top:2.4,bottom:2.4,left:2.2,right:2.2},lineColor:LN,lineWidth:.2,textColor:20,overflow:'linebreak',minCellHeight:8},
   headStyles:{fillColor:NAVY,textColor:255,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[234,239,248],textColor:NAVY,fontStyle:'bold'},alternateRowStyles:{fillColor:[248,250,253]},
-  columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:22,halign:'right'},3:{cellWidth:22,halign:'center'},4:{cellWidth:42}},margin:{left:M,right:M}});
+  columnStyles:{0:{cellWidth:12,halign:'center'},1:{cellWidth:'auto'},2:{cellWidth:22,halign:'right'},3:{cellWidth:22,halign:'center'},4:{cellWidth:ck?30:42},5:{cellWidth:14,halign:'center'}},margin:{left:M,right:M},...pdfCekHooks});
  let y=doc.lastAutoTable.finalY+6;
  if(d.partial){const Pt=d.partial;if(y>PH-90){doc.addPage();y=20}
   doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...NAVY);T('RINCIAN PENGIRIMAN PARTIAL',M,y);
@@ -5459,6 +5559,7 @@ async function sjPdf(d){
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GR);if(org)doc.text(doc.splitTextToSize(sjFx(org),sw-8),cx,y+10.5,{align:'center'});
   doc.setDrawColor(120);doc.setLineWidth(.2);doc.line(cx-24,y+34,cx+24,y+34);doc.setTextColor(20);T('( '+(nm||'                                  ')+' )',cx,y+39,{align:'center'});
   if(i===2){doc.setFontSize(7.5);doc.setTextColor(...GR);T('Tanggal terima: ........................',cx,y+43.5,{align:'center'})}});
+ pdfFoto(doc,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  const np=doc.getNumberOfPages();for(let i=1;i<=np;i++){doc.setPage(i);doc.setDrawColor(...LN);doc.setLineWidth(.2);doc.line(M,PH-11,PW-M,PH-11);doc.setFont('helvetica','italic');doc.setFontSize(7);doc.setTextColor(140);T(`Dicetak dari MNI Gudang & Logistik · ${new Date().toLocaleString('id-ID')}`,M,PH-7);T(`Hal ${i}/${np}`,PW-M,PH-7,{align:'right'})}
  return new Uint8Array(doc.output('arraybuffer'));
 }
@@ -5485,10 +5586,10 @@ async function sjXlsx(d){
  det.forEach(([k,v],i)=>{const r=r0+1+i;put(r,4,k,{sz:9,c:'FF666666'});ws.getCell(r,4).border=box;mg(r,5,r,NC);put(r,5,v,{b:true});bx(r,5,r,NC)});
  for(let k=2;k<=5;k++)ws.getRow(r0+k).height=18;
  /* tabel barang */
- let r=r0+8;
- put(r,1,'No',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,2,'Nama Barang',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,3,'Qty',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,4,'Satuan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});mg(r,5,r,NC);put(r,5,'Keterangan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});bx(r,1,r,NC);ws.getRow(r).height=22;r++;
+ let r=r0+8;const KE=d.cek?NC-1:NC;
+ put(r,1,'No',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,2,'Nama Barang',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,3,'Qty',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,4,'Satuan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});mg(r,5,r,KE);put(r,5,'Keterangan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});if(d.cek)put(r,NC,'Cek',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});bx(r,1,r,NC);ws.getRow(r).height=22;r++;
  const items=d.items||[];const rows=items.map((i,k)=>[k+1,i.d,+i.q||0,i.u||'']);while(rows.length<8)rows.push(['','','','']);
- rows.forEach((row,k)=>{const fill=k%2?'FFF8FAFD':undefined;row.forEach((v,j)=>put(r,j+1,v,{fill,h:j===0||j===3?'center':j===2?'right':'left',nf:j===2&&typeof v==='number'?'#,##0.##':undefined}));mg(r,5,r,NC);put(r,5,'',{fill});bx(r,1,r,NC);ws.getRow(r).height=21;r++});
+ rows.forEach((row,k)=>{const fill=k%2?'FFF8FAFD':undefined;row.forEach((v,j)=>put(r,j+1,v,{fill,h:j===0||j===3?'center':j===2?'right':'left',nf:j===2&&typeof v==='number'?'#,##0.##':undefined}));mg(r,5,r,KE);put(r,5,'',{fill});if(d.cek)put(r,NC,d.cek[k]?'✓':'',{fill,h:'center',b:true,c:'FF1E783C'});bx(r,1,r,NC);ws.getRow(r).height=21;r++});
  mg(r,1,r,2);put(r,1,'TOTAL',{b:true,c:NAVY,fill:'FFEAEFF8',h:'right'});put(r,3,sumBy(items,i=>+i.q||0),{b:true,c:NAVY,fill:'FFEAEFF8',h:'right',nf:'#,##0.##'});mg(r,4,r,NC);put(r,4,'',{fill:'FFEAEFF8'});bx(r,1,r,NC);r+=2;
  /* rincian partial: hanya muncul bila pengiriman ini bagian dari kiriman partial */
  if(d.partial){const P=d.partial,p=P.heads.length;
@@ -5506,6 +5607,7 @@ async function sjXlsx(d){
  const sg=[[1,2,'Hormat kami,','PT Mitra Nusa Internasional',''],[3,6,'Pengemudi','',d.driver||''],[7,9,'Diterima oleh,',d.customer||'','']];
  sg.forEach(([c1,c2,lb,org,nm])=>{mg(r,c1,r,c2);put(r,c1,lb,{b:true,h:'center'});mg(r+1,c1,r+1,c2);put(r+1,c1,org,{sz:9,c:'FF666666',h:'center'});mg(r+2,c1,r+5,c2);mg(r+6,c1,r+6,c2);put(r+6,c1,'( '+(nm||'                              ')+' )',{h:'center'});bx(r,c1,r+6,c2)});
  mg(r+7,7,r+7,9);put(r+7,7,'Tanggal terima: ....................',{sz:8.5,c:'FF666666',h:'center'});
+ xlsxFoto(wb,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  return new Uint8Array(await wb.xlsx.writeBuffer());
 }
 async function downloadDoc(kind,ref,fmt){
@@ -5540,8 +5642,12 @@ document.addEventListener('click',async e=>{
   case 'newbm':bmForm();break;
   case 'openbm':if(!e.target.closest('button'))bmDrawer(ds.id);break;
   case 'printbm':printBmChecklist(ds.id);break;
-  case 'bmstep':{const b=byId('bongkar',ds.id);const t=nowTime();await updDoc('bongkar',ds.id,ds.to==='Proses'?{status:'Proses',jamMulai:t}:{status:'Selesai',jamSelesai:t,jamMulai:b.jamMulai||b.jamMasuk});toast(ds.to==='Proses'?'Mulai dikerjakan':'Bongkar muat selesai');break}
+  case 'bmstep':{const b=byId('bongkar',ds.id);const t=nowTime();if(ds.to==='Selesai'){const cs=bmCekStat(b);if(cs.n&&cs.done<cs.n&&!confirm(`Baru ${cs.done} dari ${cs.n} item yang dicek. Tetap tandai selesai?`))break}await updDoc('bongkar',ds.id,ds.to==='Proses'?{status:'Proses',jamMulai:t}:{status:'Selesai',jamSelesai:t,jamMulai:b.jamMulai||b.jamMasuk});toast(ds.to==='Proses'?'Mulai dikerjakan':'Bongkar muat selesai');break}
   case 'bmkoreksi':bmKoreksiForm(ds.id);break;
+  case 'bmck':await bmCek(ds.id,+ds.idx,el.checked);break;
+  case 'bmckall':await bmCekSemua(ds.id,ds.on==='1');break;
+  case 'bmfotocetak':await bmFotoUbah(ds.id,ds.fid,{cetak:el.checked});break;
+  case 'bmfotodel':if(confirm('Hapus foto ini dari catatan bongkar muat?'))await bmFotoHapus(ds.id,ds.fid);break;
   case 'newvendor':vendorForm(ds.spk);break;
   case 'terima':terimaForm(ds.id);break;
   case 'openvendor':if(!e.target.closest('button'))vendorDrawer(ds.id);break;
