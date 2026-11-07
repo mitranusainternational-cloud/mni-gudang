@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Audit alur hulu ke hilir: revisi, pembatalan, rute (B-032..B-035, lokal)
+Empat celah alur ditutup dan diuji (suite `auditflow` AF-00..AF-13, mock): penjaga revisi SPK terbit, alur Batalkan/Aktifkan kembali SPK, penjaga perubahan rute produk terhadap SPK berjalan, penjaga pembatalan surat jalan vendor yang sudah menerima barang. Belum diaudit ulang: modul Penawaran dan Sales Order (tersembunyi) terhadap SPK yang dibatalkan, dan perilaku RLS di Supabase production.
+
 ### 2026-11-07 — Keseimbangan update produksi SPK dan Produksi Hari Ini (B-029..B-031, lokal)
 Drawer SPK, riwayat, lembar, ekspor, dan alur lead time hanya membaca catatan lama; hasil mesin tidak terlihat. Kini memakai riwayat gabungan. Tombol Catat per langkah berantrian, item selesai dari progres efektif, total manual lama dipertahankan. Bukti: `verified in browser` (mock) suite baru `keseimbangan` K-00..K-10. Kode monitoring lama yang mati (`_bProduksiLama`) dihapus.
 
