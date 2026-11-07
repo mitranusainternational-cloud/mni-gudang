@@ -33,7 +33,7 @@ Bergantung pada: T-167
 - [x] Pengganti form laporan harian: mesin di work center, Mulai dan Selesai, mesin alternatif, Laporan Produksi, jejak item di lembar SPK; unit 19 skenario laporan, total e2e 195 lulus
 - [x] Input fleksibel berjalan bersamaan: banyak sesi, target, simpan sebagian, pembatalan catatan, pelindung dobel; unit 24 laporan, e2e produksi 53
 - [ ] Keputusan pemilik: daftar WC, aturan khusus per bentuk, satuan kapasitas, siapa yang mengisi
-- [ ] Pengecualian rute per item di editor SPK, tabel aturan dari aplikasi, usulan langkah dari kejadian
+- [ ] Pengecualian rute per item di editor SPK, tabel aturan dari aplikasi (rute per produk dan bentuk di Master Data, aturan vendor per material), usulan langkah dari kejadian: dikerjakan sebagai lanjutan [[T-214-input-item-spk-terstruktur-dan-kalkulator-full-hole|T-214]] setelah keputusan pemilik
 - [ ] Tinjau bersama PPIC dan operator dengan data contoh
 - [ ] Terapkan migration 14 (`produksi_log`) dan tayangkan, hanya setelah persetujuan eksplisit pemilik
 

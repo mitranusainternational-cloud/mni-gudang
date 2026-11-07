@@ -5,7 +5,7 @@ description: Jalankan dan catat regresi UI penuh untuk pratinjau lokal mni-app (
 
 # Regresi E2E (mode mock)
 
-Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 36 (gudang, SPK stok, nama penanda tangan, invarian), fitur 18 (aksi UI, pembaca angka, koreksi SPK stok, Dashboard), penawaran 42 (mock menyalakan modul lewat kunci uji), editor 17 (editor SPK, Work Center, fokus dan keyboard), alur lengkap 31 (SPK customer dan stok, dengan dan tanpa vendor), menyeluruh 24 (Master Data, bongkar muat, unduhan, kendala, pemindai kejanggalan), keamanan 8 (XSS), aksesibilitas 3 (axe-core), tampilan 72; unit 266; lint `npm run lint` 0 galat (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
+Tujuan: memastikan perubahan tidak merusak alur yang sudah lulus. Keadaan 2026-11-06 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, sparepart 36 (gudang, SPK stok, nama penanda tangan, invarian), fitur 18 (aksi UI, pembaca angka, koreksi SPK stok, Dashboard), penawaran 42 (mock menyalakan modul lewat kunci uji), editor 17 (editor SPK, Work Center, fokus dan keyboard), alur lengkap 31 (SPK customer dan stok, dengan dan tanpa vendor), spk terstruktur 18 (bentuk, ukuran, berat otomatis), menyeluruh 24 (Master Data, bongkar muat, unduhan, kendala, pemindai kejanggalan), keamanan 8 (XSS), aksesibilitas 3 (axe-core), tampilan 72; unit 266; lint `npm run lint` 0 galat (`tests/unit/*.test.mjs`). Suite penawaran dilewati karena modul disembunyikan.
 
 ## Menjalankan
 

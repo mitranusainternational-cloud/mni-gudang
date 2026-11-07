@@ -163,7 +163,9 @@ export async function runAccess(page, base) {
   ok('A-29 katalog berat terpasang dari database', await page.evaluate(() => !!(window.MNIBerat && window.MNIBerat.siap())), JSON.stringify(await page.evaluate(() => window.MNIBerat && window.MNIBerat.info())));
   await go('spk');
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
-  await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
+  await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(500);
+  // dengan katalog terpasang baris awal berbentuk terstruktur; jalur teks bebas (tempel dari Excel, SPK lama) diuji di sini
+  if (await page.$('#ed-sb-0-0')) { await page.selectOption('#ed-sb-0-0', ''); await page.waitForSelector('#ed-d-0-0'); }
   await page.fill('#ed-d-0-0', 'Cable Tray W100xH100xL3000 1.2'); await page.dispatchEvent('#ed-d-0-0', 'change'); await page.waitForTimeout(400);
   const w1 = parseFloat(await page.inputValue('#ed-w-0-0'));
   ok('A-30 berat terisi otomatis dari kalkulator', Math.abs(w1 - 8.69) < 0.005 && (await page.textContent('#ed-w-0-0 >> xpath=..')).includes('auto'), String(w1));

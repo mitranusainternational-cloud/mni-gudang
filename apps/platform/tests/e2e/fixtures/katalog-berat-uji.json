@@ -1,0 +1,360 @@
+{
+ "versi": 1,
+ "sumber": "katalog sintetis untuk uji (bukan rumus perusahaan)",
+ "keluarga": {
+  "STU": {
+   "sheet": "STU",
+   "bentuk": [
+    {
+     "id": "STRAIGHT_STU",
+     "label": "STRAIGHT STU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "h",
+       "E": "l",
+       "F": "thk",
+       "G": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "h",
+       "Y": "l",
+       "Z": "t",
+       "AA": "bj"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7)*F7*E7*G7/1000000)*1.2",
+      "AG": "((W7+X7)*Z7*Y7*AA7/1000000)*1.05",
+      "AI": "MIN(ROUND(C7/50,0),8)*(E7/200)",
+      "AJ": "P7-(AI7*90*F7*G7/1000000)",
+      "AL": "MIN(ROUND(W7/50,0),8)*(Y7/200)",
+      "AM": "AG7-(AL7*90*Z7*AA7/1000000)",
+      "AT": "P7-((AI7+2*MIN(ROUND(D7/50,0),8)*ROUND(E7/200,0))*90*F7*G7/1000000)",
+      "AY": "AG7-((AL7+2*MIN(ROUND(X7/50,0),8)*ROUND(Y7/200,0))*90*Z7*AA7/1000000)"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": "AJ",
+      "real": "AG",
+      "realLubang": "AM",
+      "estimasiFullHole": "AT",
+      "realFullHole": "AY"
+     }
+    },
+    {
+     "id": "ELBOW_STU_R_D",
+     "label": "ELBOW STU R D",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "h",
+       "E": "r",
+       "F": "thk",
+       "G": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "h",
+       "Y": "r",
+       "Z": "t",
+       "AA": "bj"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7)*F7*E7*2*G7/1000000)*1.2",
+      "AG": "((W7+X7)*Z7*Y7*2*AA7/1000000)*1.05"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "REDUCER_STU_L_R_C",
+     "label": "REDUCER STU L R C",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w1",
+       "D": "w2",
+       "E": "h",
+       "F": "thk",
+       "G": "bj",
+       "H": "jika w yg kecil"
+      },
+      "R": {
+       "W": "w1",
+       "X": "w2",
+       "Y": "h",
+       "Z": "t",
+       "AA": "bj",
+       "AB": "jika w yg kecil"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7+E7)*F7*H7*G7/1000)*1.15",
+      "AG": "((W7+X7+Y7)*Z7*AB7*AA7/1000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "COVER_STRAIGHT_STU",
+     "label": "COVER STRAIGHT STU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "l",
+       "E": "thk",
+       "F": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "l",
+       "Y": "t",
+       "Z": "bj"
+      }
+     },
+     "rumus": {
+      "P": "(C7*D7*E7*F7/1000000)*1.15",
+      "AG": "(W7*X7*Y7*Z7/1000000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "HANGER_BEAM_STU",
+     "label": "HANGER BEAM STU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "thk",
+       "E": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "t",
+       "Y": "bj"
+      }
+     },
+     "rumus": {
+      "P": "(C7*50*D7*E7/1000000)*1.15",
+      "AG": "(W7*50*X7*Y7/1000000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    }
+   ]
+  },
+  "SLU": {
+   "sheet": "SLU",
+   "bentuk": [
+    {
+     "id": "STRAIGHT_SLU",
+     "label": "STRAIGHT SLU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "h",
+       "E": "l",
+       "F": "thk",
+       "G": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "h",
+       "Y": "l",
+       "Z": "t",
+       "AA": "bj"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7)*F7*E7*G7/1000000)*1.2",
+      "AG": "((W7+X7)*Z7*Y7*AA7/1000000)*1.05",
+      "AI": "MIN(ROUND(C7/50,0),8)*(E7/200)",
+      "AJ": "P7-(AI7*90*F7*G7/1000000)",
+      "AL": "MIN(ROUND(W7/50,0),8)*(Y7/200)",
+      "AM": "AG7-(AL7*90*Z7*AA7/1000000)",
+      "AT": "P7-((AI7+2*MIN(ROUND(D7/50,0),8)*ROUND(E7/200,0))*90*F7*G7/1000000)",
+      "AY": "AG7-((AL7+2*MIN(ROUND(X7/50,0),8)*ROUND(Y7/200,0))*90*Z7*AA7/1000000)"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "ELBOW_SLU_R_D",
+     "label": "ELBOW SLU R D",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "h",
+       "E": "r",
+       "F": "thk",
+       "G": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "h",
+       "Y": "r",
+       "Z": "t",
+       "AA": "bj"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7)*F7*E7*2*G7/1000000)*1.2",
+      "AG": "((W7+X7)*Z7*Y7*2*AA7/1000000)*1.05"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "REDUCER_SLU_L_R_C",
+     "label": "REDUCER SLU L R C",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w1",
+       "D": "w2",
+       "E": "h",
+       "F": "thk",
+       "G": "bj",
+       "H": "jika w yg kecil"
+      },
+      "R": {
+       "W": "w1",
+       "X": "w2",
+       "Y": "h",
+       "Z": "t",
+       "AA": "bj",
+       "AB": "jika w yg kecil"
+      }
+     },
+     "rumus": {
+      "P": "((C7+D7+E7)*F7*H7*G7/1000)*1.15",
+      "AG": "((W7+X7+Y7)*Z7*AB7*AA7/1000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "COVER_STRAIGHT_SLU",
+     "label": "COVER STRAIGHT SLU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "l",
+       "E": "thk",
+       "F": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "l",
+       "Y": "t",
+       "Z": "bj"
+      }
+     },
+     "rumus": {
+      "P": "(C7*D7*E7*F7/1000000)*1.15",
+      "AG": "(W7*X7*Y7*Z7/1000000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    },
+    {
+     "id": "HANGER_BEAM_SLU",
+     "label": "HANGER BEAM SLU",
+     "baris": 7,
+     "masukan": {
+      "L": {
+       "C": "w",
+       "D": "thk",
+       "E": "bj"
+      },
+      "R": {
+       "W": "w",
+       "X": "t",
+       "Y": "bj"
+      }
+     },
+     "rumus": {
+      "P": "(C7*50*D7*E7/1000000)*1.15",
+      "AG": "(W7*50*X7*Y7/1000000)*1.04"
+     },
+     "judul": {},
+     "keluaran": {
+      "estimasi": "P",
+      "estimasiLubang": null,
+      "real": "AG",
+      "realLubang": null,
+      "estimasiFullHole": null,
+      "realFullHole": null
+     }
+    }
+   ]
+  }
+ }
+}

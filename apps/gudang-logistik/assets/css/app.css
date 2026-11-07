@@ -1268,3 +1268,15 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .foot .muted{opacity:1!important;color:var(--muted)}
 .av{background-image:linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.2))}
 .brand small{opacity:1}
+/* editor SPK terstruktur: bentuk, spesifikasi otomatis, ukuran */
+.edt .c-sb{width:100%;margin-bottom:4px}
+.ed-nama{font-weight:600;font-size:13px;min-height:20px;padding:2px 0}
+.edt .c-spec{white-space:nowrap}.edt .c-spec .chip{margin-right:4px}
+.ed-dims{display:flex;flex-wrap:wrap;gap:6px}
+.ed-dims .dm{display:flex;flex-direction:column;gap:2px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
+.ed-dims .dm .inp{width:76px;padding:6px 8px}
+.ed-dims .dm-lub .sel{min-width:96px}
+.ed-galat{color:var(--crit,#b42318);font-size:11px;min-height:0}
+@media(max-width:700px){.ed-dims .dm .inp{width:64px}}
+.edt .c-dim{min-width:340px}
+.edt .c-d{min-width:220px}

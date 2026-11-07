@@ -1,6 +1,6 @@
 // Mesin hitung berat: menjalankan rumus Excel dari catalog.json (apa adanya) untuk satu bentuk produk.
 // hitung(catalog, 'STU', 'STRAIGHT_STU', { w: 100, h: 100, l: 3000, t: 1.2, bj: 7.85 })
-//   -> { estimasi, estimasiLubang, real, realLubang }  (kg per pcs; null bila rumus galat atau masukan kurang)
+//   -> { estimasi, estimasiLubang, real, realLubang, estimasiFullHole, realFullHole }  (kg per pcs; null bila rumus galat, masukan kurang, atau kolom tidak ada)
 import { parse, evaluate } from './formula.js';
 
 const cache = new Map(); // teks rumus -> pohon
@@ -53,7 +53,7 @@ export function hitung(catalog, keluarga, bentukId, params) {
   if (!b) return null;
   const { L, R } = cellsFor(b, params);
   const o = b.keluaran;
-  const res = { estimasi: null, estimasiLubang: null, real: null, realLubang: null };
+  const res = { estimasi: null, estimasiLubang: null, real: null, realLubang: null, estimasiFullHole: null, realFullHole: null };
   const run = (cells, key) => {
     if (!cells || !o[key]) return null;
     const v = evalRow(b, cells, [o[key]])[o[key]];
@@ -62,6 +62,7 @@ export function hitung(catalog, keluarga, bentukId, params) {
   // Sisi kiri memuat sel masukan kiri; rumus sisi kiri hanya merujuk sel kiri (dan sebaliknya)
   res.estimasi = run(L, 'estimasi'); res.estimasiLubang = run(L, 'estimasiLubang');
   res.real = run(R, 'real'); res.realLubang = run(R, 'realLubang');
+  res.estimasiFullHole = run(L, 'estimasiFullHole'); res.realFullHole = run(R, 'realFullHole'); // kalkulator include full hole (lubang bawah dan samping), hanya Straight tray
   return res;
 }
 

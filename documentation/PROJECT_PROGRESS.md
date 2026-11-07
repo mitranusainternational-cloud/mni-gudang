@@ -770,3 +770,10 @@ Permintaan pemilik: uji dari buat SPK ke vendor ke customer, SPK stok ke vendor 
 - **Suite baru** `alur-lengkap.mjs` 31 uji (empat alur, UI sungguhan, stabil tiga kali).
 - **Bug:** B-026 (kirim ke customer atau terima gudang sebelum vendor), B-027 (tahap Siap kirim salah), B-028 (SPK stok 0 kg). Jalur tanpa vendor terbukti benar.
 - **Belum:** keputusan pemilik untuk SPK lama; bukti masih mock.
+
+## 2026-11-07 · Input item SPK terstruktur dan kalkulator full hole (T-214)
+
+Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) dengan nama, type, tebal, finishing, berat, dan tonase otomatis; routing per produk diatur di Master Data. Rancangan [[INPUT_SPK_TERSTRUKTUR]], tugas [[T-214-input-item-spk-terstruktur-dan-kalkulator-full-hole]].
+
+- **Dikerjakan:** katalog dari kalkulator baru (full hole pada Straight STU dan STC), modul `bentuk.js` (unit 11), editor SPK terstruktur, uji `spk-terstruktur.mjs` 18.
+- **Belum (tahap berikut):** routing per produk dan bentuk di Master Data, aturan vendor per material, pengecualian per item (kriteria terbuka T-174); menunggu jawaban pemilik; unggah katalog baru di production.

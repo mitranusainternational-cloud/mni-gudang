@@ -131,3 +131,8 @@ Perkiraan lama (skala dari berat acuan, mengabaikan lebar dan tinggi) sudah diha
 - Unit: mesin mereproduksi 1.505 sel workbook dengan 0 selisih; pemetaan teks lulus (`npm run test:berat`).
 - Mock (verified in browser): e2e A-29 sampai A-34, memakai katalog uji sederhana buatan sendiri (bukan rumus perusahaan): katalog terpasang dari database, berat auto, timpa manual, manual tidak ditimpa, hitung ulang, item tak dikenali dikosongkan.
 - **Belum:** uji di production dengan katalog asli dan SPK nyata dibandingkan hitungan Excel.
+
+## 9. Pembaruan 2026-11-07: full hole dan input terstruktur
+
+- Workbook terbaru `kalkulator penghitung berat MNI include full hole.xlsx` memuat rumus yang sama (192 bentuk) dan menambah kolom **Total Full Hole (Bawah+Samping)** pada Straight STU dan STC (jumlah lubang bawah dan samping dikurangkan dari berat). Pembangun katalog mendeteksi judul itu (`estimasiFullHole`, `realFullHole`) dan mesin mengembalikannya.
+- Input item di SPK kini dapat berupa bentuk dan ukuran terstruktur: lihat [[INPUT_SPK_TERSTRUKTUR]]. Teks bebas dan parser (bagian 3) tetap dipakai untuk item di luar kalkulator dan SPK lama.

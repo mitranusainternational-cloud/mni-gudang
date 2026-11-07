@@ -11,10 +11,10 @@ generated: 2026-11-07
 
 ## Ringkasan
 
-- Tugas selesai: **39 / 134** (29%)
-- Bobot effort selesai: **42 / 224.59999999999997 hari kerja** (19%)
-- Sisa effort: **182.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
-- Cakupan go-live (fase P0-P7): **35 / 104** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
+- Tugas selesai: **39 / 135** (29%)
+- Bobot effort selesai: **42 / 226.59999999999997 hari kerja** (19%)
+- Sisa effort: **184.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
+- Cakupan go-live (fase P0-P7): **35 / 105** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
 - Diblokir: **1**, sedang dikerjakan: **6**
 - Estimasi effort bersifat indikatif dan belum memuat waktu tunggu pihak lain.
 
@@ -24,7 +24,7 @@ generated: 2026-11-07
 |---|---|---|---|
 | P0 Workspace dan tracking | 7/7 | 5/5 hari (100%) | selesai |
 | P1 Fondasi lokal | 2/8 | 1.5/4.7 hari (32%) | ada blocker |
-| P2 Aplikasi siap uji | 17/49 | 22/75 hari (29%) | berjalan |
+| P2 Aplikasi siap uji | 17/50 | 22/77 hari (29%) | berjalan |
 | P3 Data dan proses | 0/7 | 0/13.5 hari (0%) | belum mulai |
 | P4 Environment cloud | 6/9 | 3.5/6 hari (58%) | berjalan |
 | P5 UAT pilot | 2/12 | 2/15.899999999999999 hari (13%) | berjalan |
@@ -38,7 +38,7 @@ generated: 2026-11-07
 
 | Rilis | Tema | Tugas | Effort | Status |
 |---|---|---|---|---|
-| v0.9 | Fondasi | 18/40 | 14.75/48.45 hari (30%) | active |
+| v0.9 | Fondasi | 18/41 | 14.75/50.45 hari (29%) | active |
 | v1.0 | Pilot go-live | 15/55 | 18.5/75.9 hari (24%) | active |
 | v1.1 | Stabilisasi, akses, kualitas data | 2/14 | 4/30 hari (13%) | active |
 | v1.2 | Integrasi dan pelaporan | 4/16 | 4.75/42.75 hari (11%) | active |
@@ -49,7 +49,7 @@ generated: 2026-11-07
 | Epic | Rilis | Tugas | Progress | Status |
 |---|---|---|---|---|
 | [[roadmap/epics/E-01-fondasi-workspace-dan-repo\|E-01]] Fondasi workspace dan repo | v0.9 | 7/8 | 96% | active |
-| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 11/32 | 23% | active |
+| [[roadmap/epics/E-02-aplikasi-berjalan-lokal\|E-02]] Aplikasi berjalan lokal | v0.9 | 11/33 | 22% | active |
 | [[roadmap/epics/E-03-kualitas-aplikasi-dan-keamanan-data\|E-03]] Kualitas aplikasi dan keamanan data | v1.0 | 8/17 | 51% | active |
 | [[roadmap/epics/E-04-proses-data-dan-pilot\|E-04]] Proses, data, dan pilot | v1.0 | 0/7 | 0% | planned |
 | [[roadmap/epics/E-05-environment-cloud-dan-ci-cd\|E-05]] Environment cloud dan CI/CD | v1.0 | 5/11 | 44% | active |
@@ -129,6 +129,7 @@ generated: 2026-11-07
 - [[tasks/T-211-audit-kerangka-dan-standar-industri|T-211]] Audit kerangka dan standar industri: keamanan, aksesibilitas, kode, data, bug · dev + pemilik
 - [[tasks/T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug|T-212]] Uji menyeluruh semua modul hulu ke hilir dan perbaikan bug yang ditemukan · dev + pemilik
 - [[tasks/T-213-uji-alur-spk-lengkap-dan-penjaga-vendor-berbasis-rute|T-213]] Uji alur SPK lengkap (customer, stok, tanpa vendor) dan penjaga vendor berbasis rute · dev + pemilik
+- [[tasks/T-214-input-item-spk-terstruktur-dan-kalkulator-full-hole|T-214]] Input item SPK terstruktur (bentuk, ukuran, berat otomatis) dan kalkulator full hole · dev + pemilik
 
 ## Tugas P0 yang belum selesai
 

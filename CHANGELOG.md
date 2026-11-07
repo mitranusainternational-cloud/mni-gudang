@@ -36,6 +36,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 - Penghapusan yang ditolak kebijakan database kini menampilkan galat, bukan sukses palsu.
 - SPK dengan langkah vendor tidak lagi "Siap kirim" sebelum finishing: barang baru boleh dikirim ke customer (atau diterima gudang untuk SPK stok) setelah kembali dari vendor; tahap baru "Siap ke vendor". SPK stainless, aluminium, dan Non Finishing tetap tanpa vendor.
 - SPK stok membawa berat per pcs dari kalkulator berat bila katalog terpasang.
+- Input item SPK terstruktur: pilih bentuk (Straight, Elbow, Tee, Cross, Reducer, Cover, aksesori) lalu isi ukuran W, H, L atau R; nama item, type, tebal, finishing, berat per pcs, berat per item, dan tonase terisi otomatis dari kalkulator. Pilihan Lubang Bawah atau Full hole untuk Straight tray (kalkulator baru). Teks bebas tetap tersedia; SPK lama terbuka apa adanya.
 
 ### Aksesibilitas dan kualitas (lokal)
 - Kontras warna tema gelap dan terang memenuhi WCAG 2 AA; pilihan, isian, dan tabel yang dapat digulir diberi nama dan dapat diakses keyboard; avatar berkontras cukup.

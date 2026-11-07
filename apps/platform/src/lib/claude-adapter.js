@@ -559,13 +559,19 @@ const CLAUDE_SHIM = {
 
 // Inject before main app loads
 // Mesin hitung berat (kalkulator Excel). Katalog rumus dimuat aplikasi dari database setelah login (bukan dikemas di JS publik).
-import { hitungItem as _hitungItem } from './berat/parser.js';
+import { hitungItem as _hitungItem, bacaSection as _bacaSection } from './berat/parser.js';
+import * as _bentuk from './berat/bentuk.js';
 let _katalogBerat = null;
 window.MNIBerat = {
   siap: () => !!_katalogBerat,
   setKatalog: (c) => { _katalogBerat = c; },
   info: () => (_katalogBerat ? { versi: _katalogBerat.versi, keluarga: Object.keys(_katalogBerat.keluarga).length, bentuk: Object.values(_katalogBerat.keluarga).reduce((a, f) => a + f.bentuk.length, 0) } : null),
   hitungItem: (o) => (_katalogBerat ? _hitungItem(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
+  keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
+  bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk) : []),
+  hitungBentuk: (o) => (_katalogBerat ? _bentuk.hitungBentuk(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  namaItem: _bentuk.namaItem,
 };
 
 // Mesin rute produksi multi work center: rute, antrian, beban, kapasitas, posisi, vendor (fungsi murni)

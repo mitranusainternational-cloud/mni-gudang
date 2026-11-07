@@ -20,7 +20,7 @@ Catatan ini cukup untuk memulai sesi baru tanpa riwayat percakapan lama. Tidak m
 - **Rilis ke production dijeda** atas permintaan pemilik (2026-11-06: fokus pemolesan lokal dahulu): [[T-203-rilis-paket-gudang-dan-produksi-ke-production]]. Rencananya: database dahulu (migration 14 lalu 18, hanya menambah; 17 tidak ikut), lalu PR ke `main`, deploy Vercel, verifikasi, dengan rollback Vercel siap.
 - **Hal yang harus diketahui sebelum rilis:** cabang ini membawa 175 berkas dari `main` (bukan hanya gudang), dan penjaga kirim ke customer mengubah perilaku di production (SPK lama yang produksinya tidak pernah dicatat tertahan sampai dicatat atau override dipakai).
 - Berikutnya (lokal): pemolesan modul per permintaan pemilik; tugas terbuka T-193 (monitoring estimasi lawan aktual, ditunda karena Penawaran disembunyikan), T-111 sampai T-113 (aturan Cek Data, opname terjadwal, validasi buffer).
-- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji (2026-11-07, semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, penawaran 42, sparepart 38, fitur 18, keamanan 8, aksesibilitas 3, menyeluruh 24, editor 17, alur lengkap 31, tampilan 72, unit 266, lint 0 galat dan 42 peringatan (batas CI 43). Audit silang: [[AUDIT_PROGRESS_2026-11-07]].
+- Tingkat bukti: semua fitur baru `verified in browser` (mock) dan unit; belum ada bukti Supabase untuk migration 14, 15, 16, 18. Uji (2026-11-07, semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, penawaran 42, sparepart 38, fitur 18, keamanan 8, aksesibilitas 3, menyeluruh 24, editor 17, alur lengkap 31, spk terstruktur 18, tampilan 72, unit 266, lint 0 galat dan 42 peringatan (batas CI 43). Audit silang: [[AUDIT_PROGRESS_2026-11-07]].
 
 ## 2. Yang HANYA ada di mesin ini (cadangkan sebelum ganti akun atau mesin)
 
@@ -73,6 +73,8 @@ Commit lokal dengan identitas `mitranusainternational-cloud` / `mitranusainterna
 5. Faktor sisa potong sebenarnya per produk (sementara 1,1) dan pencatatan sisa potongan.
 6. Jam kerja dan target KPI per work center (T-183).
 7. Tinjauan tampilan Penawaran dan Sales Order.
+8. Input SPK terstruktur ([[INPUT_SPK_TERSTRUKTUR]] bagian 4): default lubang per produk (Perforated = full hole?), full hole bentuk lain, dan tahap routing (rute per produk dan bentuk di Master Data, aturan vendor per material: SPHC wajib, stainless dan aluminium tanpa, pengecualian per item).
+9. Unggah ulang katalog berat dari workbook baru di production (Master Data, Katalog berat) agar full hole muncul.
 
 ## 6. Tindakan yang menunggu persetujuan eksplisit pemilik
 

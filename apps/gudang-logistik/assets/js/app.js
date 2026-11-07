@@ -4302,25 +4302,50 @@ function weightCalc(desc,sectionHeader){const r=weightInfo(desc,sectionHeader);r
 function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
  if(!s){s=document.createElement('span');td.appendChild(s)}s.className='wtag '+L.wsrc;s.textContent=L.wsrc==='kalkulator'?'auto':'manual';s.title=L.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}
 /* hitung ulang baris yang berat otomatisnya bergantung pada judul section, material, atau tebal; yang manual tidak disentuh */
-function edHitungUlang(){let k=0;for(const s of ED.sections)for(const l of s.lines){if(!l.d||!(l.wsrc==='kalkulator'||(!l.w&&!l.wsrc)))continue;const wi=weightInfo(l.d,s.h);if(wi&&wi.ok){const w=Math.round(wi.beratSPK*1000)/1000;if(w!==l.w||l.wsrc!=='kalkulator'){l.w=w;l.wsrc='kalkulator';k++}}}
+function edHitungUlang(){let k=0;for(const s of ED.sections){k+=edSesuaikanBaris(s);for(const l of s.lines){if(l.sb)continue;if(!l.d||!(l.wsrc==='kalkulator'||(!l.w&&!l.wsrc)))continue;const wi=weightInfo(l.d,s.h);if(wi&&wi.ok){const w=Math.round(wi.beratSPK*1000)/1000;if(w!==l.w||l.wsrc!=='kalkulator'){l.w=w;l.wsrc='kalkulator';k++}}}}
  if(k){rerenderSecs();toast(`${k} berat dihitung ulang dari kalkulator`)}}
 function derive(h){const H=String(h||'').toUpperCase();let fin='';if(H.includes('ELECTRO'))fin='ELG';else if(H.includes('HOTDIP')||H.includes('HOT DIP'))fin='HDG';else if(H.includes('POWDER')||H.includes('PDC'))fin='PDC';else if(H.includes('NON'))fin='Non Finishing';
  let base='SPHC';if(H.includes('STAINLESS')||/SS ?3\d\d/.test(H))base=H.includes('316')?'SS316':'SS304';else if(H.includes('ALU'))base='Aluminium';
  return {material:(base==='SPHC'&&fin)?`SPHC / ${fin}`:base,tebal:thkOf(h),type:(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||''}}
 const DIST_DEF=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing / Punching Tray)','Procurement','Logistic'];
-const HB={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY'],t:['STU','STC','SLU','SLHD','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
+const HB={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
 function parseH(h){const H=String(h||'').toUpperCase();const o={p:'',t:'',tb:'',f:''};o.p=[...HB.p].sort((a,b)=>b.length-a.length).find(x=>H.startsWith(x))||'';o.t=(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||'';const tk=thkOf(H);o.tb=HB.tb.find(x=>parseFloat(x)===parseFloat(tk))||'';o.f=HB.f.find(x=>H.endsWith(x))||'';return o}
 const composeH=o=>[o.p,o.t?'TYPE '+o.t:'',o.tb,o.f].filter(Boolean).join(' ');
 const accsOf=h=>String(h||'').replace(/^PERFORATED CABLE TRAY|^CABLE TRAY|^COVER TRAY/,'ACCS TRAY').replace(/^CABLE LADDER/,'ACCS LADDER').replace(/^CABLE DUCT/,'ACCS DUCT');
 const nextNo=()=>Math.max(0,...S.spk.map(s=>+s.no||0))+1;
 const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
+/* ----- input item terstruktur: bentuk dan ukuran per section, nama dan berat otomatis dari kalkulator ----- */
+const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
+const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
+function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;const shapes=B.bentukProduk(fam,hb.p);return shapes.length?{fam,prod:hb.p,shapes}:null}
+function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang='standar'}return l}
+const dimKosong=(sh,l)=>sh.dim.every(d=>l.dim==null||l.dim[d.k]===''||l.dim[d.k]==null);
+/* hitung nama dan berat satu baris terstruktur; berat manual (diketik pengguna) tidak ditimpa */
+function edHitungBaris(s,l){
+ const cap=edCap(s);if(!l.sb||!cap)return null;const sh=cap.shapes.find(x=>x.id===l.sb);if(!sh)return null;
+ l.dim=l.dim||{};if(!sh.fullHole)l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);
+ l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim)+(l.lubang==='full'&&sh.fullHole?' Full Hole':'');
+ const dv=derive(s.h);const h=window.MNIBerat.hitungBentuk({keluarga:cap.fam,bentuk:l.sb,dim:l.dim,tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});
+ l.galat=h.ok||dimKosong(sh,l)?'':h.alasan;
+ if(l.wsrc!=='manual'){if(h.ok){l.w=Math.round(h.beratSPK*1000)/1000;l.wsrc='kalkulator'}else{l.w='';l.wsrc=''}}
+ return h;
+}
+/* section berubah (produk, type, tebal, finishing): sesuaikan bentuk baris terstruktur dan hitung ulang */
+function edSesuaikanBaris(s){const cap=edCap(s);let k=0;
+ for(const l of s.lines){if(l.sb===undefined||l.sb==='')continue;
+  if(!cap){l.sb='';continue}
+  let sh=cap.shapes.find(x=>x.id===l.sb);
+  if(!sh){sh=cap.shapes.find(x=>x.kunci===kunciDariId(l.sb));if(!sh){if(AKSESORI_PRODUK.includes(cap.prod)){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}sh=cap.shapes[0]}l.sb=sh.id}
+  if(!sh.fullHole)l.lubang='standar';
+  const lama=l.w;edHitungBaris(s,l);if(lama!==l.w)k++}
+ return k}
 const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
 function secsOf(s){const secs=[];for(const it of s.items||[]){const g=it.g||'';if(!secs.length||secs[secs.length-1].h!==g)secs.push({h:g,lines:[]});secs[secs.length-1].lines.push(it)}return secs}
 
 /* ----- editor ----- */
 let ED=null,EDT=null,EDDIRTY=false;
-function newEd(){const no=nextNo();return {id:null,no,tgl:today(),sales:'',customer:'',po:'',lead:'5 Hari Kerja',due:'',dueAuto:true,material:'',tebal:'',type:'',matAuto:true,note:'',noteAuto:true,dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',status:'Draft',rev:0,revAlasan:'',orig:null,sections:[{h:'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED',lines:[blankLine(),blankLine(),blankLine()]}]}}
-function edFrom(s,copy){const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0)}))}));
+function newEd(){const no=nextNo();return {id:null,no,tgl:today(),sales:'',customer:'',po:'',lead:'5 Hari Kerja',due:'',dueAuto:true,material:'',tebal:'',type:'',matAuto:true,note:'',noteAuto:true,dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',status:'Draft',rev:0,revAlasan:'',orig:null,sections:[{h:'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED',lines:[lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED')]}]}}
+function edFrom(s,copy){const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar'}:{})}))}));
  if(!secs.length)secs.push({h:'',lines:[blankLine()]});
  return {id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||DIST_DEF).slice(),signProc:s.signProc||'Halimah',signPpic:s.signPpic||'Muin M.K.',status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
 function edAuto(){const e=ED;if(e.dueAuto&&leadMax(e.lead))e.due=addWorkdays(e.tgl,leadMax(e.lead));if(e.noteAuto)e.note=e.due?'NOTE : ESTIMASI KIRIM '+tglLong(e.due).toUpperCase():'';
@@ -4333,10 +4358,19 @@ async function openEditor(ed){
 }
 function closeEditor(){clearInterval(EDT);ED=null;$('#editor').hidden=true;$('#editor').innerHTML='';document.body.style.overflow=''}
 const opt=(arr,sel,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
+const FIN_PENDEK={'ELECTRO GALVANIZED':'ELG','HOTDIP GALVANIZED':'HDG','STAINLESS STEEL 304':'SS304','STAINLESS STEEL 316L':'SS316L','POWDER COATING WHITE':'PDC putih','POWDER COATING ORANGE RAL 2000':'PDC oranye','POWDER COATING BLUE RAL 5017':'PDC biru','ALUMINIUM 1100':'Alu 1100','NON FINISHING':'Non finishing'};
+function edKolomItem(s,si,li,l,cap,hb){
+ const sh=cap&&l.sb?cap.shapes.find(x=>x.id===l.sb):null;
+ const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+'</select>';
+ const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>':'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
+ const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span></td>';
+ const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
+ return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
+}
 function edSecHtml(s,si,startNo){
- const hb=parseH(s.h);let no=startNo;
+ const hb=parseH(s.h);let no=startNo;const cap=edCap(s);
  const rows=s.lines.map((l,li)=>{no++;const bi=(+l.q||0)*(+l.w||0);return `<tr data-s="${si}" data-l="${li}"><td class="c-no">${no}</td>
-  <td class="c-d"><input class="inp" data-f="d" value="${esc(l.d)}" list="dl-desc" placeholder="Cable Tray W100xH50xL3000 mm" id="ed-d-${si}-${li}" autocomplete="off"></td>
+  ${cap?edKolomItem(s,si,li,l,cap,hb):`<td class="c-d"><input class="inp" data-f="d" value="${esc(l.d)}" list="dl-desc" placeholder="Cable Tray W100xH50xL3000 mm" id="ed-d-${si}-${li}" autocomplete="off"></td>`}
   <td class="c-ket"><input class="inp red" data-f="ket" value="${esc(l.ket)}" placeholder="opsional" id="ed-k-${si}-${li}"></td>
   <td class="c-q"><input class="inp num" data-f="q" type="number" min="0" step="any" value="${esc(l.q)}" id="ed-q-${si}-${li}" inputmode="decimal"></td>
   <td class="c-u"><input class="inp" data-f="u" value="${esc(l.u)}" list="dl-sat" id="ed-u-${si}-${li}"></td>
@@ -4348,7 +4382,7 @@ function edSecHtml(s,si,startNo){
   <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p,hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
   <span class="esec-acts"><button type="button" class="ibtn" data-act="ed-up" data-s="${si}" aria-label="Naikkan" ${si?'':'disabled'}>↑</button><button type="button" class="ibtn" data-act="ed-down" data-s="${si}" aria-label="Turunkan" ${si<ED.sections.length-1?'':'disabled'}>↓</button><button type="button" class="ibtn" data-act="ed-delsec" data-s="${si}" aria-label="Hapus section" ${ED.sections.length>1?'':'disabled'}>×</button></span>
   <input class="inp esec-title" data-sf="h" data-s="${si}" value="${esc(s.h)}" list="dl-grup" placeholder="JUDUL SECTION, mis. CABLE TRAY TYPE STU 1.5 ELECTRO GALVANIZED" id="ed-h-${si}"></div>
-  <div class="tbl-wrap"><table class="edt"><thead><tr><th>No</th><th>Description</th><th>Catatan merah</th><th class="num">Qty</th><th>Satuan</th><th class="num">Berat/pcs</th><th class="num">Berat/item</th><th>Keterangan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="tbl-wrap"><table class="edt"><thead><tr><th>No</th>${cap?'<th>Bentuk dan nama item</th><th>Spesifikasi</th><th>Ukuran (mm)</th>':'<th>Description</th>'}<th>Catatan merah</th><th class="num">Qty</th><th>Satuan</th><th class="num">Berat/pcs</th><th class="num">Berat/item</th><th>Keterangan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
   <button type="button" class="btn sm ghost" data-act="ed-addline" data-s="${si}">${ic('plus')}Baris</button></div>`;
 }
 function edTotals(){let q=0,w=0,c=0;ED.sections.forEach(s=>s.lines.forEach(l=>{if(String(l.d).trim()){c++;q+= +l.q||0;w+=(+l.q||0)*(+l.w||0)}}));return {q,w,c}}
@@ -4414,17 +4448,34 @@ function edInput(e){
   if(k==='due')ED.dueAuto=false;if(k==='note')ED.noteAuto=false;if(['material','tebal','type'].includes(k))ED.matAuto=false;
   if(['tgl','lead','due','no'].includes(k)){edAuto();edSyncHeader()}if(e.type==='change'&&['material','tebal'].includes(k))edHitungUlang();return}
  if(t.dataset.sf==='h'){const si=+t.dataset.s;ED.sections[si].h=t.value;EDDIRTY=true;edAuto();edSyncHeader();
-  if(e.type==='change'){const hb=parseH(t.value);['p','t','tb','f'].forEach(k=>{const s=$(`#ed-h${k}-${si}`);if(s)s.value=hb[k]});edHitungUlang()}return}
- if(t.dataset.hb){const si=+t.dataset.s;const hb=parseH(ED.sections[si].h);hb[t.dataset.hb]=t.value;ED.sections[si].h=composeH(hb);$('#ed-h-'+si).value=ED.sections[si].h;EDDIRTY=true;edAuto();edSyncHeader();edHitungUlang();return}
+  if(e.type==='change'){const hb=parseH(t.value);['p','t','tb','f'].forEach(k=>{const s=$(`#ed-h${k}-${si}`);if(s)s.value=hb[k]});edHitungUlang();setTimeout(()=>{if(ED)rerenderSecs()},0)}return}
+ if(t.dataset.hb){const si=+t.dataset.s;const hb=parseH(ED.sections[si].h);hb[t.dataset.hb]=t.value;ED.sections[si].h=composeH(hb);$('#ed-h-'+si).value=ED.sections[si].h;EDDIRTY=true;edAuto();edSyncHeader();edHitungUlang();rerenderSecs();return}
  if(t.dataset.dist!==undefined){const d=t.dataset.dist;ED.dist=t.checked?[...new Set([...ED.dist,d])]:ED.dist.filter(x=>x!==d);EDDIRTY=true;return}
+ const trS=t.closest('tr[data-s]');
+ if(trS&&t.dataset.dim){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.dim=L.dim||{};L.dim[t.dataset.dim]=t.value;EDDIRTY=true;edBarisBerubah(trS,si,li,e.type==='input'&&t.dataset.dim);return}
+ if(trS&&t.dataset.f==='sb'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.sb=t.value;EDDIRTY=true;
+  if(L.sb){L.dim=L.dim||{};if(L.wsrc==='kalkulator')L.wsrc='';L.lubang=L.lubang||'standar';edHitungBaris(ED.sections[si],L)}else{L.d=L.d&&L.sb===''&&L.dim?L.d:'';L.galat=''}
+  rerenderSecs();const x=$('#ed-sb-'+si+'-'+li);x&&x.focus();return}
+ if(trS&&t.dataset.f==='lubang'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.lubang=t.value;EDDIRTY=true;edBarisBerubah(trS,si,li,null);return}
  const tr=t.closest('tr[data-s]');if(!tr||!t.dataset.f)return;
  const si=+tr.dataset.s,li=+tr.dataset.l,f=t.dataset.f,L=ED.sections[si].lines[li];L[f]=t.value;EDDIRTY=true;
+ if(L.sb&&f==='q'){edBarisBerubah(tr,si,li,null)}
  if(f==='w'){L.wsrc=t.value===''?'':'manual';wTag(tr,L)}
  if(f==='d'&&e.type==='change'){const k=KAT();
   if(!L.w||L.wsrc==='kalkulator'){const wi=weightInfo(L.d,ED.sections[si].h);if(wi&&wi.ok){L.w=Math.round(wi.beratSPK*1000)/1000;L.wsrc='kalkulator';tr.querySelector('[data-f=w]').value=L.w;wTag(tr,L);if(wi.catatan&&wi.catatan.length)toast('Berat dari kalkulator · '+wi.catatan.join('; '))}else if(L.wsrc==='kalkulator'){L.w='';L.wsrc='';tr.querySelector('[data-f=w]').value='';wTag(tr,L)}}
   if(!L.w){const w=beratOf(L.d,ED.sections[si].h);if(w){L.w=w;tr.querySelector('[data-f=w]').value=w}}if(k.satuan&&k.satuan[L.d]){L.u=k.satuan[L.d];tr.querySelector('[data-f=u]').value=L.u}/* fallback: fill satuan & berat from SPK history if not in master katalog */if(!L.u||!L.w){const hi=katIndex().arr.find(x=>x.d===L.d);if(hi){if(!L.u&&hi.u){L.u=hi.u;const uf=tr.querySelector('[data-f=u]');if(uf)uf.value=hi.u}if(!L.w&&hi.w&&hi.w['–']){L.w=hi.w['–'];const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=hi.w['–']}}}/* final fallback: hitung dari formula Excel weightCalc */if(!L.w){const wc=weightCalc(L.d,ED.sections[si].h);if(wc){L.w=wc;const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=wc}}}
  const bi=(+L.q||0)*(+L.w||0);tr.querySelector('[data-bi]').textContent=bi?n(bi):'–';renderTotals();
- if(li===ED.sections[si].lines.length-1&&f==='d'&&t.value&&e.type==='input'&&!tr.nextElementSibling){ED.sections[si].lines.push(blankLine());const id=t.id;const pos=t.selectionStart;rerenderSecs();const x=$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
+ if(li===ED.sections[si].lines.length-1&&f==='d'&&t.value&&e.type==='input'&&!tr.nextElementSibling){ED.sections[si].lines.push(lineBaru(ED.sections[si].h));const id=t.id;const pos=t.selectionStart;rerenderSecs();const x=$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
+}
+/* baris terstruktur berubah (ukuran, lubang, qty): hitung nama dan berat, perbarui sel tanpa menggambar ulang agar fokus tetap */
+function edBarisBerubah(tr,si,li,fokusDim){
+ const s=ED.sections[si],L=s.lines[li];edHitungBaris(s,L);
+ const nm=$('#ed-nm-'+si+'-'+li);if(nm)nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>';
+ const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';
+ const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=L.w===''?'':L.w;wTag(tr,L);
+ const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';renderTotals();
+ /* baris terakhir mulai diisi: sediakan baris berikutnya */
+ if(fokusDim&&li===s.lines.length-1&&!tr.nextElementSibling){s.lines.push(lineBaru(s.h));const id=document.activeElement&&document.activeElement.id;const pos=document.activeElement&&document.activeElement.selectionStart;rerenderSecs();const x=id&&$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
 }
 function edPaste(e){
  const t=e.target;if(!ED||t.dataset.f!=='d')return;const txt=(e.clipboardData||window.clipboardData).getData('text');if(!txt||(!txt.includes('\t')&&!txt.includes('\n')))return;
@@ -4432,9 +4483,9 @@ function edPaste(e){
  const cur=ED.sections[si];const before=cur.lines.slice(0,li).filter(l=>String(l.d).trim()),after=cur.lines.slice(li+1).filter(l=>String(l.d).trim());
  const first=secs[0];const rest=secs.slice(1);
  if(first.cont||first.h===cur.h){cur.lines=[...before,...first.lines]}else{cur.lines=before.length?before:[];if(!before.length&&!cur.lines.length){cur.h=first.h;cur.lines=first.lines}else rest.unshift(first)}
- if(!cur.lines.length)cur.lines=[blankLine()];
- const ins=rest.map(s=>({h:s.h,lines:s.lines.length?s.lines:[blankLine()]}));
- if(ins.length){ins[ins.length-1].lines.push(...after,blankLine())}else cur.lines.push(...after,blankLine());
+ if(!cur.lines.length)cur.lines=[lineBaru(cur.h)];
+ const ins=rest.map(s=>({h:s.h,lines:s.lines.length?s.lines:[lineBaru(s.h)]}));
+ if(ins.length){ins[ins.length-1].lines.push(...after,lineBaru(ins[ins.length-1].h))}else cur.lines.push(...after,lineBaru(cur.h));
  ED.sections.splice(si+1,0,...ins);EDDIRTY=true;edAuto();edSyncHeader();rerenderSecs();
  const cnt=secs.reduce((a,s)=>a+s.lines.length,0);toast(`${cnt} baris ditempel${ins.length?` · ${ins.length} section baru`:''}`);
 }
@@ -4452,7 +4503,7 @@ async function saveEditor(mode){
  const e=ED,err=$('#ed-err');err.textContent='';
  try{need('spk');
   const no=parseInt(e.no);if(!no)throw new Error('Isi No SPK.');if(!String(e.customer).trim())throw new Error('Isi nama customer.');e.customer=cleanName(e.customer);{const sim=similarTo('customer',e.customer);if(sim){e.customer=sim.nama;const ci=$('#ed-cust');if(ci)ci.value=sim.nama;throw new Error(`Customer disamakan ke "${sim.nama}" (sudah terdaftar). Klik simpan lagi.`)}}if(!e.tgl)throw new Error('Isi tanggal SPK.');
-  const items=[];for(const s of e.sections)for(const l of s.lines){if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0)})}
+  const items=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l.lubang==='full'?{lubang:'full'}:{})}:{})})}
   if(!items.length)throw new Error('Tambahkan minimal satu item.');
   const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
   if(editTerbit&&!String(e.revAlasan).trim())throw new Error('Isi alasan revisi.');
@@ -5545,10 +5596,10 @@ document.addEventListener('click',async e=>{
   case 'sheet-close':closeSheet();break;
   case 'ed-close':if(EDDIRTY&&!el.dataset.sure){el.dataset.sure='1';el.textContent='Klik lagi: buang perubahan';return}closeEditor();break;
   case 'ed-save':saveEditor(ds.mode);break;
-  case 'ed-addline':ED.sections[+ds.s].lines.push(blankLine());rerenderSecs();{const x=$(`#ed-d-${ds.s}-${ED.sections[+ds.s].lines.length-1}`);x&&x.focus()}break;
-  case 'ed-delline':{const L=ED.sections[+ds.s].lines;L.splice(+ds.l,1);if(!L.length)L.push(blankLine());EDDIRTY=true;rerenderSecs();break}
-  case 'ed-addsec':ED.sections.push({h:ED.sections[ED.sections.length-1].h,lines:[blankLine(),blankLine()]});EDDIRTY=true;rerenderSecs();break;
-  case 'ed-addacc':ED.sections.push({h:accsOf(ED.sections[ED.sections.length-1].h),lines:[blankLine(),blankLine()]});EDDIRTY=true;rerenderSecs();break;
+  case 'ed-addline':ED.sections[+ds.s].lines.push(lineBaru(ED.sections[+ds.s].h));rerenderSecs();{const x=$(`#ed-d-${ds.s}-${ED.sections[+ds.s].lines.length-1}`);x&&x.focus()}break;
+  case 'ed-delline':{const L=ED.sections[+ds.s].lines;L.splice(+ds.l,1);if(!L.length)L.push(lineBaru(ED.sections[+ds.s].h));EDDIRTY=true;rerenderSecs();break}
+  case 'ed-addsec':ED.sections.push({h:ED.sections[ED.sections.length-1].h,lines:[lineBaru(ED.sections[ED.sections.length-1].h),lineBaru(ED.sections[ED.sections.length-1].h)]});EDDIRTY=true;rerenderSecs();break;
+  case 'ed-addacc':ED.sections.push({h:accsOf(ED.sections[ED.sections.length-1].h),lines:[lineBaru(accsOf(ED.sections[ED.sections.length-1].h)),lineBaru(accsOf(ED.sections[ED.sections.length-1].h))]});EDDIRTY=true;rerenderSecs();break;
   case 'ed-delsec':if(ED.sections.length>1){ED.sections.splice(+ds.s,1);EDDIRTY=true;edAuto();edSyncHeader();rerenderSecs()}break;
   case 'ed-up':case 'ed-down':{const i=+ds.s,j=a==='ed-up'?i-1:i+1;if(j>=0&&j<ED.sections.length){[ED.sections[i],ED.sections[j]]=[ED.sections[j],ED.sections[i]];EDDIRTY=true;rerenderSecs()}break}
   case 'openspk':spkDrawer(ds.id);break;
