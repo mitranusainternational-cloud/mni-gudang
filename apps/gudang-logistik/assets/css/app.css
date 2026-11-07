@@ -1292,3 +1292,7 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .edt td{vertical-align:top;padding:8px 6px}
 .edt .c-dim{width:440px;min-width:440px}.ed-dims{flex-wrap:nowrap}.ed-dims .dm-lub .sel{min-width:104px}
 .edt .c-bi{padding-top:16px}.edt .c-no{padding-top:16px}
+.opsi-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.opsi-g .fld.full{grid-column:auto}
+.opsi-g textarea.inp{width:100%;resize:vertical;font-family:inherit;font-size:13px;line-height:1.5}
+.opsi-g small{display:block;margin-top:4px;font-size:11px}

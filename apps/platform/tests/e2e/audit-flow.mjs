@@ -114,6 +114,28 @@ export async function runAuditFlow(page, base) {
   const tolakV = await page.evaluate(() => ({ err: (document.querySelector('#modal .err, #m-err, #modal [role="alert"]') || { textContent: '' }).textContent, st: (S.vendor.find((v) => v.noSJ === 'SJV-UJI-1') || {}).status }));
   ok('AF-13 surat jalan vendor dengan barang kembali (2 OK + 1 reject) ditolak dibatalkan; status tetap', /sudah menerima 3 barang kembali/.test(tolakV.err) && tolakV.st !== 'Batal', JSON.stringify(tolakV));
 
+  // ---------- Master Data > Opsi SPK memusatkan daftar produk, type, tebal, finishing, distribusi, penandatangan ----------
+  await go('#master-data');
+  await page.click('[data-view="master-data"][data-key="tab"][data-val="opsi"]'); await wait(600);
+  const awalOpsi = await page.evaluate(() => ({ p: HB.p.length, sign: OPSI().signProc }));
+  await page.fill('#op-p', (await page.inputValue('#op-p')) + '\nTANGGA KABEL');
+  await page.fill('#op-tb', (await page.inputValue('#op-tb')) + '\n4.0');
+  await page.fill('#op-dist', (await page.inputValue('#op-dist')) + '\nQuality Control');
+  await page.fill('#op-signProc', 'Estimator Baru');
+  await page.click('[data-act="opsisimpan"]'); await wait(900);
+  const sesudahOpsi = await page.evaluate(() => ({ p: HB.p, tb: HB.tb, dist: OPSI().dist, sign: OPSI().signProc }));
+  ok('AF-14 opsi SPK disimpan di Master Data dan langsung dipakai: produk, tebal, distribusi, dan penandatangan bawaan', sesudahOpsi.p.includes('TANGGA KABEL') && sesudahOpsi.tb.includes('4.0') && sesudahOpsi.dist.includes('Quality Control') && sesudahOpsi.sign === 'Estimator Baru' && awalOpsi.sign === 'Halimah', JSON.stringify({ awalOpsi, sign: sesudahOpsi.sign }));
+  await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(600);
+  const adaRute = await page.evaluate(() => [...document.querySelectorAll('#rute-tabel tbody tr b')].some((b) => b.textContent === 'TANGGA KABEL'));
+  ok('AF-15 produk baru langsung muncul di tab Rute produksi untuk diatur work center-nya', adaRute);
+  await go('#spk'); await page.click('#tools [data-act="newspk"]'); await page.waitForSelector('#ed-secs'); await wait(500);
+  const edOpsi = await page.evaluate(() => ({ prod: [...document.getElementById('ed-hp-0').options].map((o) => o.textContent), tb: [...document.querySelectorAll('#ed-secs select[data-hb="tb"] option')].map((o) => o.textContent), sign: document.getElementById('ed-sp').value }));
+  ok('AF-16 editor SPK baru memakai opsi dari Master Data (produk, tebal, penandatangan)', edOpsi.prod.includes('TANGGA KABEL') && edOpsi.tb.includes('4.0') && edOpsi.sign === 'Estimator Baru', JSON.stringify(edOpsi).slice(0, 300));
+  await page.evaluate(() => document.querySelector('#editor [data-act="ed-close"]')?.click()); await wait(400);
+  await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="opsi"]'); await wait(500);
+  await page.click('[data-act="opsireset"]'); await wait(900);
+  ok('AF-17 Pulihkan bawaan mengembalikan semua opsi', await page.evaluate(() => !HB.p.includes('TANGGA KABEL') && OPSI().signProc === 'Halimah'));
+
   ok('AF-99 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   const fail = R.filter((x) => x.startsWith('FAIL')).length;
   return { pass: R.length - fail, fail, detail: R };

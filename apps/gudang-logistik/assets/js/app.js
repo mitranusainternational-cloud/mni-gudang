@@ -724,7 +724,7 @@ async function soBuatSpk(){
   const items=[];sp.sections.forEach(sec=>sec.lines.forEach(l=>items.push({d:l.d,g:sec.h,q:l.q,u:l.u,w:l.w,...(l.w>0?{ws:'m'}:{}),ket:l.ket,catatan:'',prod:0})));
   const lead='5 Hari Kerja';const due=s.due||(leadMax(lead)?addWorkdays(tgl,leadMax(lead)):'');
   const d0=derive(sp.sections[0]?sp.sections[0].h:'');const type=[...new Set(sp.sections.map(x=>derive(x.h).type).filter(Boolean))].join(' & ');
-  const data={no,nomor:`${no}/SPK/${tgl.slice(0,4)}/WS`,tgl,customer:cleanName(sp.customer),po:sp.po,sales:s.sales?plain(who(s.sales)):'',lead,due,material:d0.material||'',tebal:d0.tebal||'',type,note:due?'NOTE : ESTIMASI KIRIM '+tglLong(due).toUpperCase():'',dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',items,status:'Draft',penawaran:sp.penawaran,so:sp.so};
+  const data={no,nomor:`${no}/SPK/${tgl.slice(0,4)}/WS`,tgl,customer:cleanName(sp.customer),po:sp.po,sales:s.sales?plain(who(s.sales)):'',lead,due,material:d0.material||'',tebal:d0.tebal||'',type,note:due?'NOTE : ESTIMASI KIRIM '+tglLong(due).toUpperCase():'',dist:OPSI().dist.slice(),signProc:OPSI().signProc,signPpic:OPSI().signPpic,items,status:'Draft',penawaran:sp.penawaran,so:sp.so};
   const lk=await DB.doc('lock/new-'+no).acquire({holder:ME||HOLDER,ttlMs:20000}).catch(()=>null);if(lk&&lk.acquired===false)throw new Error(`Nomor ${no} sedang diklaim pengguna lain. Coba lagi.`);
   const ex=await DB.doc('spk/'+id).get();if(ex.exists)throw new Error(`SPK ${no} sudah dipakai. Coba lagi.`);
   const now=new Date().toISOString();Object.assign(data,{alasan:'',rev:0,revisi:[],at:now,by:ME||null});
@@ -2018,12 +2018,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute'||k==='opsi';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['opsi','Opsi SPK'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2031,7 +2031,7 @@ B['master-data']=()=>{
   `<div class="kpi ok"><div class="lb">Aktif</div><div class="v">${kpi.aktif}</div></div>`+
   `<div class="kpi${kpi.nonaktif>0?' warn':''}"><div class="lb">Nonaktif</div><div class="v">${kpi.nonaktif}</div></div>`+
   `<div class="kpi info"><div class="lb">Total transaksi</div><div class="v">${kpi.totalUsage}</div></div>`+
-  `<div class="kpi${kpi.unreg>0?' crit':'ok'}"><div class="lb">Belum terdaftar</div><div class="v">${kpi.unreg}</div></div>`+
+  `<div class="kpi${kpi.unreg>0?' crit':' ok'}"><div class="lb">Belum terdaftar</div><div class="v">${kpi.unreg}</div></div>`+
  `</div>`;
  const allRows=S[MK[k]].filter(x=>!q||JSON.stringify(x).toLowerCase().includes(q));
  const rows=allRows.filter(x=>si||x.aktif!==false).sort((a,b)=>(a.aktif===false)-(b.aktif===false)||String(a[key]).localeCompare(String(b[key])));
@@ -2183,6 +2183,21 @@ const WC_SEED=[
 
 const MESIN_SEED={Shearing:['Shearing 3 Meter'],Punching:['Punching 1 (20 Ton)','Punching 2 (40 Ton)','Punching 3','Punching 4 (25 Ton)','Punching 5 (25 Ton)'],Bending:['Bending 1,2 Mtr','Bending 3 Mtr #1','Bending 3 Mtr #2'],'CNC Laser':['Laser Cutting 1','Laser Cutting 2'],Welding:['Welding 1','Welding 2']};
 const mesinSeedDari=nama=>(MESIN_SEED[nama]||[]).map(m=>({nama:m,operator:[],kapasitas:0}));
+/* ---------- Master Data: opsi SPK (produk, type, tebal, finishing, distribusi, penandatangan, lead time) ---------- */
+function opsiTab(){const o=OPSI();const ok=canManage();const ta=(k,j,ket,baris)=>`<div class="fld full"><label for="op-${k}">${j}</label><textarea class="inp" id="op-${k}" data-op="${k}" rows="${baris||6}" ${ok?'':'disabled'}>${esc(o[k].join('\n'))}</textarea><small class="muted">${ket}</small></div>`;
+ return `<section class="panel"><div class="pbody note">Daftar pilihan yang dipakai editor SPK dan lembar SPK. Satu baris satu pilihan. Mengubah daftar tidak mengubah SPK yang sudah ada. Produk baru muncul di tab Rute produksi untuk diatur work center-nya.</div>
+ <div class="pbody opsi-g">${ta('p','Produk (judul section)','Huruf besar. Nama yang lebih panjang dicocokkan lebih dulu.',9)}${ta('t','Type','mis. STU, STC, SLU',9)}${ta('tb','Tebal (mm)','Angka dengan titik, mis. 1.2',9)}${ta('f','Finishing','Kata ELECTRO, HOTDIP, POWDER atau PDC menentukan vendor finishing (ELG, HDG, PDC); STAINLESS dan ALUMIN tanpa vendor.',9)}${ta('dist','Distribusi lembar SPK (Distributed to)','Daftar bawaan di SPK baru',5)}${ta('lead','Pilihan lead time','Saran isian Lead time di header SPK',5)}
+ <div class="fld"><label for="op-signProc">Procurement / Estimator (bawaan)</label><input class="inp" id="op-signProc" data-op="signProc" value="${esc(o.signProc)}" ${ok?'':'disabled'}></div><div class="fld"><label for="op-signPpic">PPIC (bawaan)</label><input class="inp" id="op-signPpic" data-op="signPpic" value="${esc(o.signPpic)}" ${ok?'':'disabled'}></div></div>
+ <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?`<button class="btn primary" data-act="opsisimpan">Simpan opsi SPK</button><button class="btn ghost" data-act="opsireset">Pulihkan bawaan</button>`:''}<button class="btn ghost" data-act="spktarget">Target waktu proses</button></div></section>`}
+async function opsiSimpan(reset){const baca=k=>{const e=document.getElementById('op-'+k);return e?String(e.value).split('\n').map(x=>x.trim()).filter(Boolean):[]};
+ const cur={...(byId('master','setting')||{})};delete cur._id;
+ let spkOpsi=null;
+ if(!reset){const p=[...new Set(baca('p').map(x=>x.toUpperCase()))],tt=[...new Set(baca('t').map(x=>x.toUpperCase()))],tb=[...new Set(baca('tb').map(x=>x.replace(',','.')))],ff=[...new Set(baca('f').map(x=>x.toUpperCase()))],dist=baca('dist'),lead=baca('lead');
+  for(const [n,v] of [['Produk',p],['Type',tt],['Tebal',tb],['Finishing',ff],['Distribusi',dist],['Lead time',lead]])if(!v.length){toast(n+' tidak boleh kosong.');return}
+  const salah=tb.find(x=>!(parseFloat(x)>0));if(salah){toast('Tebal "'+salah+'" bukan angka.');return}
+  spkOpsi={p,t:tt,tb,f:ff,dist,lead,signProc:(document.getElementById('op-signProc').value||'').trim()||OPSI_DEF.signProc,signPpic:(document.getElementById('op-signPpic').value||'').trim()||OPSI_DEF.signPpic}}
+ try{if(byId('master','setting'))await updDoc('master','setting',{spkOpsi});else{need();await DB.doc('master/setting').set({...cur,spkOpsi})}toast(reset?'Opsi SPK dipulihkan ke bawaan':'Opsi SPK disimpan')}catch(e){toast(e.message||String(e))}
+ renderBody()}
 /* ---------- Master Data: rute produksi per produk dan per bentuk ---------- */
 const RUTE_BENTUK_FAM='STU';
 function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
@@ -2190,7 +2205,7 @@ function ruteBarisHtml(kunci,judul,sub,rute,hapus){const wcs=wcInternal();const 
  return `<tr data-rk="${esc(kunci)}"><td><b>${esc(judul)}</b>${sub?`<div class="note" style="font-size:12px">${esc(sub)}</div>`:''}</td><td><div class="rute-wcs">${wcs.map(w=>`<label class="ck rute-ck"><input type="checkbox" data-act="ruteck" data-rk="${esc(kunci)}" value="${esc(w.nama)}" ${ada.has(w.nama)?'checked':''} ${ok?'':'disabled'}> ${esc(w.nama)}</label>`).join('')}${lain.map(w=>`<span class="chip warn" title="Tidak ada di daftar Work Centre aktif">${esc(w)}</span>`).join('')}</div></td><td class="muted rute-urut">${esc((rute||[]).join(' → ')||'–')}</td><td class="acts-r">${hapus&&ok?`<button class="btn sm ghost danger" data-act="rutedel" data-rk="${esc(kunci)}">${ic('trash')}</button>`:''}</td></tr>`}
 function ruteTab(){const peta=ruteStd();const wcs=wcInternal();
  if(!wcs.length)return `<section class="panel"><div class="pbody note">Isi daftar Work Centre dulu (tab Work Centre); rute dipilih dari work center internal.</div></section>`;
-  const produk=Object.keys(peta).filter(k=>!k.includes('|'));
+  const produk=[...new Set([...OPSI().p,...Object.keys(peta).filter(k=>!k.includes('|'))])];
  const khusus=Object.keys(peta).filter(k=>k.includes('|')).sort();
  const bentukOpt=produk.flatMap(p=>ruteBentukDaftar(p).map(b=>[p+'|'+b.kunci,p+' · '+b.nama])).filter(([k])=>!peta[k]);
  const tambah=canManage()&&bentukOpt.length?`<div class="rute-tambah"><select class="sel" id="rute-baru">${bentukOpt.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join('')}</select><button class="btn sm" data-act="ruteadd">+ Rute khusus bentuk</button></div>`:'';
@@ -3609,7 +3624,7 @@ async function spkStokBuat(items,opt){
  const lines=items.map(i=>{const r=byId('fg',i.item);const d=fgSpkDesc(r),g=fgSpkJudul(r);/* berat per pcs dari kalkulator berat bila katalog terpasang (seperti SPK biasa); tanpa katalog atau item tak dikenali: 0 */const w=weightCalc(d,g);return {d,g,q:i.q,u:r.satuan||'Btg',w,...(w>0?{ws:'k'}:{}),ket:'Stok gudang',catatan:'',prod:0,fg:i.item}});
  const lead='5 Hari Kerja',due=(opt&&opt.due)||(leadMax(lead)?addWorkdays(tgl,leadMax(lead)):'');
  const d0=derive(lines[0]?lines[0].g:'');
- const data={no,nomor:`${no}/SPK/${tgl.slice(0,4)}/WS`,tgl,customer:cust,po:'STOK-'+tgl,sales:'',lead,due,material:d0.material||'',tebal:d0.tebal||'',type:[...new Set(lines.map(l=>derive(l.g).type).filter(Boolean))].join(' & '),note:'NOTE : PRODUKSI UNTUK STOK GUDANG'+((opt&&opt.ket)?' · '+opt.ket:''),dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',items:lines,status:'Draft',stokReq:true};
+ const data={no,nomor:`${no}/SPK/${tgl.slice(0,4)}/WS`,tgl,customer:cust,po:'STOK-'+tgl,sales:'',lead,due,material:d0.material||'',tebal:d0.tebal||'',type:[...new Set(lines.map(l=>derive(l.g).type).filter(Boolean))].join(' & '),note:'NOTE : PRODUKSI UNTUK STOK GUDANG'+((opt&&opt.ket)?' · '+opt.ket:''),dist:OPSI().dist.slice(),signProc:OPSI().signProc,signPpic:OPSI().signPpic,items:lines,status:'Draft',stokReq:true};
  const lk=await DB.doc('lock/new-'+no).acquire({holder:ME||HOLDER,ttlMs:20000}).catch(()=>null);if(lk&&lk.acquired===false)throw new Error(`Nomor ${no} sedang diklaim pengguna lain. Coba lagi.`);
  const ex=await DB.doc('spk/'+id).get();if(ex.exists)throw new Error(`SPK ${no} sudah dipakai. Coba lagi.`);
  const now=new Date().toISOString();Object.assign(data,{alasan:'',rev:0,revisi:[],at:now,by:ME||null});
@@ -4200,8 +4215,13 @@ function edHitungUlang(){let k=0;for(const s of ED.sections){k+=edSesuaikanBaris
 function derive(h){const H=String(h||'').toUpperCase();let fin='';if(H.includes('ELECTRO'))fin='ELG';else if(H.includes('HOTDIP')||H.includes('HOT DIP'))fin='HDG';else if(H.includes('POWDER')||H.includes('PDC'))fin='PDC';else if(H.includes('NON'))fin='Non Finishing';
  let base='SPHC';if(H.includes('STAINLESS')||/SS ?3\d\d/.test(H))base=H.includes('316')?'SS316':'SS304';else if(H.includes('ALU'))base='Aluminium';
  return {material:(base==='SPHC'&&fin)?`SPHC / ${fin}`:base,tebal:thkOf(h),type:(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||''}}
-const DIST_DEF=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing / Punching Tray)','Procurement','Logistic'];
-const HB={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
+const DIST_DEF0=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing / Punching Tray)','Procurement','Logistic'];
+const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
+const LEAD_DEF=['2 Hari Kerja','3 Hari Kerja','5 Hari Kerja','5 - 7 Hari Kerja','7 Hari Kerja','7 - 10 Hari Kerja','10 Hari Kerja','14 Hari Kerja'];
+/* Opsi SPK dari Master Data (master/setting.spkOpsi); tanpa isian memakai bawaan. Mengubah opsi tidak mengubah SPK yang sudah ada. */
+const OPSI_DEF={p:HB_DEF.p,t:HB_DEF.t,tb:HB_DEF.tb,f:HB_DEF.f,dist:null,lead:LEAD_DEF,signProc:'Halimah',signPpic:'Muin M.K.'};
+const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}return r};
+const HB={get p(){return OPSI().p},get t(){return OPSI().t},get tb(){return OPSI().tb},get f(){return OPSI().f}};
 function parseH(h){const H=String(h||'').toUpperCase();const o={p:'',t:'',tb:'',f:''};o.p=[...HB.p].sort((a,b)=>b.length-a.length).find(x=>H.startsWith(x))||'';o.t=(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||'';const tk=thkOf(H);o.tb=HB.tb.find(x=>parseFloat(x)===parseFloat(tk))||'';o.f=HB.f.find(x=>H.endsWith(x))||'';return o}
 const composeH=o=>[o.p,o.t?'TYPE '+o.t:'',o.tb,o.f].filter(Boolean).join(' ');
 const accsOf=h=>String(h||'').replace(/^PERFORATED CABLE TRAY|^CABLE TRAY|^COVER TRAY/,'ACCS TRAY').replace(/^CABLE LADDER/,'ACCS LADDER').replace(/^CABLE DUCT/,'ACCS DUCT');
@@ -4239,7 +4259,7 @@ function secsOf(s){const secs=[];for(const it of s.items||[]){const g=it.g||'';i
 
 /* ----- editor ----- */
 let ED=null,EDT=null,EDDIRTY=false;
-function newEd(){const no=nextNo();return {id:null,no,tgl:today(),sales:'',customer:'',po:'',lead:'5 Hari Kerja',due:'',dueAuto:true,material:'',tebal:'',type:'',matAuto:true,note:'',noteAuto:true,dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',status:'Draft',rev:0,revAlasan:'',orig:null,sections:[{h:'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED',lines:[lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED')]}]}}
+function newEd(){const no=nextNo();return {id:null,no,tgl:today(),sales:'',customer:'',po:'',lead:'5 Hari Kerja',due:'',dueAuto:true,material:'',tebal:'',type:'',matAuto:true,note:'',noteAuto:true,dist:OPSI().dist.slice(),signProc:OPSI().signProc,signPpic:OPSI().signPpic,status:'Draft',rev:0,revAlasan:'',orig:null,sections:[{h:'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED',lines:[lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED')]}]}}
 /* Revisi SPK terbit: catatan produksi memakai nomor urut item, dan vendor serta kirim mencocokkan nama item, sehingga item yang sudah punya
    catatan tidak boleh dihapus, dipindah, diganti nama atau section-nya, dan qty-nya tidak boleh di bawah yang sudah diproduksi atau dikirim. */
 function revisiGuard(o,items,oiList){
@@ -4261,7 +4281,7 @@ function revisiGuard(o,items,oiList){
 }
 function edFrom(s,copy){let oiN=0;const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({oi:copy?undefined:oiN++,d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{}),...(it.vv?{vv:it.vv}:{})}))}));
  if(!secs.length)secs.push({h:'',lines:[blankLine()]});
- return {id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||DIST_DEF).slice(),signProc:s.signProc||'Halimah',signPpic:s.signPpic||'Muin M.K.',status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
+ return {id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||OPSI().dist).slice(),signProc:s.signProc||OPSI().signProc,signPpic:s.signPpic||OPSI().signPpic,status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
 function edAuto(){const e=ED;if(e.dueAuto&&leadMax(e.lead))e.due=addWorkdays(e.tgl,leadMax(e.lead));if(e.noteAuto)e.note=e.due?'NOTE : ESTIMASI KIRIM '+tglLong(e.due).toUpperCase():'';
  if(e.matAuto){const h=(e.sections.find(s=>s.h)||{}).h;if(h){const d=derive(h);e.material=d.material;e.tebal=d.tebal;e.type=[...new Set(e.sections.map(s=>derive(s.h).type).filter(Boolean))].join(' & ')}}}
 async function openEditor(ed){
@@ -4309,7 +4329,7 @@ function renderTotals(){const t=edTotals();const el=$('#ed-tot');if(el)el.innerH
 function renderEditor(){
  const e=ED,k=KAT();const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
  let no=0;const secs=e.sections.map((s,i)=>{const h=edSecHtml(s,i,no);no+=s.lines.length;return h}).join('');
- const distAll=[...new Set([...DIST_DEF,...e.dist])];
+ const distAll=[...new Set([...OPSI().dist,...e.dist])];
  $('#editor').innerHTML=`<div class="ed"><header class="ed-top"><div class="ed-ttl"><h3>${e.id?`Edit SPK ${e.no}`:'SPK baru'} ${e.rev?`<span class="chip info plain">Rev.${e.rev}</span>`:''} ${stChip(e.status)}</h3><p>${e.id?'Dikunci untuk Anda selama editor terbuka, pengguna lain tidak bisa mengedit bersamaan.':'Format mengikuti lembar SPK Workshop MNI. Nomor SPK diklaim saat disimpan.'}</p></div>
   <div class="ed-btns"><button type="button" class="btn ghost" data-act="ed-close">Batal</button>${e.status==='Draft'?`<button type="button" class="btn" data-act="ed-save" data-mode="draft">Simpan draft</button>`:''}<button type="button" class="btn primary" data-act="ed-save" data-mode="terbit">${ic('chk')}${e.status==='Draft'?'Terbitkan SPK':'Simpan revisi'}</button></div></header>
   <div class="ed-body">
@@ -4343,7 +4363,7 @@ function renderEditor(){
   <datalist id="dl-cust">${[...new Set([...(k.customer||[]),...S.spk.map(s=>s.customer)])].sort().map(d=>`<option value="${esc(d)}">`).join('')}</datalist>
   <datalist id="dl-sales2">${[...new Set([...(k.sales||[]),...S.spk.map(s=>s.sales).filter(Boolean)])].sort().map(d=>`<option value="${esc(d)}">`).join('')}</datalist>
   <datalist id="dl-sat">${satList().map(d=>`<option value="${esc(d)}">`).join('')}</datalist>
-  <datalist id="dl-lead">${['2 Hari Kerja','3 Hari Kerja','5 Hari Kerja','5 - 7 Hari Kerja','7 Hari Kerja','7 - 10 Hari Kerja','10 Hari Kerja','14 Hari Kerja'].map(d=>`<option value="${d}">`).join('')}</datalist>`;
+  <datalist id="dl-lead">${OPSI().lead.map(d=>`<option value="${esc(d)}">`).join('')}</datalist>`;
  renderTotals();
 }
 function rerenderSecs(){let no=0;$('#ed-secs').innerHTML=ED.sections.map((s,i)=>{const h=edSecHtml(s,i,no);no+=s.lines.length;return h}).join('');renderTotals()}
@@ -4456,7 +4476,7 @@ async function saveEditor(mode){
 
 /* ----- document (sheet) view ----- */
 let SHEET=null;
-const spkFull=s=>({...s,note:s.note||(s.due?'NOTE : ESTIMASI KIRIM '+tglLong(s.due).toUpperCase():''),dist:s.dist||DIST_DEF,signProc:s.signProc||'Halimah',signPpic:s.signPpic||'Muin M.K.'});
+const spkFull=s=>({...s,note:s.note||(s.due?'NOTE : ESTIMASI KIRIM '+tglLong(s.due).toUpperCase():''),dist:s.dist||OPSI().dist,signProc:s.signProc||OPSI().signProc,signPpic:s.signPpic||OPSI().signPpic});
 function sheetCtx(s){
  const sum=its=>{const m={};(its||[]).forEach(i=>m[i.d]=(m[i.d]||0)+(+i.q||0));return m};
  const vs=S.vendor.filter(v=>v.spk===s._id).sort((a,b)=>(a.tgl+(a.at||'')).localeCompare(b.tgl+(b.at||'')));
@@ -4549,8 +4569,8 @@ function renderSheet(){
     <tr><td colspan="${all}">&nbsp;</td></tr>
     <tr><td></td><td class="c b">Total</td><td class="c b">${n(tq)}</td><td class="c">Btg/Pcs</td><td></td><td class="c b">${tw?tw.toFixed(2):''} Kg</td><td colspan="4"></td><td colspan="3"></td><td class="c b">${pc(avg(pp))}</td><td class="c b">${hasAnyVendor?pc(avg(pf)):'–'}</td><td class="c b">${pc(avg(pk))}</td><td></td></tr>
    </tbody></table>
-   <div class="pp-foot"><div class="pp-note">${esc(s.note||'')}</div><div class="pp-dist"><span>Distributed to:</span><ul>${(s.dist||DIST_DEF).map(d=>`<li>~ ${esc(d)}</li>`).join('')}</ul></div></div>
-   <div class="pp-sign"><div><b>Procurement/Estimator</b><span class="sp"></span><b>( ${esc(s.signProc||'Halimah')} )</b></div><div><b>PPIC</b><span class="sp"></span><b>( ${esc(s.signPpic||'Muin M.K.')} )</b></div></div>
+   <div class="pp-foot"><div class="pp-note">${esc(s.note||'')}</div><div class="pp-dist"><span>Distributed to:</span><ul>${(s.dist||OPSI().dist).map(d=>`<li>~ ${esc(d)}</li>`).join('')}</ul></div></div>
+   <div class="pp-sign"><div><b>Procurement/Estimator</b><span class="sp"></span><b>( ${esc(s.signProc||OPSI().signProc)} )</b></div><div><b>PPIC</b><span class="sp"></span><b>( ${esc(s.signPpic||OPSI().signPpic)} )</b></div></div>
   </div>
   ${matPanelHtml(matSpkItems(s),{spkId:s._id,tebal:s.tebal,label:'Material SPK '+s.no+' '+s.customer})}
   <div class="sh-meta">${st==='Draft'?'<span class="chip warn">Draft · belum terbit, belum masuk monitoring produksi</span>':''}
@@ -5593,6 +5613,8 @@ document.addEventListener('click',async e=>{
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
   case 'ruteck':await ruteCentang(el);break;
+  case 'opsisimpan':await opsiSimpan(false);break;
+  case 'opsireset':if(confirm('Pulihkan semua opsi SPK ke bawaan?'))await opsiSimpan(true);break;
   case 'ruteadd':await ruteTambah();break;
   case 'rutedel':await ruteHapus(ds.rk);break;
   case 'wcmesinseed':await seedMesin();break;
