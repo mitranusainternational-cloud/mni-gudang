@@ -601,3 +601,11 @@ window.claude = CLAUDE_SHIM;
 window.__supabase = supabase;
 
 console.log('[MNI Gudang] Adapter siap.', LOCAL_MOCK ? 'MODE MOCK LOKAL (bukan Supabase)' : 'Supabase URL: ' + (SUPABASE_URL || '(NOT SET)'));
+
+// Pratinjau lokal saja: pasang katalog berat dari berkas lokal (gitignored) bila VITE_KATALOG_LOKAL=1, agar input SPK terstruktur
+// langsung terlihat tanpa mengunggah katalog. Tanpa flag (uji otomatis, production) katalog hanya dari database.
+if (import.meta.env && import.meta.env.VITE_KATALOG_LOKAL === '1') {
+  const lokal = import.meta.glob('./berat/catalog.json');
+  const muat = Object.values(lokal)[0];
+  if (muat) muat().then((m) => { if (!_katalogBerat) _katalogBerat = m.default || m; }).catch(() => {});
+}

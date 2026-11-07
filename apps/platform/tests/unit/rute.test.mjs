@@ -1,5 +1,5 @@
 // Uji mesin rute produksi multi work center.  node tests/unit/rute.test.mjs
-import { finishingDari, langkahVendor, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual } from '../../src/lib/produksi/rute.js';
+import { finishingDari, langkahVendor, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual, materialDari, vendorUntuk, perluFinishing, RUTE_STANDAR } from '../../src/lib/produksi/rute.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -77,6 +77,16 @@ ok('R-85 prediksi tidak butuh kapasitas vendor', prediksiSelesai([{ spk: 1, item
 
 ok('R-86 progres item tidak menghitung langkah vendor (produksi = hasil mesin terakhir)', progresItem(rVen, { Shearing: 100, Punching: 100, Bending: 70, 'Vendor ELG': 0 }) === 70);
 ok('R-60 usulan langkah dari kejadian nyata', us.length === 1 && us[0].wc === 'Welding' && JSON.stringify(us[0].ruteBaru) === JSON.stringify(['Shearing', 'Bending', 'Welding']), JSON.stringify(us));
+
+// Aturan vendor menurut material dan rute khusus bentuk (tahap 2 input SPK terstruktur)
+ok('R-90 material dari judul: stainless, aluminium, selain itu baja', materialDari('CABLE TRAY TYPE STU 1.2 SS304') === 'stainless' && materialDari('CABLE TRAY STAINLESS 316') === 'stainless' && materialDari('CABLE TRAY TYPE STU 2.0 ALUMINIUM') === 'aluminium' && materialDari('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED') === 'baja');
+ok('R-91 SPHC ke vendor sesuai finishing; stainless dan aluminium tanpa vendor', vendorUntuk('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED') === 'ELG' && vendorUntuk('CABLE TRAY TYPE STU 2.0 HOTDIP GALVANIZED') === 'HDG' && vendorUntuk('CABLE TRAY TYPE STU 1.5 SS304') === '' && vendorUntuk('CABLE TRAY ALUMINIUM 2.0') === '' && vendorUntuk('CABLE TRAY TYPE STU 1.2 NON FINISHING') === '');
+ok('R-92 pengecualian per item: tanpa vendor mematikan, wajib vendor menghidupkan finishing yang ada di judul', vendorUntuk('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'tidak') === '' && vendorUntuk('CABLE TRAY TYPE STU 1.5 SS304 HOTDIP', 'ya') === 'HDG' && vendorUntuk('CABLE TRAY TYPE STU 1.5 SS304', 'ya') === '');
+ok('R-93 baja tanpa finishing dan bukan Non Finishing harus ditandai; Non Finishing, stainless, dan yang berfinishing tidak', perluFinishing('CABLE TRAY TYPE STU 1.2') === true && perluFinishing('CABLE TRAY TYPE STU 1.2 NON FINISHING') === false && perluFinishing('CABLE TRAY TYPE STU 1.5 SS304') === false && perluFinishing('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED') === false);
+const peta = { ...RUTE_STANDAR, 'CABLE TRAY|ELBOW': ['Shearing', 'Bending'] };
+const jd = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+ok('R-94 rute khusus bentuk mengalahkan rute produk; bentuk lain tetap rute produk; vendor tetap ditambahkan', eq(tentukanRute({ judulSection: jd, deskripsi: 'x' }, peta, undefined, { vendor: true, bentuk: 'ELBOW' }).rute, ['Shearing', 'Bending', 'Vendor ELG']) && eq(tentukanRute({ judulSection: jd, deskripsi: 'x' }, peta, undefined, { vendor: true, bentuk: 'STRAIGHT' }).rute, ['Shearing', 'Punching', 'Bending', 'Vendor ELG']));
+ok('R-95 kunci rute khusus bentuk tidak dianggap produk; vv tanpa vendor menghapus langkah vendor', eq(tentukanRute({ judulSection: 'CABLE TRAY 1.2 ELECTRO', deskripsi: 'x' }, peta, undefined, { vendor: true, vv: 'tidak' }).rute, ['Shearing', 'Punching', 'Bending']));
 
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n') + `\n${R.length - fail} PASS, ${fail} FAIL`);

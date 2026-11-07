@@ -33,6 +33,7 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - [x] Penyimpanan: item membawa bentuk, ukuran, dan lubang; baris tidak lengkap menolak simpan dengan pesan; baris kosong dilewati; membuka SPK untuk diubah memulihkan keadaan terstruktur; lembar SPK menampilkan nama dan berat
 - [x] E2E `spk-terstruktur.mjs` 20 lulus (S-19: Perforated Cable Tray otomatis Full hole, pilihan manual dipertahankan); regresi penuh 0 FAIL
 - [x] Keputusan pemilik 2026-11-07: Perforated Cable Tray otomatis Full hole
+- [x] Tahap 2: tab Master Data Rute produksi (per produk dan rute khusus bentuk), aturan vendor menurut material, pilihan vendor per baris dan peringatan baja tanpa finishing; unit R-90..R-95 dan E2E S-20..S-23 lulus (mock; asumsi di [[INPUT_SPK_TERSTRUKTUR]] bagian 4a menunggu koreksi pemilik)
 - [ ] Unggah ulang katalog berat dari workbook baru di production (Master Data, Katalog berat; tindakan super admin) agar full hole muncul
 - [ ] Keputusan pemilik yang masih terbuka: full hole bentuk lain dan tahap routing (lihat [[INPUT_SPK_TERSTRUKTUR]] bagian 4)
 

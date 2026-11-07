@@ -153,6 +153,36 @@ export async function runSpkTerstruktur(page, base) {
   const lbManual = await page.evaluate(() => document.getElementById('ed-lb-0-0').value);
   ok('S-19b pilihan Bawah yang dibuat pengguna dipertahankan walau section diganti produk lalu kembali; berat memakai kolom standar', lbManual === 'standar' && dekat(+(await nilai('ed-w-0-0')), stdP.beratSPK), JSON.stringify({ lbManual, w: await nilai('ed-w-0-0') }));
 
+  // ---------- S-20 vendor per baris: bawaan mengikuti material, pengecualian dipilih di editor ----------
+  const vvOpsi = await opsi('ed-vv-0-0');
+  await page.selectOption('#ed-vv-0-0', 'tidak'); await wait(400);
+  const vvState = await page.evaluate(() => ED.sections[0].lines[0].vv);
+  ok('S-20 baris menampilkan pilihan vendor (bawaan ikut aturan material) dan pilihan tanpa vendor tersimpan di baris', /ikut aturan/.test(vvOpsi[0]) && /baja, ke vendor ELG/.test(vvOpsi[0]) && vvOpsi.length === 3 && vvState === 'tidak' && (await page.inputValue('#ed-vv-0-0')) === 'tidak', JSON.stringify({ vvOpsi, vvState }));
+
+  // ---------- S-21 Master Data: rute per produk dan rute khusus bentuk memengaruhi rute item ----------
+  await page.reload(); await wait(3000); await pasangKatalog(kat);
+  await page.evaluate(async () => { for (const n of ['Shearing', 'Punching', 'CNC Laser']) if (!S.mwc.some((w) => w.nama === n)) await addDoc('mwc', { kode: 'WC-T-' + n.slice(0, 3).toUpperCase(), nama: n, tipe: 'Internal', urutan: S.mwc.length + 1, aktif: true, ket: '', mesin: [] }); });
+  await wait(600);
+  await go('#master-data');
+  await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(500);
+  const tabelAda = await ada('rute-tabel');
+  const awal = await page.evaluate(() => itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }));
+  await page.selectOption('#rute-baru', 'CABLE TRAY|ELBOW'); await page.click('[data-act="ruteadd"]'); await wait(600);
+  await page.click('#rute-tabel input[data-rk="CABLE TRAY|ELBOW"][value="Punching"]'); await wait(700);
+  const sesudah = await page.evaluate(() => ({ elbow: itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }), lurus: itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'STRAIGHT_STU' }) }));
+  ok('S-21 tab Rute produksi: rute khusus Elbow tanpa Punching berlaku untuk Elbow; Straight tetap rute produk; langkah vendor tetap mengikuti finishing', tabelAda && awal.includes('Punching') && !sesudah.elbow.includes('Punching') && sesudah.elbow.at(-1) === 'Vendor ELG' && sesudah.lurus.includes('Punching'), JSON.stringify({ awal, sesudah }));
+
+  // ---------- S-22 rute produk diubah di Master Data; minimal satu work center ----------
+  await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(700);
+  const duct = await page.evaluate(() => itemRute({ g: 'CABLE DUCT TYPE STU 1.2 NON FINISHING', d: 'x' }));
+  const rowCb = await page.$$eval('#rute-tabel input[data-rk="COVER TRAY"]:checked', (x) => x.length);
+  for (let i = 0; i < rowCb + 1; i++) { await page.evaluate(() => document.querySelector('#rute-tabel input[data-rk="COVER TRAY"]:checked')?.click()); await wait(500); }
+  const coverMasih = await page.$$eval('#rute-tabel input[data-rk="COVER TRAY"]:checked', (x) => x.length);
+  ok('S-22 rute produk dapat diubah per work center; mencentang terakhir dicabut ditolak (rute minimal satu langkah)', !duct.includes('Punching') && coverMasih === 1, JSON.stringify({ duct, coverMasih }));
+  await page.click('[data-act="rutedel"][data-rk="CABLE TRAY|ELBOW"]'); await wait(600);
+  const hapus = await page.evaluate(() => itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }));
+  ok('S-23 menghapus rute khusus bentuk mengembalikan bentuk itu ke rute produk', hapus.includes('Punching'), JSON.stringify(hapus));
+
   ok('S-18 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   void tutupEditorBatal;
   const fail = R.filter((x) => x.startsWith('FAIL')).length;

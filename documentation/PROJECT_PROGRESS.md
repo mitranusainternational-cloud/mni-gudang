@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Routing dan vendor per material, Full hole otomatis Perforated (T-214, lokal)
+Perforated Cable Tray otomatis Full hole (pilihan manual dipertahankan). Tab Master Data Rute produksi (per produk dan rute khusus bentuk), vendor mengikuti material (SPHC sesuai finishing; stainless dan aluminium tanpa), pilihan vendor per baris, peringatan baja tanpa finishing. Bukti: `verified in browser` (mock) E2E S-19..S-23 dan unit R-90..R-95; belum diuji di Supabase. Asumsi tahap 2 menunggu koreksi pemilik ([[INPUT_SPK_TERSTRUKTUR]] bagian 4a).
+
 ### 2026-11-06 — Rumus sheet utama dinyatakan baku (T-189 selesai)
 
 Pemilik menetapkan rumus sheet utama workbook penawaran sebagai baku; dua sheet lain hanya sumber parameter skenario. T-189 ditutup (done); pemuatan katalog dari tabel master setelah login dipindah ke T-190. Dicatat di [[documentation/DECISIONS]]. Langkah berikut: T-190 (modul Penawaran lokal). Production tidak disentuh.

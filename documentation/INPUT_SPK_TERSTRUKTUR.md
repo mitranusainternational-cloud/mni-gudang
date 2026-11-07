@@ -45,8 +45,21 @@ Uji CI memakai katalog sintetis `tests/e2e/fixtures/katalog-berat-uji.json` (buk
 
 1. ~~Default lubang~~ **Diputuskan 2026-11-07:** Perforated Cable Tray otomatis **Full hole** (pada bentuk yang punya kolom full hole: Straight STU/STC); produk lain Bawah. Pengguna tetap bisa mengganti ke Bawah; pilihan manual dipertahankan saat section diganti produk dan saat SPK dibuka lagi. Uji S-19.
 2. **Full hole untuk bentuk selain Straight** (Elbow, Tee, dan seterusnya): kalkulator belum memilikinya; perlu rumusnya bila dibutuhkan.
-3. **Tahap berikutnya (routing)**: rute produksi per produk dan per bentuk diatur di Master Data (work center yang dilewati), aturan vendor per material (SPHC wajib vendor, stainless dan aluminium tidak), dan pengecualian per item. Bagian ini menutup kriteria terbuka [[T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]]; pertanyaan yang perlu dijawab ada di [[HANDOFF]] bagian 5.
+3. **Tahap 2 (routing) dibangun 2026-11-07** dengan asumsi bawaan yang menunggu koreksi pemilik (lihat bagian 4a). Menutup sebagian kriteria [[T-174-produksi-multi-work-center-rute-antrian-kapasitas|T-174]].
+
+### 4a. Routing dan vendor (tahap 2)
+
+- **Master Data, tab Rute produksi:** centang work center internal yang dilewati per produk; urutan langkah mengikuti urutan Work Centre. Setiap centang langsung tersimpan di `master/rute_produksi`. Minimal satu work center. **Rute khusus bentuk** (mis. Cable Tray · Elbow 90 tanpa Punching) ditambah dari pilihan bentuk kalkulator dan mengalahkan rute produk dan aturan kata di deskripsi untuk baris terstruktur dengan bentuk itu.
+- **Vendor mengikuti material dari judul section:** baja (SPHC) ke vendor sesuai finishing (ELECTRO = ELG, HOTDIP = HDG, POWDER = PDC); stainless (SS, STAINLESS, SUS) dan aluminium tanpa vendor; Non Finishing tanpa vendor.
+- **Pengecualian per baris** di editor SPK: Ikut aturan / Wajib ke vendor / Tanpa vendor (`vv` pada item). "Wajib ke vendor" pada stainless hanya berlaku bila judul memuat finishing.
+- **Peringatan:** baja tanpa finishing dan bukan Non Finishing menampilkan peringatan di baris (vendor tidak terbentuk); tidak memblokir simpan.
+- **Asumsi yang perlu dikoreksi pemilik bila salah:** (a) SPHC Non Finishing = tanpa vendor; (b) rute per produk + bentuk, bukan per rentang ukuran; (c) pengecualian vendor diatur oleh siapa pun yang boleh mengedit SPK; (d) pilihan vendor per baris hanya tampil untuk baris terstruktur (produk berkalkulator).
+- **Catatan data:** mock lokal hanya punya 6 work center (tanpa Shearing, Punching, CNC Laser); pada data nyata, work center di rute yang tidak ada di daftar aktif tampil sebagai label kuning dan tidak bisa dicentang.
 
 ## 5. Uji
 
-Unit: `tests/unit/bentuk.test.mjs` (11). E2E: `tests/e2e/spk-terstruktur.mjs` (20): bentuk per produk, nama dan berat otomatis, full hole, ganti bentuk, ganti tebal, finishing, type, produk, berat manual, simpan dan buka lagi, aksesori, produk tanpa kalkulator, lembar SPK.
+Unit: `tests/unit/bentuk.test.mjs` (11). E2E: `tests/e2e/spk-terstruktur.mjs` (24: S-19 sampai S-23 untuk full hole otomatis, vendor per baris, tab Rute produksi); `tests/unit/rute.test.mjs` R-90 sampai R-95 untuk aturan material dan rute bentuk: bentuk per produk, nama dan berat otomatis, full hole, ganti bentuk, ganti tebal, finishing, type, produk, berat manual, simpan dan buka lagi, aksesori, produk tanpa kalkulator, lembar SPK.
+
+## 6. Melihat di pratinjau lokal
+
+Input terstruktur muncul hanya bila katalog berat terpasang. Di database katalog dipasang dari Master Data › Katalog berat. Untuk pratinjau lokal, jalankan mock dengan `VITE_LOCAL_MOCK=1 VITE_KATALOG_LOKAL=1` (memakai `src/lib/berat/catalog.json` lokal yang diabaikan Git). Uji otomatis berjalan tanpa flag ini (katalog sintetis).

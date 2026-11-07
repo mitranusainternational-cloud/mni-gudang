@@ -1279,4 +1279,5 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .ed-galat{color:var(--crit,#b42318);font-size:11px;min-height:0}
 @media(max-width:700px){.ed-dims .dm .inp{width:64px}}
 .edt .c-dim{min-width:340px}
+.edt .c-q{min-width:76px}.edt .c-u{min-width:72px}.edt .c-w{min-width:92px}
 .edt .c-d{min-width:220px}

@@ -2161,12 +2161,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2326,6 +2326,28 @@ const WC_SEED=[
 
 const MESIN_SEED={Shearing:['Shearing 3 Meter'],Punching:['Punching 1 (20 Ton)','Punching 2 (40 Ton)','Punching 3','Punching 4 (25 Ton)','Punching 5 (25 Ton)'],Bending:['Bending 1,2 Mtr','Bending 3 Mtr #1','Bending 3 Mtr #2'],'CNC Laser':['Laser Cutting 1','Laser Cutting 2'],Welding:['Welding 1','Welding 2']};
 const mesinSeedDari=nama=>(MESIN_SEED[nama]||[]).map(m=>({nama:m,operator:[],kapasitas:0}));
+/* ---------- Master Data: rute produksi per produk dan per bentuk ---------- */
+const RUTE_BENTUK_FAM='STU';
+function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
+function ruteBarisHtml(kunci,judul,sub,rute,hapus){const wcs=wcInternal();const ada=new Set(rute||[]);const lain=(rute||[]).filter(w=>!wcs.some(x=>x.nama===w));const ok=canManage();
+ return `<tr data-rk="${esc(kunci)}"><td><b>${esc(judul)}</b>${sub?`<div class="note" style="font-size:12px">${esc(sub)}</div>`:''}</td><td><div class="rute-wcs">${wcs.map(w=>`<label class="ck rute-ck"><input type="checkbox" data-act="ruteck" data-rk="${esc(kunci)}" value="${esc(w.nama)}" ${ada.has(w.nama)?'checked':''} ${ok?'':'disabled'}> ${esc(w.nama)}</label>`).join('')}${lain.map(w=>`<span class="chip warn" title="Tidak ada di daftar Work Centre aktif">${esc(w)}</span>`).join('')}</div></td><td class="muted rute-urut">${esc((rute||[]).join(' → ')||'–')}</td><td class="acts-r">${hapus&&ok?`<button class="btn sm ghost danger" data-act="rutedel" data-rk="${esc(kunci)}">${ic('trash')}</button>`:''}</td></tr>`}
+function ruteTab(){const peta=ruteStd();const wcs=wcInternal();
+ if(!wcs.length)return `<section class="panel"><div class="pbody note">Isi daftar Work Centre dulu (tab Work Centre); rute dipilih dari work center internal.</div></section>`;
+ const urut=w=>{const i=wcs.findIndex(x=>x.nama===w);return i<0?999:i};
+ const produk=Object.keys(peta).filter(k=>!k.includes('|'));
+ const khusus=Object.keys(peta).filter(k=>k.includes('|')).sort();
+ const bentukOpt=produk.flatMap(p=>ruteBentukDaftar(p).map(b=>[p+'|'+b.kunci,p+' · '+b.nama])).filter(([k])=>!peta[k]);
+ const tambah=canManage()&&bentukOpt.length?`<div class="rute-tambah"><select class="sel" id="rute-baru">${bentukOpt.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join('')}</select><button class="btn sm" data-act="ruteadd">+ Rute khusus bentuk</button></div>`:'';
+ return `<section class="panel"><div class="pbody note">Rute produksi dipilih per produk (judul section SPK). Urutan langkah mengikuti urutan Work Centre. Rute khusus bentuk mengalahkan rute produk untuk bentuk itu (mis. Elbow tanpa Punching). Langkah vendor tidak diatur di sini: vendor mengikuti material dan finishing (SPHC ke vendor sesuai finishing; stainless dan aluminium tanpa vendor), dengan pengecualian per baris di editor SPK. Perubahan berlaku untuk item yang belum punya rute sendiri.</div>
+ <div class="tbl-wrap"><table id="rute-tabel"><thead><tr><th>Produk</th><th>Work center yang dilewati</th><th>Rute</th><th></th></tr></thead><tbody>${produk.map(p=>ruteBarisHtml(p,p,'',(peta[p]||[]).slice().sort((a,b)=>urut(a)-urut(b)),false)).join('')}${khusus.map(k=>{const [p,b]=k.split('|');const nm=(ruteBentukDaftar(p).find(x=>x.kunci===b)||{}).nama||b;return ruteBarisHtml(k,p+' · '+nm,'Rute khusus bentuk',(peta[k]||[]).slice().sort((a,c)=>urut(a)-urut(c)),true)}).join('')}</tbody></table></div>${tambah}</section>`}
+async function ruteSimpan(peta){const cur=byId('master','rute_produksi');if(cur)await updDoc('master','rute_produksi',{rute:peta});else{need();await DB.doc('master/rute_produksi').set({rute:peta})}}
+async function ruteCentang(el){const rk=el.dataset.rk;const wcs=wcInternal();const peta={...ruteStd()};const baris=[...document.querySelectorAll('#rute-tabel input[data-rk]')].filter(x=>x.dataset.rk===rk);const pilih=wcs.map(w=>w.nama).filter(n=>baris.some(x=>x.value===n&&x.checked));
+ if(!pilih.length){el.checked=true;toast('Rute minimal satu work center.');return}
+ const lama=peta[rk]||[];const luar=lama.filter(w=>!wcs.some(x=>x.nama===w));peta[rk]=[...pilih,...luar.filter(w=>!pilih.includes(w))];
+ try{await ruteSimpan(peta);toast('Rute '+rk.replace('|',' · ')+' disimpan')}catch(e){toast(e.message||String(e));el.checked=!el.checked}
+ renderBody()}
+async function ruteTambah(){const k=(document.getElementById('rute-baru')||{}).value;if(!k)return;const peta={...ruteStd()};const p=k.split('|')[0];peta[k]=(peta[p]||[]).slice();try{await ruteSimpan(peta);toast('Rute khusus dibuat; sesuaikan work centre-nya')}catch(e){toast(e.message||String(e))}renderBody()}
+async function ruteHapus(k){const peta={...ruteStd()};delete peta[k];try{await ruteSimpan(peta);toast('Rute khusus dihapus; bentuk itu kembali ke rute produk')}catch(e){toast(e.message||String(e))}renderBody()}
 async function seedWc(){
  if(S.mwc.length>0)return;
  for(const w of WC_SEED)await addDoc('mwc',{...w,aktif:true,ket:'',mesin:mesinSeedDari(w.nama)});
@@ -2391,7 +2413,7 @@ let EVX=null;
 const PXL=()=>window.MNIProduksi||null;
 function evIdx(){if(EVX)return EVX;EVX={};for(const e of evData()){if(e.jenis==='mulai'||e.jenis==='batal')continue;const k=e.spk_id+'|'+e.item_idx;(EVX[k]=EVX[k]||[]).push(e)}return EVX}
 const ruteStd=()=>{const m=byId('master','rute_produksi');return (m&&m.rute)||PXL().RUTE_STANDAR};
-function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},ruteStd(),P.ATURAN_KHUSUS,{vendor:true});return {rute:r.rute,alt:r.alt||{}}}
+function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});return {rute:r.rute,alt:r.alt||{}}}
 const itemRute=it=>itemRuteInfo(it).rute;
 /* Keadaan item: rute, kumulatif per langkah, qty. Tanpa kejadian: progres lama (item.prod) dianggap sudah melewati semua langkah. */
 function itemState(s,it,idx){
@@ -4347,7 +4369,7 @@ function secsOf(s){const secs=[];for(const it of s.items||[]){const g=it.g||'';i
 /* ----- editor ----- */
 let ED=null,EDT=null,EDDIRTY=false;
 function newEd(){const no=nextNo();return {id:null,no,tgl:today(),sales:'',customer:'',po:'',lead:'5 Hari Kerja',due:'',dueAuto:true,material:'',tebal:'',type:'',matAuto:true,note:'',noteAuto:true,dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',status:'Draft',rev:0,revAlasan:'',orig:null,sections:[{h:'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED',lines:[lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'),lineBaru('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED')]}]}}
-function edFrom(s,copy){const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{})}))}));
+function edFrom(s,copy){const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{}),...(it.vv?{vv:it.vv}:{})}))}));
  if(!secs.length)secs.push({h:'',lines:[blankLine()]});
  return {id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||DIST_DEF).slice(),signProc:s.signProc||'Halimah',signPpic:s.signPpic||'Muin M.K.',status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
 function edAuto(){const e=ED;if(e.dueAuto&&leadMax(e.lead))e.due=addWorkdays(e.tgl,leadMax(e.lead));if(e.noteAuto)e.note=e.due?'NOTE : ESTIMASI KIRIM '+tglLong(e.due).toUpperCase():'';
@@ -4361,11 +4383,16 @@ async function openEditor(ed){
 function closeEditor(){clearInterval(EDT);ED=null;$('#editor').hidden=true;$('#editor').innerHTML='';document.body.style.overflow=''}
 const opt=(arr,sel,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
 const FIN_PENDEK={'ELECTRO GALVANIZED':'ELG','HOTDIP GALVANIZED':'HDG','STAINLESS STEEL 304':'SS304','STAINLESS STEEL 316L':'SS316L','POWDER COATING WHITE':'PDC putih','POWDER COATING ORANGE RAL 2000':'PDC oranye','POWDER COATING BLUE RAL 5017':'PDC biru','ALUMINIUM 1100':'Alu 1100','NON FINISHING':'Non finishing'};
+/* Vendor per baris: bawaan mengikuti material (SPHC ke vendor sesuai finishing; stainless dan aluminium tanpa vendor); pengecualian dipilih di sini. */
+function edVendorHtml(s,si,li,l){const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');const mat=P.materialDari(s.h);
+ const bawaan=fin?'ke vendor '+fin:(P.perluFinishing(s.h)?'finishing belum jelas':'tanpa vendor');
+ const peringatan=P.perluFinishing(s.h)&&l.vv!=='tidak'?'<div class="ed-galat" id="ed-vw-'+si+'-'+li+'">Baja tanpa finishing di judul section: vendor tidak terbentuk. Pilih finishing atau tandai tanpa vendor.</div>':'';
+ return '<div class="ed-vv"><select class="sel" data-f="vv" id="ed-vv-'+si+'-'+li+'" aria-label="Vendor"><option value="">Vendor: ikut aturan ('+esc(mat+', '+bawaan)+')</option><option value="ya" '+(l.vv==='ya'?'selected':'')+'>Wajib ke vendor</option><option value="tidak" '+(l.vv==='tidak'?'selected':'')+'>Tanpa vendor</option></select></div>'+peringatan}
 function edKolomItem(s,si,li,l,cap,hb){
  const sh=cap&&l.sb?cap.shapes.find(x=>x.id===l.sb):null;
  const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+'</select>';
  const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>':'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
- const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span></td>';
+ const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span>'+edVendorHtml(s,si,li,l)+'</td>';
  const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
  return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
 }
@@ -4458,6 +4485,7 @@ function edInput(e){
  if(trS&&t.dataset.f==='sb'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.sb=t.value;EDDIRTY=true;
   if(L.sb){L.dim=L.dim||{};if(L.wsrc==='kalkulator')L.wsrc='';L.lubang=L.lubangManual&&L.lubang?L.lubang:lubangBawaan(edCap(ED.sections[si]));edHitungBaris(ED.sections[si],L)}else{L.d=L.d&&L.sb===''&&L.dim?L.d:'';L.galat=''}
   rerenderSecs();const x=$('#ed-sb-'+si+'-'+li);x&&x.focus();return}
+ if(trS&&t.dataset.f==='vv'){const si=+trS.dataset.s,li=+trS.dataset.l;ED.sections[si].lines[li].vv=t.value;EDDIRTY=true;setTimeout(()=>{if(ED)rerenderSecs()},0);return}
  if(trS&&t.dataset.f==='lubang'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.lubang=t.value;L.lubangManual=true;EDDIRTY=true;edBarisBerubah(trS,si,li,null);return}
  const tr=t.closest('tr[data-s]');if(!tr||!t.dataset.f)return;
  const si=+tr.dataset.s,li=+tr.dataset.l,f=t.dataset.f,L=ED.sections[si].lines[li];L[f]=t.value;EDDIRTY=true;
@@ -4505,7 +4533,7 @@ async function saveEditor(mode){
  const e=ED,err=$('#ed-err');err.textContent='';
  try{need('spk');
   const no=parseInt(e.no);if(!no)throw new Error('Isi No SPK.');if(!String(e.customer).trim())throw new Error('Isi nama customer.');e.customer=cleanName(e.customer);{const sim=similarTo('customer',e.customer);if(sim){e.customer=sim.nama;const ci=$('#ed-cust');if(ci)ci.value=sim.nama;throw new Error(`Customer disamakan ke "${sim.nama}" (sudah terdaftar). Klik simpan lagi.`)}}if(!e.tgl)throw new Error('Isi tanggal SPK.');
-  const items=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
+  const items=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
   if(!items.length)throw new Error('Tambahkan minimal satu item.');
   const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
   if(editTerbit&&!String(e.revAlasan).trim())throw new Error('Isi alasan revisi.');
@@ -5671,6 +5699,9 @@ document.addEventListener('click',async e=>{
   case 'wcedit':wcForm(ds.id);break;
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
+  case 'ruteck':await ruteCentang(el);break;
+  case 'ruteadd':await ruteTambah();break;
+  case 'rutedel':await ruteHapus(ds.rk);break;
   case 'wcmesinseed':await seedMesin();break;
   case 'mshowInactive':F['master-data'].showInactive=el.checked;renderBody();break;
   case 'cekcsv':cekDataCsv();break;

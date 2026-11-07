@@ -29,10 +29,30 @@ export function indeksLangkah(rute, alt, wc) {
   return rute.findIndex((w) => ((alt || {})[w] || []).includes(wc));
 }
 
-const produkDari = (judul) => {
+export const produkDari = (judul, peta = RUTE_STANDAR) => {
   const H = String(judul || '').toUpperCase();
-  return Object.keys(RUTE_STANDAR).sort((a, b) => b.length - a.length).find((p) => H.startsWith(p)) || '';
+  return Object.keys(peta).filter((k) => !k.includes('|')).sort((a, b) => b.length - a.length).find((p) => H.startsWith(p)) || '';
 };
+
+// Material dari judul section: stainless dan aluminium tanpa vendor finishing; selain itu baja (SPHC) yang finishingnya dikerjakan vendor.
+export function materialDari(judul) {
+  const H = String(judul || '').toUpperCase();
+  if (/STAINLESS|(^|[^A-Z])SS ?\d|(^|[^A-Z])SUS([^A-Z]|$)/.test(H)) return 'stainless';
+  if (/ALUMIN|(^|[^A-Z])AL([^A-Z]|$)/.test(H)) return 'aluminium';
+  return 'baja';
+}
+
+// Finishing vendor yang berlaku: stainless dan aluminium tidak ke vendor kecuali dipaksa (vv='ya'); vv='tidak' mematikan vendor untuk item itu.
+// Baja (SPHC) wajib punya finishing di judul section agar vendornya jelas (perluFinishing).
+export function vendorUntuk(judul, vv = '') {
+  if (vv === 'tidak') return '';
+  if (materialDari(judul) !== 'baja' && vv !== 'ya') return '';
+  return finishingDari(judul);
+}
+export function perluFinishing(judul) {
+  const H = String(judul || '').toUpperCase();
+  return materialDari(judul) === 'baja' && !finishingDari(judul) && !/(^|[^A-Z])NON([^A-Z]|$)/.test(H);
+}
 
 // Langkah vendor (subcon) bernama "Vendor ELG", "Vendor HDG", "Vendor PDC": bukan work center, tidak punya kapasitas atau antrian mesin.
 export const langkahVendor = (w) => /^vendor/i.test(String(w || ''));
@@ -51,12 +71,14 @@ export function finishingDari(judul) {
 // opsi.vendor: bila true dan finishing dikenali dari judul section, ditambahkan langkah akhir "Vendor <finishing>" (rute item yang diatur tidak diubah).
 export function tentukanRute({ judulSection, deskripsi, ruteItem }, rute = RUTE_STANDAR, aturan = ATURAN_KHUSUS, opsi = {}) {
   if (Array.isArray(ruteItem) && ruteItem.length) return { rute: ruteItem.slice(), sumber: 'item' };
-  const p = produkDari(judulSection);
+  const p = produkDari(judulSection, rute);
   const k = aturan.find((a) => a.cocok.test(String(deskripsi || '')) && (!a.produk || a.produk.test(String(judulSection || '').toUpperCase())));
   let hasil = { rute: [], sumber: 'belum' };
-  if (k) hasil = { rute: k.rute.slice(), sumber: 'aturan', alasan: k.alasan, alt: k.alt || {} };
+  // rute khusus bentuk (Master Data, kunci 'PRODUK|BENTUK') mengalahkan aturan kata di deskripsi dan rute produk
+  if (opsi.bentuk && p && Array.isArray(rute[p + '|' + opsi.bentuk]) && rute[p + '|' + opsi.bentuk].length) hasil = { rute: rute[p + '|' + opsi.bentuk].slice(), sumber: 'bentuk' };
+  else if (k) hasil = { rute: k.rute.slice(), sumber: 'aturan', alasan: k.alasan, alt: k.alt || {} };
   else if (p && rute[p]) hasil = { rute: rute[p].slice(), sumber: 'produk' };
-  const fin = finishingDari(judulSection);
+  const fin = vendorUntuk(judulSection, opsi.vv);
   if (opsi.vendor && fin && hasil.rute.length) hasil.rute.push('Vendor ' + fin);
   return hasil;
 }
