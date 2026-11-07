@@ -49,7 +49,7 @@ Uji CI memakai katalog sintetis `tests/e2e/fixtures/katalog-berat-uji.json` (buk
 
 ### 4a. Routing dan vendor (tahap 2)
 
-- **Master Data, tab Rute produksi:** centang work center internal yang dilewati per produk; urutan langkah mengikuti urutan Work Centre. Setiap centang langsung tersimpan di `master/rute_produksi`. Minimal satu work center. **Rute khusus bentuk** (mis. Cable Tray · Elbow 90 tanpa Punching) ditambah dari pilihan bentuk kalkulator dan mengalahkan rute produk dan aturan kata di deskripsi untuk baris terstruktur dengan bentuk itu.
+- **Master Data, tab Rute produksi:** centang work center internal yang dilewati per produk; urutan langkah yang sudah ada dipertahankan dan langkah yang baru dicentang disisipkan menurut urutan Work Centre. Setiap centang langsung tersimpan di `master/rute_produksi`. Minimal satu work center. **Rute khusus bentuk** (mis. Cable Tray · Elbow 90 tanpa Punching) ditambah dari pilihan bentuk kalkulator dan mengalahkan rute produk dan aturan kata di deskripsi untuk baris terstruktur dengan bentuk itu.
 - **Vendor mengikuti material dari judul section:** baja (SPHC) ke vendor sesuai finishing (ELECTRO = ELG, HOTDIP = HDG, POWDER = PDC); stainless (SS, STAINLESS, SUS) dan aluminium tanpa vendor; Non Finishing tanpa vendor.
 - **Pengecualian per baris** di editor SPK: Ikut aturan / Wajib ke vendor / Tanpa vendor (`vv` pada item). "Wajib ke vendor" pada stainless hanya berlaku bila judul memuat finishing.
 - **Peringatan:** baja tanpa finishing dan bukan Non Finishing menampilkan peringatan di baris (vendor tidak terbentuk); tidak memblokir simpan.

@@ -181,6 +181,9 @@ export async function runSpkTerstruktur(page, base) {
   ok('S-22 rute produk dapat diubah per work center; mencentang terakhir dicabut ditolak (rute minimal satu langkah)', !duct.includes('Punching') && coverMasih === 1, JSON.stringify({ duct, coverMasih }));
   await page.click('[data-act="rutedel"][data-rk="CABLE TRAY|ELBOW"]'); await wait(600);
   const hapus = await page.evaluate(() => itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }));
+  await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(700);
+  const ductLagi = await page.evaluate(() => itemRute({ g: 'CABLE DUCT TYPE STU 1.2 NON FINISHING', d: 'x' }));
+  ok('S-22b mencentang kembali sebuah langkah tidak mengacak urutan langkah lain (Shearing tetap sebelum Bending)', ductLagi.includes('Punching') && ductLagi.indexOf('Shearing') < ductLagi.indexOf('Bending'), JSON.stringify(ductLagi));
   ok('S-23 menghapus rute khusus bentuk mengembalikan bentuk itu ke rute produk', hapus.includes('Punching'), JSON.stringify(hapus));
 
   ok('S-18 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));

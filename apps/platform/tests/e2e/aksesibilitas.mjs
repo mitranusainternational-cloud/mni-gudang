@@ -1,5 +1,6 @@
 // Uji aksesibilitas (WCAG 2.0 A dan AA) dengan axe-core pada semua menu, dua tema, form, laci, dan kartu stok. Mock, data sintetis.
 import { createRequire } from 'module';
+import fs from 'node:fs';
 const require = createRequire(import.meta.url);
 const AXE = require.resolve('axe-core/axe.min.js');
 
@@ -52,6 +53,22 @@ export async function runAksesibilitas(page, base) {
     }
   }
   ok(`A-2 ${forms.length} form, laci, dan kartu x 2 tema tanpa pelanggaran`, Object.keys(badForm).length === 0, JSON.stringify(badForm).slice(0, 600));
+  // editor SPK terstruktur (katalog sintetis terpasang) dan tab Master Data Rute produksi
+  const kat = JSON.parse(fs.readFileSync(new URL('./fixtures/katalog-berat-uji.json', import.meta.url), 'utf8'));
+  await page.evaluate((c) => { window.MNIBerat.setKatalog(c); }, kat);
+  const badEd = {};
+  for (const th of ['dark', 'light']) {
+    await theme(th);
+    await page.evaluate(() => { location.hash = '#spk'; }); await page.waitForTimeout(500);
+    await act('newspk', {}); await page.waitForSelector('#ed-secs'); await page.waitForTimeout(600);
+    await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '2'); await page.waitForTimeout(400);
+    const r1 = await scan(); if (r1.length) badEd[th + ' editor'] = r1;
+    await page.reload(); await page.waitForTimeout(3500); await page.addScriptTag({ path: AXE }); await page.evaluate((c) => { window.MNIBerat.setKatalog(c); }, kat); await theme(th);
+    await page.evaluate(() => { location.hash = '#master-data'; }); await page.waitForTimeout(600);
+    await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await page.waitForTimeout(600);
+    const r2 = await scan(); if (r2.length) badEd[th + ' rute'] = r2;
+  }
+  ok('A-4 editor SPK terstruktur dan tab Rute produksi x 2 tema tanpa pelanggaran', Object.keys(badEd).length === 0, JSON.stringify(badEd).slice(0, 700));
   ok('A-3 tanpa pageerror', errs.length === 0, errs.join(' | '));
   const fail = R.filter((x) => x.startsWith('FAIL')).length;
   return { pass: R.length - fail, fail, detail: R };
