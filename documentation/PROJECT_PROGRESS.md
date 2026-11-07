@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Langkah 4 database: view dashboard dan Realtime (T-215, draf lokal)
+Draf migration 22: `v_dash_ringkas`, `v_spk_status`, `v_dash_bahan_baku`, `v_spk_otd`, `v_item_produksi`, `hari_ini()` (Jakarta), Realtime untuk produksi_log dan spk_materials. Postgres lokal (PGlite) 85 PASS. Progres produksi akurat hanya bila item membawa snapshot rute (belum ada di aplikasi); frontend belum diubah; belum di Supabase. Rangkaian empat langkah blueprint selesai sebagai draf.
+
 ### 2026-11-07 — Langkah 3 database: posisi barang dan vendor finishing (T-215, draf lokal)
 Draf migration 21: view angka kembali/kirim vendor (0/231), posisi barang per item (enum posisi_barang), penjaga kembali + reject <= kirim, SPK Selesai hanya dari Terbit dan tanpa barang tersisa di vendor. Postgres lokal (PGlite) 67 PASS. Belum di Supabase; aplikasi sekarang menurunkan Selesai di JavaScript sehingga penjaga baru berpengaruh bila status itu mulai ditulis.
 
