@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Keseimbangan update produksi SPK dan Produksi Hari Ini (B-029..B-031, lokal)
+Drawer SPK, riwayat, lembar, ekspor, dan alur lead time hanya membaca catatan lama; hasil mesin tidak terlihat. Kini memakai riwayat gabungan. Tombol Catat per langkah berantrian, item selesai dari progres efektif, total manual lama dipertahankan. Bukti: `verified in browser` (mock) suite baru `keseimbangan` K-00..K-10. Kode monitoring lama yang mati (`_bProduksiLama`) dihapus.
+
 ### 2026-11-07 — Routing dan vendor per material, Full hole otomatis Perforated (T-214, lokal)
 Perforated Cable Tray otomatis Full hole (pilihan manual dipertahankan). Tab Master Data Rute produksi (per produk dan rute khusus bentuk), vendor mengikuti material (SPHC sesuai finishing; stainless dan aluminium tanpa), pilihan vendor per baris, peringatan baja tanpa finishing. Bukti: `verified in browser` (mock) E2E S-19..S-23 dan unit R-90..R-95; belum diuji di Supabase. Asumsi tahap 2 menunggu koreksi pemilik ([[INPUT_SPK_TERSTRUKTUR]] bagian 4a). Penyempurnaan: uji axe editor dan tab Rute (A-4), urutan langkah rute tidak diacak, kolom editor dirapikan.
 

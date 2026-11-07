@@ -1262,160 +1262,6 @@ B['produksi']=()=>{
  if(f0.tab==='kirim')return analisaKirim();
  return analisaWC();
 };
-const _bProduksiLama=()=>{
- const c=calc(),f=F['produksi']||(F['produksi']={wc:'',p:'aktif'});
- const wcs=S.mwc.filter(x=>x.aktif!==false).sort((a,b)=>a.urutan-b.urutan);
- const spkAktif=S.spk.filter(s=>{const x=c.spk[s._id];return x.st!=='Selesai'&&x.st!=='Batal'&&x.st!=='Draft'});
- const spkAll=f.p==='all'?S.spk.filter(s=>c.spk[s._id].st!=='Draft'):spkAktif;
- // Gather all prodLog entries across selected SPKs for analytics
- let totalEntries=0,totalItems=0,terlambat=0,selesai=0;
- spkAktif.forEach(s=>{totalEntries+=(s.prodLog||[]).length;s.items.forEach(i=>{totalItems+=+i.q||0});const x=c.spk[s._id];if(x.st==='Terlambat')terlambat++;if(x.st==='Selesai')selesai++});
- // build nama→kode map
- const wcByNama={};wcs.forEach(w=>{wcByNama[w.nama]=w.kode});
- // WC load: per-item per-WC berdasarkan prodLog[].items[].wc (schema baru)
- // Setiap item bisa ada di WC berbeda secara bersamaan
- const wcLoad={};
- wcs.forEach(w=>{wcLoad[w.kode]={wc:w,spks:new Set(),items:[],itemDone:0,itemTotal:0}});
- spkAll.forEach(s=>{
-  const c2=calc();
-  // Kumpulkan qty per-item per-WC dari seluruh prodLog (bukan cuma last)
-  const wcItemQty={}; // wcNama -> {itemDesc -> qtyTerbaru}
-  (s.prodLog||[]).forEach(log=>{
-   (log.items||[]).forEach(li=>{
-    const wn=li.wc||(log.wc||'');// support schema lama (wc di level log)
-    if(!wn)return;
-    if(!wcItemQty[wn])wcItemQty[wn]={};
-    // Ambil nilai terbaru (prodLog diurutkan asc by tgl)
-    wcItemQty[wn][li.d]=(wcItemQty[wn][li.d]||0)+(+li.q||0);
-   });
-  });
-  // Jika pakai schema lama (wc di level log, bukan per item), fallback ke lastLog.wc
-  if(Object.keys(wcItemQty).length===0){
-   const lastLog=(s.prodLog||[]).slice(-1)[0];
-   const wcNama=lastLog?.wc||'';
-   if(wcNama){
-    if(!wcItemQty[wcNama])wcItemQty[wcNama]={};
-    (lastLog.items||[]).forEach(li=>{wcItemQty[wcNama][li.d]=(wcItemQty[wcNama][li.d]||0)+(+li.q||0)});
-   }
-  }
-  Object.entries(wcItemQty).forEach(([wcNama,itemMap])=>{
-   const wcKode=wcByNama[wcNama];
-   if(!wcKode||!wcLoad[wcKode])return;
-   wcLoad[wcKode].spks.add(s._id);
-   Object.entries(itemMap).forEach(([desc,qty])=>{
-    if(qty>0){
-     const ordItem=s.items.find(i=>i.d===desc);
-     const ordQ=+(ordItem?.q||0);
-     const done=qty>=ordQ&&ordQ>0;
-     wcLoad[wcKode].items.push({spkNo:s.no,spkId:s._id,desc,qty,ordQ,done});
-     wcLoad[wcKode].itemTotal++;
-     if(done)wcLoad[wcKode].itemDone++;
-    }
-   });
-  });
- });
- // Convert Set to array for count
- wcs.forEach(w=>{if(wcLoad[w.kode])wcLoad[w.kode].spkCount=(wcLoad[w.kode].spks?.size||0)});
- const filterWc=f.wc;
- const mkpi=(cls,lb,v,unit,s)=>`<div class="kpi ${cls}"><span class="lb">${lb}</span><span class="v">${v}${unit?`<small>${unit}</small>`:''}</span><span class="s">${s}</span></div>`;
- const kpis=`<div class="kpi-row">
-  ${mkpi('info','SPK aktif',spkAktif.length,'','dari total '+S.spk.length+' SPK')}
-  ${mkpi(terlambat?'crit':'ok','Terlambat',terlambat,'SPK',terlambat?'segera tindak lanjuti':'semua on-track')}
-  ${mkpi('info','Update produksi',S.spk.reduce((a,s)=>a+(s.prodLog||[]).length,0),'log','total entri progres tercatat')}
-  ${mkpi(wcs.length?'info':'warn','Work Center aktif',wcs.length,'WC',wcs.filter(w=>w.tipe==='Subcont').length+' subcont')}
- </div>`;
- // Per-WC table — tampilkan per item, bukan cuma SPK chip
- const wcRows=wcs.filter(w=>!filterWc||w.kode===filterWc).map(w=>{
-  const load=wcLoad[w.kode]||{spkCount:0,items:[],itemTotal:0,itemDone:0};
-  const busy=load.spkCount||0;
-  const itms=load.items||[];
-  const itemTotal=load.itemTotal||0;
-  const itemDone=load.itemDone||0;
-  // Group items by SPK no
-  const bySPK={};itms.forEach(it=>{(bySPK[it.spkNo]=bySPK[it.spkNo]||[]).push(it)});
-  const spkNos=Object.keys(bySPK).slice(0,3);
-  const itemCells=spkNos.length===0
-   ?`<span class="muted" style="font-size:12px">Belum ada material masuk</span>`
-   :spkNos.map(no=>{
-    const items=bySPK[no];
-    const spkId=items[0].spkId;
-    const itemTags=items.slice(0,3).map(it=>`<span title="${esc(it.desc)}" style="display:inline-block;background:var(--${it.done?'ok-soft':'surface-2'});color:var(--${it.done?'ok':'fg'});border:1px solid var(--${it.done?'ok':'line'});border-radius:4px;padding:1px 6px;font-size:11px;margin-right:2px">${esc(it.desc.length>18?it.desc.substring(0,18)+'…':it.desc)} <b>${n(it.qty)}</b></span>`).join('')+(items.length>3?`<span class="muted" style="font-size:11px">+${items.length-3}</span>`:'');
-    return `<div style="margin-bottom:4px"><span class="chip plain" style="cursor:pointer;font-size:11px" data-act="prod" data-id="${esc(spkId)}">SPK ${no}</span> ${itemTags}</div>`;
-   }).join('')+(Object.keys(bySPK).length>3?`<div class="muted" style="font-size:11px">+${Object.keys(bySPK).length-3} SPK lainnya</div>`:'');
-  const statusHtml=busy===0
-   ?'<span style="color:var(--ok)">Kosong</span>'
-   :itemDone===itemTotal&&itemTotal>0
-    ?`<span style="color:var(--ok);font-weight:600">✓ ${itemDone} item selesai</span>`
-    :`<span style="color:var(--warn);font-weight:600">${itemTotal-itemDone} item berjalan</span>`;
-  return `<tr>
-   <td><b>${esc(w.nama)}</b><div class="note">${esc(w.tipe==='Subcont'?'Subcont / Vendor luar':'Internal')}</div></td>
-   <td><span class="chip ${busy>=3?'crit':busy>=1?'warn':'plain'}">${busy} SPK</span><div class="note">${itemTotal} item</div></td>
-   <td>${itemCells}</td>
-   <td>${statusHtml}</td>
-  </tr>`;
- }).join('');
- // Per-SPK produksi table — with due-date urgency + detail qty
- const todayStr=today();
- const hkDiff=(a,b)=>{// rough biz-day diff
-  let d=0,cur=new Date(a<b?a:b),end=new Date(a<b?b:a);
-  while(cur<end){const wd=cur.getDay();if(wd!==0&&wd!==6)d++;cur.setDate(cur.getDate()+1)}
-  return a<=b?d:-d;
- };
- // Filter SPK berdasarkan wcLoad (per-item WC data yang sudah dibangun)
- const spkRows=(filterWc
-  ?spkAll.filter(s=>{
-   const load=wcLoad[filterWc];
-   if(!load)return false;
-   return load.spks.has(s._id);
-  })
-  :spkAll
- ).sort((a,b)=>{const xa=c.spk[a._id],xb=c.spk[b._id];if(xa.st==='Terlambat'&&xb.st!=='Terlambat')return -1;if(xb.st==='Terlambat'&&xa.st!=='Terlambat')return 1;return b.no-a.no}).map(s=>{
-  const x=c.spk[s._id];
-  const fl=flow(s._id);
-  const lastLog=(s.prodLog||[]).slice(-1)[0];
-  const lastUpdDate=lastLog?fd(lastLog.tgl):null;
-  const lastUpdBy=lastLog?(lastLog.by||''):null;
-  const lastUpdHtml=lastUpdDate?`<span>${lastUpdDate}</span><div class="note">${esc(lastUpdBy||'–')}</div>`:'<span class="muted">–</span>';
-  // Due date urgency
-  const due=s.due||s.deadline||'';
-  const sisa=due?hkDiff(todayStr,due):null;
-  const dueCls=!due?'':(sisa<0?'color:var(--crit);font-weight:700':sisa<=3?'color:var(--warn);font-weight:700':'color:var(--ok)');
-  const dueHtml=due?`<div style="${dueCls}">${fd(due)}</div><div class="note">${sisa<0?`${-sisa} hk lewat`:`${sisa} hk lagi`}</div>`:'<span class="muted">–</span>';
-  // Qty detail
-  const prodTot=s.items.reduce((a,i)=>a+(+i.prod||0),0);
-  const ordTot=s.items.reduce((a,i)=>a+(+i.q||0),0);
-  const qtyHtml=`<div style="display:flex;align-items:center;gap:6px">${prog(x.pP)}<span class="note" style="white-space:nowrap">${n(prodTot)}/${n(ordTot)}</span></div>`;
-  return `<tr class="click" data-act="openspk" data-id="${s._id}">
-   <td class="mono"><b>${s.no}</b></td>
-   <td><b>${esc(s.customer)}</b><div class="note">${esc(s.po||'')}</div></td>
-   <td>${chip(fl.stage,STAGE_CLS[fl.stage]||'plain')}${posisiSpkHtml(s)}</td>
-   <td style="min-width:160px">${qtyHtml}</td>
-   <td>${lastUpdHtml}</td>
-   <td>${dueHtml}</td>
-   <td>${stChip(x.st)}</td>
-   <td><button class="btn sm primary" data-act="prod" data-id="${s._id}">${ic('tool',13)} Input</button></td>
-  </tr>`;
- }).join('');
- // KPI: % SPK sudah ada update
- const spkDgnUpdate=spkAktif.filter(s=>(s.prodLog||[]).length>0).length;
- const pctUpdate=spkAktif.length?Math.round(spkDgnUpdate/spkAktif.length*100):0;
- const siapKirim=spkAktif.filter(s=>flow(s._id)?.stage==='Siap kirim').length;
- const kpisEnhanced=`<div class="kpi-row">
-  ${mkpi('info','SPK aktif',spkAktif.length,'','dari total '+S.spk.length+' SPK')}
-  ${mkpi(terlambat?'crit':'ok','Terlambat',terlambat,'SPK',terlambat?'segera tindak lanjuti':'semua on-track')}
-  ${mkpi(siapKirim?'ok':'info','Siap kirim',siapKirim,'SPK','produksi 100% belum terkirim')}
-  ${mkpi(pctUpdate<50&&spkAktif.length>0?'warn':'info','Update tercatat',pctUpdate,'%',`${spkDgnUpdate} dari ${spkAktif.length} SPK ada log`)}
- </div>`;
- return `<section class="panel">
-  ${kpisEnhanced}
-  ${!filterWc?wcPanelBaru()+vendorPanelBaru():''}
-  <div class="pbody" style="padding:0">
-   <div class="dw-section-title" style="margin:8px 0 6px 0">${filterWc?`SPK di ${esc(wcs.find(w=>w.kode===filterWc)?.nama||filterWc)}`:'Semua SPK – Progres Produksi'}</div>
-   ${spkRows?`<div class="tbl-wrap"><table><thead><tr><th>SPK</th><th>Customer / PO</th><th>Posisi</th><th>Produksi</th><th>Update terakhir</th><th>Due date</th><th>Status</th><th></th></tr></thead><tbody>${spkRows}</tbody></table></div>`:empty('Tidak ada SPK aktif','Buat SPK baru di Monitoring SPK.')}
-  </div>
-  <div class="note" style="padding:8px 16px 12px;color:var(--muted);font-size:11.5px">Klik baris SPK untuk detail · Due date merah = sudah lewat, kuning = ≤3 hari kerja · Beban WC dari posisi SPK aktif saat ini</div>
- </section>`;
-};
 
 /* ---------- drawers ---------- */
 let DRAWER=null;
@@ -1452,6 +1298,15 @@ function itemSelect(g,sel){
  return `<select class="sel" id="m-item" name="item" required><option value="">Pilih produk…</option>${Object.entries(groups).sort().map(([k,xs])=>`<optgroup label="${esc(k)}">${xs.map(r=>`<option value="${r._id}" ${sel===r._id?'selected':''}>${esc(r.ukuran)} L${esc(r.panjang)} t${esc(r.tebal)} — stok ${n(calc().stock.fg[r._id])}</option>`).join('')}</optgroup>`).join('')}</select>`;
 }
 function spkSelect(sel,activeOnly=true,req=false,noStok=false){const c=calc();return `<select class="sel" id="m-spk" name="spk" ${req?'required':''}><option value="">${req?'Pilih SPK…':'— tanpa SPK —'}</option>${S.spk.filter(s=>(!noStok||!s.stokReq)&&(!activeOnly||c.spk[s._id].st!=='Selesai'||s._id===sel)).sort((a,b)=>b.no-a.no).map(s=>`<option value="${s._id}" ${sel===s._id?'selected':''}>SPK ${s.no} · ${esc(s.customer)}</option>`).join('')}</select>`}
+/* Riwayat produksi gabungan satu SPK: catatan lama (prodLog, total per item) dan hasil mesin (produksi_log, per langkah).
+   q = kontribusi ke progres item (hasil mesin hanya dihitung di langkah internal terakhir); qw = jumlah yang dicatat di langkah itu. */
+function logProduksi(s){
+ const P=PXL();const lama=(s.prodLog||[]).map(l=>({...l,sumber:'lama'}));
+ const baru=P?evHasil().filter(e=>e.spk_id===s._id).map(e=>{const it=(s.items||[])[+e.item_idx];const st=it?itemState(s,it,+e.item_idx):null;let q=0;
+  if(st){const intern=st.rute.filter(w=>!P.langkahVendor(w));const i=P.indeksLangkah(st.rute,st.alt,e.wc);q=i>=0&&st.rute[i]===intern[intern.length-1]?(+e.qty||0):0}
+  return {tgl:e.tgl||P.tanggalLokal(e.at),at:e.at||'',by:e.operator||e.oleh||'',ket:`${e.wc}${e.mesin&&e.mesin!==e.wc?' · '+e.mesin:''}: ${n(+e.qty||0)}${+e.reject?' (reject '+n(+e.reject)+')':''}`,items:[{d:e.item_desc,q,qw:+e.qty||0,wc:e.wc}],sumber:'mesin'}}):[];
+ return [...lama,...baru].sort((a,b)=>(String(a.tgl)+String(a.at)).localeCompare(String(b.tgl)+String(b.at)));
+}
 function prodForm(id){
  const s=byId('spk',id);
  const c=calc();const x=c.spk[id]||{};
@@ -1461,7 +1316,7 @@ function prodForm(id){
  const dueCls=!due?'':(dueDays<0?'crit':dueDays<=3?'warn':'ok');
  const dueTxt=!due?'–':(dueDays<0?`⚠ ${-dueDays} hk lewat`:(dueDays===0?'Due hari ini':`${dueDays} hk lagi`));
  const pPct=Math.round((x.pP||0)*100);
- const lastLog=(s.prodLog||[]).slice(-1)[0];
+ const lastLog=logProduksi(s).slice(-1)[0];
  // WC list from master
  const wcList=S.mwc.filter(w=>w.aktif!==false).sort((a,b)=>a.urutan-b.urutan).map(w=>w.nama);
  // Last WC per item: ambil dari log terbaru yang punya entry untuk item tsb
@@ -1474,7 +1329,7 @@ function prodForm(id){
   });
  });
  // Item status summary
- const doneItems=s.items.filter(i=>(+i.prod||0)>= +i.q).length;
+ const doneItems=s.items.filter((i,k)=>{const l=x.lines&&x.lines[k];return (+i.q||0)>0&&(l?+l.prodEff||0:+i.prod||0)>=+i.q}).length;
  const totalItems=s.items.length;
  const summaryBar=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin-bottom:14px">
   <div style="background:var(--surface-2);border-radius:8px;padding:8px 10px;text-align:center">
@@ -1511,7 +1366,7 @@ function prodForm(id){
    const tx={wc:p=>`${esc(p.tempat)} ${n(p.qty)}`,'vendor-siap-kirim':p=>`siap kirim ke ${esc(p.tempat)} ${n(p.qty)}`,'di-vendor':p=>`di ${esc(p.tempat)} ${n(p.qty)}`,selesai:p=>`selesai produksi ${n(p.qty)}`};
    const pos=P.posisiItem(st.rute,st.kum,q,st.vendorKirim);
    posisi=(pos.length?`<div class="note">Posisi: ${pos.map(p=>(tx[p.jenis]||tx.wc)(p)).join(' · ')}</div>`:'')+(rsv?`<div class="note">Sedang dikerjakan: ${rsv}</div>`:'');
-   aksi=now>=0?`<button type="button" class="btn sm primary" data-act="prodcatat" data-k="${esc(s._id+'|'+k)}">Catat hasil di ${esc(st.rute[now])}</button>`:'';
+   aksi=aq.map((a,ii)=>({w:st.rute[ii],antri:a.antri})).filter(z=>z.antri>0&&!P.langkahVendor(z.w)).map((z,j)=>`<button type="button" class="btn sm ${j===0?'primary':'ghost'}" data-act="prodcatat" data-k="${esc(s._id+'|'+k)}" data-wc="${esc(z.w)}">Catat hasil di ${esc(z.w)} (${n(z.antri)} siap)</button>`).join(' ');
    manual=adaEv?'':`<details class="prod-manual"${prod>0?' open':''}><summary>SPK lama: isi total manual</summary><div style="margin-top:6px">${inpManual}</div></details>`;
   }else manual=`<div class="note" style="margin-bottom:4px">Rute produk belum dikenali (judul section tanpa nama produk). Isi total manual.</div>${inpManual}`;
   return `<div style="border:1px solid var(--${done?'ok':'line'});border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface)">
@@ -2421,14 +2276,16 @@ const itemRute=it=>itemRuteInfo(it).rute;
 function itemState(s,it,idx){
  const P=PXL();if(!P)return null;const {rute:r,alt}=itemRuteInfo(it);if(!r.length)return null;
  const ev=evIdx()[s._id+'|'+idx]||[];const qty=+it.q||0;
- const kum=ev.length?P.kumulatif(r,ev.map(e=>({wc:e.wc,qty:+e.qty||0,reject:+e.reject||0})),alt):Object.fromEntries(r.map(w=>[w,Math.min(+it.prod||0,qty)]));
+ /* Total manual lama (item.prod) dianggap sudah melewati semua langkah dan tetap dihitung bila hasil mesin dicatat sesudahnya (tidak hilang). */
+ const dasar=Math.min(Math.max(0,+it.prod||0),qty);
+ const kum=ev.length?Object.fromEntries(Object.entries(P.kumulatif(r,ev.map(e=>({wc:e.wc,qty:+e.qty||0,reject:+e.reject||0})),alt)).map(([w,v])=>[w,Math.min(qty,v+dasar)])):Object.fromEntries(r.map(w=>[w,dasar]));
  /* Langkah vendor: kum = yang sudah kembali OK dari vendor, vendorKirim = yang sudah dikirim (dari dokumen Kirim ke Vendor dan Terima dari Vendor) */
  const vendorKirim={};const vs=r.find(P.langkahVendor);
  if(vs){let out=0,back=0;for(const v of S.vendor){if(v.status==='Batal'||v.spk!==s._id)continue;for(const i of v.items||[])if(i.d===it.d){out+=+i.q||0;back+=+i.kembali||0}}
   kum[vs]=Math.min(back,qty);vendorKirim[vs]=out}
  return {rute:r,alt,kum,qty,ev,vendorKirim};
 }
-function prodFromEvents(s,it,idx){const ev=evIdx()[s._id+'|'+idx];if(!ev||!ev.length||!PXL())return null;const {rute:r,alt}=itemRuteInfo(it);if(!r.length)return null;return PXL().progresItem(r,PXL().kumulatif(r,ev.map(e=>({wc:e.wc,qty:+e.qty||0,reject:+e.reject||0})),alt))}
+function prodFromEvents(s,it,idx){const ev=evIdx()[s._id+'|'+idx];if(!ev||!ev.length||!PXL())return null;const {rute:r,alt}=itemRuteInfo(it);if(!r.length)return null;return Math.min(+it.q||0,PXL().progresItem(r,PXL().kumulatif(r,ev.map(e=>({wc:e.wc,qty:+e.qty||0,reject:+e.reject||0})),alt))+Math.min(Math.max(0,+it.prod||0),+it.q||0))}
 const kapMesinSum=w=>(Array.isArray(w.mesin)?w.mesin:[]).reduce((a,m)=>a+(+m.kapasitas||0),0);
 const kapWC=()=>Object.fromEntries(S.mwc.filter(w=>w.aktif!==false).map(w=>[w.nama,+w.kapasitas>0?+w.kapasitas:kapMesinSum(w)]).filter(([,k])=>k>0));
 const wcInternal=()=>S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').sort((a,b)=>a.urutan-b.urutan);
@@ -4180,7 +4037,7 @@ async function exportCsv(what){
  else if(what==='vendor'){head=['No SJ','Tanggal','Vendor','Proses','SPK','Customer','Kirim','Kembali','Sisa','Umur (hari)','Status'];rows=c.vend.map(x=>{const s=byId('spk',x.v.spk);return [x.v.noSJ,x.v.tgl,x.v.vendor,x.v.proses,s?.no,s?.customer,x.out,x.back,x.sisa,x.st==='Selesai'?'':x.age,x.st]})}
  else if(what==='kirim'){head=['No SJ','Tanggal','SPK','Customer','Item','Qty','Kendaraan','No Polisi','Driver','Status'];rows=S.kirim.flatMap(k=>(k.items||[]).map(i=>[k.noSJ,k.tgl,byId('spk',k.spk)?.no,k.customer,i.d,i.q,k.kendaraan,k.nopol,k.driver,k.status]))}
  else if(what==='bongkar'){head=['Tanggal','Jenis','Muatan','Pihak','Referensi','Kendaraan','No Polisi','Driver','Jam Masuk','Jam Mulai','Jam Selesai','Status'];rows=S.bongkar.map(b=>[b.tgl,b.jenis,b.muatan,b.pihak,b.ref,b.kendaraan,b.nopol,b.driver,b.jamMasuk,b.jamMulai,b.jamSelesai,b.status])}
- else if(what==='prodlog'){head=['SPK','Customer','PO','Tanggal Log','Item','Qty Produksi','Update oleh','Catatan'];rows=S.spk.flatMap(s=>(s.prodLog||[]).flatMap(l=>(l.items||[]).map(i=>[s.no,s.customer,s.po,l.tgl,i.d,i.q,l.by||'',l.ket||''])))}
+ else if(what==='prodlog'){head=['SPK','Customer','PO','Tanggal Log','Item','Qty Produksi','Update oleh','Catatan'];rows=S.spk.flatMap(s=>logProduksi(s).flatMap(l=>(l.items||[]).map(i=>[s.no,s.customer,s.po,l.tgl,i.d,i.qw!=null?i.qw:i.q,l.by||'',l.ket||''])))}
  else{head=['SPK','Tanggal','Customer','PO','Sales','Material','Due','Produksi %','Terkirim %','Status','Telat (hari)'];rows=S.spk.map(s=>{const x=c.spk[s._id];return [s.no,s.tgl,s.customer,s.po,s.sales,s.material,s.due,Math.round(x.pP*100),Math.round(x.pK*100),x.st,x.late||'']})}
  const q=v=>{const s=String(v??'');return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
  const csv='﻿'+[head,...rows].map(r=>r.map(q).join(',')).join('\r\n');
@@ -5197,8 +5054,9 @@ function flow(id){
  const mp=its=>{const m={};(its||[]).forEach(i=>m[i.d]=(m[i.d]||0)+(+i.q||0));return m};
  // production
  let P=null,Pest='';
- const log=(s.prodLog||[]).slice().sort((a,b)=>(a.tgl+a.at).localeCompare(b.tgl+b.at));
- for(const e of log){const m={};(e.items||[]).forEach(i=>m[i.d]=(m[i.d]||0)+(+i.q||0));if(Object.keys(need).every(d=>(m[d]||0)>=need[d])){P=e.tgl;break}}
+ const log=logProduksi(s);
+ for(const e of log.filter(l=>l.sumber==='lama')){const m={};(e.items||[]).forEach(i=>m[i.d]=(m[i.d]||0)+(+i.q||0));if(Object.keys(need).every(d=>(m[d]||0)>=need[d])){P=e.tgl;break}}
+ if(!P){const fm=fullDate(log.filter(l=>l.sumber==='mesin').map(l=>({tgl:l.tgl,map:Object.fromEntries((l.items||[]).map(i=>[i.d,i.q]))})),need);if(fm)P=fm}
  if(!P&&x.pP>=1){const vf=fullDate(vs.map(v=>({tgl:v.tgl,map:mp(v.items)})),need);if(vf){P=vf;Pest='dari kirim vendor'}else{const kf=fullDate(ks.map(k=>({tgl:k.tgl,map:mp(k.items)})),need);if(kf){P=kf;Pest='dari kirim customer'}else if(log.length){P=log[log.length-1].tgl;Pest='update terakhir'}}}
  // vendor
  const vend=vs.map(v=>{const R=vReturns(v);const out=sumBy(v.items||[],i=>i.q),back=sumBy(v.items||[],i=>i.kembali),rej=sumBy(v.items||[],i=>i.reject);
@@ -5336,8 +5194,8 @@ function docModel(kind,ref){
    tables:[{title:'Progres per item',cols:[['No',6,'c'],['Item',60,'l'],['Order',12,'r'],['Satuan',10,'c'],['Diproduksi',14,'r'],['Sisa',12,'r'],['Progres',12,'r']],
      rows:f.x.lines.map((l,i)=>[i+1,l.d,l.q,l.u||'',l.prodEff,Math.max(0,l.q-l.prodEff),Math.round(pct(l.prodEff,l.q)*100)+'%']),
      foot:['','TOTAL',f.x.q,'',f.x.prod,Math.max(0,f.x.q-f.x.prod),Math.round(f.x.pP*100)+'%']},
-    {title:'Riwayat update produksi',cols:[['Tanggal',16,'c'],['Diinput',22,'c'],['Total diproduksi',18,'r'],['Catatan',70,'l']],
-     rows:log.length?log.map(e=>[fdS(e.tgl),e.at?new Date(e.at).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'',sumBy(e.items||[],i=>i.q),e.ket||'']):[['-','-','-','Belum ada update bertanggal. Update berikutnya lewat tombol Update progres produksi akan tercatat di sini.']]}],
+    {title:'Riwayat update produksi',cols:[['Tanggal',16,'c'],['Diinput',22,'c'],['Qty dicatat',18,'r'],['Catatan',70,'l']],
+     rows:log.length?log.map(e=>[fdS(e.tgl),e.at?new Date(e.at).toLocaleString('id-ID',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'',sumBy(e.items||[],i=>i.qw!=null?i.qw:i.q),(e.by&&e.sumber==='mesin'?e.by+' · ':'')+(e.ket||'')]):[['-','-','-','Belum ada update bertanggal. Update berikutnya lewat tombol Update progres produksi akan tercatat di sini.']]}],
    note:s.alasan?'Kendala: '+s.alasan:'',signs:['Dibuat oleh,\nAdmin Produksi','Diperiksa,\nKepala Produksi','Mengetahui,\nPPIC']}}
  if(kind==='sjv'){const v=byId('vendor',ref);if(!v)return null;const s=byId('spk',v.spk)||{};const tgt=v.target||addWorkdays(v.tgl,T[vKey(v.proses)]);
   return {file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
@@ -5636,7 +5494,7 @@ document.addEventListener('click',async e=>{
   case 'ed-up':case 'ed-down':{const i=+ds.s,j=a==='ed-up'?i-1:i+1;if(j>=0&&j<ED.sections.length){[ED.sections[i],ED.sections[j]]=[ED.sections[j],ED.sections[i]];EDDIRTY=true;rerenderSecs()}break}
   case 'openspk':spkDrawer(ds.id);break;
   case 'prod':prodForm(ds.id);break;
-  case 'prodcatat':{const c=mesinCtx(ds.k);if(!c)break;const aq=PXL().antrianPerLangkah(c.st.rute,c.st.kum,c.st.qty);const w=c.st.rute[aq.findIndex((a,ii)=>a.antri>0&&!PXL().langkahVendor(c.st.rute[ii]))];if(!w)break;F.mesin.wc=w;F.mesin.mesin='';lsSet('mni-wc',w);lsSet('mni-mesin','');mesinCatatForm(ds.k);break}
+  case 'prodcatat':{const c=mesinCtx(ds.k);if(!c)break;const aq=PXL().antrianPerLangkah(c.st.rute,c.st.kum,c.st.qty);const w0=c.st.rute[aq.findIndex((a,ii)=>a.antri>0&&!PXL().langkahVendor(c.st.rute[ii]))];const w=ds.wc&&c.st.rute.includes(ds.wc)&&!PXL().langkahVendor(ds.wc)?ds.wc:w0;if(!w)break;F.mesin.wc=w;F.mesin.mesin='';lsSet('mni-wc',w);lsSet('mni-mesin','');mesinCatatForm(ds.k);break}
   case 'prodall':document.querySelectorAll('#mform [name^="p_"]').forEach(inpEl=>{const q=parseFloat(inpEl.max);if(q>0)inpEl.value=q});break; /* B-006: sebelumnya membaca sel tabel (closest('tr')) yang tidak ada di form kartu, sehingga melempar galat */
   case 'railtg':railToggle();break;
   case 'void':voidForm(ds.c,ds.id);break;
