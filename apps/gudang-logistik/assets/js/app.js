@@ -128,7 +128,7 @@ function calc(){
  const spk={};
  for(const s of S.spk){
   let q=0,prod=0,kir=0,vo=0,vb=0;
-  const lines=(s.items||[]).map((it,ix)=>{const v=vIdx[s._id+'|'+it.d]||{out:0,back:0};const k=s.stokReq?(fgIdx[s._id+'|'+it.fg]||0):(kIdx[s._id+'|'+it.d]||0);const iq=+it.q||0;const evP=prodFromEvents(s,it,ix);const pe=evP!=null?Math.max(Math.min(evP,iq),Math.min(v.out,iq)):Math.max(Math.min(+it.prod||0,iq),Math.min(v.out,iq));q+=iq;prod+=pe;kir+=Math.min(k,iq);vo+=v.out;vb+=v.back;const stv=PXL()?itemState(s,it,ix):null;const vSiap=stv&&stv.ev.length?PXL().siapKirimVendor(stv.rute,stv.kum):null;return {...it,prodEff:pe,vOut:v.out,vBack:v.back,kirim:k,vSiap}});
+  const lines=(s.items||[]).map((it,ix)=>{const v=vIdx[s._id+'|'+it.d]||{out:0,back:0};const k=s.stokReq?(fgIdx[s._id+'|'+it.fg]||0):(kIdx[s._id+'|'+it.d]||0);const iq=+it.q||0;const evP=prodFromEvents(s,it,ix);const pe=evP!=null?Math.max(Math.min(evP,iq),Math.min(v.out,iq)):Math.max(Math.min(+it.prod||0,iq),Math.min(v.out,iq));q+=iq;prod+=pe;kir+=Math.min(k,iq);vo+=v.out;vb+=v.back;const stv=PXL()?itemState(s,it,ix):null;const vSiap=stv&&stv.ev.length?PXL().siapKirimVendor(stv.rute,stv.kum):null;/* Rute dengan langkah vendor: yang boleh dikirim ke customer atau diterima gudang hanyalah yang sudah KEMBALI dari vendor (bukan produksi dikurangi yang di vendor: barang yang belum pernah dikirim ke vendor belum difinishing). */const rv=stv&&stv.ev.length&&PXL().langkahVendor&&stv.rute.some(PXL().langkahVendor);const siapKirim=rv?Math.min(iq,Math.max(0,stv.kum[stv.rute[stv.rute.length-1]]||0)):null;return {...it,prodEff:pe,vOut:v.out,vBack:v.back,kirim:k,vSiap,siapKirim}});
   const pK=pct(kir,q),pP=pct(prod,q);
   let st='Proses',late=0;
   if((s.status||'Terbit')==='Draft')st='Draft';else if(pK>=1)st='Selesai';else if(s.due&&s.due<t){st='Terlambat';late=days(s.due,t)}
@@ -252,7 +252,7 @@ B.dashboard=()=>{
  const K90=spkKpi('90');
  const K30=spkKpi('30');
  // Stage counts
- const stageCnt={Draft:0,Produksi:0,'Di vendor':0,'Siap kirim':0,'Kirim sebagian':0,Terkirim:0};
+ const stageCnt={Draft:0,Produksi:0,'Siap ke vendor':0,'Di vendor':0,'Siap kirim':0,'Kirim sebagian':0,Terkirim:0};
  S.spk.filter(s=>(s.status||'Terbit')!=='Draft'&&!s.stokReq&&s.tgl>=K90.a).forEach(s=>{const f=flow(s._id);if(f)stageCnt[f.stage]=(stageCnt[f.stage]||0)+1});
  // OTD: on-time delivery rate (% SPK terkirim tepat waktu)
  const otdRate=K90.kir.length?K90.otd.length/K90.kir.length:null;
@@ -309,7 +309,7 @@ B.dashboard=()=>{
  </section>`:''}`;
 
  // === Pipeline SPK per stage ===
- const pipeStages=[{k:'Produksi',cls:'info'},{k:'Di vendor',cls:'warn'},{k:'Siap kirim',cls:'info'},{k:'Kirim sebagian',cls:'info'},{k:'Terkirim',cls:'ok'}];
+ const pipeStages=[{k:'Produksi',cls:'info'},{k:'Siap ke vendor',cls:'warn'},{k:'Di vendor',cls:'warn'},{k:'Siap kirim',cls:'info'},{k:'Kirim sebagian',cls:'info'},{k:'Terkirim',cls:'ok'}];
  const pipeTotal=pipeStages.reduce((a,s)=>a+(stageCnt[s.k]||0),0)||1;
  const pipeReal=pipeStages.reduce((a,s)=>a+(stageCnt[s.k]||0),0);
  const pipeH=pipeReal?`<div class="funnel"><div class="fbar">${pipeStages.filter(s=>stageCnt[s.k]).map(s=>`<i class="${s.cls}" style="flex:${stageCnt[s.k]}" title="${s.k}: ${stageCnt[s.k]} SPK"></i>`).join('')}</div><div class="fleg">${pipeStages.map(s=>`<div class="${stageCnt[s.k]?'':'zero'}"><b>${stageCnt[s.k]||0}</b><span>${s.k}</span></div>`).join('')}</div></div>`:empty('Belum ada SPK dalam 90 hari','SPK yang diterbitkan akan tampil per tahap: produksi, vendor, siap kirim, terkirim.');
@@ -868,8 +868,8 @@ function spkBerjalan(){
  const P=PXL();const c=calc(),f=F.spk,q=(f.q||'').toLowerCase(),t=today();
  const semua=S.spk.filter(s=>{const x=c.spk[s._id];return x&&x.st!=='Draft'&&x.st!=='Batal'&&spkJn(s)});
  const stage=s=>(flow(s._id)||{}).stage||'';
- const jenis=s=>{const x=c.spk[s._id];if(x.st==='Selesai')return 'selesai';if(x.st==='Terlambat')return 'telat';const g=stage(s);if(g==='Di vendor')return 'vendor';if(g==='Siap kirim'||g==='Kirim sebagian')return 'siap';return 'jalan'};
- const cocok=(s,k)=>k==='semua'||(k==='jalan'?c.spk[s._id].st!=='Selesai':k==='telat'?c.spk[s._id].st==='Terlambat':k==='vendor'?stage(s)==='Di vendor':k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):c.spk[s._id].st==='Selesai');
+ const jenis=s=>{const x=c.spk[s._id];if(x.st==='Selesai')return 'selesai';if(x.st==='Terlambat')return 'telat';const g=stage(s);if(/vendor/.test(g))return 'vendor';if(g==='Siap kirim'||g==='Kirim sebagian')return 'siap';return 'jalan'};
+ const cocok=(s,k)=>k==='semua'||(k==='jalan'?c.spk[s._id].st!=='Selesai':k==='telat'?c.spk[s._id].st==='Terlambat':k==='vendor'?/vendor/.test(stage(s)):k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):c.spk[s._id].st==='Selesai');
  const hit=k=>semua.filter(s=>cocok(s,k)).length;
  const kp=`<div class="kpi-row"><div class="kpi info"><span class="lb">SPK berjalan</span><span class="v">${hit('jalan')}</span><span class="s">belum selesai</span></div><div class="kpi ${hit('telat')?'crit':'ok'}"><span class="lb">Telat</span><span class="v">${hit('telat')}</span><span class="s">lewat due date</span></div><div class="kpi warn"><span class="lb">Di vendor</span><span class="v">${hit('vendor')}</span><span class="s">sedang finishing</span></div><div class="kpi ok"><span class="lb">Siap kirim</span><span class="v">${hit('siap')}</span><span class="s">produksi selesai, belum terkirim</span></div></div>`;
  const xs=semua.filter(s=>cocok(s,f.fl||'jalan')&&(!q||(s.no+' '+s.customer+' '+(s.po||'')).toLowerCase().includes(q)))
@@ -908,7 +908,7 @@ function spkPapan(){
  const c=calc(),f=F.spk,t=today(),q=(f.q||'').toLowerCase();
  const semua=S.spk.filter(s=>{const x=c.spk[s._id];return x&&x.st!=='Draft'&&x.st!=='Batal'&&spkJn(s)});
  const stage=s=>(flow(s._id)||{}).stage||'';
- const cocok=(s,k)=>{const x=c.spk[s._id];return k==='semua'||(k==='jalan'?x.st!=='Selesai':k==='telat'?x.st==='Terlambat':k==='vendor'?stage(s)==='Di vendor':k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):x.st==='Selesai')};
+ const cocok=(s,k)=>{const x=c.spk[s._id];return k==='semua'||(k==='jalan'?x.st!=='Selesai':k==='telat'?x.st==='Terlambat':k==='vendor'?/vendor/.test(stage(s)):k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):x.st==='Selesai')};
  const tampil=semua.filter(s=>cocok(s,f.fl||'jalan')&&(!q||(s.no+' '+s.customer+' '+(s.po||'')).toLowerCase().includes(q)));
  // perkiraan siap kirim: semua SPK aktif dijadwalkan bersama (kapasitas dan due date), hanya hasilnya yang ditampilkan
  const itemR=[];
@@ -995,7 +995,7 @@ function spkJadwal(){
  const c=calc(),f=F.spk,q=(f.q||'').toLowerCase(),t=today();
  const semua=S.spk.filter(s=>{const x=c.spk[s._id];return x&&x.st!=='Draft'&&x.st!=='Batal'&&spkJn(s)});
  const stage=s=>(flow(s._id)||{}).stage||'';
- const cocok=(s,k)=>{const x=c.spk[s._id];return k==='semua'||(k==='jalan'?x.st!=='Selesai':k==='telat'?x.st==='Terlambat':k==='vendor'?stage(s)==='Di vendor':k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):x.st==='Selesai')};
+ const cocok=(s,k)=>{const x=c.spk[s._id];return k==='semua'||(k==='jalan'?x.st!=='Selesai':k==='telat'?x.st==='Terlambat':k==='vendor'?/vendor/.test(stage(s)):k==='siap'?(stage(s)==='Siap kirim'||stage(s)==='Kirim sebagian'):x.st==='Selesai')};
  const pilih=semua.filter(s=>cocok(s,f.fl||'jalan')&&(!q||(s.no+' '+s.customer+' '+(s.po||'')).toLowerCase().includes(q)))
   .sort((a,b)=>(a.tgl||'').localeCompare(b.tgl||'')||a.no-b.no);
  const mesinView=f.vw==='mesin';
@@ -1906,7 +1906,7 @@ function linesTable(spkId,mode){
 /* Sisa yang boleh dikirim. Ke vendor juga dibatasi hasil langkah produksi terakhir (item yang sudah punya catatan produksi per mesin). */
 const sisaLine=(l,mode)=>{const s=Math.max(0,l.q-(mode==='vendor'?l.vOut:l.kirim));if(mode==='vendor')return l.vSiap!=null?Math.min(s,Math.max(0,l.vSiap-l.vOut)):s;
  /* kirim ke customer: hanya hasil produksi yang selesai (dan sudah kembali dari vendor finishing) */
- const siap=Math.max(0,Math.min(l.q,(+l.prodEff||0)-(+l.vOut||0)+(+l.vBack||0)));return Math.min(s,Math.max(0,siap-l.kirim))};
+ const siap=l.siapKirim!=null?l.siapKirim:Math.max(0,Math.min(l.q,(+l.prodEff||0)-(+l.vOut||0)+(+l.vBack||0)));return Math.min(s,Math.max(0,siap-l.kirim))};
 const pickLines=(spkId,d)=>calc().spk[spkId].lines.map((l,i)=>({d:l.d,u:l.u,q:num0(d['ln_'+i])})).filter(l=>l.q>0);
 function checkCap(spkId,d,mode){if(d.over)return;const x=calc().spk[spkId];x.lines.forEach((l,i)=>{const q=num0(d['ln_'+i]);const sisa=sisaLine(l,mode);if(q>sisa)throw new Error(`"${l.d}": ${n(q)} melebihi ${(mode==='vendor'&&l.vSiap!=null&&sisa<Math.max(0,l.q-l.vOut))||(mode!=='vendor'&&sisa<Math.max(0,l.q-l.kirim))?'hasil produksi yang siap dikirim':'sisa'} ${n(sisa)}. Centang ${mode==='vendor'?'kirim ulang / rework':'kirim lebih / sebelum produksi tercatat selesai'} bila memang disengaja.`)})}
 function vendorForm(spk){
@@ -3593,7 +3593,7 @@ const stLbl=(s,g)=>s&&s.stokReq?({'Siap kirim':'Siap masuk gudang','Kirim sebagi
 /* barang masuk gudang jadi dari satu SPK per produk: transaksi masuk ditambah koreksi yang membalik transaksi masuk */
 const fgGot=(spkId,fgId)=>{const by={};S.mutasi.forEach(m=>{by[m._id]=m});return S.mutasi.filter(m=>m.gudang==='fg'&&m.item===fgId&&m.spk===spkId&&(m.jenis==='masuk'||(m.jenis==='koreksi'&&(by[m.koreksiDari]||{}).jenis==='masuk'))).reduce((a,m)=>a+(+m.delta||0),0)};
 /* hasil produksi yang siap diterima gudang barang jadi per baris SPK: selesai produksi, dikurangi yang masih di vendor finishing */
-function fgSiapMap(s){const x=calc().spk[s._id];return (s.items||[]).map((it,ix)=>{const l=x&&x.lines[ix];if(!l)return 0;return Math.max(0,Math.min(+it.q||0,l.prodEff-l.vOut+l.vBack))})}
+function fgSiapMap(s){const x=calc().spk[s._id];return (s.items||[]).map((it,ix)=>{const l=x&&x.lines[ix];if(!l)return 0;return l.siapKirim!=null?l.siapKirim:Math.max(0,Math.min(+it.q||0,l.prodEff-l.vOut+l.vBack))})}
 function fgTerimaSpk(id){
  const s=byId('spk',id);if(!s)return;
  if(s.status==='Draft'){toast('SPK stok ini masih Draft. Terbitkan SPK dan produksi dulu sebelum barang diterima di gudang.');return}
@@ -3713,7 +3713,7 @@ const fgSpkJudul=r=>`${String(r.kategori||'').toUpperCase()}${r.type?' TYPE '+St
 async function spkStokBuat(items,opt){
  need('spk');
  const tgl=today(),no=nextNo(),id='spk-'+no,cust='STOK MNI';
- const lines=items.map(i=>{const r=byId('fg',i.item);return {d:fgSpkDesc(r),g:fgSpkJudul(r),q:i.q,u:r.satuan||'Btg',w:0,ket:'Stok gudang',catatan:'',prod:0,fg:i.item}});
+ const lines=items.map(i=>{const r=byId('fg',i.item);const d=fgSpkDesc(r),g=fgSpkJudul(r);/* berat per pcs dari kalkulator berat bila katalog terpasang (seperti SPK biasa); tanpa katalog atau item tak dikenali: 0 */const w=weightCalc(d,g);return {d,g,q:i.q,u:r.satuan||'Btg',w,...(w>0?{ws:'k'}:{}),ket:'Stok gudang',catatan:'',prod:0,fg:i.item}});
  const lead='5 Hari Kerja',due=(opt&&opt.due)||(leadMax(lead)?addWorkdays(tgl,leadMax(lead)):'');
  const d0=derive(lines[0]?lines[0].g:'');
  const data={no,nomor:`${no}/SPK/${tgl.slice(0,4)}/WS`,tgl,customer:cust,po:'STOK-'+tgl,sales:'',lead,due,material:d0.material||'',tebal:d0.tebal||'',type:[...new Set(lines.map(l=>derive(l.g).type).filter(Boolean))].join(' & '),note:'NOTE : PRODUKSI UNTUK STOK GUDANG'+((opt&&opt.ket)?' · '+opt.ket:''),dist:DIST_DEF.slice(),signProc:'Halimah',signPpic:'Muin M.K.',items:lines,status:'Draft',stokReq:true};
@@ -5138,11 +5138,12 @@ function flow(id){
  const otd=Kfull&&s.due?Kfull<=s.due:null;const lateK=Kfull&&s.due&&Kfull>s.due?wd(s.due,Kfull):0;
  const cycle=Kfull?Math.max(0,wd(s.tgl,Kfull)):null;
  const draft=(s.status||'Terbit')==='Draft';
- const stage=draft?'Draft':x.pK>=1?'Terkirim':x.pP<1?'Produksi':vend.some(o=>!o.done)?'Di vendor':x.kir>0?'Kirim sebagian':'Siap kirim';
+ const blmBalik=x.lines.some(l=>l.siapKirim!=null&&l.siapKirim<l.q);
+ const stage=draft?'Draft':x.pK>=1?'Terkirim':x.pP<1?'Produksi':vend.some(o=>!o.done)?'Di vendor':blmBalik?'Siap ke vendor':x.kir>0?'Kirim sebagian':'Siap kirim';
  const r={s,x,need,vs,ks,vend,log,P,Pest,V1,Vfull,Rfull,Rest,K1,Kfull,recv,ready,dProd,okProd,dWaitV,dKirim,okKirim,otd,lateK,cycle,stage};
  c._flow[id]=r;return r;
 }
-const STAGE_CLS={Draft:'plain',Produksi:'info','Di vendor':'warn','Siap kirim':'info','Kirim sebagian':'info',Terkirim:'ok'};
+const STAGE_CLS={Draft:'plain',Produksi:'info','Siap ke vendor':'warn','Di vendor':'warn','Siap kirim':'info','Kirim sebagian':'info',Terkirim:'ok'};
 const okChip=(ok,yes='Tepat',no='Telat')=>ok==null?'':chip(ok?yes:no,ok?'ok':'crit');
 const dTxt=v=>v==null?'–':v+' hk';
 
@@ -5181,7 +5182,7 @@ function spkKpiBody(){
  </section>`;
  // flow funnel
  const st={};K.Fl.forEach(f=>st[f.stage]=(st[f.stage]||0)+1);
- h+=`<section class="panel"><header><h2>Posisi SPK saat ini</h2><span class="hint">${esc(K.lbl)} · ${K.Fl.length} SPK</span></header><div class="pbody flowbar">${['Produksi','Di vendor','Siap kirim','Kirim sebagian','Terkirim'].map(k=>`<button class="fstep ${STAGE_CLS[k]}" data-act="spkstage" data-st="${k}"><b>${st[k]||0}</b><span>${k}</span></button>`).join('<i>›</i>')}</div></section>`;
+ h+=`<section class="panel"><header><h2>Posisi SPK saat ini</h2><span class="hint">${esc(K.lbl)} · ${K.Fl.length} SPK</span></header><div class="pbody flowbar">${['Produksi','Siap ke vendor','Di vendor','Siap kirim','Kirim sebagian','Terkirim'].map(k=>`<button class="fstep ${STAGE_CLS[k]}" data-act="spkstage" data-st="${k}"><b>${st[k]||0}</b><span>${k}</span></button>`).join('<i>›</i>')}</div></section>`;
  // 1 production
  const prodRows=K.prodOpen.slice(0,8).map(o=>`<tr class="click" data-act="openspk" data-id="${o.f.s._id}"><td class="mono"><b>${o.f.s.no}</b></td><td>${esc(o.f.s.customer)}</td><td>${prog(o.f.x.pP)}</td><td class="num ${o.age>T.prod?'bad':''}">${o.age} hk</td><td>${fd(o.f.s.due)}</td></tr>`).join('');
  const slowProd=K.prod.filter(f=>!f.okProd).sort((a,b)=>b.dProd-a.dProd).slice(0,6).map(f=>`<tr class="click" data-act="openspk" data-id="${f.s._id}"><td class="mono"><b>${f.s.no}</b></td><td>${esc(f.s.customer)}</td><td>${fd(f.s.tgl)} → ${fd(f.P)}${f.Pest?` <span class="note">(est.)</span>`:''}</td><td class="num bad">${f.dProd} hk</td><td class="muted">${esc(f.s.alasan||'')}</td></tr>`).join('');

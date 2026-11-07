@@ -762,3 +762,11 @@ Permintaan pemilik setelah berganti akun: audit fitur, cari bug hulu ke hilir, p
 - **Uji baru:** `editor.mjs` 17 uji, opname sparepart; aksi UI belum diuji turun dari 76 ke 43.
 - **Tugas dan roadmap:** bukti ditulis (T-046, T-175, T-176, T-178); T-180 dan T-185 ditutup (digantikan T-186); kriteria ganda dirapikan; dependensi T-034 dilepas dari Docker; roadmap diselaraskan.
 - **Belum:** keputusan pemilik di [[AUDIT_PROGRESS_2026-11-07]] bagian 4; semua bukti masih mock.
+
+## 2026-11-07 · Uji alur SPK lengkap dan penjaga vendor berbasis rute (T-213)
+
+Permintaan pemilik: uji dari buat SPK ke vendor ke customer, SPK stok ke vendor ke customer, dan SPK tanpa vendor (stainless dan aluminium), lalu sesuaikan. Tugas [[T-213-uji-alur-spk-lengkap-dan-penjaga-vendor-berbasis-rute]].
+
+- **Suite baru** `alur-lengkap.mjs` 31 uji (empat alur, UI sungguhan, stabil tiga kali).
+- **Bug:** B-026 (kirim ke customer atau terima gudang sebelum vendor), B-027 (tahap Siap kirim salah), B-028 (SPK stok 0 kg). Jalur tanpa vendor terbukti benar.
+- **Belum:** keputusan pemilik untuk SPK lama; bukti masih mock.

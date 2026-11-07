@@ -52,13 +52,13 @@ Riwayat mutasi tiap gudang: filter jenis, periode, dan SPK; tombol SPK membuka l
 1. **Buat**: di Gudang Barang Jadi, ceklis produk di Posisi stok (atau Rencana produksi atau tombol SPK stok) lalu Buat SPK stok. Hasilnya SPK **Draft**, customer **STOK MNI**, `stokReq=true`, tiap baris tertaut produk (`fg`).
 2. **Terbit**: PPIC memeriksa dan menerbitkan SPK seperti biasa. Muncul di Monitoring SPK; filter **Semua SPK, SPK Customer, SPK Stok**.
 3. **Produksi dan vendor**: tim produksi memperbarui progres seperti SPK biasa; kirim ke **vendor** finishing tetap ada.
-4. **Terima di gudang barang jadi** (menggantikan Kirim ke customer): form terisi dari item SPK; hanya sebesar hasil produksi yang selesai, dikurangi yang masih di vendor, ditambah yang sudah kembali. Ditolak bila SPK masih Draft.
+4. **Terima di gudang barang jadi** (menggantikan Kirim ke customer): form terisi dari item SPK; hanya sebesar hasil produksi siap (aturan di bagian 6): untuk rute dengan vendor hanya yang sudah kembali dari vendor. Ditolak bila SPK masih Draft.
 5. **Jejak**: BJ-M tertaut SPK, timeline SPK memuat dokumen masuk, Riwayat mutasi menandai "untuk stok gudang" atau customer.
 6. Progres "Terkirim" pada SPK stok = barang masuk gudang jadi; SPK stok selesai bila seluruhnya masuk.
 
 ## 6. Penjaga kirim ke customer
 
-Kirim ke customer hanya sebesar hasil produksi siap = produksi efektif − di vendor + kembali dari vendor − sudah terkirim. Pelanggaran ditolak dengan pesan "melebihi hasil produksi yang siap dikirim". Centang **kirim lebih** (ganti reject, bonus, atau produksi belum tercatat selesai) meloloskan dengan keterangan wajib. Dampak rilis: SPK lama yang produksinya tidak pernah dicatat tertahan sampai produksinya dicatat atau override dipakai.
+Kirim ke customer hanya sebesar hasil produksi siap − sudah terkirim. **Hasil produksi siap:** bila rute item memuat langkah vendor (finishing dibaca dari judul section: ELG, HDG, PDC) dan item sudah punya catatan produksi per mesin = **yang sudah kembali dari vendor**; selain itu (stainless, aluminium, Non Finishing, atau SPK lama tanpa catatan per mesin) = produksi efektif − di vendor + kembali dari vendor. Tahap SPK produksi selesai tetapi belum ke vendor adalah **Siap ke vendor**, bukan Siap kirim. Pelanggaran ditolak dengan pesan "melebihi hasil produksi yang siap dikirim". Centang **kirim lebih** (ganti reject, bonus, atau produksi belum tercatat selesai) meloloskan dengan keterangan wajib. Dampak rilis: SPK lama yang produksinya tidak pernah dicatat tertahan sampai produksinya dicatat atau override dipakai.
 
 ## 7. Hak akses
 

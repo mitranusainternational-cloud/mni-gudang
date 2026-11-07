@@ -34,6 +34,8 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 - Work Center yang dilewati rute SPK aktif, punya catatan produksi, atau ada di aturan rute tidak lagi bisa dihapus (ditawarkan Nonaktifkan) dan tidak bisa diganti nama.
 - Modal dan laci mengelola fokus keyboard: Tab tetap di dalam dialog, fokus kembali ke tombol pemicu saat ditutup.
 - Penghapusan yang ditolak kebijakan database kini menampilkan galat, bukan sukses palsu.
+- SPK dengan langkah vendor tidak lagi "Siap kirim" sebelum finishing: barang baru boleh dikirim ke customer (atau diterima gudang untuk SPK stok) setelah kembali dari vendor; tahap baru "Siap ke vendor". SPK stainless, aluminium, dan Non Finishing tetap tanpa vendor.
+- SPK stok membawa berat per pcs dari kalkulator berat bila katalog terpasang.
 
 ### Aksesibilitas dan kualitas (lokal)
 - Kontras warna tema gelap dan terang memenuhi WCAG 2 AA; pilihan, isian, dan tabel yang dapat digulir diberi nama dan dapat diakses keyboard; avatar berkontras cukup.

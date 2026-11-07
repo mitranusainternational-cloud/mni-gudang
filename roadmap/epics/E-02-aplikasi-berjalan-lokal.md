@@ -7,7 +7,7 @@ theme: Fondasi
 priority: P0
 status: active
 progress: 23
-tasks_total: 31
+tasks_total: 32
 tasks_done: 11
 updated: 2026-11-07
 ---
@@ -58,5 +58,6 @@ Docker belum aktif di mesin kerja (T-010).
 - [ ] [[tasks/T-205-audit-mandiri-dan-perbaikan-pemakaian-di-hp|T-205]] Audit mandiri dan perbaikan pemakaian di HP (kartu per item, form tanpa terpotong) · review · P1 · 1 hari
 - [ ] [[tasks/T-207-master-data-bahan-baku-jenis-material-dan-massa-jenis|T-207]] Master Data > Bahan baku: jenis material, massa jenis, hapus dan pulihkan, ganti nama mengikuti semua modul · review · P1 · 2 hari
 - [ ] [[tasks/T-209-gudang-bahan-baku-posisi-stok-dan-stock-opname-dipoles|T-209]] Gudang Bahan Baku: Posisi stok, lembar hitung opname, dan berita acara opname · review · P1 · 1 hari
+- [ ] [[tasks/T-213-uji-alur-spk-lengkap-dan-penjaga-vendor-berbasis-rute|T-213]] Uji alur SPK lengkap (customer, stok, tanpa vendor) dan penjaga vendor berbasis rute · review · P1 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

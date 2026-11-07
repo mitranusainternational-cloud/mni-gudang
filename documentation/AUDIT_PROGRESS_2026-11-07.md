@@ -53,3 +53,13 @@ Tambahan uji: `editor.mjs` 17 uji (editor SPK, Work Center, fokus dan keyboard),
 - **Tinjauan pemilik** untuk 30-an tugas `review` (modul demi modul), keputusan di [[AUDIT_PROGRESS_2026-11-06]] bagian "Keputusan yang ditunggu pemilik" dan di [[HANDOFF]] bagian 5.
 - **Data contoh mock realistis** (nama material memuat jenis) dan 43 aksi UI yang belum diacu uji (lihat [[FEATURE_AUDIT]] bagian 3).
 - **Bukti Supabase** untuk migration 14 sampai 18 dan tampilan production untuk T-176 belum ada.
+
+## 5. Lanjutan: uji alur SPK lengkap (T-213)
+
+Atas permintaan pemilik diuji empat jenis alur dengan UI sungguhan (`alur-lengkap.mjs`, 31 uji): SPK customer galvanis, SPK stok galvanis, SPK stainless tanpa vendor, SPK stok aluminium tanpa vendor. Temuan dan perbaikan ([[TEST_MATRIX]]):
+
+- **B-026 (serius):** SPK galvanis boleh dikirim ke customer, atau diterima gudang untuk SPK stok, sebelum finishing di vendor. Kini hanya yang sudah kembali dari vendor.
+- **B-027:** tahap SPK menjadi "Siap kirim" padahal rutenya masih ke vendor; tahap baru "Siap ke vendor".
+- **B-028:** SPK stok selalu 0 kg; kini memakai kalkulator berat bila ada.
+- Jalur tanpa vendor (stainless, aluminium) sudah benar: rute hanya mesin internal, langsung siap kirim atau masuk gudang.
+- Keputusan pemilik tersisa: SPK galvanis lama di production yang produksinya tidak tercatat per mesin tetap memakai aturan lama (tidak terblokir).
