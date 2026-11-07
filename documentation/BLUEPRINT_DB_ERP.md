@@ -25,7 +25,7 @@ Permintaan pemilik 2026-11-07: merapikan versi lokal menjadi sistem terintegrasi
 ## 2. Urutan langkah
 
 1. **Skema SPK dan kebutuhan bahan** (draf `apps/platform/supabase/draft/20240101000019_spk_peruntukan_materials.sql` (migration 19)): enum `spk_peruntukan` ('customer', 'stok_buffer'), `customer_id` terhubung ke `mcustomer`, batasan (customer dan PO wajib untuk SPK customer terbit, stok tanpa customer, status valid, nomor angka), pemicu penjaga peruntukan dan nomor setelah terbit, tabel `spk_materials` (kebutuhan, cadangan, keluar per bahan dan item, unik per SPK-bahan-item, tanpa DELETE).
-2. **Cadangan dan pemotongan stok di database**: pemicu saat SPK Draft → Terbit memeriksa stok tersedia (stok minus cadangan SPK lain) dan menulis cadangan; pengeluaran fisik tetap baris `mutasi` (sudah dijaga draf 17 agar stok tidak negatif dan diserialkan per item).
+2. **Cadangan bahan di database** (draf `apps/platform/supabase/draft/20240101000020_spk_cadangan_bahan.sql`, keputusan K-1 = cadangan dulu): pemicu saat SPK Draft → Terbit memeriksa `tersedia = stok - cadangan SPK lain` untuk SELURUH baris dan menggagalkan penerbitan dengan pesan bahan, kebutuhan, dan tersedia; Batal dan Selesai melepas cadangan, dibuka kembali mencadangkan ulang; pengeluaran fisik tetap baris `mutasi` bertanda SPK dan otomatis menyinkronkan `qty_keluar` (tidak pernah menggagalkan pergerakan stok). Bagian 6 memuat hasil tinjauan dan uji.
 3. **Pipeline posisi dan vendor**: tabel `vendor_finishing_jobs` hanya bila perlu; saat ini `vendor` (dokumen kirim ke vendor dengan `items[].q/kembali/reject`) sudah memuat kirim dan kembali. View menurunkan posisi barang dan angka "kembali/kirim"; aturan SPK tidak boleh Selesai bila barang di vendor belum kembali.
 4. **View agregasi dashboard dan realtime**: view untuk bahan baku kritis, SPK berjalan, progres, OTD; realtime hanya pada tabel yang perlu (`spk`, `vendor`, `produksi_log`).
 
@@ -39,11 +39,23 @@ Permintaan pemilik 2026-11-07: merapikan versi lokal menjadi sistem terintegrasi
 
 ## 4. Keputusan yang menunggu pemilik
 
-- **K-1 Kapan stok bahan dipotong:** (a) cadangan saat Terbit, potong fisik saat pengeluaran bertanda SPK (disarankan: stok fisik tetap cocok dengan rak, SPK dibatalkan tinggal melepas cadangan); atau (b) potong langsung saat Terbit (stok fisik di sistem turun walau bahan belum diambil, pembatalan dan revisi perlu mutasi pembalik).
-- **K-2 Customer wajib terdaftar:** SPK customer terbit harus memakai nama yang ada di master customer (tidak boleh teks bebas). Apakah ada SPK lama dengan nama customer tidak cocok yang harus dirapikan lebih dulu?
-- **K-3 PO wajib** untuk SPK customer terbit: apakah ada SPK customer yang sah tanpa PO (mis. sampel, komplain)? Bila ada, perlu nilai khusus dan bukan dikosongkan.
+- **K-1 (DIPUTUSKAN 2026-11-07: cadangan dulu):** bahan dicadangkan saat Terbit; stok fisik turun hanya saat pengeluaran bertanda SPK; SPK dibatalkan tinggal melepas cadangan.
+- **K-2 Customer wajib terdaftar** dan **K-3 PO wajib:** DIBUAT BERTAHAP karena tinjauan membuktikan aplikasi saat ini belum mengisi `customer_id` dan tidak mewajibkan PO, sehingga batasan ketat akan membuat aplikasi tidak bisa menerbitkan SPK. Tahap sekarang: SPK customer terbit wajib bernama customer dan `customer_id` ditautkan otomatis dari nama yang cocok; tahap ketat (customer_id dan PO wajib, Batal dan Selesai dikecualikan) ada di akhir draf 19 dan baru dipasang setelah UI menegakkannya. Pertanyaan untuk Anda: apakah ada SPK customer yang sah tanpa PO (sampel, komplain)? Bila ada, perlu nilai khusus, bukan dikosongkan; dan apakah ada SPK lama dengan nama customer yang tidak cocok dengan master?
 - **K-4 Penerapan:** draf ini diuji dulu di project dev atau branch Supabase (bukan production), lalu rilis bertahap sesuai [[INTEGRATION_PATH]].
 
-## 5. Status bukti
+## 5. Langkah 2: keputusan rancangan
 
-`source-level` saja: berkas SQL ditulis dan ditinjau terhadap skema production yang dibaca (kolom `spk`), belum dijalankan di database mana pun. Daftar uji ada di akhir berkas SQL.
+- **Satu kunci advisory global** untuk semua pencadangan dan sinkron (bukan per bahan): pabrik kecil, dan kunci per bahan terbukti bisa saling bersilang (deadlock) antara penerbitan dan pengeluaran multi-baris. Sinkron pengeluaran menelan kegagalan kunci sehingga pergerakan stok tidak pernah gagal; `spk_materials_hitung_ulang()` memperbaikinya.
+- **Status baris:** rencana, dicadangkan, dikeluarkan, **lepas** (dilepas karena SPK Batal atau Selesai, dihidupkan lagi saat dibuka), **batal** (dibatalkan sengaja oleh pengguna, tidak dihidupkan otomatis).
+- **Klien tidak bisa memalsukan** `qty_keluar`, `qty_dicadangkan`, `spk_id`, `rm_id`, atau status sistem; hanya pemicu.
+- **Batas yang disengaja:** pengeluaran fisik SPK lain tidak diblokir walau memakan cadangan SPK lain; `tersedia` negatif menjadi peringatan di `v_rm_ketersediaan`.
+
+## 6. Tinjauan dan uji
+
+Empat peninjau independen (konkurensi, semantik, Supabase/RLS, keselamatan migrasi) memeriksa draf 19 dan 20; tiap temuan diverifikasi satu agen dengan mencoba mereproduksinya di Postgres lokal. 21 temuan, 19 terbukti nyata (17 direproduksi): pergerakan stok bisa gagal oleh batasan status, cadangan hantu pada SPK Selesai, buka kembali Selesai tidak mencadangkan, baris batal sengaja dihidupkan, kolom sistem bisa dipalsukan klien, fungsi hitung membocorkan stok lewat RPC, aplikasi saat ini tidak bisa menerbitkan SPK karena batasan customer, dan potensi deadlock. Semuanya diperbaiki di draf dan dikunci dengan uji. Dua temuan ditolak (FK customer RESTRICT adalah perilaku wajar; Realtime ditangani di langkah 4).
+
+Uji: `apps/platform/tests/sql/cadangan.sql.test.mjs` menjalankan draf 17, 19, 20 di Postgres lokal (PGlite, tanpa Docker dan tanpa Supabase): 48 PASS. Pasang sekali `npm i --no-save @electric-sql/pglite` lalu `node tests/sql/cadangan.sql.test.mjs`. **Belum teruji:** konkurensi sungguhan (PGlite satu koneksi), RLS dengan peran Supabase asli, dan perilaku di project Supabase.
+
+## 7. Status bukti
+
+`verified in database` hanya untuk Postgres lokal (PGlite, 48 uji lulus); belum dijalankan di Supabase (dev maupun production). Skema `spk` production dibaca (kolom saja); batasan dan pemicu production tidak dibaca (pembacaan kedua ditolak izin). Uji konkurensi sungguhan dan RLS peran Supabase tetap wajib di project dev atau branch sebelum rilis.

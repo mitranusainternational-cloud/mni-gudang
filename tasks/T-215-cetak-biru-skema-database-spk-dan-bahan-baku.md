@@ -27,13 +27,16 @@ Rancangan: [[BLUEPRINT_DB_ERP]]
 
 - [x] Cetak biru empat alur integrasi dengan pemetaan terhadap kenyataan sistem (nama tabel, stok turunan dari `mutasi`, status SPK) di [[BLUEPRINT_DB_ERP]]
 - [x] Draf `supabase/draft/20240101000019_spk_peruntukan_materials.sql`: enum peruntukan, `customer_id`, batasan NOT VALID, pemicu penjaga, tabel `spk_materials`, RLS, audit, daftar periksa, uji, rollback (hanya menambah)
-- [ ] Keputusan pemilik K-1 sampai K-4 di [[BLUEPRINT_DB_ERP]]
+- [x] K-1 diputuskan 2026-11-07: cadangan dulu
+- [x] Draf `supabase/draft/20240101000020_spk_cadangan_bahan.sql` (cadangan, pelepasan, sinkron pengeluaran, view ketersediaan) ditinjau empat sudut dan diuji di Postgres lokal: 48 PASS ([[BLUEPRINT_DB_ERP]] bagian 6)
+- [ ] Keputusan pemilik K-2 dan K-3 (tahap ketat customer_id dan PO) serta K-4 (penerapan)
 - [ ] Uji draf di project dev atau branch Supabase (bukan production), lalu regresi aplikasi
 - [ ] Langkah 2 sampai 4 (cadangan dan potong stok di database, pipeline vendor, view dashboard dan realtime)
 
 ## Bukti
 
-- `source-level`: berkas SQL ditulis terhadap kolom `spk` production yang dibaca 2026-11-07 dan pola draf 17 dan 18; belum dijalankan di database mana pun.
+- `verified in database` (Postgres lokal PGlite): `tests/sql/cadangan.sql.test.mjs` 48 PASS untuk draf 17, 19, 20. Belum di Supabase dev atau production.
+- Tinjauan adversarial empat sudut: 21 temuan, 19 nyata, semua diperbaiki dan dikunci dengan uji.
 
 ## Catatan
 

@@ -48,7 +48,19 @@ UPDATE public.spk s
 
 -- ---------- 2. Batasan SPK (berlaku untuk baris baru/diubah; baris lama tidak dipaksa) ----------
 DO $$
+DECLARE
+  n_no integer;
+  n_st integer;
+  n_cu integer;
 BEGIN
+  -- Gerbang: batasan NOT VALID tetap MENOLAK UPDATE biasa pada baris lama yang melanggar (progres, revisi, batal), jadi migration
+  -- berhenti dulu bila ada baris lama yang melanggar. Rapikan datanya, lalu jalankan ulang.
+  SELECT count(*) INTO n_no FROM public.spk WHERE no !~ '^[0-9]{1,9}$';
+  SELECT count(*) INTO n_st FROM public.spk WHERE status NOT IN ('Draft', 'Terbit', 'Selesai', 'Batal');
+  SELECT count(*) INTO n_cu FROM public.spk WHERE status IN ('Terbit') AND peruntukan = 'customer' AND btrim(coalesce(customer, '')) = '';
+  IF n_no + n_st + n_cu > 0 THEN
+    RAISE EXCEPTION 'Migration 19 dihentikan: % SPK bernomor bukan angka, % berstatus di luar daftar, % SPK customer terbit tanpa nama customer. Rapikan dulu.', n_no, n_st, n_cu;
+  END IF;
   -- nomor SPK hanya angka (aplikasi menyimpan teks angka); keunikan sudah dijamin UNIQUE(no) di skema awal
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spk_no_angka' AND conrelid = 'public.spk'::regclass) THEN
     ALTER TABLE public.spk ADD CONSTRAINT spk_no_angka CHECK (no ~ '^[0-9]{1,9}$') NOT VALID;
@@ -56,10 +68,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spk_status_valid' AND conrelid = 'public.spk'::regclass) THEN
     ALTER TABLE public.spk ADD CONSTRAINT spk_status_valid CHECK (status IN ('Draft', 'Terbit', 'Selesai', 'Batal')) NOT VALID;
   END IF;
-  -- SPK customer yang sudah diterbitkan wajib punya customer terdaftar dan nomor PO; Draft boleh belum lengkap
+  -- Tahap sekarang (kompatibel dengan aplikasi yang berjalan): SPK customer terbit wajib bernama customer. Penautan customer_id
+  -- dilakukan otomatis oleh pemicu (cocok nama dengan master customer) dan wajib PO baru dipasang setelah UI menegakkannya;
+  -- lihat bagian 'Tahap ketat' di akhir berkas.
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spk_customer_wajib' AND conrelid = 'public.spk'::regclass) THEN
     ALTER TABLE public.spk ADD CONSTRAINT spk_customer_wajib
-      CHECK (status = 'Draft' OR peruntukan <> 'customer' OR (customer_id IS NOT NULL AND btrim(coalesce(po, '')) <> '')) NOT VALID;
+      CHECK (status <> 'Terbit' OR peruntukan <> 'customer' OR btrim(coalesce(customer, '')) <> '') NOT VALID;
   END IF;
   -- SPK stok buffer tidak boleh terikat customer (barang masuk gudang barang jadi internal)
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spk_stok_tanpa_customer' AND conrelid = 'public.spk'::regclass) THEN
@@ -78,6 +92,13 @@ LANGUAGE plpgsql
 SET search_path = public
 AS $$
 BEGIN
+  -- tautkan customer_id otomatis bila namanya cocok persis dengan satu master customer aktif (aplikasi lama hanya menulis nama)
+  IF NEW.peruntukan = 'customer' AND NEW.customer_id IS NULL AND btrim(coalesce(NEW.customer, '')) <> '' THEN
+    SELECT (array_agg(m.id))[1] INTO NEW.customer_id
+      FROM public.mcustomer m
+     WHERE lower(btrim(m.nama)) = lower(btrim(NEW.customer)) AND m.aktif IS NOT FALSE
+    HAVING count(*) = 1;
+  END IF;
   IF NEW.data ? 'stokReq' THEN
     NEW.peruntukan := CASE WHEN lower(coalesce(NEW.data ->> 'stokReq', 'false')) IN ('true', 't', '1')
                            THEN 'stok_buffer'::public.spk_peruntukan ELSE 'customer'::public.spk_peruntukan END;
@@ -110,15 +131,17 @@ CREATE TABLE IF NOT EXISTS public.spk_materials (
   qty_dicadangkan  NUMERIC(14, 3) NOT NULL DEFAULT 0 CHECK (qty_dicadangkan >= 0),
   qty_keluar       NUMERIC(14, 3) NOT NULL DEFAULT 0 CHECK (qty_keluar >= 0),
   sumber           TEXT NOT NULL DEFAULT 'manual' CHECK (sumber IN ('manual', 'hitung')),
-  status           TEXT NOT NULL DEFAULT 'rencana' CHECK (status IN ('rencana', 'dicadangkan', 'dikeluarkan', 'batal')),
+  status           TEXT NOT NULL DEFAULT 'rencana' CHECK (status IN ('rencana', 'dicadangkan', 'dikeluarkan', 'lepas', 'batal')),
   ket              TEXT,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_by       TEXT,
   updated_by       TEXT,
-  -- cadangan dan pengeluaran tidak boleh melebihi kebutuhan; pengeluaran hanya sesudah dicadangkan atau sekaligus
-  CONSTRAINT spk_materials_batas CHECK (qty_dicadangkan <= qty_butuh AND qty_keluar <= qty_butuh),
-  CONSTRAINT spk_materials_status_qty CHECK (status <> 'rencana' OR (qty_dicadangkan = 0 AND qty_keluar = 0))
+  -- cadangan tidak boleh melebihi kebutuhan. qty_keluar BOLEH melebihi kebutuhan (bahan keluar lebih banyak dari rencana tetap harus
+  -- tercatat, bukan membuat pergerakan stok gagal); kelebihan terlihat dari qty_keluar > qty_butuh.
+  CONSTRAINT spk_materials_batas CHECK (qty_dicadangkan <= qty_butuh),
+  -- baris 'rencana' tidak mencadangkan apa pun; qty_keluar boleh terisi (bahan bisa keluar untuk SPK yang masih Draft)
+  CONSTRAINT spk_materials_status_qty CHECK (status <> 'rencana' OR qty_dicadangkan = 0)
 );
 
 -- Tidak boleh ada dua baris untuk bahan dan item yang sama dalam satu SPK (mencegah kebutuhan terhitung ganda)
@@ -152,6 +175,12 @@ DROP TRIGGER IF EXISTS trigger_spk_materials_updated_at ON public.spk_materials;
 CREATE TRIGGER trigger_spk_materials_updated_at BEFORE UPDATE ON public.spk_materials
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+-- ---------- Tahap ketat (dipasang SETELAH UI mengisi customer_id dan PO; keputusan pemilik K-2 dan K-3) ----------
+--   ALTER TABLE public.spk DROP CONSTRAINT IF EXISTS spk_customer_wajib;
+--   ALTER TABLE public.spk ADD CONSTRAINT spk_customer_wajib
+--     CHECK (status IN ('Draft', 'Batal', 'Selesai') OR peruntukan <> 'customer' OR (customer_id IS NOT NULL AND btrim(coalesce(po, '')) <> '')) NOT VALID;
+--   (Batal dan Selesai dikecualikan agar membatalkan atau menyelesaikan SPK lama tidak tertolak.)
+--
 -- ---------- Setelah dipasang: daftar periksa data lama (jalankan, perbaiki, baru VALIDATE) ----------
 --   SPK customer yang belum tertaut ke master customer (nama tidak cocok persis):
 --     SELECT no, customer, status FROM public.spk WHERE peruntukan = 'customer' AND customer_id IS NULL ORDER BY no;

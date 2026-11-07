@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Langkah 2 database: cadangan bahan saat SPK terbit (T-215, draf lokal)
+K-1 diputuskan (cadangan dulu). Draf migration 20 dan revisi draf 19 ditinjau empat peninjau independen (21 temuan, 19 nyata) lalu diperbaiki; diuji di Postgres lokal (PGlite) 48 PASS. Belum diterapkan ke Supabase mana pun; konkurensi sungguhan dan RLS peran asli belum teruji. Lihat [[BLUEPRINT_DB_ERP]].
+
 ### 2026-11-07 — Pemusatan opsi SPK di Master Data (lokal)
 Tab Master Data Opsi SPK (`master/setting.spkOpsi`) menggantikan daftar yang tertanam di kode: produk, type, tebal, finishing, distribusi, lead time, penandatangan bawaan. Bukti: `verified in browser` (mock) AF-14..AF-17. Masih tertanam di kode (belum dipusatkan): singkatan finishing dan pemetaan vendor finishing berdasarkan kata kunci, massa jenis bawaan material, role, jam kerja shift 480 menit.
 
