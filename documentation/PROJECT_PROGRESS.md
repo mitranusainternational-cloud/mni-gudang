@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — Langkah 3 database: posisi barang dan vendor finishing (T-215, draf lokal)
+Draf migration 21: view angka kembali/kirim vendor (0/231), posisi barang per item (enum posisi_barang), penjaga kembali + reject <= kirim, SPK Selesai hanya dari Terbit dan tanpa barang tersisa di vendor. Postgres lokal (PGlite) 67 PASS. Belum di Supabase; aplikasi sekarang menurunkan Selesai di JavaScript sehingga penjaga baru berpengaruh bila status itu mulai ditulis.
+
 ### 2026-11-07 — K-3 diputuskan: SPK tanpa PO sah dengan alasan (T-215, draf lokal)
 Draf 19 menambah kolom `tanpa_po_alasan` (sampel, komplain, garansi, lainnya) dan aturan tahap ketat customer_id dan (PO atau alasan); uji SQL lokal 52 PASS. UI editor SPK untuk memilih alasan belum dibuat. Belum diterapkan ke Supabase.
 

@@ -30,14 +30,15 @@ Rancangan: [[BLUEPRINT_DB_ERP]]
 - [x] K-1 diputuskan 2026-11-07: cadangan dulu
 - [x] Draf `supabase/draft/20240101000020_spk_cadangan_bahan.sql` (cadangan, pelepasan, sinkron pengeluaran, view ketersediaan) ditinjau empat sudut dan diuji di Postgres lokal: 48 PASS ([[BLUEPRINT_DB_ERP]] bagian 6)
 - [x] K-3 diputuskan 2026-11-07: ada SPK tanpa PO sah; kolom `tanpa_po_alasan` dan aturan tahap ketat diuji (K-01..K-04)
+- [x] Langkah 3 draf `supabase/draft/20240101000021_pipeline_posisi_vendor.sql` (view vendor dan posisi, penjaga item vendor, penjaga SPK Selesai) diuji di Postgres lokal; total 67 PASS
 - [ ] Kolom alasan tanpa PO di editor SPK (UI) sebelum tahap ketat dipasang
 - [ ] Keputusan pemilik K-2 (SPK lama dengan nama customer tidak cocok master) dan K-4 (penerapan)
 - [ ] Uji draf di project dev atau branch Supabase (bukan production), lalu regresi aplikasi
-- [ ] Langkah 2 sampai 4 (cadangan dan potong stok di database, pipeline vendor, view dashboard dan realtime)
+- [ ] Langkah 4 (view agregasi dashboard dan Realtime hanya pada spk, vendor, produksi_log)
 
 ## Bukti
 
-- `verified in database` (Postgres lokal PGlite): `tests/sql/cadangan.sql.test.mjs` 52 PASS untuk draf 17, 19, 20. Belum di Supabase dev atau production.
+- `verified in database` (Postgres lokal PGlite): `tests/sql/cadangan.sql.test.mjs` 67 PASS untuk draf 17, 19, 20, 21. Belum di Supabase dev atau production.
 - Tinjauan adversarial empat sudut: 21 temuan, 19 nyata, semua diperbaiki dan dikunci dengan uji.
 
 ## Catatan
