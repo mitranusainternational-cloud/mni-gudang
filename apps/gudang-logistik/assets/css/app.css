@@ -1281,3 +1281,14 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .edt .c-dim{min-width:340px}
 .edt .c-q{min-width:76px}.edt .c-u{min-width:72px}.edt .c-w{min-width:92px}
 .edt .c-d{min-width:220px}
+/* Editor SPK terstruktur: kolom lebih lega dan rapi */
+.edt{min-width:1180px}
+.edt .c-d{width:24%;min-width:230px}.edt .c-spec{width:230px;min-width:230px;white-space:normal}
+.edt .c-dim{width:300px;min-width:300px}
+.edt .c-ket,.edt .c-cat{width:11%;min-width:120px}
+.edt .c-q{width:92px;min-width:92px}.edt .c-u{width:92px;min-width:92px}.edt .c-w{width:104px;min-width:104px}.edt .c-bi{width:104px;min-width:104px}
+.edt .c-spec .ed-vv{margin-top:6px}.edt .c-spec .ed-vv .sel{width:100%;font-size:12px;padding:5px 6px}
+.ed-dims .dm .inp{width:72px}.ed-dims .dm-lub .sel{min-width:120px;font-size:13px;padding:6px 8px}
+.edt td{vertical-align:top;padding:8px 6px}
+.edt .c-dim{width:440px;min-width:440px}.ed-dims{flex-wrap:nowrap}.ed-dims .dm-lub .sel{min-width:104px}
+.edt .c-bi{padding-top:16px}.edt .c-no{padding-top:16px}

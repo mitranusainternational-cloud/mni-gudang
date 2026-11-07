@@ -4384,10 +4384,10 @@ function closeEditor(){clearInterval(EDT);ED=null;$('#editor').hidden=true;$('#e
 const opt=(arr,sel,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
 const FIN_PENDEK={'ELECTRO GALVANIZED':'ELG','HOTDIP GALVANIZED':'HDG','STAINLESS STEEL 304':'SS304','STAINLESS STEEL 316L':'SS316L','POWDER COATING WHITE':'PDC putih','POWDER COATING ORANGE RAL 2000':'PDC oranye','POWDER COATING BLUE RAL 5017':'PDC biru','ALUMINIUM 1100':'Alu 1100','NON FINISHING':'Non finishing'};
 /* Vendor per baris: bawaan mengikuti material (SPHC ke vendor sesuai finishing; stainless dan aluminium tanpa vendor); pengecualian dipilih di sini. */
-function edVendorHtml(s,si,li,l){const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');const mat=P.materialDari(s.h);
+function edVendorHtml(s,si,li,l){const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');
  const bawaan=fin?'ke vendor '+fin:(P.perluFinishing(s.h)?'finishing belum jelas':'tanpa vendor');
  const peringatan=P.perluFinishing(s.h)&&l.vv!=='tidak'?'<div class="ed-galat" id="ed-vw-'+si+'-'+li+'">Baja tanpa finishing di judul section: vendor tidak terbentuk. Pilih finishing atau tandai tanpa vendor.</div>':'';
- return '<div class="ed-vv"><select class="sel" data-f="vv" id="ed-vv-'+si+'-'+li+'" aria-label="Vendor"><option value="">Vendor: ikut aturan ('+esc(mat+', '+bawaan)+')</option><option value="ya" '+(l.vv==='ya'?'selected':'')+'>Wajib ke vendor</option><option value="tidak" '+(l.vv==='tidak'?'selected':'')+'>Tanpa vendor</option></select></div>'+peringatan}
+ return '<div class="ed-vv"><select class="sel" data-f="vv" id="ed-vv-'+si+'-'+li+'" aria-label="Vendor"><option value="">Ikut aturan: '+esc(bawaan)+'</option><option value="ya" '+(l.vv==='ya'?'selected':'')+'>Wajib ke vendor</option><option value="tidak" '+(l.vv==='tidak'?'selected':'')+'>Tanpa vendor</option></select></div>'+peringatan}
 function edKolomItem(s,si,li,l,cap,hb){
  const sh=cap&&l.sb?cap.shapes.find(x=>x.id===l.sb):null;
  const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+'</select>';

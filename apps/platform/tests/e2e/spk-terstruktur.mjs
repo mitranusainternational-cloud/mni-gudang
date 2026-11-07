@@ -157,7 +157,7 @@ export async function runSpkTerstruktur(page, base) {
   const vvOpsi = await opsi('ed-vv-0-0');
   await page.selectOption('#ed-vv-0-0', 'tidak'); await wait(400);
   const vvState = await page.evaluate(() => ED.sections[0].lines[0].vv);
-  ok('S-20 baris menampilkan pilihan vendor (bawaan ikut aturan material) dan pilihan tanpa vendor tersimpan di baris', /ikut aturan/.test(vvOpsi[0]) && /baja, ke vendor ELG/.test(vvOpsi[0]) && vvOpsi.length === 3 && vvState === 'tidak' && (await page.inputValue('#ed-vv-0-0')) === 'tidak', JSON.stringify({ vvOpsi, vvState }));
+  ok('S-20 baris menampilkan pilihan vendor (bawaan ikut aturan material) dan pilihan tanpa vendor tersimpan di baris', /Ikut aturan/.test(vvOpsi[0]) && /ke vendor ELG/.test(vvOpsi[0]) && vvOpsi.length === 3 && vvState === 'tidak' && (await page.inputValue('#ed-vv-0-0')) === 'tidak', JSON.stringify({ vvOpsi, vvState }));
 
   // ---------- S-21 Master Data: rute per produk dan rute khusus bentuk memengaruhi rute item ----------
   await page.reload(); await wait(3000); await pasangKatalog(kat);
