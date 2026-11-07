@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 — SPK customer memakai stok barang jadi sebagian (T-216, lokal)
+Item SPK customer bisa mengambil sebagian dari stok Gudang Barang Jadi: cadangan sejak terbit, produksi hanya sisanya, keluar stok otomatis lewat surat jalan, pembalikan saat batal, neraca stok terjaga. Bukti: `verified in browser` (mock) suite `ambilstok` AM-01..AM-08 (13 PASS); regresi penuh 0 FAIL di semua 19 suite (auditflow diulang sekali setelah timeout page.goto), unit 34 PASS, lint 0 error. Belum diuji di Supabase; cadangan hanya diperiksa di klien (tanpa kunci database) dan belum ada draf migration. Berikutnya: T-218 (surat jalan gabungan beberapa SPK).
+
 ### 2026-11-08 — Bongkar Muat: ceklis, foto bukti, dan surat jalan terintegrasi (T-217, lokal)
 Ceklis digital tersimpan dan tampil sebagai ✓ di surat jalan vendor/customer; foto bukti (kamera atau unggah, dikompres, dipilih per foto) menjadi lampiran di cetak (pratinjau, PDF, Excel); antrian dirapikan (kartu ringkas, pencarian, Selesai dibatasi). Bukti: `verified in browser` (mock) suite `bongkarmuat` BM-01..BM-14 (15 PASS); regresi penuh 0 FAIL di semua 18 suite (role diulang sekali setelah galat jaringan lokal ERR_NO_BUFFER_SPACE), unit 34 PASS, lint 0 error. Belum diuji di Supabase; foto masih inline di dokumen, bucket privat baru draf migration 23. Berikutnya: T-216 (SPK customer memakai stok sebagian) dan T-218 (surat jalan gabungan beberapa SPK, ceklis per SPK).
 

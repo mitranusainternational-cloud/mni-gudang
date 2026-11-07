@@ -1315,3 +1315,5 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .bm-prev-foto img{width:100%;max-height:220px;object-fit:contain;display:block}
 .bm-prev-foto figcaption{font-size:9px;color:#555;padding-top:2px}
 @media (max-width:760px){.bm-kanban .col-body{max-height:none}.bm-prev-foto{grid-template-columns:minmax(0,1fr)}}
+
+.edt .c-stk{width:190px;min-width:170px}.edt .c-stk .sel{width:100%;font-size:11px}.edt .c-stk .inp{width:100%;margin-top:3px}.ed-stk-h{font-size:10.5px;color:var(--muted);margin-top:2px}

@@ -131,6 +131,7 @@ generated: 2026-11-07
 - [[tasks/T-213-uji-alur-spk-lengkap-dan-penjaga-vendor-berbasis-rute|T-213]] Uji alur SPK lengkap (customer, stok, tanpa vendor) dan penjaga vendor berbasis rute · dev + pemilik
 - [[tasks/T-214-input-item-spk-terstruktur-dan-kalkulator-full-hole|T-214]] Input item SPK terstruktur (bentuk, ukuran, berat otomatis) dan kalkulator full hole · dev + pemilik
 - [[tasks/T-215-cetak-biru-skema-database-spk-dan-bahan-baku|T-215]] Cetak biru skema database: peruntukan SPK dan kebutuhan bahan baku (draf migration 19) · dev + pemilik
+- [[tasks/T-216-spk-customer-memakai-stok-sebagian|T-216]] SPK customer memakai stok gudang barang jadi sebagian · dev + pemilik
 - [[tasks/T-217-bongkar-muat-tata-letak-foto-dan-ceklis-terintegrasi|T-217]] Bongkar Muat: tata letak rapi, foto bukti, dan ceklis terintegrasi surat jalan · dev + pemilik
 
 ## Tugas P0 yang belum selesai
