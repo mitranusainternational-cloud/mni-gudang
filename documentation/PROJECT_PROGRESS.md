@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 — Surat jalan gabungan beberapa SPK (T-218, lokal)
+Beberapa SPK dalam satu armada memakai satu nomor surat jalan (dokumen tetap satu per SPK, tanpa perubahan skema); cetak, ceklis Bongkar Muat, dan foto mengikuti kelompok. Bukti: `verified in browser` (mock) suite `gabungan` GB-01..GB-08 (9 PASS); regresi penuh 0 FAIL di semua 20 suite, unit 34 PASS, lint 0 error. Belum: subtotal per SPK, pengiriman SPK stok murni ke customer, uji di Supabase.
+
 ### 2026-11-08 — SPK customer memakai stok barang jadi sebagian (T-216, lokal)
 Item SPK customer bisa mengambil sebagian dari stok Gudang Barang Jadi: cadangan sejak terbit, produksi hanya sisanya, keluar stok otomatis lewat surat jalan, pembalikan saat batal, neraca stok terjaga. Bukti: `verified in browser` (mock) suite `ambilstok` AM-01..AM-08 (13 PASS); regresi penuh 0 FAIL di semua 19 suite (auditflow diulang sekali setelah timeout page.goto), unit 34 PASS, lint 0 error. Belum diuji di Supabase; cadangan hanya diperiksa di klien (tanpa kunci database) dan belum ada draf migration. Berikutnya: T-218 (surat jalan gabungan beberapa SPK).
 

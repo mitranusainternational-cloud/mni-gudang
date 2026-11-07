@@ -1317,3 +1317,8 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 @media (max-width:760px){.bm-kanban .col-body{max-height:none}.bm-prev-foto{grid-template-columns:minmax(0,1fr)}}
 
 .edt .c-stk{width:190px;min-width:170px}.edt .c-stk .sel{width:100%;font-size:11px}.edt .c-stk .inp{width:100%;margin-top:3px}.ed-stk-h{font-size:10.5px;color:var(--muted);margin-top:2px}
+
+/* ---- Surat jalan gabungan beberapa SPK (T-218) ---- */
+.gx{border:1px dashed var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
+.gx-h{display:flex;gap:6px;align-items:center}.gx-h .sel{flex:1}
+.bm-checklist-tbl tr.bm-spk-h td{background:var(--hover);font-weight:700;font-size:11px;border-top:2px solid var(--line)}

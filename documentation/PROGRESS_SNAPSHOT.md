@@ -133,6 +133,7 @@ generated: 2026-11-07
 - [[tasks/T-215-cetak-biru-skema-database-spk-dan-bahan-baku|T-215]] Cetak biru skema database: peruntukan SPK dan kebutuhan bahan baku (draf migration 19) · dev + pemilik
 - [[tasks/T-216-spk-customer-memakai-stok-sebagian|T-216]] SPK customer memakai stok gudang barang jadi sebagian · dev + pemilik
 - [[tasks/T-217-bongkar-muat-tata-letak-foto-dan-ceklis-terintegrasi|T-217]] Bongkar Muat: tata letak rapi, foto bukti, dan ceklis terintegrasi surat jalan · dev + pemilik
+- [[tasks/T-218-surat-jalan-gabungan-beberapa-spk|T-218]] Surat jalan vendor dan customer gabungan beberapa SPK dalam satu armada · dev + pemilik
 
 ## Tugas P0 yang belum selesai
 

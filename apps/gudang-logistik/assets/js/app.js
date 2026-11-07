@@ -1566,6 +1566,7 @@ function sjvPreview(v,s){
     <tr class="sj-prev-foot"><td colspan="2" style="text-align:right;font-weight:600">TOTAL</td><td style="text-align:right;font-weight:600">${n(totalQty)}</td><td colspan="${bmPrev('vendor',v).cs}"></td></tr>
    </tbody>
   </table>
+  ${gxNote('vendor',v)}
   ${bmPrev('vendor',v).foto}
   ${v.ket?`<div class="sj-prev-note">Catatan: ${esc(v.ket)}</div>`:''}
   ${v.batal?`<div class="sj-prev-note" style="color:var(--crit)">DIBATALKAN: ${esc(v.batal.alasan)}</div>`:''}
@@ -1605,6 +1606,7 @@ function sjPreview(k,s){
    </tbody>
   </table>
   ${sjPartialHtml(k)}
+  ${gxNote('kirim',k)}
   ${bmPrev('kirim',k).foto}
   ${k.ket?`<div class="sj-prev-note">Catatan: ${esc(k.ket)}</div>`:''}
   ${k.batal?`<div class="sj-prev-note" style="color:var(--red)">DIBATALKAN: ${esc(k.batal.alasan)}</div>`:''}
@@ -1761,34 +1763,42 @@ function mvForm(g,j,item,prId){
    toast(`${noDok} tersimpan · ${lines.length} item`);
   },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(!sk)return;if(sk.stokReq&&j==='masuk'){fgIsiDariSpk(f,sk)}else if(!String(f.pihak.value||'').trim())f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
 }
-function linesTable(spkId,mode){
+function linesTable(spkId,mode,pfx=''){
  if(!spkId)return '<div class="note">Pilih SPK untuk menampilkan item.</div>';
  const x=calc().spk[spkId];if(!x)return '';
- return `<div class="tbl-wrap"><table class="lines"><thead><tr><th>Item</th><th class="num">Order</th><th class="num">${mode==='vendor'?'Sudah ke vendor':'Sudah terkirim'}</th><th class="num">Sisa</th><th class="num">Qty ${mode==='vendor'?'kirim ke vendor':'kirim sekarang'}</th></tr></thead><tbody>${x.lines.map((l,i)=>{const done=mode==='vendor'?l.vOut:l.kirim;const sisa=sisaLine(l,mode);return `<tr><td>${esc(l.d)}</td><td class="num" data-l="Order">${n(l.q)} ${esc(l.u)}${l.am?`<div class="note">${n(l.am)} dari stok · ${n(l.q-l.am)} produksi</div>`:''}</td><td class="num" data-l="${mode==='vendor'?'Sudah ke vendor':'Terkirim'}">${n(done)}</td><td class="num" data-l="Sisa"><b>${n(sisa)}</b>${mode==='vendor'&&l.vSiap!=null&&l.vSiap-l.vOut<l.q-l.vOut?`<div class="note">siap ${n(Math.max(0,l.vSiap-l.vOut))} (hasil produksi)</div>`:''}</td><td class="num" data-l="${mode==='vendor'?'Qty kirim ke vendor':'Qty kirim sekarang'}"><input class="inp" type="number" min="0" step="any" name="ln_${i}" id="m-ln_${i}" value="${sisa||''}" data-max="${sisa}"></td></tr>`}).join('')}</tbody></table></div><div class="note">Kosongkan item yang tidak ikut. Qty tidak boleh melebihi sisa, kecuali dicentang di bawah.</div>`;
+ return `<div class="tbl-wrap"><table class="lines"><thead><tr><th>Item</th><th class="num">Order</th><th class="num">${mode==='vendor'?'Sudah ke vendor':'Sudah terkirim'}</th><th class="num">Sisa</th><th class="num">Qty ${mode==='vendor'?'kirim ke vendor':'kirim sekarang'}</th></tr></thead><tbody>${x.lines.map((l,i)=>{const done=mode==='vendor'?l.vOut:l.kirim;const sisa=sisaLine(l,mode);return `<tr><td>${esc(l.d)}</td><td class="num" data-l="Order">${n(l.q)} ${esc(l.u)}${l.am?`<div class="note">${n(l.am)} dari stok · ${n(l.q-l.am)} produksi</div>`:''}</td><td class="num" data-l="${mode==='vendor'?'Sudah ke vendor':'Terkirim'}">${n(done)}</td><td class="num" data-l="Sisa"><b>${n(sisa)}</b>${mode==='vendor'&&l.vSiap!=null&&l.vSiap-l.vOut<l.q-l.vOut?`<div class="note">siap ${n(Math.max(0,l.vSiap-l.vOut))} (hasil produksi)</div>`:''}</td><td class="num" data-l="${mode==='vendor'?'Qty kirim ke vendor':'Qty kirim sekarang'}"><input class="inp" type="number" min="0" step="any" name="${pfx}ln_${i}" id="m-${pfx}ln_${i}" value="${sisa||''}" data-max="${sisa}"></td></tr>`}).join('')}</tbody></table></div><div class="note">Kosongkan item yang tidak ikut. Qty tidak boleh melebihi sisa, kecuali dicentang di bawah.</div>`;
 }
 /* Sisa yang boleh dikirim. Ke vendor juga dibatasi hasil langkah produksi terakhir (item yang sudah punya catatan produksi per mesin). */
 const sisaLine=(l,mode)=>{const s=Math.max(0,(mode==='vendor'?l.q-(l.am||0):l.q)-(mode==='vendor'?l.vOut:l.kirim));if(mode==='vendor')return l.vSiap!=null?Math.min(s,Math.max(0,l.vSiap-l.vOut)):s;
  /* kirim ke customer: hanya hasil produksi yang selesai (dan sudah kembali dari vendor finishing) */
  const siap=l.siapKirim!=null?l.siapKirim:Math.max(0,Math.min(l.q,(+l.prodEff||0)-(+l.vOut||0)+(+l.vBack||0)));return Math.min(s,Math.max(0,siap-l.kirim))};
-const pickLines=(spkId,d)=>calc().spk[spkId].lines.map((l,i)=>({d:l.d,u:l.u,q:num0(d['ln_'+i])})).filter(l=>l.q>0);
-function checkCap(spkId,d,mode){if(d.over)return;const x=calc().spk[spkId];x.lines.forEach((l,i)=>{const q=num0(d['ln_'+i]);const sisa=sisaLine(l,mode);if(q>sisa)throw new Error(`"${l.d}": ${n(q)} melebihi ${(mode==='vendor'&&l.vSiap!=null&&sisa<Math.max(0,l.q-l.vOut))||(mode!=='vendor'&&sisa<Math.max(0,l.q-l.kirim))?'hasil produksi yang siap dikirim':'sisa'} ${n(sisa)}. Centang ${mode==='vendor'?'kirim ulang / rework':'kirim lebih / sebelum produksi tercatat selesai'} bila memang disengaja.`)})}
+const pickLines=(spkId,d,pfx='')=>calc().spk[spkId].lines.map((l,i)=>({d:l.d,u:l.u,q:num0(d[pfx+'ln_'+i])})).filter(l=>l.q>0);
+/* Blok SPK tambahan dalam satu surat jalan (satu armada). Mengembalikan [{spk,pfx,items}] setelah memeriksa duplikat dan sisa. */
+function gxBlok(d,mode){const out=[],seen=new Set([d.spk]);
+ Object.keys(d).filter(k=>/^gspk_\d+$/.test(k)).forEach(k=>{const id=d[k];if(!id)return;if(seen.has(id))throw new Error(`${spkName(id)} dipilih dua kali dalam satu surat jalan.`);seen.add(id);
+  const pfx='g'+k.slice(5)+'_';checkCap(id,d,mode,pfx);const items=pickLines(id,d,pfx);if(!items.length)throw new Error(`Isi qty minimal satu item untuk ${spkName(id)}.`);out.push({spk:id,pfx,items})});return out}
+const gxUi=mode=>`<div class="full" id="m-extra"></div><div class="full"><button type="button" class="btn sm ghost" data-act="addgx" data-mode="${mode}">${ic('plus')} Tambah SPK lain di armada yang sama</button> <span class="note">Satu surat jalan, satu nomor, beberapa SPK.</span></div>`;
+function gxOpsi(mode,excl,cust){const c=calc();return '<option value="">Pilih SPK…</option>'+S.spk.filter(s=>(mode==='vendor'||!s.stokReq)&&!excl.includes(s._id)&&(!cust||s.customer===cust)&&c.spk[s._id].st!=='Selesai'&&c.spk[s._id].st!=='Batal').sort((a,b)=>b.no-a.no).map(s=>`<option value="${s._id}">SPK ${s.no} · ${esc(s.customer)}</option>`).join('')}
+document.addEventListener('change',e=>{const el=e.target;if(el&&el.dataset&&el.dataset.gxSel!==undefined){const bx=el.closest('.gx');if(bx)bx.querySelector('.gx-l').innerHTML=linesTable(el.value,el.dataset.mode,'g'+el.dataset.gxSel+'_')}});
+function checkCap(spkId,d,mode,pfx=''){if(d.over)return;const x=calc().spk[spkId];x.lines.forEach((l,i)=>{const q=num0(d[pfx+'ln_'+i]);const sisa=sisaLine(l,mode);if(q>sisa)throw new Error(`"${l.d}": ${n(q)} melebihi ${(mode==='vendor'&&l.vSiap!=null&&sisa<Math.max(0,l.q-l.vOut))||(mode!=='vendor'&&sisa<Math.max(0,l.q-l.kirim))?'hasil produksi yang siap dikirim':'sisa'} ${n(sisa)}. Centang ${mode==='vendor'?'kirim ulang / rework':'kirim lebih / sebelum produksi tercatat selesai'} bila memang disengaja.`)})}
 function vendorForm(spk){
  openModal('Kirim barang setengah jadi ke vendor',
   fld('Vendor finishing',inp('vendor','','text','list="dl-ven" required autocomplete="off" placeholder="Pilih dari master vendor"'))+fld('Proses',inp('proses','','text','list="dl-pro" placeholder="HDG / ELG / Powder Coating"'))+
   fld('Tanggal kirim',inp('tgl',today(),'date'))+fld('Target kembali',inp('target','','date'))+
   fld('No surat jalan',inp('noSJ','','text','placeholder="Kosongkan = otomatis SJ-V/'+today().slice(0,4)+'/'+today().slice(5,7)+'/…"'))+
-  fld('SPK',spkSelect(spk||'',true,true),true)+`<div class="full" id="m-lines">${linesTable(spk,'vendor')}</div>`+
+  fld('SPK',spkSelect(spk||'',true,true),true)+`<div class="full" id="m-lines">${linesTable(spk,'vendor')}</div>`+gxUi('vendor')+
   `<label class="ck full"><input type="checkbox" name="over" id="m-over"> Kirim ulang / rework (boleh melebihi sisa) — wajib isi keterangan</label>`+fld('Keterangan',inp('ket'),true)+
   dockCk('Masukkan ke antrian Loading di Bongkar Muat')+armadaFields()+
   dl('dl-ven',mNames('vendor'))+dl('dl-pro',['HDG','ELG','Powder Coating','PDC White','PDC Orange','PDC Blue','Non Finishing']),
   async (d,form)=>{if(!d.spk)throw new Error('Pilih SPK.');checkCap(d.spk,d,'vendor');if(d.over&&!String(d.ket).trim())throw new Error('Isi keterangan untuk kirim ulang / rework.');
-   const items=pickLines(d.spk,d).map(l=>({...l,kembali:0,reject:0}));if(!items.length)throw new Error('Isi qty minimal satu item.');
+   const items=pickLines(d.spk,d).map(l=>({...l,kembali:0,reject:0}));if(!items.length)throw new Error('Isi qty minimal satu item.');const blok=gxBlok(d,'vendor');
    const vendor=await ensureMaster('vendor',d.vendor,form,'vendor',{proses:d.proses||''});
    const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=await nextDocNo('SJV',t);
    const s=byId('spk',d.spk);
    const nopolV=getNopol(d);
-   await addDoc('vendor',{vendor,proses:d.proses||'',tgl:t,target:d.target||'',noSJ,nopol:nopolV,kendaraan:d.kendaraan||'',driver:d.driver||'',spk:d.spk,items,status:'Di Vendor',ket:d.ket||'',rework:!!d.over,riwayat:[]});
-   if(d.dock){await queueDock({jenis:'Loading',muatan:'Barang Setengah Jadi',pihak:vendor,ref:`${noSJ} · SPK ${s.no}`,nopol:nopolV,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'vendor',noSJ}})}
+   const semua=[{spk:d.spk,items},...blok.map(b=>({spk:b.spk,items:b.items.map(l=>({...l,kembali:0,reject:0}))}))];
+   for(const x of semua)await addDoc('vendor',{vendor,proses:d.proses||'',tgl:t,target:d.target||'',noSJ,nopol:nopolV,kendaraan:d.kendaraan||'',driver:d.driver||'',spk:x.spk,items:x.items,status:'Di Vendor',ket:d.ket||'',rework:!!d.over,riwayat:[]});
+   if(d.dock){await queueDock({jenis:'Loading',muatan:'Barang Setengah Jadi',pihak:vendor,ref:`${noSJ} · ${semua.map(x=>spkName(x.spk)).join(', ')}`,nopol:nopolV,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'vendor',noSJ}})}
    rememberArmada(nopolV,d.kendaraan,d.driver);toast(`${noSJ} tersimpan`)},
   {submit:'Kirim ke vendor',done:' ',mount:f=>{f.spk.addEventListener('change',()=>{$('#m-lines').innerHTML=linesTable(f.spk.value,'vendor')});f.vendor.addEventListener('change',()=>{const v=mList('vendor').find(x=>x.nama===f.vendor.value);if(v&&v.proses&&!f.proses.value)f.proses.value=String(v.proses).split(',')[0].trim()});bindArmada(f)}});
 }
@@ -1812,23 +1822,23 @@ function terimaForm(id){
 function setVendorForm(id){const v=byId('vendor',id);openModal(`Isi nama vendor · ${esc(v.noSJ||'')}`,fld('Vendor finishing',inp('vendor','','text','list="dl-ven" required autocomplete="off"'),true)+fld('Proses',inp('proses',v.proses||'','text','list="dl-pro"'))+dl('dl-ven',mNames('vendor'))+dl('dl-pro',['HDG','ELG','Powder Coating','Non Finishing']),
  async (d,form)=>{const vendor=await ensureMaster('vendor',d.vendor,form,'vendor',{proses:d.proses||''});await updDoc('vendor',id,{vendor,proses:d.proses||v.proses||''})})}
 function kirimForm(spk){
- openModal('Buat surat jalan ke customer',fld('SPK',spkSelect(spk||'',true,true,true),true)+`<div class="full" id="m-lines">${linesTable(spk,'kirim')}</div>`+
+ openModal('Buat surat jalan ke customer',fld('SPK',spkSelect(spk||'',true,true,true),true)+`<div class="full" id="m-lines">${linesTable(spk,'kirim')}</div>`+gxUi('kirim')+
   `<label class="ck full"><input type="checkbox" name="over" id="m-over"> Kirim lebih dari yang siap (ganti reject / bonus, atau produksi belum tercatat selesai) — wajib isi keterangan</label>`+
   fld('Tanggal',inp('tgl',today(),'date'))+fld('No surat jalan',inp('noSJ','','text','placeholder="Kosongkan = otomatis '+sjMniNext(today())+'"'))+
   fld('Alamat pengiriman',`<textarea class="inp" name="alamat" id="m-alamat" rows="2" placeholder="Alamat tujuan / lokasi proyek (otomatis dari data customer bila sudah ada)"></textarea>`,true)+`<label class="ck full"><input type="checkbox" name="simpanAlamat" id="m-simpan-alamat"> Simpan juga sebagai alamat customer di Master Data</label>`+
   armadaFields()+fld('Status',`<select class="sel" name="status" id="m-status"><option>Disiapkan</option><option>Dalam Perjalanan</option><option>Diterima</option></select>`)+fld('Keterangan',inp('ket'),true)+
   dockCk('Masukkan ke antrian Loading di Bongkar Muat'),
   async (d,form)=>{if(!d.spk)throw new Error('Pilih SPK.');checkCap(d.spk,d,'kirim');if(d.over&&!String(d.ket).trim())throw new Error('Isi keterangan untuk kirim lebih.');
-   const items=pickLines(d.spk,d);if(!items.length)throw new Error('Isi qty minimal satu item.');
+   const items=pickLines(d.spk,d);if(!items.length)throw new Error('Isi qty minimal satu item.');const blok=gxBlok(d,'kirim');{const c0=(byId('spk',d.spk)||{}).customer;blok.forEach(b=>{const cx=(byId('spk',b.spk)||{}).customer;if(cx!==c0)throw new Error(`${spkName(b.spk)} milik customer lain (${cx}); surat jalan customer gabungan harus satu customer.`)})}
    const nopolK=getNopol(d);
    if(!nopolK&&d.status!=='Disiapkan')throw new Error('Pilih armada atau isi no polisi kendaraan.');
    const s=byId('spk',d.spk);const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=sjMniNext(t);
-   const dariStok=ambilUntukKirim(s,items);
+   const semua=[{spk:d.spk,s,items},...blok.map(b=>({spk:b.spk,s:byId('spk',b.spk),items:b.items}))];const stokX=semua.map(x=>({...x,dariStok:ambilUntukKirim(x.s,x.items)}));const dariStok=stokX.flatMap(x=>x.dariStok);
    for(const x of dariStok){const sisa=calc().stock.fg[x.fg]||0;if(sisa<x.q)throw new Error(`Stok fisik "${fgLabel(byId('fg',x.fg))}" hanya ${n(sisa)}, kurang dari ${n(x.q)} yang dicadangkan untuk SPK ini. Periksa Gudang Barang Jadi.`)}
-   await addDoc('kirim',{spk:d.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items,ket:d.ket||'',alamat:String(d.alamat||'').trim(),lebih:!!d.over});
-   for(const x of dariStok)await addDoc('mutasi',{gudang:'fg',item:x.fg,jenis:'keluar',delta:-x.q,tgl:t,noDok:noSJ,ref:'SJ '+noSJ+' · SPK '+s.no,spk:d.spk,pihak:s.customer,ket:'Diambil dari stok untuk SPK customer'});
+   for(const x of stokX)await addDoc('kirim',{spk:x.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items:x.items,ket:d.ket||'',alamat:String(d.alamat||'').trim(),lebih:!!d.over});
+   for(const y of stokX)for(const x of y.dariStok)await addDoc('mutasi',{gudang:'fg',item:x.fg,jenis:'keluar',delta:-x.q,tgl:t,noDok:noSJ,ref:'SJ '+noSJ+' · SPK '+y.s.no,spk:y.spk,pihak:s.customer,ket:'Diambil dari stok untuk SPK customer'});
    await simpanAlamatCustomer(s.customer,d.alamat,!!d.simpanAlamat);
-   if(d.dock)await queueDock({jenis:'Loading',muatan:'Barang Jadi',pihak:s.customer,ref:`${noSJ} · SPK ${s.no}`,nopol:nopolK,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'kirim',noSJ}});
+   if(d.dock)await queueDock({jenis:'Loading',muatan:'Barang Jadi',pihak:s.customer,ref:`${noSJ} · ${semua.map(x=>spkName(x.spk)).join(', ')}`,nopol:nopolK,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'kirim',noSJ}});
    rememberArmada(nopolK,d.kendaraan,d.driver);toast(`${noSJ} tersimpan`)},
   {submit:'Buat surat jalan',done:' ',mount:f=>{const fillAl=()=>{const s=byId('spk',f.spk.value),cu=s?mList('customer').find(x=>x.nama===s.customer):null;if(!f.alamat.dataset.dirty){f.alamat.value=(cu&&cu.alamat)||'';}const sa=f.querySelector('#m-simpan-alamat');if(sa)sa.checked=!(cu&&cu.alamat)}; f.alamat.addEventListener('input',()=>{f.alamat.dataset.dirty='1'});f.spk.addEventListener('change',()=>{$('#m-lines').innerHTML=linesTable(f.spk.value,'kirim');fillAl()});fillAl();bindArmada(f)}});
 }
@@ -1839,26 +1849,40 @@ function sjAlamatForm(id){const k=byId('kirim',id);if(!k)return;const cu=mList('
 
 /* ---------- Bongkar Muat: ceklis digital dan foto bukti, terhubung ke surat jalan vendor/customer ---------- */
 /* Sumber item (dokumen yang dibongkar/dimuat) untuk satu catatan bongkar muat. */
+/* ---------- Surat jalan gabungan beberapa SPK dalam satu armada (T-218) ----------
+   Satu pengiriman = beberapa dokumen vendor/kirim (satu per SPK, agar progres, sisa, dan stok tiap SPK tetap benar) yang memakai
+   NO SURAT JALAN YANG SAMA. Kelompok = dokumen aktif dengan no surat jalan itu. Cetak, ceklis Bongkar Muat, dan lampiran foto
+   bekerja pada kelompok. Urutan kelompok = urutan pembuatan dokumen (menentukan nomor butir ceklis). */
+const spkRingkas=id=>{const s=byId('spk',id);return s?`SPK ${s.no} · ${s.customer}${s.po?' · PO '+s.po:''}`:'SPK ?'};
+function sjGrup(c,doc){
+ if(!doc)return [];if(!doc.noSJ)return [doc];
+ const g=(c==='vendor'?S.vendor:S.kirim).filter(x=>x.status!=='Batal'&&x.noSJ===doc.noSJ).sort((a,b)=>String(a.at||'').localeCompare(String(b.at||''))||String(a._id).localeCompare(String(b._id)));
+ return g.some(x=>x._id===doc._id)?g:[doc];
+}
+function gxNote(c,doc){const g=sjGrup(c,doc);return g.length>1?`<div class="sj-prev-note">Surat jalan gabungan ${g.length} SPK dalam satu armada (${g.map(x=>esc(spkName(x.spk))).join(', ')}). Cetak Excel/PDF memuat semuanya; tabel di atas hanya bagian SPK ini.</div>`:''}
+/* Sumber item (dokumen yang dibongkar/dimuat) untuk satu catatan bongkar muat. Muatan keluar (Loading) memakai seluruh kelompok;
+   item diberi penanda _spk bila kelompok berisi lebih dari satu SPK. */
 function bmSrc(b){
- let items=[],label='',ref='';const l=b&&b.link;
+ let items=[],label='',ref='',grup=false;const l=b&&b.link;
+ const dari=docs=>{grup=docs.length>1;docs.forEach(d=>(d.items||[]).forEach(i=>items.push(grup?{...i,_spk:spkRingkas(d.spk)}:i)))};
  if(l){
   if(l.c==='mutasi'){const m=S.mutasi.find(x=>x.noDok===l.noDok);items=m?(m.items||[]):[];label='Penerimaan Bahan Baku';ref=l.noDok||''}
-  else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);items=v?(v.items||[]):[];label='SJ Vendor';ref=l.noSJ||''}
-  else if(l.c==='kirim'){const k=S.kirim.find(x=>x.noSJ===l.noSJ);items=k?(k.items||[]):[];label='SJ Customer';ref=l.noSJ||''}
+  else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);label='SJ Vendor';ref=l.noSJ||'';dari(v?(b.jenis==='Loading'?sjGrup('vendor',v):[v]):[])}
+  else if(l.c==='kirim'){const k=S.kirim.find(x=>x.noSJ===l.noSJ);label='SJ Customer';ref=l.noSJ||'';dari(k?sjGrup('kirim',k):[])}
  }
- return {items,label,ref};
+ return {items,label,ref,grup};
 }
 const bmCekMap=b=>(b&&b.ceklis)||{};
 function bmCekStat(b){const m=bmCekMap(b),it=bmSrc(b).items;return {n:it.length,done:it.filter((_,i)=>m[i]&&m[i].ok).length}}
 /* Catatan bongkar muat yang terhubung ke satu surat jalan vendor ('vendor') atau customer ('kirim'). */
-function bmFor(c,doc){if(!doc)return null;return S.bongkar.find(b=>b.status!=='Batal'&&b.link&&b.link.c===c&&((b.link.id&&b.link.id===doc._id)||(b.link.noSJ&&b.link.noSJ===doc.noSJ)))||null}
+function bmFor(c,doc){if(!doc)return null;return S.bongkar.find(b=>b.status!=='Batal'&&b.jenis==='Loading'&&b.link&&b.link.c===c&&((b.link.id&&b.link.id===doc._id)||(b.link.noSJ&&b.link.noSJ===doc.noSJ)))||null}
 const bmFotoCetak=b=>((b&&b.foto)||[]).filter(x=>x.data&&x.cetak!==false);
 function bmCekCatatan(b){const s=bmCekStat(b);return s.n?`Ceklis bongkar muat: ${s.done} dari ${s.n} item dicek digital (✓ di kolom Cek)`:''}
 /* Kolom Cek dan lampiran foto pada pratinjau surat jalan di layar. */
 function bmPrev(c,doc){
  const b=bmFor(c,doc);if(!b)return {th:'',td:()=>'',cs:2,foto:''};
- const m=bmCekMap(b),ft=bmFotoCetak(b);
- return {th:'<th style="width:8%">Cek</th>',td:i=>`<td style="text-align:center;font-weight:700;color:#1e783c">${m[i]&&m[i].ok?'✓':''}</td>`,cs:3,
+ const m=bmCekMap(b),ft=bmFotoCetak(b);let off=0;for(const x of sjGrup(c,doc)){if(x._id===doc._id)break;off+=(x.items||[]).length}
+ return {th:'<th style="width:8%">Cek</th>',td:i=>`<td style="text-align:center;font-weight:700;color:#1e783c">${m[off+i]&&m[off+i].ok?'✓':''}</td>`,cs:3,
   foto:ft.length?`<div style="font-weight:700;margin:12px 0 4px;font-size:11px;letter-spacing:.03em">LAMPIRAN BUKTI BONGKAR MUAT</div><div class="bm-prev-foto">${ft.map((x,i)=>`<figure><img src="${x.data}" alt="Foto bukti ${i+1}"><figcaption>Foto ${i+1}${x.ket?' · '+esc(x.ket):''}</figcaption></figure>`).join('')}</div>`:''};
 }
 /* Penyimpanan foto: sekarang disimpan langsung (data URL terkompres) di dokumen bongkar. Untuk Supabase disiapkan bucket privat
@@ -1922,16 +1946,9 @@ function xlsxFoto(wb,foto,judul){
 
 function printBmChecklist(id){
  const b=byId('bongkar',id);if(!b)return;
- /* ambil items dari dokumen sumber */
- let items=[],docLabel='',docRef='';
- if(b.link){
-  const lc=b.link.c;
-  if(lc==='mutasi'){const mut=S.mutasi.find(x=>x.noDok===b.link.noDok);items=mut?(mut.items||[]):[];docLabel='Penerimaan Bahan Baku';docRef=b.link.noDok||'';}
-  else if(lc==='vendor'){const vd=b.link.id?byId('vendor',b.link.id):S.vendor.find(x=>x.noSJ===b.link.noSJ);items=vd?(vd.items||[]):[];docLabel='SJ Vendor';docRef=b.link.noSJ||'';}
-  else if(lc==='kirim'){const kd=S.kirim.find(x=>x.noSJ===b.link.noSJ);items=kd?(kd.items||[]):[];docLabel='SJ Customer';docRef=b.link.noSJ||'';}
- }
+ const _s=bmSrc(b);const items=_s.items,docLabel=_s.label,docRef=_s.ref;
  const totalQty=sumBy(items,i=>+i.q||0);
- const rows=items.map((i,idx)=>`<tr><td class="pck-no">${idx+1}</td><td>${(i.d||i.item||'').replace(/</g,'&lt;')}</td><td class="pck-num">${+i.q||0}</td><td class="pck-u">${(i.u||'').replace(/</g,'&lt;')}</td><td class="pck-ck">${b.ceklis&&b.ceklis[idx]&&b.ceklis[idx].ok?'✓':'☐'}</td></tr>`).join('');
+ const rows=items.map((i,idx)=>`${i._spk&&i._spk!==(items[idx-1]||{})._spk?`<tr><td colspan="5" style="background:#eef2f9;font-weight:700">${esc(i._spk)}</td></tr>`:''}<tr><td class="pck-no">${idx+1}</td><td>${(i.d||i.item||'').replace(/</g,'&lt;')}</td><td class="pck-num">${+i.q||0}</td><td class="pck-u">${(i.u||'').replace(/</g,'&lt;')}</td><td class="pck-ck">${b.ceklis&&b.ceklis[idx]&&b.ceklis[idx].ok?'✓':'☐'}</td></tr>`).join('');
  const win=window.open('','_blank','width=794,height=1123');
  if(!win)return toast('Aktifkan popup untuk print checklist');
  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Checklist ${b.jenis} · ${b.nopol||''}</title><style>
@@ -2024,6 +2041,7 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
    srcHtml=`<div class="dw-meta-card"><span>Dokumen sumber</span><b>SJ Customer${noSJ?` · <span class="mono">${esc(noSJ)}</span>`:''}</b>${spk?`<div style="font-size:11px;color:var(--muted);margin-top:2px">SPK ${esc(spk.no)} · ${esc(spk.customer)}</div>`:''}</div>`;
   }
  }
+ srcItems=bmSrc(b).items;
  /* timeline */
  const tl=[];
  if(b.jamMasuk)tl.push(`<div class="bm-tl-row"><span class="bm-tl-dot ok"></span><div><b>Tiba di dock</b><div class="bm-tl-time">${esc(b.jamMasuk)}</div></div></div>`);
@@ -2060,7 +2078,7 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
    <div class="tbl-wrap">
     <table class="bm-checklist-tbl">
      <thead><tr><th style="width:32px"></th><th>Item / Barang</th><th class="num">Qty</th><th style="width:60px;text-align:center">Satuan</th></tr></thead>
-     <tbody>${srcItems.map((i,idx)=>`<tr>
+     <tbody>${srcItems.map((i,idx)=>`${i._spk&&i._spk!==(srcItems[idx-1]||{})._spk?`<tr class="bm-spk-h"><td colspan="4">${esc(i._spk)}</td></tr>`:''}<tr>
       <td style="text-align:center"><input type="checkbox" class="bm-ck" id="bmck-${idx}" data-act="bmck" data-id="${id}" data-idx="${idx}" ${cm[idx]&&cm[idx].ok?'checked':''} ${bisaUbah?'':'disabled'}></td>
       <td><label for="bmck-${idx}" style="cursor:pointer;display:block">${esc(i.d||i.item||'')}</label></td>
       <td class="num">${n(i.q)}</td>
@@ -2097,7 +2115,7 @@ function voidForm(c,id){
    if(c==='vendor'){const dv=byId('vendor',id);const sudah=(dv&&dv.items||[]).reduce((q,i)=>q+(+i.kembali||0)+(+i.reject||0),0);if(sudah>0)throw new Error(`Surat jalan vendor ini sudah menerima ${n(sudah)} barang kembali (termasuk reject); tidak bisa dibatalkan karena stok dan progres sudah bergerak.`)}
    const doc=byId(c,id);await updDoc(c,id,{status:'Batal',batal:b});
    if(c==='kirim'&&doc){for(const m of S.mutasi.filter(m=>m.gudang==='fg'&&m.jenis==='keluar'&&!m.dikoreksi&&m.spk===doc.spk&&m.noDok&&m.noDok===doc.noSJ)){await addDoc('mutasi',{gudang:'fg',item:m.item,jenis:'koreksi',delta:-m.delta,tgl:today(),noDok:m.noDok,ref:'Batal SJ '+m.noDok,spk:m.spk,pihak:m.pihak||'',ket:'Surat jalan dibatalkan: '+b.alasan,koreksiDari:m._id});await updDoc('mutasi',m._id,{dikoreksi:true})}}
-   if((c==='vendor'||c==='kirim')&&doc){const key=doc.noSJ;for(const x of S.bongkar.filter(x=>x.link&&x.status==='Antri'&&(x.link.noSJ===key||x.link.id===id)))await updDoc('bongkar',x._id,{status:'Batal',batal:{...b,alasan:'Dokumen sumber dibatalkan'}})}
+   if((c==='vendor'||c==='kirim')&&doc){const key=doc.noSJ;if(!(key&&(c==='vendor'?S.vendor:S.kirim).some(o=>o._id!==id&&o.status!=='Batal'&&o.noSJ===key)))for(const x of S.bongkar.filter(x=>x.link&&x.status==='Antri'&&(x.link.noSJ===key||x.link.id===id)))await updDoc('bongkar',x._id,{status:'Batal',batal:{...b,alasan:'Dokumen sumber dibatalkan'}})}
    closeDrawer()},{submit:'Batalkan',done:'Dibatalkan · tercatat di riwayat'});
 }
 function koreksiForm(id){
@@ -5405,10 +5423,12 @@ function docModel(kind,ref){
    note:s.alasan?'Kendala: '+s.alasan:'',signs:['Dibuat oleh,\nAdmin Produksi','Diperiksa,\nKepala Produksi','Mengetahui,\nPPIC']}}
  if(kind==='sjv'){const v=byId('vendor',ref);if(!v)return null;const s=byId('spk',v.spk)||{};const tgt=v.target||addWorkdays(v.tgl,T[vKey(v.proses)]);
   const bm=bmFor('vendor',v),ck=bm?bmCekMap(bm):null;
+  const G=sjGrup('vendor',v),gab=G.length>1,spkG=[...new Set(G.map(x=>byId('spk',x.spk)).filter(Boolean))];let nk=0;const brs=[],hdr=[];
+  G.forEach(d=>{if(gab){hdr.push(brs.length);brs.push(['',spkRingkas(d.spk),'','','',...(ck?['']:[])])}(d.items||[]).forEach(i=>{brs.push([brs.length-hdr.length+1,i.d,+i.q||0,i.u||'',d.rework?'Rework':'',...(ck?[ck[nk]&&ck[nk].ok?'✓':'']:[])]);nk++})});
   return {foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(v.noSJ||''),file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
-   meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Customer akhir',s.customer||'-'],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
-   tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l'],...(ck?[['Cek',8,'c']]:[])],rows:(v.items||[]).map((i,k)=>[k+1,i.d,+i.q||0,i.u||'',v.rework?'Rework':'',...(ck?[ck[k]&&ck[k].ok?'✓':'']:[])]),foot:['','TOTAL',sumBy(v.items||[],i=>i.q),'','',...(ck?['']:[])]}],
-   note:[v.ket,v.batal?'DIBATALKAN: '+v.batal.alasan:'',bm?bmCekCatatan(bm):''].filter(Boolean).join(' · '),signs:['Pengirim,\nGudang MNI','Pengemudi','Penerima,\n'+(v.vendor||'Vendor')]}}
+   meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'-'))],['Customer akhir',gab?[...new Set(spkG.map(x=>x.customer))].join(', '):(s.customer||'-')],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
+   tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l'],...(ck?[['Cek',8,'c']]:[])],rows:brs,hdr,foot:['','TOTAL',sumBy(G.flatMap(d=>d.items||[]),i=>i.q),'','',...(ck?['']:[])]}],
+   note:[v.ket,v.batal?'DIBATALKAN: '+v.batal.alasan:'',bm?bmCekCatatan(bm):'',gab?'Surat jalan gabungan '+G.length+' SPK dalam satu armada':''].filter(Boolean).join(' · '),signs:['Pengirim,\nGudang MNI','Pengemudi','Penerima,\n'+(v.vendor||'Vendor')]}}
  if(kind==='btb'){const [vid,k]=String(ref).split('|');const v=byId('vendor',vid);if(!v)return null;const R=vReturns(v);const r=R.find(x=>String(x.k)===String(k));if(!r)return null;const s=byId('spk',v.spk)||{};
   const idx=r.k>=0?r.k+1:0;
   return {file:`BTB ${v.noSJ||''}-${idx||'lama'} - ${v.vendor||''}`,title:'BUKTI TERIMA BARANG DARI VENDOR',no:`BTB/${v.noSJ||''}/${idx||'-'}`,date:r.tgl,
@@ -5419,8 +5439,11 @@ function docModel(kind,ref){
    note:[r.ket,r.est?'Data penerimaan lama: tanggal diestimasi dari surat jalan customer pertama setelahnya.':''].filter(Boolean).join(' · '),signs:['Diserahkan,\n'+(v.vendor||'Vendor'),'Diterima,\nGudang MNI','Diperiksa,\nQC']}}
  if(kind==='sjc'){const k=byId('kirim',ref);if(!k)return null;const s=byId('spk',k.spk)||{};const cu=mList('customer').find(x=>x.nama===k.customer)||{};
   const bm=bmFor('kirim',k),ck=bm?bmCekMap(bm):null;
+  const G=sjGrup('kirim',k),gab=G.length>1,spkG=[...new Set(G.map(x=>byId('spk',x.spk)).filter(Boolean))];const itemsG=[];
+  G.forEach(d=>{if(gab)itemsG.push({hdr:spkRingkas(d.spk)});(d.items||[]).forEach(i=>itemsG.push(i))});
+  const cekG=ck?itemsG.filter(i=>!i.hdr).map((_,i)=>!!(ck[i]&&ck[i].ok)):null;
   return {file:`Surat Jalan ${k.noSJ||''} - ${k.customer||''}`,title:'SURAT JALAN',no:k.noSJ||'',date:k.tgl,
-   sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:s.po||'',spk:s.nomor||(s.no?String(s.no):''),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:k.items||[],ket:k.ket||'',batal:k.batal||null,partial:sjPartial(k),cek:ck?(k.items||[]).map((_,i)=>!!(ck[i]&&ck[i].ok)):null,foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(k.noSJ||'')},
+   sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:gab?[...new Set(spkG.map(x=>x.po).filter(Boolean))].join(', '):(s.po||''),spk:gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'')),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:gab?itemsG:(k.items||[]),ket:k.ket||'',batal:k.batal||null,partial:gab?null:sjPartial(k),cek:cekG,foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(k.noSJ||'')},
    meta:[['Kepada',k.customer||'-'],['Alamat',k.alamat||cu.alamat||'-'],['Tanggal',tglLong(k.tgl)],['No PO',s.po||'-'],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Kendaraan',[k.kendaraan,k.nopol].filter(Boolean).join(' · ')||'-'],['Driver',k.driver||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',72,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',28,'l']],rows:(k.items||[]).map((i,n2)=>[n2+1,i.d,+i.q||0,i.u||'','']),foot:['','TOTAL',sumBy(k.items||[],i=>i.q),'','']}],
    note:[k.ket,k.batal?'DIBATALKAN: '+k.batal.alasan:''].filter(Boolean).join(' · '),signs:['Hormat kami,\nPT Mitra Nusa Internasional','Pengemudi','Diterima oleh,\n'+(k.customer||'Customer')]}}
@@ -5454,7 +5477,7 @@ async function docXlsx(m){
  for(const t of m.tables){
   if(t.title){ws.mergeCells(r,1,r,nc);put(r,1,t.title,{b:true,sz:11});r++}
   t.cols.forEach((c,i)=>put(r,i+1,c[0],{b:true,box:true,fill:'FFDCE5F4',h:'center'}));ws.getRow(r).height=20;r++;
-  for(const row of t.rows){row.forEach((v,i)=>{const al=(t.cols[i]||[])[2];put(r,i+1,v,{box:true,h:al==='r'?'right':al==='c'?'center':'left',nf:typeof v==='number'&&al==='r'?'#,##0.##':undefined})});r++}
+  t.rows.forEach((row,ri)=>{const hd=!!(t.hdr&&t.hdr.includes(ri));row.forEach((v,i)=>{const al=(t.cols[i]||[])[2];put(r,i+1,v,{box:true,b:hd,fill:hd?'FFEEF2F9':undefined,h:al==='r'?'right':al==='c'?'center':'left',nf:typeof v==='number'&&al==='r'?'#,##0.##':undefined})});r++});
   if(t.foot){t.foot.forEach((v,i)=>{const al=(t.cols[i]||[])[2];put(r,i+1,v,{b:true,box:true,fill:'FFF2F4F8',h:al==='r'?'right':al==='c'?'center':'left',nf:typeof v==='number'?'#,##0.##':undefined})});r++}
   r++;
  }
@@ -5486,7 +5509,7 @@ async function docPdf(m){
   const cs={};t.cols.forEach((c,i)=>cs[i]={cellWidth:c[1]/tw*avail,halign:c[2]==='r'?'right':c[2]==='c'?'center':'left'});
   const fmt=v=>typeof v==='number'?n(v):String(v??'');
   doc.autoTable({startY:y,head:[t.cols.map(c=>c[0])],body:t.rows.map(r=>r.map(fmt)),foot:t.foot?[t.foot.map(fmt)]:undefined,theme:'grid',
-   styles:{fontSize:8.5,cellPadding:1.6,lineColor:[60,60,60],lineWidth:.15,textColor:20,overflow:'linebreak'},headStyles:{fillColor:[220,229,244],textColor:20,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[242,244,248],textColor:20,fontStyle:'bold'},columnStyles:cs,margin:{left:M,right:M},showFoot:'lastPage',...pdfCekHooks});
+   styles:{fontSize:8.5,cellPadding:1.6,lineColor:[60,60,60],lineWidth:.15,textColor:20,overflow:'linebreak'},headStyles:{fillColor:[220,229,244],textColor:20,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[242,244,248],textColor:20,fontStyle:'bold'},columnStyles:cs,margin:{left:M,right:M},showFoot:'lastPage',...pdfCekHooks,didParseCell:h=>{pdfCekHooks.didParseCell(h);if(h.section==='body'&&t.hdr&&t.hdr.includes(h.row.index)){h.cell.styles.fontStyle='bold';h.cell.styles.fillColor=[238,242,249]}}});
   y=doc.lastAutoTable.finalY+6;
  }
  const PH=doc.internal.pageSize.getHeight();
@@ -5575,7 +5598,7 @@ async function sjPdf(d){
  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(60);doc.text(al,M+4,y0+17.8);
  det.forEach(([k,v],i)=>{const yy=y0+12.2+i*5.4;doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...GR);T(k,x2+4,yy);doc.setTextColor(20);doc.setFont('helvetica','bold');T(': '+v,x2+27,yy)});
  /* tabel barang */
- const items=d.items||[];const tq=sumBy(items,i=>+i.q||0);const ck=d.cek;const body=items.map((i,k)=>[String(k+1),sjFx(i.d),n(i.q),sjFx(i.u||''),'',...(ck?[ck[k]?'✓':'']:[])]);while(body.length<8)body.push(['','','','','',...(ck?['']:[])]);
+ const items=d.items||[];const tq=sumBy(items,i=>+i.q||0);const ck=d.cek;let nk=0;const body=items.map(i=>{if(i.hdr)return [{content:sjFx(i.hdr),colSpan:ck?6:5,styles:{fontStyle:'bold',fillColor:[238,242,249],halign:'left'}}];const k=nk++;return [String(k+1),sjFx(i.d),n(i.q),sjFx(i.u||''),'',...(ck?[ck[k]?'✓':'']:[])]});while(body.length<8)body.push(['','','','','',...(ck?['']:[])]);
  doc.autoTable({startY:y0+H+7,head:[['No','Nama Barang','Qty','Satuan','Keterangan',...(ck?['Cek']:[])]],body,foot:[['','TOTAL',n(tq),'','',...(ck?['']:[])]],theme:'grid',showFoot:'lastPage',
   styles:{fontSize:9,cellPadding:{top:2.4,bottom:2.4,left:2.2,right:2.2},lineColor:LN,lineWidth:.2,textColor:20,overflow:'linebreak',minCellHeight:8},
   headStyles:{fillColor:NAVY,textColor:255,fontStyle:'bold',halign:'center'},footStyles:{fillColor:[234,239,248],textColor:NAVY,fontStyle:'bold'},alternateRowStyles:{fillColor:[248,250,253]},
@@ -5627,8 +5650,8 @@ async function sjXlsx(d){
  /* tabel barang */
  let r=r0+8;const KE=d.cek?NC-1:NC;
  put(r,1,'No',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,2,'Nama Barang',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,3,'Qty',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});put(r,4,'Satuan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});mg(r,5,r,KE);put(r,5,'Keterangan',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});if(d.cek)put(r,NC,'Cek',{b:true,c:'FFFFFFFF',fill:NAVY,h:'center'});bx(r,1,r,NC);ws.getRow(r).height=22;r++;
- const items=d.items||[];const rows=items.map((i,k)=>[k+1,i.d,+i.q||0,i.u||'']);while(rows.length<8)rows.push(['','','','']);
- rows.forEach((row,k)=>{const fill=k%2?'FFF8FAFD':undefined;row.forEach((v,j)=>put(r,j+1,v,{fill,h:j===0||j===3?'center':j===2?'right':'left',nf:j===2&&typeof v==='number'?'#,##0.##':undefined}));mg(r,5,r,KE);put(r,5,'',{fill});if(d.cek)put(r,NC,d.cek[k]?'✓':'',{fill,h:'center',b:true,c:'FF1E783C'});bx(r,1,r,NC);ws.getRow(r).height=21;r++});
+ const items=d.items||[];let nk=0;const rows=items.map(i=>i.hdr?{hdr:i.hdr}:[++nk,i.d,+i.q||0,i.u||'']);while(rows.length<8)rows.push(['','','','']);
+ rows.forEach((row,k)=>{if(row.hdr){mg(r,1,r,NC);put(r,1,row.hdr,{b:true,fill:'FFEEF2F9'});bx(r,1,r,NC);ws.getRow(r).height=21;r++;return}const ci=typeof row[0]==='number'?row[0]-1:-1;const fill=k%2?'FFF8FAFD':undefined;row.forEach((v,j)=>put(r,j+1,v,{fill,h:j===0||j===3?'center':j===2?'right':'left',nf:j===2&&typeof v==='number'?'#,##0.##':undefined}));mg(r,5,r,KE);put(r,5,'',{fill});if(d.cek)put(r,NC,d.cek[ci]?'✓':'',{fill,h:'center',b:true,c:'FF1E783C'});bx(r,1,r,NC);ws.getRow(r).height=21;r++});
  mg(r,1,r,2);put(r,1,'TOTAL',{b:true,c:NAVY,fill:'FFEAEFF8',h:'right'});put(r,3,sumBy(items,i=>+i.q||0),{b:true,c:NAVY,fill:'FFEAEFF8',h:'right',nf:'#,##0.##'});mg(r,4,r,NC);put(r,4,'',{fill:'FFEAEFF8'});bx(r,1,r,NC);r+=2;
  /* rincian partial: hanya muncul bila pengiriman ini bagian dari kiriman partial */
  if(d.partial){const P=d.partial,p=P.heads.length;
@@ -5683,6 +5706,9 @@ document.addEventListener('click',async e=>{
   case 'printbm':printBmChecklist(ds.id);break;
   case 'bmstep':{const b=byId('bongkar',ds.id);const t=nowTime();if(ds.to==='Selesai'){const cs=bmCekStat(b);if(cs.n&&cs.done<cs.n&&!confirm(`Baru ${cs.done} dari ${cs.n} item yang dicek. Tetap tandai selesai?`))break}await updDoc('bongkar',ds.id,ds.to==='Proses'?{status:'Proses',jamMulai:t}:{status:'Selesai',jamSelesai:t,jamMulai:b.jamMulai||b.jamMasuk});toast(ds.to==='Proses'?'Mulai dikerjakan':'Bongkar muat selesai');break}
   case 'bmkoreksi':bmKoreksiForm(ds.id);break;
+  case 'addgx':{const box=$('#m-extra'),f=$('#mform');if(!box||!f)break;const k=Math.max(0,...[...f.querySelectorAll('[data-gx]')].map(x=>+x.dataset.gx))+1,prim=f.spk.value,cust=ds.mode==='kirim'&&prim?(byId('spk',prim)||{}).customer:'';const excl=[prim,...[...f.querySelectorAll('[data-gx-sel]')].map(x=>x.value)].filter(Boolean);
+   box.insertAdjacentHTML('beforeend',`<div class="gx full" data-gx="${k}"><div class="gx-h"><select class="sel" name="gspk_${k}" data-gx-sel="${k}" data-mode="${ds.mode}" aria-label="SPK lain">${gxOpsi(ds.mode,excl,cust)}</select><button type="button" class="ibtn" data-act="delgx" aria-label="Hapus SPK ini">×</button></div><div class="gx-l"><div class="note">Pilih SPK untuk menampilkan item.</div></div></div>`);break}
+  case 'delgx':{const bx=el.closest('.gx');if(bx)bx.remove();break}
   case 'bmck':await bmCek(ds.id,+ds.idx,el.checked);break;
   case 'bmckall':await bmCekSemua(ds.id,ds.on==='1');break;
   case 'bmfotocetak':await bmFotoUbah(ds.id,ds.fid,{cetak:el.checked});break;
