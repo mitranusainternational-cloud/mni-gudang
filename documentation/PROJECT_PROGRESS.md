@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-07 — K-3 diputuskan: SPK tanpa PO sah dengan alasan (T-215, draf lokal)
+Draf 19 menambah kolom `tanpa_po_alasan` (sampel, komplain, garansi, lainnya) dan aturan tahap ketat customer_id dan (PO atau alasan); uji SQL lokal 52 PASS. UI editor SPK untuk memilih alasan belum dibuat. Belum diterapkan ke Supabase.
+
 ### 2026-11-07 — Langkah 2 database: cadangan bahan saat SPK terbit (T-215, draf lokal)
 K-1 diputuskan (cadangan dulu). Draf migration 20 dan revisi draf 19 ditinjau empat peninjau independen (21 temuan, 19 nyata) lalu diperbaiki; diuji di Postgres lokal (PGlite) 48 PASS. Belum diterapkan ke Supabase mana pun; konkurensi sungguhan dan RLS peran asli belum teruji. Lihat [[BLUEPRINT_DB_ERP]].
 

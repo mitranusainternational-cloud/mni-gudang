@@ -193,6 +193,20 @@ const fn = await q(`SELECT proname, prosecdef FROM pg_proc WHERE proname IN ('rm
 ok('T-13 rm_stok dan rm_cadangan SECURITY INVOKER; fungsi internal dan hitung ulang tertutup dari klien', fn.length === 2 && fn.every((x) => x.prosecdef === false) && (await q(`SELECT has_function_privilege('authenticated', 'public.spk_materials_hitung_ulang(uuid)', 'EXECUTE') a, has_function_privilege('authenticated', 'public._rm_stok_internal(uuid)', 'EXECUTE') b`))[0].a === false);
 ok('T-14 hitung ulang massal mengembalikan angka yang sama dengan sinkron berjalan', (await q(`SELECT public.spk_materials_hitung_ulang() n`))[0].n > 0 && (await mat(x43))[0].k === 3);
 
+
+// ---------- tahap ketat (K-3: PO kosong sah hanya dengan alasan), dipasang di akhir uji ----------
+await db.exec(`
+  ALTER TABLE public.spk DROP CONSTRAINT IF EXISTS spk_customer_wajib;
+  ALTER TABLE public.spk ADD CONSTRAINT spk_customer_wajib
+    CHECK (status IN ('Draft', 'Batal', 'Selesai') OR peruntukan <> 'customer'
+           OR (customer_id IS NOT NULL AND (btrim(coalesce(po, '')) <> '' OR tanpa_po_alasan IS NOT NULL))) NOT VALID;
+`);
+const kt1 = await gagal(`INSERT INTO spk (no, customer, po, status, customer_id) VALUES ('5001', 'PT Contoh Satu', '', 'Terbit', $1)`, [cid]);
+ok('K-01 tahap ketat: SPK customer terbit tanpa PO dan tanpa alasan ditolak', /spk_customer_wajib/.test(kt1 || ''), kt1);
+ok('K-02 tahap ketat: tanpa PO dengan alasan (sampel) diterima; alasan di luar daftar ditolak', (await gagal(`INSERT INTO spk (no, customer, po, status, customer_id, tanpa_po_alasan) VALUES ('5002', 'PT Contoh Satu', '', 'Terbit', $1, 'sampel')`, [cid])) === null && /spk_tanpa_po_alasan_valid/.test((await gagal(`INSERT INTO spk (no, customer, po, status, customer_id, tanpa_po_alasan) VALUES ('5003', 'PT Contoh Satu', '', 'Terbit', $1, 'iseng')`, [cid])) || ''));
+ok('K-03 tahap ketat: SPK customer terbit tanpa customer_id (nama tidak cocok master) ditolak; dengan PO dan customer_id diterima; Selesai dan Batal lama tidak terkunci', /spk_customer_wajib/.test((await gagal(`INSERT INTO spk (no, customer, po, status) VALUES ('5004', 'PT Tidak Terdaftar', 'PO-9', 'Terbit')`)) || '') && (await gagal(`INSERT INTO spk (no, customer, po, status, customer_id) VALUES ('5005', 'PT Contoh Satu', 'PO-9', 'Terbit', $1)`, [cid])) === null && (await gagal(`INSERT INTO spk (no, customer, po, status) VALUES ('5006', 'PT Tidak Terdaftar', '', 'Selesai')`)) === null);
+ok('K-04 SPK stok buffer tidak terpengaruh tahap ketat (tanpa customer dan PO)', (await gagal(`INSERT INTO spk (no, customer, po, status, data) VALUES ('5007', 'STOK', '', 'Terbit', '{"stokReq": true}')`)) === null);
+
 console.log(R.join('\n'));
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(`${R.length - fail} PASS, ${fail} FAIL`);

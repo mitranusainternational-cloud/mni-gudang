@@ -27,6 +27,16 @@ $$;
 
 ALTER TABLE public.spk ADD COLUMN IF NOT EXISTS peruntukan  public.spk_peruntukan;
 ALTER TABLE public.spk ADD COLUMN IF NOT EXISTS customer_id UUID REFERENCES public.mcustomer (id) ON DELETE RESTRICT;
+-- SPK customer yang sah tanpa PO (keputusan pemilik K-3 2026-11-07: ada) wajib menyebut alasannya, bukan dikosongkan diam-diam.
+-- Daftar alasan sengaja pendek dan bisa ditambah lewat migration berikutnya.
+ALTER TABLE public.spk ADD COLUMN IF NOT EXISTS tanpa_po_alasan TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'spk_tanpa_po_alasan_valid' AND conrelid = 'public.spk'::regclass) THEN
+    ALTER TABLE public.spk ADD CONSTRAINT spk_tanpa_po_alasan_valid CHECK (tanpa_po_alasan IS NULL OR tanpa_po_alasan IN ('sampel', 'komplain', 'garansi', 'lainnya'));
+  END IF;
+END
+$$;
 
 -- Backfill dari data lama: SPK stok ditandai data.stokReq = true oleh aplikasi; selain itu SPK customer.
 UPDATE public.spk
@@ -178,7 +188,9 @@ CREATE TRIGGER trigger_spk_materials_updated_at BEFORE UPDATE ON public.spk_mate
 -- ---------- Tahap ketat (dipasang SETELAH UI mengisi customer_id dan PO; keputusan pemilik K-2 dan K-3) ----------
 --   ALTER TABLE public.spk DROP CONSTRAINT IF EXISTS spk_customer_wajib;
 --   ALTER TABLE public.spk ADD CONSTRAINT spk_customer_wajib
---     CHECK (status IN ('Draft', 'Batal', 'Selesai') OR peruntukan <> 'customer' OR (customer_id IS NOT NULL AND btrim(coalesce(po, '')) <> '')) NOT VALID;
+--     CHECK (status IN ('Draft', 'Batal', 'Selesai') OR peruntukan <> 'customer'
+--            OR (customer_id IS NOT NULL AND (btrim(coalesce(po, '')) <> '' OR tanpa_po_alasan IS NOT NULL))) NOT VALID;
+--   PO kosong hanya sah bila tanpa_po_alasan terisi ('sampel', 'komplain', 'garansi', 'lainnya'); alasan tanpa PO dicatat di kolom itu.
 --   (Batal dan Selesai dikecualikan agar membatalkan atau menyelesaikan SPK lama tidak tertolak.)
 --
 -- ---------- Setelah dipasang: daftar periksa data lama (jalankan, perbaiki, baru VALIDATE) ----------
