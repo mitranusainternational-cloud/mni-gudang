@@ -6,10 +6,10 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 16
-tasks_total: 12
+progress: 15
+tasks_total: 13
 tasks_done: 4
-updated: 2026-11-07
+updated: 2026-11-08
 ---
 
 # E-16 ERP hulu: Penawaran, estimasi, dan monitoring operasional
@@ -39,5 +39,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-215-cetak-biru-skema-database-spk-dan-bahan-baku|T-215]] Cetak biru skema database: peruntukan SPK dan kebutuhan bahan baku (draf migration 19) · review · P2 · 2 hari
 - [ ] [[tasks/T-216-spk-customer-memakai-stok-sebagian|T-216]] SPK customer memakai stok gudang barang jadi sebagian · review · P1 · 3 hari
 - [ ] [[tasks/T-218-surat-jalan-gabungan-beberapa-spk|T-218]] Surat jalan vendor dan customer gabungan beberapa SPK dalam satu armada · review · P1 · 4 hari
+- [ ] [[tasks/T-219-desain-dokumen-modern-dan-kop-di-master-data|T-219]] Desain dokumen modern bertema per jenis dan kop yang dapat diatur di Master Data · review · P1 · 3 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

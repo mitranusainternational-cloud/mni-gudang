@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 — Desain dokumen modern dan kop di Master Data (T-219, lokal)
+Kop (logo, nama, alamat, kontak, warna) dapat diatur di Master Data dan dipakai semua dokumen utama; PDF, Excel, dan pratinjau memakai tata letak bersih bertema dengan kode dan warna pembeda per jenis. Bukti: `verified in browser` (mock) suite `kopdokumen` KO-01..KO-10 (11 PASS), PDF dicek visual. Belum: PR, mutasi, kartu stok, penawaran cetak, dan lembar SPK memakai tema baru; Excel belum dibuka visual; belum diuji di Supabase.
+
 ### 2026-11-08 — Surat jalan gabungan beberapa SPK (T-218, lokal)
 Beberapa SPK dalam satu armada memakai satu nomor surat jalan (dokumen tetap satu per SPK, tanpa perubahan skema); cetak, ceklis Bongkar Muat, dan foto mengikuti kelompok. Bukti: `verified in browser` (mock) suite `gabungan` GB-01..GB-08 (9 PASS); regresi penuh 0 FAIL di semua 20 suite, unit 34 PASS, lint 0 error. Belum: subtotal per SPK, pengiriman SPK stok murni ke customer, uji di Supabase.
 

@@ -9,7 +9,7 @@ status: active
 progress: 0
 tasks_total: 5
 tasks_done: 0
-updated: 2026-11-07
+updated: 2026-11-08
 ---
 
 # E-13 Modernisasi frontend dan pengujian

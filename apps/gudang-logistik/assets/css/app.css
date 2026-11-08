@@ -1322,3 +1322,10 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .gx{border:1px dashed var(--line);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
 .gx-h{display:flex;gap:6px;align-items:center}.gx-h .sel{flex:1}
 .bm-checklist-tbl tr.bm-spk-h td{background:var(--hover);font-weight:700;font-size:11px;border-top:2px solid var(--line)}
+
+/* dokumen: pratinjau bertema per jenis dokumen (warna --dc) */
+.sj-prev-meta{background:color-mix(in srgb,var(--dc,#1F3A6E) 4%,transparent);border-left:3px solid var(--dc,#1F3A6E);border-radius:4px;padding:6px 8px}
+.sj-prev-tbl th{background:var(--dc,#1F3A6E);color:#fff;border-color:var(--dc,#1F3A6E)}
+.sj-prev-tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--dc,#1F3A6E) 4%,transparent)}
+.sj-prev-foot td{background:color-mix(in srgb,var(--dc,#1F3A6E) 14%,transparent)!important;color:var(--dc,#1F3A6E);font-weight:700}
+.kop-prev{border:1px dashed var(--border);border-radius:10px;padding:16px 18px;background:var(--card)}
