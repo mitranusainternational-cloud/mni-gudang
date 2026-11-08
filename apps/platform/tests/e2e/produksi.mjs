@@ -1,5 +1,10 @@
 // Uji produksi multi work center (mock): rute dari produk, Antrian Mesin per work center, validasi urutan langkah,
 // beban per work center di Dashboard Produksi, dan kemajuan item dari kejadian per mesin.
+// Baris SPK: bila bentuk terstruktur aktif (katalog berat terpasang), pilih "Teks bebas" dulu agar kolom #ed-d tersedia (pola access.mjs).
+async function teksBebas(page, si, li) {
+  await page.evaluate(([si, li]) => { const s = document.querySelector(`#ed-sb-${si}-${li}`); if (s && s.value !== '') { s.value = ''; s.dispatchEvent(new Event('change', { bubbles: true })); } }, [si, li]);
+  await page.waitForSelector(`#ed-d-${si}-${li}`, { timeout: 5000 });
+}
 export async function runProduksi(page, base) {
   const R = [];
   const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
@@ -50,7 +55,7 @@ export async function runProduksi(page, base) {
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
   await page.fill('#ed-cust', 'Customer Rute'); await page.fill('#ed-due', '2026-12-15');
   await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
-  await page.fill('#ed-d-0-0', 'Cable Tray W100xH100xL3000 1.2'); await page.fill('#ed-q-0-0', '20'); await page.fill('#ed-u-0-0', 'Btg');
+  await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Cable Tray W100xH100xL3000 1.2'); await page.fill('#ed-q-0-0', '20'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor button:has-text("Terbitkan SPK")'); await page.waitForTimeout(1800);
 
   await go('mesin');
@@ -169,7 +174,7 @@ export async function runProduksi(page, base) {
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
   await page.fill('#ed-cust', 'Customer Cover'); await page.fill('#ed-due', '2026-12-20');
   await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
-  await page.fill('#ed-d-0-0', 'COVER TRAY W 200 L 3000'); await page.fill('#ed-q-0-0', '10'); await page.fill('#ed-u-0-0', 'Btg');
+  await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'COVER TRAY W 200 L 3000'); await page.fill('#ed-q-0-0', '10'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor button:has-text("Terbitkan SPK")'); await page.waitForTimeout(1800);
   await go('mesin'); await page.selectOption('#f-mesin', 'CNC Laser'); await page.waitForTimeout(500);
   const altTxt = await page.evaluate(() => (document.getElementById('mesin-antri') || { innerText: '' }).innerText);
@@ -231,7 +236,7 @@ export async function runProduksi(page, base) {
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
   await page.fill('#ed-cust', 'Customer Paralel'); await page.fill('#ed-due', '2026-12-22');
   await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 NON FINISHING'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
-  await page.fill('#ed-d-0-0', 'Cable Tray W150xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '30'); await page.fill('#ed-u-0-0', 'Btg');
+  await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Cable Tray W150xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '30'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor button:has-text("Terbitkan SPK")'); await page.waitForTimeout(1800);
   await go('mesin'); await page.selectOption('#f-mesin', 'Shearing'); await page.waitForTimeout(500);
   await catatBaris('Customer Paralel', 30, '07:00', '08:00'); await closeAll();
@@ -292,7 +297,7 @@ export async function runProduksi(page, base) {
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
   await page.fill('#ed-cust', 'Customer Kartu'); await page.fill('#ed-due', '2020-01-10');
   await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 NON FINISHING'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
-  await page.fill('#ed-d-0-0', 'Cable Tray W200xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '12'); await page.fill('#ed-u-0-0', 'Btg');
+  await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Cable Tray W200xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '12'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor button:has-text("Terbitkan SPK")'); await page.waitForTimeout(1800);
   await go('mesin'); await page.selectOption('#f-mesin', 'Shearing'); await page.waitForTimeout(500);
   const kartuK = await page.evaluate(() => { const c = [...document.querySelectorAll('#mesin-antri .mcard')].find((x) => x.innerText.includes('Customer Kartu')); return c ? { txt: c.innerText, mulai: !!c.querySelector('[data-act="mesinmulai"]'), cat: !!c.querySelector('[data-act="mesincatat"]') } : null; });

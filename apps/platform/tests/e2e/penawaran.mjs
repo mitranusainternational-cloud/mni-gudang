@@ -11,6 +11,11 @@ const sk = JSON.parse(fs.readFileSync(new URL('skenario-harga-uji.json', FX), 'u
 const berkas = (f) => fileURLToPath(new URL(f, FX));
 const angka = (t) => Number(String(t).replace(/[^\d]/g, ''));
 
+// Baris SPK: bila bentuk terstruktur aktif (katalog berat terpasang), pilih "Teks bebas" dulu agar kolom #ed-d tersedia (pola access.mjs).
+async function teksBebas(page, si, li) {
+  await page.evaluate(([si, li]) => { const s = document.querySelector(`#ed-sb-${si}-${li}`); if (s && s.value !== '') { s.value = ''; s.dispatchEvent(new Event('change', { bubbles: true })); } }, [si, li]);
+  await page.waitForSelector(`#ed-d-${si}-${li}`, { timeout: 5000 });
+}
 export async function runPenawaran(page, base) {
   const R = [];
   const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
@@ -214,7 +219,7 @@ export async function runPenawaran(page, base) {
   await page.evaluate(() => { location.hash = '#spk'; }); await page.waitForTimeout(500);
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
   await page.fill('#ed-cust', 'PT Reservasi Uji'); await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
-  await page.fill('#ed-d-0-0', 'Cable Tray W100xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '2'); await page.fill('#ed-w-0-0', '10');
+  await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Cable Tray W100xH50xL3000 1.2'); await page.fill('#ed-q-0-0', '2'); await page.fill('#ed-w-0-0', '10');
   await page.click('[data-act="ed-save"][data-mode="draft"]'); await page.waitForTimeout(1800);
   const rv = await page.evaluate(() => (document.querySelector('#sheet #mat-tbl') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
   await tutupSheet();

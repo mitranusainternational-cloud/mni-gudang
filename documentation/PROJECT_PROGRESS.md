@@ -42,6 +42,11 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 · Keterhubungan kebutuhan plat SPK
+- Hasil: 5 temuan audit di rantai material diperbaiki (satuan Lembar, pengurangan ambil dari stok barang jadi, koreksi penerimaan, SPK Batal/Draft pada KPI dan analisa, batas sisa PR). Skill .claude/skills/keterhubungan-data dibuat.
+- Bukti: verified in browser (mock). Suite kebutuhanplat KP-01..KP-05 (7 PASS); regresi penuh 24 suite 0 FAIL; lint 0 error.
+- Hambatan: 14 temuan audit lain belum diperbaiki (lihat T-221). Belum diuji dengan katalog perusahaan dan belum di Supabase.
+
 ### 2026-11-08 · T-221 Master Mesin dan alur sparepart standar
 - Hasil: tab Master Data Mesin, sparepart keluar ke mesin (bukan SPK), masuk via PR atau alasan tanpa PR, tab Pemakaian mesin, koreksi penerimaan PR mengembalikan sisa PR. Bukti: verified in browser (mock), suite mesinsparepart 20 PASS, sparepart 38 PASS.
 - Hambatan: audit lintas modul (workflow 9 modul) terhenti oleh batas pemakaian; baru modul PR dan sparepart tuntas (1 temuan, diperbaiki). Langkah berikut: ulang audit modul lain, PR untuk bahan baku, aturan Cek Data mesin.

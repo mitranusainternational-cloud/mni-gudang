@@ -6,6 +6,13 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Diperbaiki (kebutuhan plat SPK, 2026-11-08)
+- Bahan baku bersatuan Lembar dihitung berat per lembar dan masuk kebutuhan plat.
+- Kebutuhan plat SPK dikurangi qty yang diambil dari stok barang jadi.
+- SPK Draft dan Batal tidak lagi ikut KPI dan analisa kebutuhan material.
+- Koreksi penerimaan tidak dihitung sebagai pemakaian SPK.
+- Penerimaan PR bahan baku dibatasi sisa PR.
+
 ### Ditambahkan (Master Mesin dan alur sparepart, 2026-11-08)
 - Master Data › **Mesin**: mesin produksi (dari Work Centre) dan peralatan pendukung dengan kode aset, merek, lokasi, aktif/nonaktif.
 - Sparepart **keluar ke mesin** (jenis pemakaian, mesin, pengambil), **masuk lewat PR** atau dengan alasan tanpa PR; tab **Pemakaian mesin** dan filter riwayat per mesin; dokumen SP-M/SP-K memuat PR atau mesin.

@@ -29,6 +29,9 @@ Dashboard interaktif: [[PROGRESS_DASHBOARD]] · Kesehatan vault: [[VAULT_HEALTH]
 | GitHub | `main` terproteksi (PR + 1 approval, CI wajib); `fitur/produksi-multi-wc` sudah di-push, belum di-PR | [[documentation/GITHUB_MIGRATION]] |
 | Deploy | Vercel Production aktif; variabel lingkungan baru berlabel Production (Preview belum). **Tidak ada deploy atau perubahan production tanpa persetujuan pemilik** | [[documentation/INTEGRATION_PATH]] · [[GO_LIVE_PLAN]] |
 
+> [!tip] Mulai di sini
+> Untuk kerja harian pakai [[documentation/INDEKS_CEPAT]] (satu halaman: baca, jalankan, catat, batas). Halaman ini cukup sebagai peta.
+
 ## 2. Saya ingin…
 
 | Tujuan | Buka |

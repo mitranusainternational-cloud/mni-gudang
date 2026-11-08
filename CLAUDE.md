@@ -1,6 +1,6 @@
 # MNI Gudang & Logistik — panduan untuk Claude Code
 
-Vault Obsidian sekaligus repository aplikasi MNI Gudang & Logistik. Aturan kerja lengkap ada di [AGENTS.md](AGENTS.md); dashboard di [Home.md](Home.md). Baca keduanya sebelum bekerja.
+Vault Obsidian sekaligus repository aplikasi MNI Gudang & Logistik. **Mulai dari [documentation/INDEKS_CEPAT.md](documentation/INDEKS_CEPAT.md)** (baca, jalankan, catat, batas; ringkas untuk menghemat token). Aturan kerja lengkap ada di [AGENTS.md](AGENTS.md); dashboard di [Home.md](Home.md).
 
 ## Rangkuman cepat
 

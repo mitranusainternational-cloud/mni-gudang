@@ -9,6 +9,11 @@
 // Uji ini memeriksa UI dan bentuk data terhadap mock yang meniru batasan Postgres (UUID, kolom);
 // bukan pengganti uji Supabase nyata (T-021, T-022, T-028).
 
+// Baris SPK: bila bentuk terstruktur aktif (katalog berat terpasang), pilih "Teks bebas" dulu agar kolom #ed-d tersedia (pola access.mjs).
+async function teksBebas(page, si, li) {
+  await page.evaluate(([si, li]) => { const s = document.querySelector(`#ed-sb-${si}-${li}`); if (s && s.value !== '') { s.value = ''; s.dispatchEvent(new Event('change', { bubbles: true })); } }, [si, li]);
+  await page.waitForSelector(`#ed-d-${si}-${li}`, { timeout: 5000 });
+}
 export async function runRegression(page, base) {
   const R = [];
   const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
@@ -101,7 +106,7 @@ export async function runRegression(page, base) {
   // SPK: baru, revisi, duplikat, produksi
   await go('spk'); n = (await tab('spk')).length;
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
-  await page.fill('#ed-cust', 'Customer Uji E2E'); await page.fill('#ed-po', 'PO-E2E'); await page.fill('#ed-due', '2026-12-15'); await page.fill('#ed-d-0-0', 'Hollow Uji'); await page.fill('#ed-q-0-0', '4'); await page.fill('#ed-u-0-0', 'Btg');
+  await page.fill('#ed-cust', 'Customer Uji E2E'); await page.fill('#ed-po', 'PO-E2E'); await page.fill('#ed-due', '2026-12-15'); await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Hollow Uji'); await page.fill('#ed-q-0-0', '4'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor button:has-text("Terbitkan SPK")'); await page.waitForTimeout(1800);
   const s3 = (await tab('spk')).find((s) => s.no === '1003');
   ok('F-10 SPK baru (UUID, no 1003)', (await tab('spk')).length === n + 1 && !!s3 && /^[0-9a-f-]{36}$/.test(s3.id));
@@ -116,13 +121,13 @@ export async function runRegression(page, base) {
   ok('F-22 revisi SPK (alasan wajib, tanpa baris ganda)', noReason && s2.length === 1 && s2[0].rev === 1 && s2[0].po === 'PO-REV');
   await closeAll(); await go('spk'); n = (await tab('spk')).length;
   await rowOpen('1001'); await page.click('#drawer [data-act="spkdup"]'); await page.waitForTimeout(800);
-  await page.fill('#ed-cust', 'Customer Duplikat'); await page.fill('#ed-due', '2026-12-20'); await page.fill('#ed-d-0-0', 'Item dup'); await page.fill('#ed-q-0-0', '2'); await page.fill('#ed-u-0-0', 'Btg');
+  await page.fill('#ed-cust', 'Customer Duplikat'); await page.fill('#ed-due', '2026-12-20'); await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Item dup'); await page.fill('#ed-q-0-0', '2'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor [data-act="ed-save"]:has-text("draft")'); await page.waitForTimeout(1500);
   ok('F-23 duplikat SPK -> draft', (await tab('spk')).length === n + 1 && (await tab('spk')).some((s) => s.status === 'Draft'));
   // B-013: SPK tanpa tanggal due (string kosong) harus tersimpan sebagai NULL
   await go('spk'); n = (await tab('spk')).length;
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
-  await page.fill('#ed-cust', 'Customer Tanpa Due'); await page.fill('#ed-due', ''); await page.fill('#ed-d-0-0', 'Item tanpa due'); await page.fill('#ed-q-0-0', '1'); await page.fill('#ed-u-0-0', 'Btg');
+  await page.fill('#ed-cust', 'Customer Tanpa Due'); await page.fill('#ed-due', ''); await teksBebas(page, 0, 0); await page.fill('#ed-d-0-0', 'Item tanpa due'); await page.fill('#ed-q-0-0', '1'); await page.fill('#ed-u-0-0', 'Btg');
   await page.click('#editor [data-act="ed-save"]:has-text("draft")'); await page.waitForTimeout(1500);
   const noDue = (await tab('spk')).find((s) => s.customer === 'Customer Tanpa Due');
   ok('B-013 SPK tanpa due tersimpan (due null)', (await tab('spk')).length === n + 1 && !!noDue && noDue.due === null);
