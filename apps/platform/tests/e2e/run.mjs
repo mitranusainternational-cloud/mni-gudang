@@ -25,6 +25,7 @@ import { runStokFlow } from './stok-flow.mjs';
 import { runBongkarMuat } from './bongkar-muat.mjs';
 import { runAmbilStok } from './ambil-stok.mjs';
 import { runGabungan } from './gabungan.mjs';
+import { runSpkAturan } from './spk-aturan.mjs';
 import { runKop } from './kop-dokumen.mjs';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173/';
@@ -34,7 +35,7 @@ const penjualanOff = false;
 
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['spkaturan', runSpkAturan], ['tampilan', runSweep]]) {
   if (only.length && !only.includes(name)) continue;
   if (name === 'penawaran' && penjualanOff) {
     console.log(`== ${name} ==\nDILEWATI: modul Penjualan disembunyikan (MODUL_PENJUALAN=false)\n`);
@@ -46,7 +47,7 @@ for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['aks
     console.log(`== ${name} ==\n${detail.join('\n')}\n${pass} PASS, ${fail} FAIL\n`);
     totalFail += fail;
   } catch (e) {
-    console.log(`== ${name} ==\nFAIL rangkaian berhenti karena galat: ${String(e && e.message || e).split('\n')[0]}\n0 PASS, 1 FAIL\n`);
+    console.log(`== ${name} ==\nFAIL rangkaian berhenti karena galat: ${String(e && e.message || e).split('\n').slice(0, 3).join(' | ')}\n0 PASS, 1 FAIL\n`);
     totalFail += 1;
   }
   await page.close();

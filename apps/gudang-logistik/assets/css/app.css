@@ -1329,3 +1329,6 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .sj-prev-tbl tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--dc,#1F3A6E) 4%,transparent)}
 .sj-prev-foot td{background:color-mix(in srgb,var(--dc,#1F3A6E) 14%,transparent)!important;color:var(--dc,#1F3A6E);font-weight:700}
 .kop-prev{border:1px dashed var(--border);border-radius:10px;padding:16px 18px;background:var(--card)}
+
+.ed-stk-s{font-size:11px;color:var(--muted);margin:4px 0}.ed-stk-s.ada{color:var(--ok,#15803d);font-weight:600}.ed-stk-s .btn{margin-left:6px;padding:2px 8px}
+.ar-t th.c,.ar-t td.c{text-align:center}.ar-t tr.ar-g td{background:var(--hover);font-weight:700;font-size:11px;letter-spacing:.04em}

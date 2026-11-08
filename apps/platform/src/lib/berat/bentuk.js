@@ -40,15 +40,45 @@ export function dimensiBentuk(katalog, keluarga, id) {
   return parameterBentuk(katalog, keluarga, id).filter((n) => URUT_DIM.includes(n)).sort((a, b) => URUT_DIM.indexOf(a) - URUT_DIM.indexOf(b)).map((n) => ({ k: n, label: NAMA_DIM[n] }));
 }
 
-/** Daftar bentuk untuk satu produk dalam satu keluarga: [{ id, kunci, nama, dim:[{k,label}], fullHole }]. */
-export function bentukUntukProduk(katalog, keluarga, produk) {
+/** Pengelompokan bentuk: STRAIGHT (batang lurus), FITTING (elbow, tee, cross, riser, reducer), COVER (tutup), AKSESORI (sisanya). */
+const FITTING = new Set(['ELBOW', 'TEE', 'CROSS', 'INSIDE', 'OUTSIDE', 'REDUCER']);
+export function kelompokBentuk(kunci) {
+  if (kunci === 'STRAIGHT') return 'STRAIGHT';
+  if (FITTING.has(kunci)) return 'FITTING';
+  if (String(kunci).startsWith('COVER_') && kunci !== 'COVER_CLAMP' && kunci !== 'COVER_CLAMP_HEAVY_DUTY') return 'COVER';
+  return 'AKSESORI';
+}
+/** Aturan bawaan section (standar lembar SPK MNI): CABLE TRAY / PERFORATED / LADDER hanya batang lurus; ACCS (Tray, Ladder, Duct) memuat
+ *  fitting (elbow, tee, cross, riser, reducer) dan aksesori; COVER TRAY memuat semua tutup. Diganti lewat Master Data (aturanSection). */
+export const ATURAN_DEFAULT = {
+  'CABLE TRAY': ['STRAIGHT'],
+  'PERFORATED CABLE TRAY': ['STRAIGHT'],
+  'CABLE LADDER': ['STRAIGHT'],
+  'COVER TRAY': ['@COVER'],
+  'ACCS TRAY': ['@FITTING', '@AKSESORI'],
+  'ACCS LADDER': ['@FITTING', '@AKSESORI'],
+  'ACCS DUCT': ['@FITTING', '@AKSESORI'],
+};
+export const PRODUK_BENTUK = Object.keys(ATURAN_DEFAULT);
+/** Apakah bentuk (kunci) boleh dipilih di section produk ini. aturan = { PRODUK: [kunci,...] } dari Master Data; produk yang tidak ada di aturan memakai bawaan. */
+export function bentukDiizinkan(produk, kunci, aturan) {
+  const p = String(produk || '').toUpperCase();
+  const khusus = aturan && Array.isArray(aturan[p]) ? aturan[p] : null;
+  if (khusus) return khusus.includes(kunci);
+  const d = ATURAN_DEFAULT[p];
+  if (!d) return false;
+  return d.includes(kunci) || d.includes('@' + kelompokBentuk(kunci));
+}
+const susun = (katalog, keluarga, b) => { const kunci = kunciBentuk(b.id, keluarga); return { id: b.id, kunci, nama: namaBentuk(kunci), kelompok: kelompokBentuk(kunci), dim: dimensiBentuk(katalog, keluarga, b.id), fullHole: !!(b.keluaran && b.keluaran.realFullHole) }; };
+/** Semua bentuk dalam satu keluarga tanpa saringan produk (untuk membaca baris lama dan tabel aturan). */
+export function bentukSemua(katalog, keluarga) {
   const fam = katalog && katalog.keluarga && katalog.keluarga[keluarga];
-  const grup = KELOMPOK_PRODUK[String(produk || '').toUpperCase()];
-  if (!fam || !grup) return [];
-  return fam.bentuk.map((b) => ({ b, kunci: kunciBentuk(b.id, keluarga) })).filter(({ kunci }) => {
-    const g = kunci.startsWith('COVER_') && kunci !== 'COVER_CLAMP' && kunci !== 'COVER_CLAMP_HEAVY_DUTY' ? 'COVER' : UTAMA.has(kunci) ? 'UTAMA' : 'AKSESORI';
-    return g === grup;
-  }).map(({ b, kunci }) => ({ id: b.id, kunci, nama: namaBentuk(kunci), dim: dimensiBentuk(katalog, keluarga, b.id), fullHole: !!(b.keluaran && b.keluaran.realFullHole) }));
+  return fam ? fam.bentuk.map((b) => susun(katalog, keluarga, b)) : [];
+}
+/** Daftar bentuk untuk satu produk dalam satu keluarga: [{ id, kunci, nama, kelompok, dim:[{k,label}], fullHole }]. */
+export function bentukUntukProduk(katalog, keluarga, produk, aturan) {
+  if (!PRODUK_BENTUK.includes(String(produk || '').toUpperCase())) return [];
+  return bentukSemua(katalog, keluarga).filter((x) => bentukDiizinkan(produk, x.kunci, aturan));
 }
 
 /** Teks deskripsi item dari pilihan: "Cable Tray W100xH50xL3000", "Cable Tray Elbow 90 W100xH50xR300", "Hanger Beam W100". */
@@ -56,7 +86,9 @@ export function namaItem(produk, kunci, dim, daftarDim) {
   const ukuran = (daftarDim || []).map((d) => (Number.isFinite(+dim[d.k]) && dim[d.k] !== '' && dim[d.k] != null ? d.label + (+dim[d.k]) : d.label + '?')).join('x');
   const utama = UTAMA.has(kunci);
   const bagian = [];
+  const dasarAccs = { 'ACCS TRAY': 'Cable Tray', 'ACCS LADDER': 'Cable Ladder', 'ACCS DUCT': 'Cable Duct' }[String(produk || '').toUpperCase()];
   if (!/^ACCS/i.test(produk)) bagian.push(produkJudul(produk));
+  else if (FITTING.has(kunci) && dasarAccs) bagian.push(dasarAccs); // fitting di section ACCS: nama tetap memuat jenis tray/ladder/duct (unik dan sama dengan penamaan lama)
   if (!(utama && kunci === 'STRAIGHT') && !(String(kunci).startsWith('COVER_') && kunci === 'COVER_STRAIGHT' && /^COVER/i.test(produk))) bagian.push(namaBentuk(kunci));
   if (ukuran) bagian.push(ukuran);
   return bagian.join(' ').replace(/\s+/g, ' ').trim();

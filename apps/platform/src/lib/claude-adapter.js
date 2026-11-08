@@ -562,6 +562,7 @@ const CLAUDE_SHIM = {
 import { hitungItem as _hitungItem, bacaSection as _bacaSection } from './berat/parser.js';
 import * as _bentuk from './berat/bentuk.js';
 let _katalogBerat = null;
+let _aturanSection = null;
 window.MNIBerat = {
   siap: () => !!_katalogBerat,
   setKatalog: (c) => { _katalogBerat = c; },
@@ -569,7 +570,14 @@ window.MNIBerat = {
   hitungItem: (o) => (_katalogBerat ? _hitungItem(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
   // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
   keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
-  bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk) : []),
+  // aturan section dari Master Data (setting.aturanSection); kosong = bawaan standar (berat/bentuk.js ATURAN_DEFAULT)
+  setAturan: (a) => { _aturanSection = a && typeof a === 'object' ? a : null; },
+  aturanBawaan: () => JSON.parse(JSON.stringify(_bentuk.ATURAN_DEFAULT)),
+  bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk, _aturanSection) : []),
+  bentukSemua: (keluarga) => (_katalogBerat ? _bentuk.bentukSemua(_katalogBerat, keluarga) : []),
+  produkBentuk: () => _bentuk.PRODUK_BENTUK.slice(),
+  diizinkan: (produk, kunci) => _bentuk.bentukDiizinkan(produk, kunci, _aturanSection),
+  keluargaDaftar: () => (_katalogBerat ? Object.keys(_katalogBerat.keluarga) : []),
   hitungBentuk: (o) => (_katalogBerat ? _bentuk.hitungBentuk(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
   namaItem: _bentuk.namaItem,
 };

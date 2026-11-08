@@ -42,6 +42,9 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 — Aturan section SPK sesuai standar dan stok di editor (T-220, lokal)
+Permintaan pemilik: isi section harus sesuai standar (ACCS memuat elbow, tee, dst; cover dan cable tray masing-masing) dan tidak tertanam di kode, serta pemakaian stok terlihat saat membuat SPK. Aturan kini data (Master Data › Aturan section), SPK lama aman, editor menampilkan status stok per baris. Bukti: `verified in browser` (mock, katalog sintetis) unit B-01..B-16 dan e2e `spkaturan` AR-01..AR-17 (peninjauan independen: 17 temuan, yang terbukti sudah diperbaiki). Belum: rute default fitting di ACCS (butuh keputusan pemilik), pencocokan stok fitting/aksesori, uji dengan katalog perusahaan dan Supabase.
+
 ### 2026-11-08 — Desain dokumen modern dan kop di Master Data (T-219, lokal)
 Kop (logo, nama, alamat, kontak, warna) dapat diatur di Master Data dan dipakai semua dokumen utama; PDF, Excel, dan pratinjau memakai tata letak bersih bertema dengan kode dan warna pembeda per jenis. Bukti: `verified in browser` (mock) suite `kopdokumen` KO-01..KO-10 (11 PASS), PDF dicek visual. Belum: PR, mutasi, kartu stok, penawaran cetak, dan lembar SPK memakai tema baru; Excel belum dibuka visual; belum diuji di Supabase.
 

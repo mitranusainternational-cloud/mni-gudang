@@ -39,4 +39,4 @@ Rancangan: `KOP()` membaca `master/setting.kop` (nama, a1, a2, kontak, warna, lo
 
 Perluasan: model `mvModel/prModel/ksModel` memakai mesin `docPdf/docXlsx`; cetak jendela memakai `printDocHtml`; penawaran memakai tema `pq` (PNW). Tombol PDF baru di daftar PR dan kartu stok. Kolom selisih/koreksi bertanda +/- di Excel.
 
-Batas yang jujur: logo disimpan inline di pengaturan (maks. sekitar 300 KB); lembar SPK mempertahankan format formulir MNI; dokumen PR, mutasi, kartu stok, dan penawaran belum diganti tata letaknya.
+Batas yang jujur: logo disimpan inline di pengaturan (maks. sekitar 300 KB); lembar SPK mempertahankan format formulir MNI; lembar SPK tetap berformat formulir MNI.

@@ -2130,12 +2130,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute'||k==='opsi'||k==='kop';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['opsi','Opsi SPK'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute'||k==='opsi'||k==='kop'||k==='aturan';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2310,6 +2310,24 @@ async function opsiSimpan(reset){const baca=k=>{const e=document.getElementById(
   spkOpsi={p,t:tt,tb,f:ff,dist,lead,signProc:(document.getElementById('op-signProc').value||'').trim()||OPSI_DEF.signProc,signPpic:(document.getElementById('op-signPpic').value||'').trim()||OPSI_DEF.signPpic}}
  try{if(byId('master','setting'))await updDoc('master','setting',{spkOpsi});else{need();await DB.doc('master/setting').set({...cur,spkOpsi})}toast(reset?'Opsi SPK dipulihkan ke bawaan':'Opsi SPK disimpan')}catch(e){toast(e.message||String(e))}
  renderBody()}
+/* ---------- Master Data: aturan section (bentuk apa yang boleh dipilih di section produk mana) ---------- */
+const ARATUR_KEL=[['STRAIGHT','Batang lurus'],['FITTING','Fitting (elbow, tee, cross, riser, reducer)'],['COVER','Tutup (cover)'],['AKSESORI','Aksesori dan pendukung']];
+function aturanBentuk(){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDaftar)return null;const peta={};
+ for(const f of B.keluargaDaftar())for(const x of B.bentukSemua(f))if(!peta[x.kunci])peta[x.kunci]={kunci:x.kunci,nama:x.nama,kelompok:x.kelompok};
+ return Object.values(peta)}
+function aturanTab(){const B=window.MNIBerat,ok=canManage();const sem=aturanBentuk();
+ if(!sem)return `<section class="panel"><div class="pbody note">Aturan section memakai katalog berat. Pasang katalog di Master Data › Katalog berat lebih dulu.</div></section>`;
+ B.setAturan((byId('master','setting')||{}).aturanSection);const prods=B.produkBentuk(),cust=!!((byId('master','setting')||{}).aturanSection);
+ const rows=ARATUR_KEL.map(([kel,jud])=>{const xs=sem.filter(x=>x.kelompok===kel);if(!xs.length)return '';
+  return `<tr class="ar-g"><td colspan="${prods.length+1}">${esc(jud)}</td></tr>`+xs.map(x=>`<tr><td>${esc(x.nama)}</td>${prods.map(p=>`<td class="c"><input type="checkbox" data-ar="${esc(p)}|${esc(x.kunci)}" ${B.diizinkan(p,x.kunci)?'checked':''} ${ok?'':'disabled'} aria-label="${esc(x.nama)} di ${esc(p)}"></td>`).join('')}</tr>`).join('')}).join('');
+ return `<section class="panel"><div class="pbody note">Menentukan bentuk apa yang boleh dipilih di tiap section SPK. Standar MNI: <b>Cable Tray, Perforated, dan Ladder</b> hanya batang lurus; <b>ACCS</b> (Tray, Ladder, Duct) memuat fitting dan aksesori; <b>Cover Tray</b> memuat semua tutup. Baris SPK lama yang bentuknya di luar aturan tetap terbaca dan hanya diberi tanda. ${cust?'<b>Aturan kustom aktif.</b>':'Memakai standar.'}</div>
+ <div class="pbody"><div class="tbl-wrap"><table class="lines ar-t"><thead><tr><th>Bentuk</th>${prods.map(p=>`<th class="c">${esc(p)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>
+ <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?'<button class="btn primary" data-act="aturansimpan">Simpan aturan</button><button class="btn ghost" data-act="aturanreset">Pulihkan standar</button>':'<span class="note">Hanya admin yang dapat mengubah aturan.</span>'}</div></section>`}
+async function aturanSimpan(reset){let aturanSection=null;
+ if(!reset){aturanSection={};document.querySelectorAll('input[data-ar]').forEach(c=>{const [p,k]=c.dataset.ar.split('|');(aturanSection[p]=aturanSection[p]||[]);if(c.checked)aturanSection[p].push(k)});const kosong=Object.keys(aturanSection).filter(p=>!aturanSection[p].length);kosong.forEach(p=>{delete aturanSection[p]});if(kosong.length)toast('Produk tanpa bentuk dikembalikan ke standar: '+kosong.join(', '))}
+ const cur={...(byId('master','setting')||{})};delete cur._id;
+ try{if(byId('master','setting'))await updDoc('master','setting',{aturanSection});else{need();await DB.doc('master/setting').set({...cur,aturanSection})}toast(reset?'Aturan section dipulihkan ke standar':'Aturan section disimpan')}catch(e){toast(e.message||String(e))}
+ renderBody()}
 /* ---------- Master Data: kop dokumen (logo, nama, alamat, kontak, warna) ---------- */
 let KOP_PEND=null;
 function kopTab(){const k=KOP(),ok=canManage();KOP_PEND=null;
@@ -2346,7 +2364,7 @@ document.addEventListener('change',async e=>{const el=e.target;if(!el||el.id!=='
  try{KOP_PEND=await kopBacaLogo(el.files[0]);kopPrevRender();toast('Logo siap. Tekan Simpan kop untuk memakainya.')}catch(err){toast(err.message||String(err));el.value=''}});
 /* ---------- Master Data: rute produksi per produk dan per bentuk ---------- */
 const RUTE_BENTUK_FAM='STU';
-function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
+function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
 function ruteBarisHtml(kunci,judul,sub,rute,hapus){const wcs=wcInternal();const ada=new Set(rute||[]);const lain=(rute||[]).filter(w=>!wcs.some(x=>x.nama===w));const ok=canManage();
  return `<tr data-rk="${esc(kunci)}"><td><b>${esc(judul)}</b>${sub?`<div class="note" style="font-size:12px">${esc(sub)}</div>`:''}</td><td><div class="rute-wcs">${wcs.map(w=>`<label class="ck rute-ck"><input type="checkbox" data-act="ruteck" data-rk="${esc(kunci)}" value="${esc(w.nama)}" ${ada.has(w.nama)?'checked':''} ${ok?'':'disabled'}> ${esc(w.nama)}</label>`).join('')}${lain.map(w=>`<span class="chip warn" title="Tidak ada di daftar Work Centre aktif">${esc(w)}</span>`).join('')}</div></td><td class="muted rute-urut">${esc((rute||[]).join(' → ')||'–')}</td><td class="acts-r">${hapus&&ok?`<button class="btn sm ghost danger" data-act="rutedel" data-rk="${esc(kunci)}">${ic('trash')}</button>`:''}</td></tr>`}
 function ruteTab(){const peta=ruteStd();const wcs=wcInternal();
@@ -4349,20 +4367,21 @@ const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...O
 const HB={get p(){return OPSI().p},get t(){return OPSI().t},get tb(){return OPSI().tb},get f(){return OPSI().f}};
 function parseH(h){const H=String(h||'').toUpperCase();const o={p:'',t:'',tb:'',f:''};o.p=[...HB.p].sort((a,b)=>b.length-a.length).find(x=>H.startsWith(x))||'';o.t=(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||'';const tk=thkOf(H);o.tb=HB.tb.find(x=>parseFloat(x)===parseFloat(tk))||'';o.f=HB.f.find(x=>H.endsWith(x))||'';return o}
 const composeH=o=>[o.p,o.t?'TYPE '+o.t:'',o.tb,o.f].filter(Boolean).join(' ');
+const coverOf=h=>String(h||'').replace(/^(PERFORATED CABLE TRAY|CABLE TRAY|CABLE LADDER|CABLE DUCT|ACCS TRAY|ACCS LADDER|ACCS DUCT|SUPPORT TRAY|WIREMESH CABLE TRAY)/,'COVER TRAY');
 const accsOf=h=>String(h||'').replace(/^PERFORATED CABLE TRAY|^CABLE TRAY|^COVER TRAY/,'ACCS TRAY').replace(/^CABLE LADDER/,'ACCS LADDER').replace(/^CABLE DUCT/,'ACCS DUCT');
 const nextNo=()=>Math.max(0,...S.spk.map(s=>+s.no||0))+1;
 const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 /* ----- input item terstruktur: bentuk dan ukuran per section, nama dan berat otomatis dari kalkulator ----- */
 const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
 const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
-function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;const shapes=B.bentukProduk(fam,hb.p);return shapes.length?{fam,prod:hb.p,shapes}:null}
+function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
 /* Perforated Cable Tray otomatis Full hole; produk lain Bawah. Pilihan manual pengguna (lubangManual) tidak diganti oleh bawaan. */
 const lubangBawaan=cap=>cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
-function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}
+function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&cap.shapes.length&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}
 const dimKosong=(sh,l)=>sh.dim.every(d=>l.dim==null||l.dim[d.k]===''||l.dim[d.k]==null);
 /* hitung nama dan berat satu baris terstruktur; berat manual (diketik pengguna) tidak ditimpa */
 function edHitungBaris(s,l){
- const cap=edCap(s);if(!l.sb||!cap)return null;const sh=cap.shapes.find(x=>x.id===l.sb);if(!sh)return null;
+ const cap=edCap(s);if(!l.sb||!cap)return null;const sh=cap.all.find(x=>x.id===l.sb);if(!sh)return null;
  l.dim=l.dim||{};if(!sh.fullHole)l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);
  l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim)+(l.lubang==='full'&&sh.fullHole?' Full Hole':'');
  const dv=derive(s.h);const h=window.MNIBerat.hitungBentuk({keluarga:cap.fam,bentuk:l.sb,dim:l.dim,tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});
@@ -4374,8 +4393,9 @@ function edHitungBaris(s,l){
 function edSesuaikanBaris(s){const cap=edCap(s);let k=0;
  for(const l of s.lines){if(l.sb===undefined||l.sb==='')continue;
   if(!cap){l.sb='';continue}
-  let sh=cap.shapes.find(x=>x.id===l.sb);
-  if(!sh){sh=cap.shapes.find(x=>x.kunci===kunciDariId(l.sb));if(!sh){if(AKSESORI_PRODUK.includes(cap.prod)){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}sh=cap.shapes[0]}l.sb=sh.id}
+  let sh=cap.all.find(x=>x.id===l.sb);
+  if(!sh){sh=cap.all.find(x=>x.kunci===kunciDariId(l.sb));if(!sh){if(AKSESORI_PRODUK.includes(cap.prod)||!cap.shapes.length){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}sh=cap.shapes[0]}l.sb=sh.id}
+  if(!cap.shapes.some(x=>x.id===sh.id)){const eq=sh.kunci==='STRAIGHT'?'COVER_STRAIGHT':sh.kunci==='COVER_STRAIGHT'?'STRAIGHT':'';const t2=eq&&cap.shapes.find(x=>x.kunci===eq);if(t2){sh=t2;if(l.fg){l.fg='';l.ambil=''}}else if(AKSESORI_PRODUK.includes(cap.prod)&&dimKosong(sh,l)&&(l.q===''||l.q==null)){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}l.sb=sh.id}
   if(!sh.fullHole)l.lubang='standar';else if(!l.lubangManual)l.lubang=lubangBawaan(cap);
   const lama=l.w;edHitungBaris(s,l);if(lama!==l.w)k++}
  return k}
@@ -4424,10 +4444,11 @@ function edVendorHtml(s,si,li,l){const P=PXL();if(!P||!P.vendorUntuk)return '';c
  const bawaan=fin?'ke vendor '+fin:(P.perluFinishing(s.h)?'finishing belum jelas':'tanpa vendor');
  const peringatan=P.perluFinishing(s.h)&&l.vv!=='tidak'?'<div class="ed-galat" id="ed-vw-'+si+'-'+li+'">Baja tanpa finishing di judul section: vendor tidak terbentuk. Pilih finishing atau tandai tanpa vendor.</div>':'';
  return '<div class="ed-vv"><select class="sel" data-f="vv" id="ed-vv-'+si+'-'+li+'" aria-label="Vendor"><option value="">Ikut aturan: '+esc(bawaan)+'</option><option value="ya" '+(l.vv==='ya'?'selected':'')+'>Wajib ke vendor</option><option value="tidak" '+(l.vv==='tidak'?'selected':'')+'>Tanpa vendor</option></select></div>'+peringatan}
+function edSaranSection(s,sh){const B=window.MNIBerat;try{const fam=B.keluargaDari(s.h),H=String(s.h||'').toUpperCase(),kata=/LADDER/.test(H)?'LADDER':/DUCT/.test(H)?'DUCT':'TRAY';const hit=B.produkBentuk().filter(p=>B.bentukProduk(fam,p).some(x=>x.kunci===sh.kunci));return hit.find(p=>p.includes(kata))||hit[0]||''}catch(_){}return ''}
 function edKolomItem(s,si,li,l,cap,hb){
- const sh=cap&&l.sb?cap.shapes.find(x=>x.id===l.sb):null;
- const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+'</select>';
- const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>':'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
+ const sh=cap&&l.sb?cap.all.find(x=>x.id===l.sb):null;const ada=!sh||cap.shapes.some(x=>x.id===sh.id);
+ const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+(ada?'':'<option value="'+sh.id+'" selected>'+esc(sh.nama)+' (di luar aturan)</option>')+'</select>';
+ const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>'+(ada?'':'<div class="ed-galat" id="ed-lr-'+si+'-'+li+'">'+esc(sh.nama)+' di luar aturan section '+esc(cap.prod)+(edSaranSection(s,sh)?'; biasanya di section '+esc(edSaranSection(s,sh)):'')+'. Tetap bisa disimpan.</div>'):'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
  const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span>'+edVendorHtml(s,si,li,l)+'</td>';
  const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
  return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
@@ -4435,12 +4456,36 @@ function edKolomItem(s,si,li,l,cap,hb){
 /* Sel "Dari stok": pilih produk gudang barang jadi dan jumlah yang diambil dari stok (sisanya diproduksi). */
 function edStokHint(l,res){if(!l.fg)return '';const tersedia=(calc().stock.fg[l.fg]||0)-((res||fgResMap(ED&&ED.id))[l.fg]||0);const am=Math.max(0,+l.ambil||0),q=+l.q||0;
  return 'tersedia '+n(tersedia)+(am>0?' · produksi '+n(Math.max(0,q-am)):'')+(am>q&&q>0?' · melebihi qty':am>tersedia?' · melebihi stok':'')}
-function edStokHtml(si,li,l,res){
+const finKode=x=>{const u=String(x||'').toUpperCase();return /ELECTRO|ELG/.test(u)?'ELG':/HOT ?DIP|HDG/.test(u)?'HDG':/POWDER|PDC/.test(u)?'PDC':/NON/.test(u)?'NON':/316/.test(u)?'SS316':/304/.test(u)?'SS304':/ALU/.test(u)?'ALU':u.trim()};
+/* produk gudang barang jadi yang cocok dengan satu baris SPK: nama item sama persis, atau (baris terstruktur Straight / Cover Straight) produk, type, tebal, finishing, W, H, dan L sama */
+function fgCocokBaris(s,l){const hb=parseH(s.h),dim=l.dim||{},w=+dim.w,h=+dim.h,L=+dim.l,nm=String(l.d||'').trim(),out=[];
+ for(const r of S.fg){if(r.aktif===false)continue;
+  if(nm&&fgSpkDesc(r)===nm){out.push(r);continue}
+  if(!l.sb||!(w>0)||!(h>0)||!/^(STRAIGHT|COVER_STRAIGHT)/.test(kunciDariId(l.sb))||!(L>0))continue;
+  const m=String(r.ukuran||'').match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);if(!m||+m[1].replace(',','.')!==w||+m[2].replace(',','.')!==h||+r.panjang!==L)continue;
+  if(r.type&&hb.t&&String(r.type).toUpperCase()!==hb.t)continue;
+  if(hb.tb&&r.tebal&&parseFloat(r.tebal)!==parseFloat(hb.tb))continue;
+  if(hb.f&&r.finishing&&finKode(r.finishing)!==finKode(hb.f))continue;
+  if(hb.p&&r.kategori&&String(r.kategori).toUpperCase()!==hb.p)continue;
+  out.push(r)}
+ return out}
+function fgCocokUrut(s,l,res){const rs=res||fgResMap(ED&&ED.id);const tsd=r=>(calc().stock.fg[r._id]||0)-(rs[r._id]||0);return fgCocokBaris(s,l).map(r=>({r,t:tsd(r)})).sort((a,b)=>b.t-a.t).map(x=>x.r)}
+function edStokStatus(si,li,l,res,s){const rs=res||fgResMap(ED&&ED.id);const tsd=r=>(calc().stock.fg[r._id]||0)-(rs[r._id]||0);const cocok=s&&!l.fg?fgCocokUrut(s,l,rs):[];
+ const k=l.sb?kunciDariId(l.sb):'',lurus=/^(STRAIGHT|COVER_STRAIGHT)/.test(k),kosong=!String(l.d||'').trim();let inner='',ada=false;
+ if(!l.fg){
+  if(cocok.length){const c=cocok[0],t=tsd(c);if(t>0){ada=true;inner='Stok cocok: '+esc(fgLabel(c))+' · tersedia '+n(t)+' <button type="button" class="btn sm" data-act="ed-stok-pakai" data-s="'+si+'" data-l="'+li+'" aria-label="Pakai stok untuk baris '+(li+1)+' section '+(si+1)+'">Pakai stok</button>'}else inner='Stok cocok: '+esc(fgLabel(c))+' · tersedia '+n(Math.max(0,t))+' (habis atau dicadangkan) · produksi semua'}
+  else if(l.sb&&!lurus)inner='Fitting/aksesori: stok tidak dicocokkan otomatis; pilih produk manual bila ada stok'
+  else if(kosong)inner='Isi ukuran untuk mencocokkan stok'
+  else inner='Tidak ada stok cocok · produksi semua'}
+ return '<div class="ed-stk-s'+(ada?' ada':'')+'" id="ed-ss-'+si+'-'+li+'">'+inner+'</div>'}
+function edStokRefresh(si,li){const el=$('#ed-ss-'+si+'-'+li);if(!el||!ED)return;const s=ED.sections[si],l=s.lines[li];if(!s||!l)return;const w=document.createElement('div');w.innerHTML=edStokStatus(si,li,l,null,s);if(el.outerHTML!==w.firstChild.outerHTML)el.replaceWith(w.firstChild)}
+function edStokHtml(si,li,l,res,s){
  if(ED&&ED.stokReq)return '<td class="c-stk"></td>';
- const nm=String(l.d||'').trim(),fgs=S.fg.filter(r=>r.aktif!==false||r._id===l.fg),cocok=nm?fgs.filter(r=>fgSpkDesc(r)===nm):[];
+ const fgs=S.fg.filter(r=>r.aktif!==false||r._id===l.fg),cocok=s?fgCocokUrut(s,l,res):[];
+ const status=edStokStatus(si,li,l,res,s);
  const op=r=>'<option value="'+r._id+'" '+(r._id===l.fg?'selected':'')+'>'+esc(fgLabel(r))+' · tersedia '+n((calc().stock.fg[r._id]||0)-(res[r._id]||0))+'</option>';
- return '<td class="c-stk"><select class="sel" data-f="fg" id="ed-fg-'+si+'-'+li+'" aria-label="Produk di gudang barang jadi"><option value="">Produksi semua</option>'+(cocok.length?'<optgroup label="Cocok dengan nama item">'+cocok.map(op).join('')+'</optgroup>':'')+(fgs.length-cocok.length?'<optgroup label="Semua produk">'+fgs.filter(r=>!cocok.includes(r)).map(op).join('')+'</optgroup>':'')+'</select>'
-  +'<input class="inp num" data-f="ambil" type="number" min="0" step="any" inputmode="decimal" placeholder="Ambil dari stok" id="ed-am-'+si+'-'+li+'" value="'+esc(l.ambil==null?'':l.ambil)+'" '+(l.fg?'':'disabled')+'><div class="note ed-stk-h" id="ed-sh-'+si+'-'+li+'">'+esc(edStokHint(l,res))+'</div></td>';
+ return '<td class="c-stk"><select class="sel" data-f="fg" id="ed-fg-'+si+'-'+li+'" aria-label="Produk di gudang barang jadi"><option value="">Produksi semua</option>'+(cocok.length?'<optgroup label="Cocok dengan item ini">'+cocok.map(op).join('')+'</optgroup>':'')+(fgs.length-cocok.length?'<optgroup label="Semua produk">'+fgs.filter(r=>!cocok.includes(r)).map(op).join('')+'</optgroup>':'')+'</select>'
+  +status+'<input class="inp num" data-f="ambil" type="number" min="0" step="any" inputmode="decimal" placeholder="Ambil dari stok" id="ed-am-'+si+'-'+li+'" value="'+esc(l.ambil==null?'':l.ambil)+'" '+(l.fg?'':'disabled')+'><div class="note ed-stk-h" id="ed-sh-'+si+'-'+li+'">'+esc(edStokHint(l,res))+'</div></td>';
 }
 function edSecHtml(s,si,startNo){
  const hb=parseH(s.h);let no=startNo;const cap=edCap(s);const RES=fgResMap(ED&&ED.id);
@@ -4449,7 +4494,7 @@ function edSecHtml(s,si,startNo){
   <td class="c-ket"><input class="inp red" data-f="ket" value="${esc(l.ket)}" placeholder="opsional" id="ed-k-${si}-${li}"></td>
   <td class="c-q"><input class="inp num" data-f="q" type="number" min="0" step="any" value="${esc(l.q)}" id="ed-q-${si}-${li}" inputmode="decimal"></td>
   <td class="c-u"><input class="inp" data-f="u" value="${esc(l.u)}" list="dl-sat" id="ed-u-${si}-${li}"></td>
-  ${edStokHtml(si,li,l,RES)}
+  ${edStokHtml(si,li,l,RES,s)}
   <td class="c-w"><input class="inp num" data-f="w" type="number" min="0" step="any" value="${esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal">${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}</td>
   <td class="c-bi num" data-bi>${bi?n(bi):'–'}</td>
   <td class="c-cat"><input class="inp" data-f="catatan" value="${esc(l.catatan)}" id="ed-c-${si}-${li}"></td>
@@ -4486,7 +4531,7 @@ function renderEditor(){
   </div><p class="note">Estimasi kirim dihitung dari tanggal + lead time hari kerja (Senin–Jumat). Ubah manual bila perlu.</p></section>
   <section class="ecard"><div class="ecard-h"><h4>Item pekerjaan</h4><span class="note">Tips: copy baris dari Excel SPK lama (kolom No/Description/Qty/Satuan/Berat) lalu paste di kolom Description. Judul section kuning ikut terbaca. Pilihan Description, satuan, dan berat diambil dari <button type="button" class="linkbtn" data-act="katgo">Master Data › Item SPK</button>.</span></div>
    <div id="ed-secs" class="esecs">${secs}</div>
-   <div class="ed-add"><button type="button" class="btn sm" data-act="ed-addsec">${ic('plus')}Section</button><button type="button" class="btn sm" data-act="ed-addacc">${ic('plus')}Section ACCS</button></div></section>
+   <div class="ed-add"><button type="button" class="btn sm" data-act="ed-addsec">${ic('plus')}Section</button><button type="button" class="btn sm" data-act="ed-addacc">${ic('plus')}Section ACCS</button><button type="button" class="btn sm" data-act="ed-addcov">${ic('plus')}Section COVER</button></div></section>
   <section class="ecard"><h4>Catatan &amp; distribusi</h4><div class="egrid">
    <label class="fld span2"><span>Note ${e.noteAuto?'<em class="auto">otomatis</em>':''}</span><input class="inp" data-h="note" id="ed-note" value="${esc(e.note)}"></label>
    <label class="fld"><span>Procurement / Estimator</span><input class="inp" data-h="signProc" id="ed-sp" value="${esc(e.signProc)}"></label>
@@ -4541,6 +4586,7 @@ function edInput(e){
  if(L.sb&&f==='q'){edBarisBerubah(tr,si,li,null)}
  if(f==='q'&&L.fg){const h=$('#ed-sh-'+si+'-'+li);if(h)h.textContent=edStokHint(L)}
  if(f==='w'){L.wsrc=t.value===''?'':'manual';wTag(tr,L)}
+ if(f==='d')edStokRefresh(si,li);
  if(f==='d'&&e.type==='change'){const k=KAT();
   if(!L.w||L.wsrc==='kalkulator'){const wi=weightInfo(L.d,ED.sections[si].h);if(wi&&wi.ok){L.w=Math.round(wi.beratSPK*1000)/1000;L.wsrc='kalkulator';tr.querySelector('[data-f=w]').value=L.w;wTag(tr,L);if(wi.catatan&&wi.catatan.length)toast('Berat dari kalkulator · '+wi.catatan.join('; '))}else if(L.wsrc==='kalkulator'){L.w='';L.wsrc='';tr.querySelector('[data-f=w]').value='';wTag(tr,L)}}
   if(!L.w){const w=beratOf(L.d,ED.sections[si].h);if(w){L.w=w;tr.querySelector('[data-f=w]').value=w}}if(k.satuan&&k.satuan[L.d]){L.u=k.satuan[L.d];tr.querySelector('[data-f=u]').value=L.u}/* fallback: fill satuan & berat from SPK history if not in master katalog */if(!L.u||!L.w){const hi=katIndex().arr.find(x=>x.d===L.d);if(hi){if(!L.u&&hi.u){L.u=hi.u;const uf=tr.querySelector('[data-f=u]');if(uf)uf.value=hi.u}if(!L.w&&hi.w&&hi.w['–']){L.w=hi.w['–'];const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=hi.w['–']}}}/* final fallback: hitung dari formula Excel weightCalc */if(!L.w){const wc=weightCalc(L.d,ED.sections[si].h);if(wc){L.w=wc;const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=wc}}}
@@ -4551,7 +4597,7 @@ function edInput(e){
 function edBarisBerubah(tr,si,li,fokusDim){
  const s=ED.sections[si],L=s.lines[li];edHitungBaris(s,L);
  const nm=$('#ed-nm-'+si+'-'+li);if(nm)nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>';
- const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';
+ const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';edStokRefresh(si,li);
  const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=L.w===''?'':L.w;wTag(tr,L);
  const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';renderTotals();
  /* baris terakhir mulai diisi: sediakan baris berikutnya */
@@ -4583,7 +4629,7 @@ async function saveEditor(mode){
  const e=ED,err=$('#ed-err');err.textContent='';
  try{need('spk');
   const no=parseInt(e.no);if(!no)throw new Error('Isi No SPK.');if(!String(e.customer).trim())throw new Error('Isi nama customer.');e.customer=cleanName(e.customer);{const sim=similarTo('customer',e.customer);if(sim){e.customer=sim.nama;const ci=$('#ed-cust');if(ci)ci.value=sim.nama;throw new Error(`Customer disamakan ke "${sim.nama}" (sudah terdaftar). Klik simpan lagi.`)}}if(!e.tgl)throw new Error('Isi tanggal SPK.');
-  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.shapes.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.fg?{fg:l.fg}:{}),...(!e.stokReq&&l.fg&&num0(l.ambil)>0?{ambil:num0(l.ambil)}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
+  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.all.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.fg?{fg:l.fg}:{}),...(!e.stokReq&&l.fg&&num0(l.ambil)>0?{ambil:num0(l.ambil)}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
   if(!items.length)throw new Error('Tambahkan minimal satu item.');
   if(!e.stokReq){const per={};items.forEach(i=>{if(i.ambil>0){if(i.ambil>i.q)throw new Error(`"${i.d}": jumlah dari stok (${n(i.ambil)}) melebihi qty order (${n(i.q)}).`);per[i.fg]=(per[i.fg]||0)+i.ambil}});
    const res=fgResMap(e.id),klr=e.id?fgKeluarMap():{};
@@ -5762,6 +5808,8 @@ document.addEventListener('click',async e=>{
   case 'ed-addline':ED.sections[+ds.s].lines.push(lineBaru(ED.sections[+ds.s].h));rerenderSecs();{const x=$(`#ed-d-${ds.s}-${ED.sections[+ds.s].lines.length-1}`);x&&x.focus()}break;
   case 'ed-delline':{const L=ED.sections[+ds.s].lines;L.splice(+ds.l,1);if(!L.length)L.push(lineBaru(ED.sections[+ds.s].h));EDDIRTY=true;rerenderSecs();break}
   case 'ed-addsec':ED.sections.push({h:ED.sections[ED.sections.length-1].h,lines:[lineBaru(ED.sections[ED.sections.length-1].h),lineBaru(ED.sections[ED.sections.length-1].h)]});EDDIRTY=true;rerenderSecs();break;
+  case 'ed-stok-pakai':{const sc=ED.sections[+ds.s],L=sc.lines[+ds.l],c=fgCocokUrut(sc,L)[0];if(c){const ts=(calc().stock.fg[c._id]||0)-(fgResMap(ED.id)[c._id]||0),q=+L.q||0;if(ts<=0){toast('Stok tersedia 0 (habis atau dicadangkan SPK lain); tidak bisa dipakai.');break}L.fg=c._id;L.ambil=Math.max(0,Math.min(q>0?q:ts,ts))||'';EDDIRTY=true;rerenderSecs()}break}
+  case 'ed-addcov':{const hh=coverOf(ED.sections[ED.sections.length-1].h);ED.sections.push({h:hh,lines:[lineBaru(hh),lineBaru(hh)]});EDDIRTY=true;rerenderSecs();break}
   case 'ed-addacc':ED.sections.push({h:accsOf(ED.sections[ED.sections.length-1].h),lines:[lineBaru(accsOf(ED.sections[ED.sections.length-1].h)),lineBaru(accsOf(ED.sections[ED.sections.length-1].h))]});EDDIRTY=true;rerenderSecs();break;
   case 'ed-delsec':if(ED.sections.length>1){ED.sections.splice(+ds.s,1);EDDIRTY=true;edAuto();edSyncHeader();rerenderSecs()}break;
   case 'ed-up':case 'ed-down':{const i=+ds.s,j=a==='ed-up'?i-1:i+1;if(j>=0&&j<ED.sections.length){[ED.sections[i],ED.sections[j]]=[ED.sections[j],ED.sections[i]];EDDIRTY=true;rerenderSecs()}break}
@@ -5834,7 +5882,7 @@ document.addEventListener('click',async e=>{
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
   case 'ruteck':await ruteCentang(el);break;
-  case 'opsisimpan':await opsiSimpan(false);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;
+  case 'opsisimpan':await opsiSimpan(false);break;case 'aturansimpan':await aturanSimpan(false);break;case 'aturanreset':if(confirm('Pulihkan aturan section ke standar MNI?'))await aturanSimpan(true);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;
   case 'opsireset':if(confirm('Pulihkan semua opsi SPK ke bawaan?'))await opsiSimpan(true);break;
   case 'ruteadd':await ruteTambah();break;
   case 'rutedel':await ruteHapus(ds.rk);break;
