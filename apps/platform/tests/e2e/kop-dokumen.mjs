@@ -70,6 +70,39 @@ export async function runKop(page, base) {
     await page.click('[data-act="kopreset"]'); await wait(1200);
     const rs = await page.evaluate(() => { const k = KOP(); return { nama: k.nama, custom: k.custom, a1: k.a1, warna: k.warna }; });
     ok('KO-10 pulihkan bawaan: nama, alamat, warna, dan logo kembali ke semula', /MITRA NUSA/.test(rs.nama) && !rs.custom && /Gravitas/.test(rs.a1) && rs.warna === '#1F3A6E', JSON.stringify(rs));
+
+    // ---- dokumen gudang: mutasi, PR, kartu stok, lembar opname, penawaran ----
+    const gd = await page.evaluate(async () => {
+      const out = {}; const X = await loadExcelJS(); const rd = async (b) => { const wb = new X.Workbook(); await wb.xlsx.load(b); return wb.worksheets[0]; };
+      const jenisList = ['masuk', 'keluar', 'opname', 'koreksi'];
+      out.mv = [];
+      for (const j of jenisList) {
+        const d = { tgl: '2026-11-08', kode: 'MV-' + j, jenis: j, title: 'BUKTI UJI ' + j.toUpperCase(), meta: [['No dokumen', 'x'], ['Tanggal', 'y'], ['No SPK', '1001']], cols: [['Material', 'l'], ['Ukuran (t×l×p mm)', 'l'], ['Qty', 'r'], ['Selisih', 'r', 1]], body: [['SPHC 2mm', '1219x2438', 5, -3], ['SPHC 1.6', '1219x2438', 2, 4]], tot: ['TOTAL', '', 7, 1], signs: ['A', 'B', 'C'], ket: 'uji' };
+        const m = mvModel(d); const pdf = await docPdf({ ...m, names: ['X', '', 'Z'] }); const xl = await docXlsx(m); const ws = await rd(xl);
+        let fmtNeg = null, metaHasNo = false; ws.eachRow((row) => row.eachCell((c) => { if (c.value === -3) fmtNeg = c.numFmt; if (c.value === 'NO. DOKUMEN   MV-' + j) metaHasNo = true; }));
+        out.mv.push({ j, kind: m.kind, k: ws.getCell('A6').value, pdf: pdf.length > 4000, fmtNeg, metaHasNo, metaN: m.meta.length });
+      }
+      // cetak jendela bertema (tanpa popup nyata)
+      const wo = window.open; let html = ''; window.open = () => ({ document: { write: (s) => { html = s; }, close() {} } });
+      printDocHtml(mvModel({ tgl: '2026-11-08', kode: 'MV-keluar', jenis: 'keluar', title: 'BUKTI PENGELUARAN BAHAN BAKU', meta: [['No SPK', '1001']], cols: [['Material', 'l'], ['Qty', 'r']], body: [['SPHC 2mm', 5]], tot: ['TOTAL', 5], signs: ['A', 'B'], ket: 'uji <b>x</b>' }), ['Budi', '']);
+      window.open = wo;
+      out.print = { txt: html.replace(/<style[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), th: /--dc:#B91C1C/.test(html), esc: !/uji <b>x/.test(html) };
+      const rm = S.rm[0];
+      const ks = ksModel(rm._id); const ksPdf = await docPdf(ks), ksXl = await docXlsx(ks);
+      out.ks = { kind: ks.kind, land: ks.landscape, rows: ks.tables[0].rows.length, pdf: ksPdf.length > 4000, xl: ksXl.length > 2000, code: (await rd(ksXl)).getCell('A6').value };
+      const pr = prModel({ noPR: 'PR/UJI/1', tgl: '2026-11-08', butuh: '2026-11-10', supplier: 'Supplier Uji', gudang: 'rm', items: [{ item: rm._id, q: 3 }] });
+      const prPdf = await docPdf(pr), prXl = await docXlsx(pr);
+      out.pr = { kind: pr.kind, pdf: prPdf.length > 4000, code: (await rd(prXl)).getCell('A6').value, tot: pr.tables[0].foot[3] };
+      const sp0 = S.sp && S.sp[0];
+      if (sp0) { const ps = prModel({ noPR: 'PR/UJI/2', tgl: '2026-11-08', gudang: 'sp', items: [{ item: sp0._id, q: 2 }] }); out.prsp = { title: ps.title, pdf: (await docPdf(ps)).length > 4000, xl: (await docXlsx(ps)).length > 2000 }; }
+      out.doct = (() => { const v = Object.values(DOCT); return { n: v.length, c: new Set(v.map((x) => x.c)).size, k: new Set(v.map((x) => x.k)).size }; })();
+      return out;
+    });
+    ok('KO-11 dokumen mutasi (4 jenis): PDF dan Excel jadi, kode dan warna per jenis, kolom selisih bertanda +/- di Excel', gd.mv.length === 4 && gd.mv.every((x) => x.pdf && x.metaHasNo && x.fmtNeg && /\+/.test(x.fmtNeg)) && gd.mv.map((x) => x.k).join() === 'IN,OUT,OPN,KOR' && gd.mv.every((x) => x.metaN === 1), JSON.stringify(gd.mv).slice(0, 220));
+    ok('KO-12 cetak jendela bertema: judul, isi, nama penanda tangan ( Budi ) dan ( ____________ ) tetap, markup di-escape, warna jenis OUT', /BUKTI PENGELUARAN BAHAN BAKU/.test(gd.print.txt) && /\( Budi \)/.test(gd.print.txt) && /\( ____________ \)/.test(gd.print.txt) && gd.print.th && gd.print.esc, gd.print.txt.slice(0, 100));
+    ok('KO-13 kartu stok bahan baku: model landscape dengan baris saldo, PDF dan Excel jadi, kode KS', gd.ks.kind === 'ks' && gd.ks.land && gd.ks.rows >= 1 && gd.ks.pdf && gd.ks.xl && gd.ks.code === 'KS', JSON.stringify(gd.ks));
+    ok('KO-14 PR bahan baku dan sparepart: PDF dan Excel jadi, kode PR, total qty benar', gd.pr.kind === 'pr' && gd.pr.pdf && gd.pr.code === 'PR' && gd.pr.tot === 3 && (!gd.prsp || (/SPAREPART/.test(gd.prsp.title) && gd.prsp.pdf && gd.prsp.xl)), JSON.stringify({ pr: gd.pr, sp: gd.prsp }));
+    ok('KO-15 semua jenis dokumen terdaftar punya warna dan kode unik', gd.doct.n >= 13 && gd.doct.c === gd.doct.n && gd.doct.k === gd.doct.n, JSON.stringify(gd.doct));
   } catch (e) {
     R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
   }
