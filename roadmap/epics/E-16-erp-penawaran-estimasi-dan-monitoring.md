@@ -6,8 +6,8 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 13
-tasks_total: 14
+progress: 12
+tasks_total: 15
 tasks_done: 4
 updated: 2026-11-08
 ---
@@ -41,5 +41,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-218-surat-jalan-gabungan-beberapa-spk|T-218]] Surat jalan vendor dan customer gabungan beberapa SPK dalam satu armada · review · P1 · 4 hari
 - [ ] [[tasks/T-219-desain-dokumen-modern-dan-kop-di-master-data|T-219]] Desain dokumen modern bertema per jenis dan kop yang dapat diatur di Master Data · review · P1 · 3 hari
 - [ ] [[tasks/T-220-aturan-section-spk-standar-dan-stok-di-editor|T-220]] Aturan section SPK sesuai standar (Cable Tray, ACCS, Cover) dan keterangan pemakaian stok di editor · review · P1 · 3 hari
+- [ ] [[tasks/T-221-master-mesin-dan-alur-sparepart-standar|T-221]] Master Mesin dan alur sparepart standar (terima via PR, keluar ke mesin) serta audit lintas modul · doing · P1 · 3 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

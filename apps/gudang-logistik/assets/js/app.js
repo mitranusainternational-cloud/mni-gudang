@@ -1717,6 +1717,51 @@ function newItemForm(g){
 }
 function render(){renderNav();renderTools();renderBody()}
 /* ---------- forms ---------- */
+// ---------- Mesin (master) dan pemakaian sparepart ke mesin ----------
+const TUJUAN_SP=[['perawatan','Perawatan rutin'],['perbaikan','Perbaikan (breakdown)'],['ganti','Penggantian komponen aus'],['tools','Tools / consumable produksi'],['umum','Umum (bukan untuk satu mesin)']];
+const DASAR_SP=[['langsung','Pembelian langsung / darurat'],['retur','Retur atau pengembalian dari mesin'],['titipan','Hibah, sample, atau titipan'],['penyesuaian','Penyesuaian data (bukan pembelian baru)']];
+const tujuanLbl=k=>(TUJUAN_SP.find(x=>x[0]===k)||[0,k||''])[1];
+const GRUP_LAIN='Utilitas & pendukung';
+const mesinInfoAll=()=>(byId('master','setting')||{}).mesinInfo||{};
+const mesinLainAll=()=>Array.isArray((byId('master','setting')||{}).mesinLain)?byId('master','setting').mesinLain:[];
+const mesinOn=nm=>(mesinInfoAll()[nm]||{}).aktif!==false;
+// Daftar mesin: mesin produksi dari Work Centre (mwc.mesin) ditambah peralatan pendukung (master/setting.mesinLain); info tambahan (kode, lokasi, aktif) di master/setting.mesinInfo
+function mesinSemua(){const inf=mesinInfoAll(),out=[],seen=new Set();
+ S.mwc.slice().sort((a,b)=>(a.urutan||0)-(b.urutan||0)).forEach(w=>{(Array.isArray(w.mesin)?w.mesin:[]).forEach(m=>{const nm=String(m.nama||'').trim();if(!nm||seen.has(nm.toLowerCase()))return;seen.add(nm.toLowerCase());const i=inf[nm]||{};out.push({nama:nm,grup:w.nama,wcId:w._id,src:'wc',kode:i.kode||'',lokasi:i.lokasi||'',merk:i.merk||'',ket:i.ket||'',aktif:i.aktif!==false&&w.aktif!==false,operator:m.operator||[],kapasitas:+m.kapasitas||0})})});
+ mesinLainAll().forEach(m=>{const nm=String(m.nama||'').trim();if(!nm||seen.has(nm.toLowerCase()))return;seen.add(nm.toLowerCase());out.push({nama:nm,grup:GRUP_LAIN,wcId:'',src:'lain',kode:m.kode||'',lokasi:m.lokasi||'',merk:m.merk||'',ket:m.ket||'',aktif:m.aktif!==false,operator:[],kapasitas:0})});
+ return out}
+function mesinOpsi(sel){const g={};mesinSemua().filter(m=>m.aktif||m.nama===sel).forEach(m=>(g[m.grup]=g[m.grup]||[]).push(m));
+ return Object.entries(g).map(([k,xs])=>`<optgroup label="${esc(k)}">${xs.map(m=>`<option value="${esc(m.nama)}" ${m.nama===sel?'selected':''}>${esc(m.nama)}${m.kode?' · '+esc(m.kode):''}${m.aktif?'':' (nonaktif)'}</option>`).join('')}</optgroup>`).join('')}
+const mesinPakai=nm=>{const sp=S.mutasi.filter(m=>m.gudang==='sp'&&m.mesin===nm).length,lg=(S.produksi_log||[]).filter(e=>(e.mesin||'')===nm).length;return {sp,lg,ada:sp>0||lg>0}};
+function spPrOpen(){return S.pr.filter(p=>p.gudang==='sp'&&p.status!=='Selesai'&&p.status!=='Batal'&&(p.items||[]).some(i=>(+i.q||0)>(+i.qTerima||0))).sort((a,b)=>String(b.noPR).localeCompare(String(a.noPR)))}
+function spPrField(PRD){const open=spPrOpen(),sel=PRD?PRD._id:'',lst=(PRD&&!open.some(p=>p._id===PRD._id)?[PRD]:[]).concat(open);
+ return fld('Permintaan pembelian (PR)',`<select class="sel" id="m-pr" name="pr"><option value="">— Tanpa PR —</option>${lst.map(p=>`<option value="${p._id}" ${p._id===sel?'selected':''}>${esc(p.noPR)}${p.supplier?' · '+esc(p.supplier):''} · ${(p.items||[]).filter(i=>(+i.q||0)>(+i.qTerima||0)).length} item belum datang</option>`).join('')}</select>`)+
+ `<div id="sp-dasar-f" style="display:${PRD?'none':'contents'}">`+fld('Alasan tanpa PR',`<select class="sel" id="m-dasar" name="dasar"><option value="">Pilih alasan…</option>${DASAR_SP.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}</select>`)+`</div>`}
+function spKeluarFields(){const ops=[...new Set([...mesinSemua().flatMap(m=>m.operator||[]),...S.mutasi.filter(m=>m.gudang==='sp'&&m.jenis==='keluar').map(m=>m.oleh).filter(Boolean)])].sort();
+ return fld('Jenis pemakaian',`<select class="sel" id="m-tujuan" name="tujuan" required>${TUJUAN_SP.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join('')}</select>`)+
+ `<div id="sp-mesin-f" style="display:contents">`+fld('Mesin yang memakai',`<select class="sel" id="m-mesin" name="mesin"><option value="">Pilih mesin…</option>${mesinOpsi('')}</select>`)+`</div>`+
+ fld('Diambil oleh (nama pengambil)',inp('oleh','','text','list="dl-oleh" autocomplete="off" required'))+dl('dl-oleh',ops)}
+// Aturan sparepart: masuk harus dari PR (atau alasan tanpa PR), keluar harus ke mesin (atau umum) dengan nama pengambil
+function spCek(d,j,lines,PRD){const ket=String(d.ket||'').trim();
+ if(j==='masuk'){const pr=PRD||(d.pr?byId('pr',d.pr):null);
+  if(pr){const sisa={};(pr.items||[]).forEach(i=>{sisa[i.item]=(sisa[i.item]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))});const need={};lines.forEach(l=>need[l.item]=(need[l.item]||0)+l.q);
+   for(const [it,q] of Object.entries(need)){if(!(it in sisa))throw new Error(`${spLabel(byId('sp',it))} tidak ada di ${pr.noPR}. Pilih "Tanpa PR" bila memang pembelian di luar PR.`);if(q>sisa[it]+1e-9)throw new Error(`${spLabel(byId('sp',it))}: diterima ${n(q)} melebihi sisa ${pr.noPR} (${n(sisa[it])}). Terima sesuai sisa, atau catat kelebihannya sebagai penerimaan tanpa PR dengan alasan.`)}}
+  else{if(!d.dasar)throw new Error('Pilih PR yang diterima, atau pilih alasan bila tanpa PR.');if(!ket)throw new Error('Penerimaan tanpa PR wajib diberi keterangan (siapa yang memesan dan kenapa tanpa PR).')}
+  return}
+ if(j==='keluar'){if(!d.tujuan)throw new Error('Pilih jenis pemakaian.');const um=d.tujuan==='umum';
+  if(!um&&!d.mesin)throw new Error('Pilih mesin yang memakai sparepart ini (atau pilih jenis "Umum").');
+  if(!um&&!mesinSemua().some(m=>m.nama===d.mesin))throw new Error('Mesin tidak ada di Master Data › Mesin.');
+  if(!String(d.oleh||'').trim())throw new Error('Isi nama pengambil agar pengeluaran bisa dipertanggungjawabkan.');
+  if(d.tujuan==='perbaikan'&&!ket)throw new Error('Perbaikan wajib diisi keluhan atau kerusakannya di Keterangan.');
+  if(um&&!ket)throw new Error('Pemakaian umum wajib diberi keterangan keperluannya.')}}
+const spExtra=(d,j)=>j==='masuk'?{dasar:d.pr?'':(d.dasar||'')}:j==='keluar'?{tujuan:d.tujuan||'',mesin:d.tujuan==='umum'?'':(d.mesin||''),mesinGrup:d.tujuan==='umum'?'':((mesinSemua().find(m=>m.nama===d.mesin)||{}).grup||''),oleh:String(d.oleh||'').trim()}:{};
+function spBindForm(f,j){
+ if(j==='keluar'){const tj=f.querySelector('#m-tujuan'),w=f.querySelector('#sp-mesin-f');if(!tj)return;const up=()=>{if(w)w.style.display=tj.value==='umum'?'none':'contents'};tj.addEventListener('change',up);up();return}
+ const pr=f.querySelector('#m-pr');if(!pr)return;const da=f.querySelector('#sp-dasar-f');const up=()=>{if(da)da.style.display=pr.value?'none':'contents'};
+ pr.addEventListener('change',()=>{up();const p=byId('pr',pr.value),body=f.querySelector('#m-mvl');
+  if(p){const its=(p.items||[]).filter(i=>(+i.q||0)>(+i.qTerima||0));body.innerHTML=its.map((i,k)=>mvLine('sp',k,i.item,(+i.q||0)-(+i.qTerima||0))).join('');if(f.pihak&&p.supplier)f.pihak.value=p.supplier;if(f.ref)f.ref.value=p.noPR}
+  else{body.innerHTML=mvLine('sp',0,'');if(f.ref&&/^PR\//.test(f.ref.value))f.ref.value=''}
+  const s0=body.querySelector('select');if(s0)s0.dispatchEvent(new Event('change',{bubbles:true}))});up()}
 function mvLine(g,i,sel,q){return `<tr data-ln="${i}"><td>${itemSelect(g,sel).replace('id="m-item" name="item"',`id="m-item-${i}" name="item_${i}"`)}</td><td class="num"><input class="inp" type="number" min="0" step="any" name="qty_${i}" id="m-qty-${i}" inputmode="decimal" placeholder="Qty" value="${q??''}"></td><td class="note" data-stk></td><td><button type="button" class="ibtn" data-act="mvdel" aria-label="Hapus baris">×</button></td></tr>`}
 function mvForm(g,j,item,prId){
  const PRD=prId?byId('pr',prId):null;
@@ -1728,15 +1773,15 @@ function mvForm(g,j,item,prId){
    await addDoc('mutasi',{gudang:g,item:d.item,jenis:'opname',delta,tgl:d.tgl||today(),ref:'',spk:'',pihak:'',ket:d.ket,noDok:'',stokSistem:cur,stokFisik:num0(d.fisik)})},
   {submit:'Simpan opname',mount:f=>{const upd=()=>{const id=f.item.value;$('#m-info').textContent=id?`Stok sistem saat ini: ${n(calc().stock[g][id])}`:''};f.item.addEventListener('change',upd);upd()}});return}
  const needSpk=g==='rm'&&j==='keluar';
- const pihakFld=g==='sp'?(j==='masuk'?fld('Supplier / asal',inp('pihak','','text','list="dl-sup" autocomplete="off"'))+dl('dl-sup',mNames('supplier')):fld('Diambil oleh / tujuan (bagian atau mesin)',inp('pihak','','text','list="dl-pihak" autocomplete="off"'))+dl('dl-pihak',[...new Set([...S.mutasi.filter(m=>m.gudang==='sp'&&m.jenis==='keluar').map(m=>m.pihak).filter(Boolean),'Produksi','Welding','QC','Maintenance','Shearing','Bending','Punching'])])):g==='rm'&&j==='masuk'?fld('Supplier',inp('pihak','','text','list="dl-sup" required autocomplete="off"'))+dl('dl-sup',mNames('supplier'))
+ const pihakFld=g==='sp'?(j==='masuk'?fld('Supplier / asal',inp('pihak','','text','list="dl-sup" autocomplete="off"'))+dl('dl-sup',mNames('supplier')):spKeluarFields()):g==='rm'&&j==='masuk'?fld('Supplier',inp('pihak','','text','list="dl-sup" required autocomplete="off"'))+dl('dl-sup',mNames('supplier'))
   :g==='fg'&&j==='keluar'?fld('Customer / tujuan',inp('pihak','','text','list="dl-custm" autocomplete="off"'))+dl('dl-custm',mNames('customer'))
   :g==='rm'
    ?fld('Diserahkan ke (bagian / mesin)',inp('pihak','','text','list="dl-pihak" autocomplete="off"'))+dl('dl-pihak',[...new Set([...S.mutasi.filter(m=>m.gudang==='rm'&&m.jenis==='keluar').map(m=>m.pihak).filter(Boolean),'Produksi','Shearing','Bending','Punching','BJP','Rolling','Galvindo','CNC Laser','Welding'])])
    :fld('Asal (proses / vendor finishing)',inp('pihak','','text','list="dl-pihak" autocomplete="off"'))+dl('dl-pihak',[...new Set([...S.mutasi.filter(m=>m.gudang==='fg'&&m.jenis==='masuk').map(m=>m.pihak).filter(Boolean),'Produksi',...mNames('vendor')])]);
  openModal(`${jl} · ${gNm}`,
   fld('Tanggal',inp('tgl',today(),'date','required'))+fld('No dokumen',`<input class="inp" id="m-nodok" value="Otomatis: ${DOCFMT[kind]}/${today().slice(0,4)}/${today().slice(5,7)}/…" disabled>`)+
-  fld(needSpk?'SPK (wajib)':(g==='fg'&&j==='keluar'?'SPK terkait (tercatat juga di SPK)':'SPK terkait'),spkSelect('',true).replace('— tanpa SPK —',needSpk?'— Non-SPK (wajib isi keterangan) —':'— tanpa SPK —'))+
-  fld(j==='masuk'&&(g==='rm'||g==='sp')?'No PO / SJ supplier':'Referensi (SJ / PO)',inp('ref'))+pihakFld+
+  (g==='sp'?(j==='masuk'?spPrField(PRD):''):fld(needSpk?'SPK (wajib)':(g==='fg'&&j==='keluar'?'SPK terkait (tercatat juga di SPK)':'SPK terkait'),spkSelect('',true).replace('— tanpa SPK —',needSpk?'— Non-SPK (wajib isi keterangan) —':'— tanpa SPK —')))+
+  fld(j==='masuk'&&(g==='rm'||g==='sp')?'No PO / SJ supplier':g==='sp'?'No. WO / tiket perbaikan (opsional)':'Referensi (SJ / PO)',inp('ref'))+pihakFld+
   `<div class="full tbl-wrap"><table class="lines mvl"><thead><tr><th>Item</th><th class="num">Qty</th><th>Stok sistem</th><th></th></tr></thead><tbody id="m-mvl">${PRD?PRD.items.filter(i=>(+i.q||0)>(+i.qTerima||0)).map((i,k)=>mvLine(g,k,i.item,(+i.q||0)-(+i.qTerima||0))).join(''):mvLine(g,0,item)}</tbody></table><button type="button" class="btn sm ghost" data-act="mvadd" data-g="${g}" style="margin-top:6px">${ic('plus')}Item lain di dokumen yang sama</button>${g==='rm'?'<div class="note" id="m-kg" style="margin-top:6px"></div>':''}</div>`+
   fld('Keterangan',inp('ket'),true)+(g==='rm'&&j==='masuk'?dockCk('Masukkan ke antrian Unloading di Bongkar Muat')+armadaFields():''),
   async (d,form)=>{
@@ -1748,17 +1793,17 @@ function mvForm(g,j,item,prId){
     const rdy=fgSiapMap(sk),need={};lines.forEach(l=>need[l.item]=(need[l.item]||0)+l.q);
     for(const [it,q] of Object.entries(need)){const ix=(sk.items||[]).findIndex(z=>fgDariItem(z)===it);if(ix<0)throw new Error(`${fgLabel(byId('fg',it))} tidak ada di SPK ${sk.no}.`);const got=fgGot(sk._id,it),can=Math.max(0,rdy[ix]-got);
      if(q>can)throw new Error(`${fgLabel(byId('fg',it))}: yang siap diterima ${n(can)} (selesai produksi ${n(rdy[ix])}, sudah masuk gudang ${n(got)}), diminta ${n(q)}.`)}}}
-   if(needSpk&&!d.spk&&!String(d.ket).trim())throw new Error('Pemakaian tanpa SPK wajib diberi keterangan (mis. sample, perbaikan).');
+   if(needSpk&&!d.spk&&!String(d.ket).trim())throw new Error('Pemakaian tanpa SPK wajib diberi keterangan (mis. sample, perbaikan).');if(g==='sp')spCek(d,j,lines,PRD);
    if(j==='keluar'){const tot={};lines.forEach(l=>tot[l.item]=(tot[l.item]||0)+l.q);for(const [it,q] of Object.entries(tot)){const cur=calc().stock[g][it];if(q>cur)throw new Error(`Stok ${g==='rm'?rmLabel(byId('rm',it)):g==='sp'?spLabel(byId('sp',it)):fgLabel(byId('fg',it))} tidak cukup: tersedia ${n(cur)}, diminta ${n(q)}.`)}}
-   let pihak=d.pihak||'';
+   let pihak=g==='sp'&&j==='keluar'?(d.tujuan==='umum'?'Umum':(d.mesin||'')):(d.pihak||'');
    if((g==='rm'||(g==='sp'&&pihak))&&j==='masuk')pihak=await ensureMaster('supplier',pihak,form,'pihak');
    if(g==='fg'&&j==='keluar'&&pihak)pihak=await ensureMaster('customer',pihak,form,'pihak');
-   const t=d.tgl||today();const noDok=await nextDocNo(kind,t);const s=d.spk?byId('spk',d.spk):null;
-   for(const l of lines)await addDoc('mutasi',{gudang:g,item:l.item,jenis:j,delta:j==='masuk'?l.q:-l.q,tgl:t,noDok,ref:[s?'SPK '+s.no:'',d.ref||''].filter(Boolean).join(' · '),spk:d.spk||'',pihak,ket:d.ket||'',pr:PRD?prId:''});
-   if(PRD){const got={};lines.forEach(l=>got[l.item]=(got[l.item]||0)+l.q);const items=PRD.items.map(i=>({...i,qTerima:(+i.qTerima||0)+(got[i.item]||0)}));const done=items.every(i=>i.qTerima>=i.q);await updDoc('pr',prId,{items,status:done?'Selesai':PRD.status==='Diajukan'?'Dipesan':PRD.status,supplier:PRD.supplier||pihak})}
+   const t=d.tgl||today();const noDok=await nextDocNo(kind,t);const s=d.spk&&g!=='sp'?byId('spk',d.spk):null;const PRX=PRD||(g==='sp'&&j==='masuk'&&d.pr?byId('pr',d.pr):null);
+   for(const l of lines)await addDoc('mutasi',{gudang:g,item:l.item,jenis:j,delta:j==='masuk'?l.q:-l.q,tgl:t,noDok,ref:[s?'SPK '+s.no:'',d.ref||''].filter(Boolean).join(' · '),spk:g==='sp'?'':(d.spk||''),pihak,ket:d.ket||'',pr:PRX?PRX._id:'',...(g==='sp'?spExtra(d,j):{})});
+   if(PRX){const got={};lines.forEach(l=>got[l.item]=(got[l.item]||0)+l.q);const items=PRX.items.map(i=>({...i,qTerima:(+i.qTerima||0)+(got[i.item]||0)}));const done=items.every(i=>i.qTerima>=i.q);await updDoc('pr',PRX._id,{items,status:done?'Selesai':PRX.status==='Diajukan'?'Dipesan':PRX.status,supplier:PRX.supplier||pihak})}
    if(d.dock){const nopolM=getNopol(d);await queueDock({jenis:'Unloading',muatan:'Bahan Baku',pihak,ref:[noDok,d.ref].filter(Boolean).join(' · '),nopol:nopolM,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'mutasi',noDok}});rememberArmada(nopolM,d.kendaraan,d.driver)}
    toast(`${noDok} tersimpan · ${lines.length} item`);
-  },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(!sk)return;if(sk.stokReq&&j==='masuk'){fgIsiDariSpk(f,sk)}else if(!String(f.pihak.value||'').trim())f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
+  },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}if(g==='sp')spBindForm(f,j);const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(!sk)return;if(sk.stokReq&&j==='masuk'){fgIsiDariSpk(f,sk)}else if(!String(f.pihak.value||'').trim())f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
 }
 function linesTable(spkId,mode,pfx=''){
  if(!spkId)return '<div class="note">Pilih SPK untuk menampilkan item.</div>';
@@ -2117,7 +2162,10 @@ function koreksiForm(id){
  openModal('Koreksi transaksi stok',`<div class="full kv"><div><span>Item</span><b>${esc(m.gudang==='rm'?rmLabel(it):m.gudang==='sp'?spLabel(it):fgLabel(it))}</b></div><div><span>Transaksi</span><b>${esc(MVL[m.jenis]||m.jenis)} ${m.delta>0?'+':''}${n(m.delta)} · ${fd(m.tgl)}</b></div><div><span>Dokumen</span><b>${esc(m.noDok||m.ref||'–')}</b></div></div>`+fld('Alasan koreksi',inp('ket','','text','required placeholder="mis. salah item, seharusnya 1.5 mm"'),true)+`<div class="note full">Sistem membuat transaksi pembalik ${m.delta>0?'−':'+'}${n(Math.abs(m.delta))}. Setelah itu catat ulang transaksi yang benar.</div>`,
   async d=>{if(!String(d.ket).trim())throw new Error('Isi alasan koreksi.');if(-m.delta<0){const cur=calc().stock[m.gudang][m.item];if(cur+(-m.delta)<0)throw new Error(`Koreksi membuat stok minus (stok sekarang ${n(cur)}).`)}
    await addDoc('mutasi',{gudang:m.gudang,item:m.item,jenis:'koreksi',delta:-m.delta,tgl:today(),noDok:m.noDok||'',ref:'Koreksi '+(m.noDok||fd(m.tgl)),spk:m.spk||'',pihak:m.pihak||'',ket:d.ket,koreksiDari:id});
-   await updDoc('mutasi',id,{dikoreksi:true})},{submit:'Buat koreksi'});
+   await updDoc('mutasi',id,{dikoreksi:true});
+   /* penerimaan dari PR yang dikoreksi: qTerima PR dikembalikan agar sisa PR dan usulan beli kembali benar */
+   if(m.jenis==='masuk'&&m.pr){const p=byId('pr',m.pr);if(p&&p.status!=='Batal'){let sisa=Math.abs(+m.delta||0);const items=(p.items||[]).map(i=>{if(i.item!==m.item||sisa<=0)return i;const k=Math.min(+i.qTerima||0,sisa);sisa-=k;return {...i,qTerima:(+i.qTerima||0)-k}});
+    const lengkap=items.every(i=>(+i.qTerima||0)>=(+i.q||0));await updDoc('pr',p._id,{items,status:lengkap?'Selesai':(p.status==='Selesai'?'Dipesan':p.status)})}}},{submit:'Buat koreksi'});
 }
 
 /* ---------- MASTER DATA ---------- */
@@ -2130,12 +2178,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='rute'||k==='opsi'||k==='kop'||k==='aturan';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['rute','Rute produksi'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='mesin'||k==='rute'||k==='opsi'||k==='kop'||k==='aturan';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['mesin','Mesin'],['rute','Rute produksi'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='mesin')return mesinTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2563,7 +2611,7 @@ function vendorPanelBaru(){
 
 /* ---- Antrian Mesin: operator mencatat hasil di mesinnya (Mulai lalu Selesai, atau catat manual) ---- */
 F.mesin=F.mesin||{wc:'',mesin:''};
-const mesinWC=nama=>{const w=S.mwc.find(x=>x.nama===nama);return Array.isArray(w&&w.mesin)?w.mesin:[]};
+const mesinWC=nama=>{const w=S.mwc.find(x=>x.nama===nama);return Array.isArray(w&&w.mesin)?w.mesin.filter(m=>mesinOn(m.nama)):[]};
 const opKey=m=>'mni-op:'+m;
 const lsGet=k=>{try{return localStorage.getItem(k)||''}catch(_){return ''}};
 const lsSet=(k,v)=>{try{if(v)localStorage.setItem(k,v);else localStorage.removeItem(k)}catch(_){}};
@@ -2827,6 +2875,28 @@ function jejakHtml(id){
  return `<div><div class="dw-section-title">Jejak tiap item sampai barang jadi</div>${blok||'<div class="note">SPK belum punya item.</div>'}</div>`;
 }
 
+function mesinTab(){const ok=canManage(),q=F['master-data'].q.toLowerCase(),all=mesinSemua(),t=today(),d90=addDays(t,-90);
+ const rows=all.filter(m=>!q||(m.nama+m.kode+m.grup+m.lokasi+m.merk).toLowerCase().includes(q));
+ const kp=`<div class="kpis" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))"><div class="kpi ok"><div class="lb">Aktif</div><div class="v">${all.filter(m=>m.aktif).length}</div></div><div class="kpi${all.some(m=>!m.aktif)?' warn':''}"><div class="lb">Nonaktif</div><div class="v">${all.filter(m=>!m.aktif).length}</div></div><div class="kpi info"><div class="lb">Mesin produksi</div><div class="v">${all.filter(m=>m.src==='wc').length}</div></div><div class="kpi"><div class="lb">Utilitas &amp; pendukung</div><div class="v">${all.filter(m=>m.src==='lain').length}</div></div></div>`;
+ const tr=rows.map(m=>{const u=S.mutasi.filter(x=>x.gudang==='sp'&&x.jenis==='keluar'&&!x.dikoreksi&&x.mesin===m.nama&&x.tgl>=d90),qty=u.reduce((a,x)=>a+Math.abs(+x.delta||0),0);
+  return `<tr class="${m.aktif?'':'void'}"><td><b>${esc(m.nama)}</b>${m.kode?` <span class="mono muted">${esc(m.kode)}</span>`:''}${m.merk?`<div class="note">${esc(m.merk)}</div>`:''}</td><td>${esc(m.grup)}</td><td>${esc(m.lokasi||'–')}</td><td class="num">${u.length?`${n(u.length)}× · ${n(qty)} unit`:'–'}</td><td>${m.aktif?chip('Aktif','ok'):chip('Nonaktif','plain')}</td><td class="acts-r">${ok?`<button class="btn sm ghost" data-act="mesinedit" data-nm="${esc(m.nama)}">${ic('edit2')} Ubah</button>`:''}</td></tr>`}).join('');
+ return kp+`<section class="panel"><div class="pbody note">Daftar mesin dan peralatan perusahaan. Mesin produksi mengikuti Work Centre (bisa ditambah dari sini atau dari Work Centre); peralatan pendukung (forklift, kompresor, genset, crane) didaftarkan di grup <b>${GRUP_LAIN}</b>. Daftar ini dipakai di <b>pengeluaran sparepart</b> (sparepart keluar ke mesin mana), Pemakaian mesin, dan Produksi. Mesin yang sudah punya riwayat tidak dihapus, cukup dinonaktifkan.</div>${rows.length?`<div class="tbl-wrap"><table><thead><tr><th>Mesin</th><th>Grup / Work Centre</th><th>Lokasi</th><th class="num">Sparepart 90 hari</th><th>Status</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`:empty('Belum ada mesin','Isi mesin lewat Work Centre atau tombol Tambah.')}</section>`}
+function mesinForm(nm){const all=mesinSemua(),x=nm?all.find(m=>m.nama===nm):null;if(nm&&!x){toast('Mesin tidak ditemukan.');return}
+ const pk=x?mesinPakai(x.nama):{ada:false},wcs=S.mwc.filter(w=>w.tipe==='Internal'&&w.aktif!==false).sort((a,b)=>(a.urutan||0)-(b.urutan||0)),lock=!!x&&(x.src==='wc'||pk.ada);
+ const grupSel=x?fld('Grup',`<input class="inp" value="${esc(x.grup)}" disabled>`):fld('Grup / Work Centre',`<select class="inp" name="grup" required>${wcs.map(w=>`<option value="wc:${w._id}">${esc(w.nama)}</option>`).join('')}<option value="lain" ${wcs.length?'':'selected'}>${GRUP_LAIN}</option></select>`);
+ openModal(`${x?'Ubah':'Tambah'} mesin`,
+  fld('Nama mesin',`<input class="inp" name="nama" value="${esc(x?x.nama:'')}" ${lock?'disabled':''} required placeholder="mis. Punching 3 atau Forklift 1">${lock?'<small class="muted">Nama terkunci karena berasal dari Work Centre atau sudah dipakai di riwayat.</small>':''}`,true)+grupSel+
+  fld('Kode aset (opsional)',inp('kode',x?x.kode:'','text','placeholder="mis. MC-PUN-03"'))+fld('Merek / tipe',inp('merk',x?x.merk:''))+fld('Lokasi',inp('lokasi',x?x.lokasi:'','text','placeholder="mis. Hall A"'))+fld('Keterangan',inp('ket',x?x.ket:''),true)+
+  (x?`<label class="ck full"><input type="checkbox" name="aktif" ${x.aktif?'checked':''}> Aktif (tampil di pilihan mesin)</label>`:''),
+  async d=>{
+   const nama=(!x||!lock)?String(d.nama||'').trim():x.nama;if(!nama)throw new Error('Nama mesin wajib diisi.');
+   if((!x||nama.toLowerCase()!==x.nama.toLowerCase())&&all.some(m=>m.nama.toLowerCase()===nama.toLowerCase()))throw new Error(`Mesin "${nama}" sudah ada.`);
+   const info={kode:String(d.kode||'').trim(),merk:String(d.merk||'').trim(),lokasi:String(d.lokasi||'').trim(),ket:String(d.ket||'').trim()},aktif=x?!!d.aktif:true;
+   if(!x){if(String(d.grup||'').startsWith('wc:')){const w=S.mwc.find(r=>r._id===String(d.grup).slice(3));if(!w)throw new Error('Work Centre tidak ditemukan.');await updDoc('mwc',w._id,{mesin:[...(Array.isArray(w.mesin)?w.mesin:[]),{nama,operator:[],kapasitas:0}]});await saveSetting({mesinInfo:{...mesinInfoAll(),[nama]:{...info,aktif:true}}})}
+    else await saveSetting({mesinLain:[...mesinLainAll(),{nama,...info,aktif:true}]});toast(`Mesin ${nama} ditambahkan`);return}
+   if(x.src==='wc')await saveSetting({mesinInfo:{...mesinInfoAll(),[x.nama]:{...info,aktif}}});
+   else await saveSetting({mesinLain:mesinLainAll().map(m=>m.nama===x.nama?{...m,...info,aktif,nama}:m)});
+   toast(`Mesin ${nama} diperbarui`)})}
 function wcForm(id){
  const x=id?S.mwc.find(r=>r._id===id):{};
  const vendorOpts=S.mvendor.filter(v=>v.aktif!==false).sort((a,b)=>a.nama.localeCompare(b.nama));
@@ -3497,7 +3567,7 @@ const spOn=r=>r.aktif!==false;
 const spLabel=r=>r?`${r.item}${r.aktif===false?' · nonaktif':''}`:'(item terhapus)';
 const spSort=(a,b)=>{const ka=parseFloat(a.kode),kb=parseFloat(b.kode),na=!isNaN(ka),nb=!isNaN(kb);if(na&&nb&&ka!==kb)return ka-kb;if(na!==nb)return na?-1:1;return String(a.item).localeCompare(String(b.item))};
 const spState=(r,s)=>{const m=+r.min||0,b=+r.buffer||0;if(s<=0)return['Habis','crit'];if(m>0&&s<=m)return['Stok minimum','warn'];if(b>0&&s<b)return['Di bawah buffer','warn'];return['Aman','ok']};
-F['sparepart']={q:'',st:'',tab:'stok',mvj:'',mvp:'90',mvspk:'',opn:{},beli:{}};
+F['sparepart']={q:'',st:'',tab:'stok',mvj:'',mvp:'90',mvspk:'',mvmesin:'',opn:{},beli:{}};
 const SP_SATUAN=['Pcs','Liter','Lusin','Set','Kg','Meter','Roll','Box','Pack'];
 function spCalc(){
  const c=calc();if(c._sp)return c._sp;
@@ -3534,9 +3604,9 @@ B['sparepart']=()=>{
   ${kpi('info','Keluar 30 hari',n(k30),'unit',top?`terbanyak: ${esc(top.r.item)} (${n(top.k30)})`:'belum ada pengeluaran','mutasi')}
  </section>`;
  const nbSp=spSug().filter(x=>x.sug>0).length;
- const tabs=[['stok','Posisi stok'],['tren','Tren'],['beli','Rencana pembelian'+(nbSp?` (${nbSp})`:'')],['opname','Stock opname'],['mutasi','Riwayat mutasi']];
+ const tabs=[['stok','Posisi stok'],['tren','Tren'],['mesin','Pemakaian mesin'],['beli','Rencana pembelian'+(nbSp?` (${nbSp})`:'')],['opname','Stock opname'],['mutasi','Riwayat mutasi']];
  const tabH=`<div class="tabs">${tabs.map(([v,l])=>`<button data-act="filt" data-view="sparepart" data-key="tab" data-val="${v}" class="${f.tab===v?'on':''}">${l}</button>`).join('')}</div>`;
- const body={stok:spStok,tren:()=>trenPanel('sp'),beli:spBeli,opname:spOpname,mutasi:spMutasi}[f.tab]||spStok;
+ const body={stok:spStok,tren:()=>trenPanel('sp'),mesin:spMesin,beli:spBeli,opname:spOpname,mutasi:spMutasi}[f.tab]||spStok;
  return head+`<section class="panel">${tabH}${body()}</section>`;
 };
 function spStok(){
@@ -3569,6 +3639,16 @@ function spOpnSave(){
  openModal('Simpan hasil opname sparepart',`<div class="note full">${counted} barang dihitung · <b>${diffs.length} selisih</b> akan disesuaikan ke stok dengan satu nomor dokumen.</div>`+fld('Tanggal',inp('tgl',today(),'date','required'))+fld('Catatan opname',inp('ket','','text','placeholder="mis. opname akhir bulan November"'),true),
   async d=>{const t=d.tgl||today(),noDok=await nextDocNo('SPO',t);for(const x of diffs)await addDoc('mutasi',{gudang:'sp',item:x.id,jenis:'opname',delta:x.d,tgl:t,ref:'Stock opname',spk:'',pihak:'',ket:d.ket||'',noDok,stokSistem:x.sis,stokFisik:x.fis});F['sparepart'].opn={};toast(`${noDok} tersimpan · ${diffs.length} selisih disesuaikan`)},{submit:'Simpan opname',done:' '});
 }
+function spMesin(){const f=F['sparepart'],t=today(),per=f.mvp==='all'?null:addDays(t,-(+f.mvp||90));
+ const mv=S.mutasi.filter(m=>m.gudang==='sp'&&m.jenis==='keluar'&&!m.dikoreksi&&(!per||m.tgl>=per));
+ const kunci=m=>m.mesin?m.mesin:(m.tujuan==='umum'?'__umum':'__lama');const g={};
+ mv.forEach(m=>{const k=kunci(m),o=g[k]||(g[k]={n:0,qty:0,it:{},last:'',tj:{}});const q=Math.abs(+m.delta||0);o.n++;o.qty+=q;o.it[m.item]=(o.it[m.item]||0)+q;if(m.tgl>o.last)o.last=m.tgl;if(m.tujuan)o.tj[m.tujuan]=(o.tj[m.tujuan]||0)+1});
+ const top=o=>Object.entries(o.it).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([id,q])=>`${esc((byId('sp',id)||{}).item||'(terhapus)')} (${n(q)})`).join(', ');
+ const reg=mesinSemua().filter(m=>m.aktif||g[m.nama]);
+ const baris=(nama,sub,o,nm)=>`<tr><td><b>${esc(nama)}</b>${sub?`<div class="note">${esc(sub)}</div>`:''}</td><td class="num">${o?n(o.n):'–'}</td><td class="num big">${o?n(o.qty):'–'}</td><td>${o?top(o):'<span class="muted">belum ada pemakaian</span>'}</td><td class="num">${o&&o.tj.perawatan?n(o.tj.perawatan):'–'}</td><td class="num">${o&&o.tj.perbaikan?n(o.tj.perbaikan):'–'}</td><td>${o?fd(o.last):'–'}</td><td class="acts-r">${o&&nm?`<button class="btn sm ghost" data-act="spmesinlihat" data-nm="${esc(nm)}">Riwayat</button>`:''}</td></tr>`;
+ const rows=reg.map(m=>baris(m.nama,m.grup+(m.aktif?'':' · nonaktif'),g[m.nama],m.nama)).join('')+(g.__umum?baris('Umum (bukan satu mesin)','',g.__umum,''):'')+(g.__lama?baris('Tanpa mesin','pengeluaran sebelum pencatatan mesin',g.__lama,''):'');
+ const tot=mv.reduce((a,m)=>a+Math.abs(+m.delta||0),0);
+ return `<div class="pbody"><div class="summ">${segBtns('sparepart','mvp',[['30','30 hari'],['90','90 hari'],['all','Semua']])}<span class="grow"></span>${chip(`${n(mv.length)} pengeluaran · ${n(tot)} unit`,'info')}</div><p class="note" style="margin:6px 0 0">Sparepart yang keluar dikelompokkan per mesin (daftar mesin diatur di Master Data › Mesin). Dipakai untuk melihat mesin mana yang paling banyak memakai sparepart dan merencanakan stok minimum.</p></div>${rows?`<div class="tbl-wrap"><table><thead><tr><th>Mesin</th><th class="num">Pengeluaran</th><th class="num">Total unit</th><th>Barang terbanyak</th><th class="num">Perawatan</th><th class="num">Perbaikan</th><th>Terakhir</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:empty('Belum ada mesin','Daftarkan mesin di Master Data › Mesin.')}`}
 function spMutasi(){return gudangMutasi('sp')}
 /* ---------- Tren, riwayat mutasi umum, rencana produksi stok dan rencana pembelian (2026-11-06) ----------
    Dipakai Gudang Sparepart (g='sp') dan Gudang Barang Jadi (g='fg'). */
@@ -3705,11 +3785,12 @@ function gudangMutasi(g){
  const view=g==='sp'?'sparepart':'barang-jadi',f=F[view],t=today(),lbl=r=>r?(g==='sp'?spLabel(r):fgLabel(r)):'(item terhapus)';
  const ids=new Set((g==='sp'?spFilter(true):whRows('fg')).map(r=>r._id));
  const spkNos=[...new Set(S.mutasi.filter(m=>m.gudang===g).map(mvSpkNo).filter(Boolean))].sort((a,b)=>String(b).localeCompare(String(a),undefined,{numeric:true}));
- const mv=S.mutasi.filter(m=>m.gudang===g&&ids.has(m.item)&&(!f.mvj||m.jenis===f.mvj)&&(!f.mvspk||(f.mvspk==='__non'?!mvSpkNo(m):mvSpkNo(m)===f.mvspk))&&(f.mvp==='all'||m.tgl>=addDays(t,-(+f.mvp||90)))).sort((a,b)=>(b.tgl+(b.at||'')).localeCompare(a.tgl+(a.at||'')));
+ const mv=S.mutasi.filter(m=>m.gudang===g&&ids.has(m.item)&&(!f.mvj||m.jenis===f.mvj)&&(g==='sp'?(!f.mvmesin||(f.mvmesin==='__non'?!m.mesin:m.mesin===f.mvmesin)):(!f.mvspk||(f.mvspk==='__non'?!mvSpkNo(m):mvSpkNo(m)===f.mvspk)))&&(f.mvp==='all'||m.tgl>=addDays(t,-(+f.mvp||90)))).sort((a,b)=>(b.tgl+(b.at||'')).localeCompare(a.tgl+(a.at||'')));
  const sum=j=>mv.filter(m=>m.jenis===j).reduce((a,m)=>a+Math.abs(+m.delta||0),0);
+ const mesinNames=[...new Set(S.mutasi.filter(m=>m.gudang==='sp'&&m.mesin).map(m=>m.mesin))].sort();const mesinSel=`<select class="sel" data-act="filtsel" data-view="sparepart" data-key="mvmesin" title="Lihat pemakaian per mesin"><option value="">Semua mesin</option><option value="__non" ${f.mvmesin==='__non'?'selected':''}>Tanpa mesin</option>${mesinNames.map(x=>`<option value="${esc(x)}" ${f.mvmesin===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
  const spkSel=`<select class="sel" data-act="filtsel" data-view="${view}" data-key="mvspk" title="Lihat mutasi per SPK"><option value="">Semua SPK</option><option value="__non" ${f.mvspk==='__non'?'selected':''}>Tanpa SPK</option>${spkNos.map(x=>`<option value="${esc(x)}" ${f.mvspk===x?'selected':''}>SPK ${esc(x)}</option>`).join('')}</select>`;
- return `<div class="pbody"><div class="summ">${segBtns(view,'mvj',[['','Semua'],['masuk','Masuk'],['keluar','Keluar'],['opname','Opname'],['koreksi','Koreksi']])}${segBtns(view,'mvp',[['30','30 hari'],['90','90 hari'],['all','Semua']])}${spkSel}<span class="grow"></span>${chip(`Masuk ${n(sum('masuk'))}`,'ok')}${chip(`Keluar ${n(sum('keluar'))}`,'info')}</div></div>
- ${mv.length?`<div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Jenis</th><th>${g==='sp'?'Barang':'Produk'}</th><th class="num">Qty</th><th>Dokumen</th><th>${g==='sp'?'Asal / tujuan':'Asal / customer'}</th><th>Keterangan</th><th>Dicatat</th><th>Unduh</th></tr></thead><tbody>${mv.map(m=>{const it=byId(g,m.item),sk=mvSpkNo(m),sid=m.spk;return `<tr class="${m.dikoreksi?'void':''}"><td>${fd(m.tgl)}</td><td>${stChip(MVL[m.jenis]||m.jenis)}</td><td>${esc(lbl(it))}</td><td class="num big" style="color:${m.delta<0?'var(--crit)':'var(--ok)'}">${m.delta>0?'+':''}${n(m.delta)} <span class="note">${esc(it?it.satuan||'':'')}</span></td><td>${m.noDok?`<span class="mono">${esc(m.noDok)}</span>`:''}<div class="note">${sk?(sid&&byId('spk',sid)?`<button type="button" class="linkbtn" data-act="spksheet" data-id="${esc(sid)}">SPK ${esc(sk)}</button>`:chip('SPK '+esc(sk),'info')):''}${sid&&byId('spk',sid)?` <span class="note">${byId('spk',sid).stokReq?'untuk stok gudang':esc(byId('spk',sid).customer||'')}</span>`:''} ${esc(String(m.ref||'').replace(/^SPK\s*[\w-]+\s*·?\s*/i,''))}</div></td><td>${esc(m.pihak||'')}</td><td class="note" style="white-space:pre-line;min-width:160px">${esc(m.ket||'')}</td><td class="note">${who(m.by)}</td><td style="white-space:nowrap"><button class="btn sm ghost" data-act="mvpdf" data-no="${esc(m.noDok||'')}" data-j="${esc(m.jenis)}" data-id="${m._id}">PDF</button> <button class="btn sm ghost" data-act="mvxlsx" data-no="${esc(m.noDok||'')}" data-j="${esc(m.jenis)}" data-id="${m._id}">Excel</button></td></tr>`}).join('')}</tbody></table></div>`:empty('Belum ada mutasi pada periode ini','Penerimaan, pengeluaran, opname, dan koreksi tercatat di sini dengan nomor dokumen dan SPK terkait.')}`;
+ return `<div class="pbody"><div class="summ">${segBtns(view,'mvj',[['','Semua'],['masuk','Masuk'],['keluar','Keluar'],['opname','Opname'],['koreksi','Koreksi']])}${segBtns(view,'mvp',[['30','30 hari'],['90','90 hari'],['all','Semua']])}${g==='sp'?mesinSel:spkSel}<span class="grow"></span>${chip(`Masuk ${n(sum('masuk'))}`,'ok')}${chip(`Keluar ${n(sum('keluar'))}`,'info')}</div></div>
+ ${mv.length?`<div class="tbl-wrap"><table><thead><tr><th>Tanggal</th><th>Jenis</th><th>${g==='sp'?'Barang':'Produk'}</th><th class="num">Qty</th><th>Dokumen</th><th>${g==='sp'?'Mesin / PR / asal':'Asal / customer'}</th><th>Keterangan</th><th>Dicatat</th><th>Unduh</th></tr></thead><tbody>${mv.map(m=>{const it=byId(g,m.item),sk=mvSpkNo(m),sid=m.spk;return `<tr class="${m.dikoreksi?'void':''}"><td>${fd(m.tgl)}</td><td>${stChip(MVL[m.jenis]||m.jenis)}</td><td>${esc(lbl(it))}</td><td class="num big" style="color:${m.delta<0?'var(--crit)':'var(--ok)'}">${m.delta>0?'+':''}${n(m.delta)} <span class="note">${esc(it?it.satuan||'':'')}</span></td><td>${m.noDok?`<span class="mono">${esc(m.noDok)}</span>`:''}<div class="note">${sk?(sid&&byId('spk',sid)?`<button type="button" class="linkbtn" data-act="spksheet" data-id="${esc(sid)}">SPK ${esc(sk)}</button>`:chip('SPK '+esc(sk),'info')):''}${sid&&byId('spk',sid)?` <span class="note">${byId('spk',sid).stokReq?'untuk stok gudang':esc(byId('spk',sid).customer||'')}</span>`:''} ${esc(String(m.ref||'').replace(/^SPK\s*[\w-]+\s*·?\s*/i,''))}</div></td><td>${g==='sp'&&m.jenis==='keluar'&&(m.mesin||m.tujuan)?`<b>${esc(m.mesin||'Umum')}</b><div class="note">${esc(tujuanLbl(m.tujuan))}${m.oleh?' · '+esc(m.oleh):''}</div>`:esc(m.pihak||'')}${g==='sp'&&m.jenis==='masuk'&&m.pr&&byId('pr',m.pr)?`<div class="note">${esc(byId('pr',m.pr).noPR)}</div>`:''}${g==='sp'&&m.jenis==='masuk'&&m.dasar?`<div class="note">tanpa PR: ${esc((DASAR_SP.find(x=>x[0]===m.dasar)||[0,m.dasar])[1])}</div>`:''}</td><td class="note" style="white-space:pre-line;min-width:160px">${esc(m.ket||'')}</td><td class="note">${who(m.by)}</td><td style="white-space:nowrap"><button class="btn sm ghost" data-act="mvpdf" data-no="${esc(m.noDok||'')}" data-j="${esc(m.jenis)}" data-id="${m._id}">PDF</button> <button class="btn sm ghost" data-act="mvxlsx" data-no="${esc(m.noDok||'')}" data-j="${esc(m.jenis)}" data-id="${m._id}">Excel</button></td></tr>`}).join('')}</tbody></table></div>`:empty('Belum ada mutasi pada periode ini','Penerimaan, pengeluaran, opname, dan koreksi tercatat di sini dengan nomor dokumen dan SPK terkait.')}`;
 }
 /* ---- dokumen mutasi barang jadi ---- */
 function mvDocFg(rows,noDok,h){
@@ -3939,8 +4020,8 @@ function mvDocSp(rows,noDok,h){
  const kode=noDok?(jenis==='koreksi'?noDok+' (koreksi)':noDok):'MUT-'+String(h._id||'').slice(0,8).toUpperCase();
  const meta=[['No dokumen',kode],['Tanggal',tglLong(h.tgl)]];let cols,body,tot,signs;
  const sq=sumBy(L,x=>x.q),sd=sumBy(L,x=>x.d);
- if(jenis==='masuk'){meta.push(['Supplier / asal',h.pihak||'-'],['No PO / SJ supplier',h.ref||'-']);cols=[['Nama barang','l'],['Kode','c'],['Qty','r'],['Satuan','c']];body=L.map(x=>[x.nama,x.kode,x.q,x.satuan]);tot=['TOTAL','',sq,''];signs=['Pengirim / Supplier','Dicatat (Gudang)','Diterima (Gudang MNI)']}
- else if(jenis==='keluar'){meta.push(['Diambil oleh / tujuan',h.pihak||'-'],['Referensi',h.ref||'-']);cols=[['Nama barang','l'],['Kode','c'],['Qty','r'],['Satuan','c']];body=L.map(x=>[x.nama,x.kode,x.q,x.satuan]);tot=['TOTAL','',sq,''];signs=['Dicatat (Gudang)','Diserahkan','Diterima (Peminta)']}
+ if(jenis==='masuk'){meta.push(['Supplier / asal',h.pihak||'-'],['No PR',h.pr&&byId('pr',h.pr)?byId('pr',h.pr).noPR:(h.dasar?'Tanpa PR: '+(DASAR_SP.find(x=>x[0]===h.dasar)||[0,h.dasar])[1]:'-')],['No PO / SJ supplier',h.ref||'-']);cols=[['Nama barang','l'],['Kode','c'],['Qty','r'],['Satuan','c']];body=L.map(x=>[x.nama,x.kode,x.q,x.satuan]);tot=['TOTAL','',sq,''];signs=['Pengirim / Supplier','Dicatat (Gudang)','Diterima (Gudang MNI)']}
+ else if(jenis==='keluar'){meta.push(['Mesin / tujuan',h.mesin?h.mesin+(h.mesinGrup?' ('+h.mesinGrup+')':''):(h.tujuan==='umum'?'Umum':(h.pihak||'-'))],['Jenis pemakaian',h.tujuan?tujuanLbl(h.tujuan):'-'],['Diambil oleh',h.oleh||'-'],['No. WO / tiket',h.ref||'-']);cols=[['Nama barang','l'],['Kode','c'],['Qty','r'],['Satuan','c']];body=L.map(x=>[x.nama,x.kode,x.q,x.satuan]);tot=['TOTAL','',sq,''];signs=['Dicatat (Gudang)','Diserahkan','Diterima (Peminta)']}
  else if(jenis==='opname'){meta.push(['Keterangan sesi',h.ref||'Stock opname']);cols=[['Nama barang','l'],['Kode','c'],['Stok sistem','r'],['Stok fisik','r'],['Selisih','r',1]];body=L.map(x=>[x.nama,x.kode,x.m.stokSistem==null?'':x.m.stokSistem,x.m.stokFisik==null?'':x.m.stokFisik,x.d]);tot=['TOTAL','','','',sd];signs=['Dihitung oleh','Diperiksa','Disetujui']}
  else{meta.push(['Mengoreksi dokumen',noDok||'-'],['Pihak',h.pihak||'-']);cols=[['Nama barang','l'],['Kode','c'],['Koreksi qty','r',1],['Satuan','c']];body=L.map(x=>[x.nama,x.kode,x.d,x.satuan]);tot=['TOTAL','',sd,''];signs=['Dicatat (Gudang)','Disetujui','Diketahui']}
  return {tgl:h.tgl,kode,jenis,title:{masuk:'BUKTI PENERIMAAN SPAREPART',keluar:'BUKTI PENGELUARAN SPAREPART',opname:'BERITA ACARA STOCK OPNAME SPAREPART',koreksi:'BUKTI KOREKSI STOK SPAREPART'}[jenis]||'DOKUMEN SPAREPART',meta,cols,body,tot,signs,ket:kets,by:h.by?(uname(h.by)||'Pengguna'):''};
@@ -5823,6 +5904,8 @@ document.addEventListener('click',async e=>{
   case 'rmset':rmSetForm();break;
   case 'rmedit':rmEditForm(ds.id);break;
   case 'prnew':prNewForm();break;
+  case 'mesinedit':mesinForm(ds.nm);break;
+  case 'spmesinlihat':{const fs0=F['sparepart'];fs0.tab='mutasi';fs0.mvmesin=ds.nm;fs0.mvj='keluar';renderTools();renderBody();break}
   case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
   case 'prterima':{const pp=byId('pr',ds.id);mvForm(pp&&pp.gudang==='sp'?'sp':'rm','masuk',null,ds.id);break}
   case 'spprnew':spPrNewForm();break;
@@ -5861,7 +5944,7 @@ document.addEventListener('click',async e=>{
   case 'jenisdel':{const g=ds.j,u=S.rm.filter(r=>grade(r)===g).length;if(u&&!confirm(`Jenis "${g}" dipakai ${u} item. Setelah dihapus, item itu menjadi "Belum dikenali" dan beratnya dihitung seperti baja. Lanjutkan?`))break;if(BASE_GRADES.includes(g))await saveSetting({jenisOff:[...OFFG(),g]});else await saveSetting({mats:CMATS().filter(m=>m.nama!==g)});toast('Jenis material dihapus');break}
   case 'jenispulih':await saveSetting({jenisOff:OFFG().filter(x=>x!==ds.j)});toast('Jenis material dipulihkan');break;
   case 'rmdel':{const id=ds.id,r=byId('rm',id);if(!r)break;const nm=S.mutasi.filter(m=>m.gudang==='rm'&&m.item===id).length,np=S.pr.filter(p=>(p.items||[]).some(i=>i.item===id)).length;if(nm||np){toast(`"${rmLabel(r)}" tidak bisa dihapus: punya ${nm} mutasi stok${np?` dan ${np} PR`:''}. Riwayat stok harus tetap utuh. Gunakan Nonaktifkan agar item tidak muncul lagi di daftar dan pilihan form.`);break}if(!confirm(`Hapus item "${rmLabel(r)}"? Item ini belum punya riwayat mutasi.`))break;try{for(const h of S.rmhist.filter(h=>h.item===id))await delDoc('rmhist',h._id);await delDoc('rm',id);toast('Item dihapus')}catch(e){if(/ditolak database/i.test(e.message||'')){await updDoc('rm',id,{aktif:false});toast('Hapus permanen dilarang di database; item dinonaktifkan agar tidak muncul lagi (riwayat tetap utuh).')}else throw e}break}
-  case 'mnew':{const tb=F['master-data'].tab;if(tb==='bb'){newItemForm('rm');break}if(tb==='item')katItemForm();else if(tb==='grup')grupForm();else if(tb==='satuan')listForm('sat');else if(tb==='wc')wcForm();else masterForm(tb);break}
+  case 'mnew':{const tb=F['master-data'].tab;if(tb==='bb'){newItemForm('rm');break}if(tb==='item')katItemForm();else if(tb==='grup')grupForm();else if(tb==='satuan')listForm('sat');else if(tb==='wc')wcForm();else if(tb==='mesin')mesinForm();else masterForm(tb);break}
   case 'katedit':katItemForm(ds.d);break;
   case 'katauto':katAutoForm();break;
   case 'katmerge':katMergeForm(ds.d);break;

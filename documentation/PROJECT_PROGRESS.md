@@ -42,6 +42,10 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-08 · T-221 Master Mesin dan alur sparepart standar
+- Hasil: tab Master Data Mesin, sparepart keluar ke mesin (bukan SPK), masuk via PR atau alasan tanpa PR, tab Pemakaian mesin, koreksi penerimaan PR mengembalikan sisa PR. Bukti: verified in browser (mock), suite mesinsparepart 20 PASS, sparepart 38 PASS.
+- Hambatan: audit lintas modul (workflow 9 modul) terhenti oleh batas pemakaian; baru modul PR dan sparepart tuntas (1 temuan, diperbaiki). Langkah berikut: ulang audit modul lain, PR untuk bahan baku, aturan Cek Data mesin.
+
 ### 2026-11-08 — Aturan section SPK sesuai standar dan stok di editor (T-220, lokal)
 Permintaan pemilik: isi section harus sesuai standar (ACCS memuat elbow, tee, dst; cover dan cable tray masing-masing) dan tidak tertanam di kode, serta pemakaian stok terlihat saat membuat SPK. Aturan kini data (Master Data › Aturan section), SPK lama aman, editor menampilkan status stok per baris. Bukti: `verified in browser` (mock, katalog sintetis) unit B-01..B-16 dan e2e `spkaturan` AR-01..AR-17 (peninjauan independen: 17 temuan, yang terbukti sudah diperbaiki). Belum: rute default fitting di ACCS (butuh keputusan pemilik), pencocokan stok fitting/aksesori, uji dengan katalog perusahaan dan Supabase.
 

@@ -6,6 +6,11 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Ditambahkan (Master Mesin dan alur sparepart, 2026-11-08)
+- Master Data › **Mesin**: mesin produksi (dari Work Centre) dan peralatan pendukung dengan kode aset, merek, lokasi, aktif/nonaktif.
+- Sparepart **keluar ke mesin** (jenis pemakaian, mesin, pengambil), **masuk lewat PR** atau dengan alasan tanpa PR; tab **Pemakaian mesin** dan filter riwayat per mesin; dokumen SP-M/SP-K memuat PR atau mesin.
+- Koreksi penerimaan dari PR mengembalikan qTerima dan status PR.
+
 ### Ditambahkan (Surat Jalan ke customer, 2026-11-06)
 - Isian **alamat pengiriman** pada surat jalan (otomatis dari Master Data customer, bisa diubah per surat jalan, tombol Ubah alamat di laci detail). Disimpan di bidang tambahan surat jalan, tanpa migration.
 - Dokumen PDF dan Excel surat jalan dengan tata letak baru; **status tidak lagi ikut** di dokumen.

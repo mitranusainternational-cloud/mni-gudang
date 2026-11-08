@@ -70,13 +70,15 @@ export async function runSparepart(page, base) {
   ok('SP-5 status mengikuti stok minimum (Baut 4 ≤ 5 = Stok minimum, Oli 8 > 3 = Aman)', /Stok minimum/.test(sBaut || '') && /Aman/.test((await rowTxt('Oli uji A')) || ''));
 
   // keluarkan: melebihi stok ditolak, jumlah wajar diterima
+  await page.evaluate(async () => { await saveSetting({ mesinLain: [{ nama: 'Forklift Uji', kode: 'UT-01', aktif: true }] }); });
+  await page.waitForTimeout(400);
   await page.evaluate(() => [...document.querySelectorAll('table.spt tbody tr')].find((x) => x.children[1].innerText.includes('Oli uji A')).querySelector('[data-act="mv"][data-j="keluar"]').click());
   await page.waitForTimeout(600);
-  await page.evaluate(() => { document.querySelector('#mform [name^="qty_"]').value = '99'; });
+  await page.evaluate(() => { const f = document.querySelector('#mform'); f.querySelector('[name^="qty_"]').value = '99'; f.tujuan.value = 'perawatan'; f.tujuan.dispatchEvent(new Event('change', { bubbles: true })); f.mesin.value = 'Forklift Uji'; f.oleh.value = 'Budi Gudang'; });
   await submit();
   const tolak = await page.evaluate(() => document.querySelector('#modal')?.innerText.match(/Stok [^.]*tidak cukup[^.]*\./)?.[0] || '');
   ok('SP-6 keluar melebihi stok ditolak dengan pesan jelas', /tidak cukup/.test(tolak), tolak);
-  await page.evaluate(() => { document.querySelector('#mform [name^="qty_"]').value = '1'; document.querySelector('#mform [name="pihak"]').value = 'Welding'; });
+  await page.evaluate(() => { const f = document.querySelector('#mform'); f.querySelector('[name^="qty_"]').value = '1'; f.tujuan.value = 'perawatan'; f.tujuan.dispatchEvent(new Event('change', { bubbles: true })); f.mesin.value = 'Forklift Uji'; f.oleh.value = 'Budi Gudang'; });
   await submit();
   ok('SP-7 keluar 1: stok Oli 7', (await stok('Oli uji A')) === '7', await stok('Oli uji A'));
 
