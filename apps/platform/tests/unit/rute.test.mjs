@@ -93,6 +93,13 @@ const snapRute = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISH
 const dariSnap = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Hanger Beam W100', ruteItem: snapRute.rute, altItem: snapRute.alt }, { 'ACCS TRAY': ['Welding'] }, undefined, { vendor: true });
 ok('R-96 snapshot membawa rute dan alt (Hanger: CNC Laser dengan alternatif Shearing); rute master yang berubah tidak memengaruhinya', eq(dariSnap.rute, ['CNC Laser', 'Bending']) && eq(dariSnap.alt, { 'CNC Laser': ['Shearing'] }) && dariSnap.sumber === 'item', JSON.stringify(dariSnap));
 
+// Fitting di section ACCS (T-220): memakai rute produk ACCS tanpa kunci per bentuk; Hanger/Clamp tetap aturan khusus; rute khusus bentuk tetap bisa menimpa
+const jdA = 'ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+const ruteAccs = ['CNC Laser', 'Bending', 'Welding'];
+ok('R-97 Elbow, Tee, Cross, Riser, Reducer di section ACCS memakai rute produk ACCS (CNC Laser, Bending, Welding) lalu vendor', ['ELBOW', 'TEE', 'CROSS', 'INSIDE_RISER', 'OUTSIDE_RISER', 'REDUCER'].every((b) => { const h = tentukanRute({ judulSection: jdA, deskripsi: 'Cable Tray Elbow 90 W100xH50xR300' }, RUTE_STANDAR, undefined, { vendor: true, bentuk: b }); return h.sumber === 'produk' && eq(h.rute, [...ruteAccs, 'Vendor ELG']); }));
+ok('R-98 ACCS LADDER dan ACCS DUCT juga memakai rute produknya; Hanger Beam di ACCS tetap aturan khusus', eq(tentukanRute({ judulSection: 'ACCS LADDER TYPE STU 1.5 NON FINISHING', deskripsi: 'Cable Ladder Elbow 90 W100xH50xR300' }).rute, ruteAccs) && eq(tentukanRute({ judulSection: 'ACCS DUCT 1.2 NON FINISHING', deskripsi: 'Cable Duct Tee W100xH50' }).rute, ruteAccs) && tentukanRute({ judulSection: jdA, deskripsi: 'Hanger Beam W100' }).sumber === 'aturan');
+ok('R-99 rute khusus bentuk ACCS TRAY|ELBOW (bila pemilik mengaturnya) menimpa rute produk, bentuk lain tidak terpengaruh', eq(tentukanRute({ judulSection: jdA, deskripsi: 'x' }, { ...RUTE_STANDAR, 'ACCS TRAY|ELBOW': ['CNC Laser', 'Bending'] }, undefined, { bentuk: 'ELBOW' }).rute, ['CNC Laser', 'Bending']) && eq(tentukanRute({ judulSection: jdA, deskripsi: 'x' }, { ...RUTE_STANDAR, 'ACCS TRAY|ELBOW': ['CNC Laser', 'Bending'] }, undefined, { bentuk: 'TEE' }).rute, ruteAccs));
+
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n') + `\n${R.length - fail} PASS, ${fail} FAIL`);
 process.exit(fail ? 1 : 0);

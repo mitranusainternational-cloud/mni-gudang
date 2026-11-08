@@ -29,7 +29,7 @@ Bergantung pada: T-216, T-219
 - [x] SPK lama tetap aman: baris dengan bentuk di luar aturan (mis. Elbow di Cable Tray) tetap terbuka dan terhitung, hanya diberi tanda beserta saran section; mengganti produk section menukar Straight dan Cover Straight otomatis; baris kosong di section ACCS kembali ke teks bebas
 - [x] Tombol **Section COVER** di editor (melengkapi Section dan Section ACCS)
 - [x] Keterangan pemakaian stok selalu tampil di tiap baris editor SPK customer: "Stok cocok: <produk> · tersedia N" dengan tombol **Pakai stok**, atau "Tidak ada stok cocok · produksi semua"; pengguna tinggal menyesuaikan jumlah dari stok (sisanya produksi). Pencocokan memakai spesifikasi terstruktur (produk, type, tebal, finishing, W, H, L) selain nama item
-- [ ] Rute produksi default untuk Elbow/Tee/dst di section ACCS (kunci `ACCS TRAY|ELBOW`) diatur pemilik di Master Data › Rute produksi (kunci lama `CABLE TRAY|ELBOW` tetap berlaku untuk SPK lama)
+- [x] Rute produksi fitting di section ACCS: Elbow/Tee/Cross/Riser/Reducer memakai rute produk ACCS (CNC Laser → Bending → Welding, sesuai `RUTE_PRODUKSI.md`) tanpa kunci per bentuk; Hanger/Clamp tetap aturan khusus; bila pemilik ingin rute berbeda untuk satu fitting, cukup tambah rute khusus bentuk (`ACCS TRAY|ELBOW`) di Master Data › Rute produksi. Diuji R-97..R-99 (kunci lama `CABLE TRAY|ELBOW` tetap berlaku untuk SPK lama)
 - [ ] Pencocokan stok untuk fitting dan aksesori (saat ini hanya Straight dan Cover Straight yang dicocokkan otomatis; lainnya dipilih manual lewat daftar produk)
 
 ## Bukti

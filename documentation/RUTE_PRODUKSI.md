@@ -117,7 +117,7 @@ Isi sekali (dapat berubah); yang tidak diisi mengikuti rute produk.
 | Cover | Ladder, Tray, Duct | Shearing → Bending | contoh awal |
 | Jointing, Fish Plate, End Plate | (semua) | ? | menunggu tim |
 | Bracket, Hanger, Clamp, Separator | (semua) | ? | menunggu tim |
-| Elbow, Tee, Cross, Riser, Reducer (Accs) | Accs | CNC Laser → Bending → Welding | sesuai uraian |
+| Elbow, Tee, Cross, Riser, Reducer (Accs) | Accs | CNC Laser → Bending → Welding | sesuai uraian; sejak T-220 fitting hanya ada di section ACCS Tray/Ladder/Duct dan mengikuti rute produk ACCS (diuji R-97..R-98). Rute berbeda per fitting: tambah rute khusus bentuk `ACCS TRAY\|ELBOW` di Master Data (R-99) |
 | Lainnya | | ? | menunggu tim |
 
 ## 9. Rencana pembangunan (tidak ditayangkan sebelum disetujui)
