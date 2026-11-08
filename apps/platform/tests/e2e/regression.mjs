@@ -156,6 +156,8 @@ export async function runRegression(page, base) {
   await page.click('#tools [data-act="newkirim"]'); await page.waitForTimeout(500);
   await page.selectOption('#m-spk', await opt('#m-spk', '1003')); await page.waitForTimeout(400); await dockOff(); await submit();
   ok('F-12 surat jalan', (await tab('kirim')).length === n + 1);
+  // berangkat dan diterima wajib armada (no polisi), sesuai aturan status SJ
+  await page.evaluate(async () => { const k = JSON.parse(localStorage.getItem('mni-local-mock-db')).tables.kirim.at(-1); await updDoc('kirim', k._id || k.id, { nopol: 'B 1 REG' }); }); await page.waitForTimeout(700);
   await page.click('#body [data-act="kstep"] >> nth=0'); await page.waitForTimeout(700);
   await page.click('#body [data-act="kstep"] >> nth=0'); await page.waitForTimeout(700);
   ok('F-25 status SJ -> Diterima', (await tab('kirim')).at(-1).status === 'Diterima');

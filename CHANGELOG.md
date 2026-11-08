@@ -6,6 +6,13 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Diperbaiki (logistik dari audit, 2026-11-09)
+- SJ customer dari stok memeriksa hak Barang jadi dan stok kumulatif per produk.
+- SJ Dalam Perjalanan atau Diterima tidak bisa dibatalkan langsung; berangkat atau diterima wajib no polisi.
+- Pembatalan SJ hanya membatalkan antrian Bongkar Muat yang tertaut ke SJ itu.
+- Checklist Unloading penerimaan bahan baku terisi item dan jumlahnya.
+- PR sparepart masuk modul Sparepart.
+
 ### Diperbaiki (kebutuhan plat SPK, 2026-11-08)
 - Bahan baku bersatuan Lembar dihitung berat per lembar dan masuk kebutuhan plat.
 - Kebutuhan plat SPK dikurangi qty yang diambil dari stok barang jadi.

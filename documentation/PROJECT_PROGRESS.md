@@ -42,6 +42,11 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-09 · Perbaikan logistik dari audit
+- Hasil: 7 temuan logistik diperbaiki (SJ dari stok dan hak Barang jadi, stok kumulatif, batas pembatalan SJ, antrian bongkar tertaut, no polisi wajib untuk berangkat, checklist Unloading, modul PR sparepart). Uji regresi F-25 disesuaikan ke aturan no polisi.
+- Bukti: verified in browser (mock). Suite logistiksj LG-01..LG-06 (7 PASS); regresi 24 suite: 42 PASS di regresi, dan suite lain 0 FAIL kecuali produksi M-161 dan M-162 (lihat hambatan); unit bentuk 16 PASS, rute 45 PASS; lint 0 error.
+- Hambatan: M-161 dan M-162 (produksi, Timeline dan status prediksi) gagal juga di versi HEAD, jadi bukan dari perubahan hari ini; penyebab belum ditelusuri. LG-04 belum mereproduksi kunci noSJ undefined. Belum diuji peran Logistik untuk jalur stok (#2) dan stok kumulatif (#14). Enam temuan audit lain belum diperbaiki (lihat T-221).
+
 ### 2026-11-08 · Keterhubungan kebutuhan plat SPK
 - Hasil: 5 temuan audit di rantai material diperbaiki (satuan Lembar, pengurangan ambil dari stok barang jadi, koreksi penerimaan, SPK Batal/Draft pada KPI dan analisa, batas sisa PR). Skill .claude/skills/keterhubungan-data dibuat.
 - Bukti: verified in browser (mock). Suite kebutuhanplat KP-01..KP-05 (7 PASS); regresi penuh 24 suite 0 FAIL; lint 0 error.

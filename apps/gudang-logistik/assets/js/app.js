@@ -1875,8 +1875,8 @@ function kirimForm(spk){
    const nopolK=getNopol(d);
    if(!nopolK&&d.status!=='Disiapkan')throw new Error('Pilih armada atau isi no polisi kendaraan.');
    const s=byId('spk',d.spk);const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=sjMniNext(t);
-   const semua=[{spk:d.spk,s,items},...blok.map(b=>({spk:b.spk,s:byId('spk',b.spk),items:b.items}))];const stokX=semua.map(x=>({...x,dariStok:ambilUntukKirim(x.s,x.items)}));const dariStok=stokX.flatMap(x=>x.dariStok);
-   for(const x of dariStok){const sisa=calc().stock.fg[x.fg]||0;if(sisa<x.q)throw new Error(`Stok fisik "${fgLabel(byId('fg',x.fg))}" hanya ${n(sisa)}, kurang dari ${n(x.q)} yang dicadangkan untuk SPK ini. Periksa Gudang Barang Jadi.`)}
+   const semua=[{spk:d.spk,s,items},...blok.map(b=>({spk:b.spk,s:byId('spk',b.spk),items:b.items}))];const stokX=semua.map(x=>({...x,dariStok:ambilUntukKirim(x.s,x.items)}));const dariStok=stokX.flatMap(x=>x.dariStok);if(dariStok.length&&!canMod('barang-jadi'))throw new Error('Surat jalan ini mengambil stok barang jadi. Akun Anda perlu hak Barang jadi untuk mencatat keluarnya stok; minta admin atau kirim tanpa stok.');
+   const totFg={};for(const x of dariStok)totFg[x.fg]=(totFg[x.fg]||0)+x.q;for(const fgId of Object.keys(totFg)){const q=totFg[fgId],sisa=calc().stock.fg[fgId]||0;if(sisa<q)throw new Error('Stok fisik "'+fgLabel(byId('fg',fgId))+'" hanya '+n(sisa)+', kurang dari '+n(q)+' yang dibutuhkan semua SPK di surat jalan ini. Periksa Gudang Barang Jadi.')}
    for(const x of stokX)await addDoc('kirim',{spk:x.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items:x.items,ket:d.ket||'',alamat:String(d.alamat||'').trim(),lebih:!!d.over});
    for(const y of stokX)for(const x of y.dariStok)await addDoc('mutasi',{gudang:'fg',item:x.fg,jenis:'keluar',delta:-x.q,tgl:t,noDok:noSJ,ref:'SJ '+noSJ+' · SPK '+y.s.no,spk:y.spk,pihak:s.customer,ket:'Diambil dari stok untuk SPK customer'});
    await simpanAlamatCustomer(s.customer,d.alamat,!!d.simpanAlamat);
@@ -1908,7 +1908,7 @@ function bmSrc(b){
  let items=[],label='',ref='',grup=false;const l=b&&b.link;
  const dari=docs=>{grup=docs.length>1;docs.forEach(d=>(d.items||[]).forEach(i=>items.push(grup?{...i,_spk:spkRingkas(d.spk)}:i)))};
  if(l){
-  if(l.c==='mutasi'){const m=S.mutasi.find(x=>x.noDok===l.noDok);items=m?(m.items||[]):[];label='Penerimaan Bahan Baku';ref=l.noDok||''}
+  if(l.c==='mutasi'){items=S.mutasi.filter(x=>x.noDok===l.noDok&&x.gudang==='rm'&&x.jenis==='masuk').map(x=>{const r=byId('rm',x.item)||{};return {d:rmLabel(r),q:+x.delta||0,u:r.satuan||''}});label='Penerimaan Bahan Baku';ref=l.noDok||''}
   else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);label='SJ Vendor';ref=l.noSJ||'';dari(v?(b.jenis==='Loading'?sjGrup('vendor',v):[v]):[])}
   else if(l.c==='kirim'){const k=S.kirim.find(x=>x.noSJ===l.noSJ);label='SJ Customer';ref=l.noSJ||'';dari(k?sjGrup('kirim',k):[])}
  }
@@ -2152,9 +2152,10 @@ function voidForm(c,id){
   async d=>{if(!String(d.alasan).trim())throw new Error('Isi alasan pembatalan.');const b={alasan:d.alasan.trim(),at:new Date().toISOString(),by:ME||null};
    if(c==='spk'){const aktifDok=S.vendor.filter(v=>v.spk===id&&v.status!=='Batal').length+S.kirim.filter(k=>k.spk===id&&k.status!=='Batal').length;if(aktifDok)throw new Error(`SPK ini masih punya ${aktifDok} surat jalan vendor/customer yang aktif. Batalkan surat jalannya dulu, atau selesaikan SPK.`)}
    if(c==='vendor'){const dv=byId('vendor',id);const sudah=(dv&&dv.items||[]).reduce((q,i)=>q+(+i.kembali||0)+(+i.reject||0),0);if(sudah>0)throw new Error(`Surat jalan vendor ini sudah menerima ${n(sudah)} barang kembali (termasuk reject); tidak bisa dibatalkan karena stok dan progres sudah bergerak.`)}
+   if(c==='kirim'){const dk=byId('kirim',id);if(dk&&(dk.status==='Dalam Perjalanan'||dk.status==='Diterima'))throw new Error('Surat jalan berstatus '+dk.status+' tidak bisa dibatalkan. Kembalikan status ke Disiapkan dulu bila memang salah.');const adaStok=!!dk&&S.mutasi.some(m=>m.gudang==='fg'&&m.jenis==='keluar'&&!m.dikoreksi&&m.noDok&&m.noDok===dk.noSJ);if(adaStok&&!canMod('barang-jadi'))throw new Error('Surat jalan ini punya mutasi stok barang jadi. Akun Anda perlu hak Barang jadi untuk membatalkannya.')}
    const doc=byId(c,id);await updDoc(c,id,{status:'Batal',batal:b});
    if(c==='kirim'&&doc){for(const m of S.mutasi.filter(m=>m.gudang==='fg'&&m.jenis==='keluar'&&!m.dikoreksi&&m.spk===doc.spk&&m.noDok&&m.noDok===doc.noSJ)){await addDoc('mutasi',{gudang:'fg',item:m.item,jenis:'koreksi',delta:-m.delta,tgl:today(),noDok:m.noDok,ref:'Batal SJ '+m.noDok,spk:m.spk,pihak:m.pihak||'',ket:'Surat jalan dibatalkan: '+b.alasan,koreksiDari:m._id});await updDoc('mutasi',m._id,{dikoreksi:true})}}
-   if((c==='vendor'||c==='kirim')&&doc){const key=doc.noSJ;if(!(key&&(c==='vendor'?S.vendor:S.kirim).some(o=>o._id!==id&&o.status!=='Batal'&&o.noSJ===key)))for(const x of S.bongkar.filter(x=>x.link&&x.status==='Antri'&&(x.link.noSJ===key||x.link.id===id)))await updDoc('bongkar',x._id,{status:'Batal',batal:{...b,alasan:'Dokumen sumber dibatalkan'}})}
+   if((c==='vendor'||c==='kirim')&&doc){const key=doc.noSJ;if(!(key&&(c==='vendor'?S.vendor:S.kirim).some(o=>o._id!==id&&o.status!=='Batal'&&o.noSJ===key)))for(const x of S.bongkar.filter(x=>x.link&&x.status!=='Selesai'&&x.status!=='Batal'&&((key&&x.link.noSJ===key)||x.link.id===id)))await updDoc('bongkar',x._id,{status:'Batal',batal:{...b,alasan:'Dokumen sumber dibatalkan'}})}
    closeDrawer()},{submit:'Batalkan',done:'Dibatalkan · tercatat di riwayat'});
 }
 function koreksiForm(id){
@@ -4907,7 +4908,8 @@ function myAcc(){
 function canMod(m){if(!ME_P&&!ME)return false;if(m==='*any')return myAnyEdit();return myLevel(m)==='ubah'}
 const canManage=()=>!!ME_P&&myRole()==='admin';
 function modOf(c,data,id,op){
- if(['rm','rmhist','pr','opname'].includes(c))return 'bahan-baku';
+ if(c==='pr'){const g=(data&&data.gudang)||(byId('pr',id)||{}).gudang;return g==='sp'?'sparepart':'bahan-baku'}
+ if(['rm','rmhist','opname'].includes(c))return 'bahan-baku';
  if(c==='penawaran'||c==='salesorder')return 'penawaran';
  if(c==='fg')return 'barang-jadi';
  if(c==='sp')return 'sparepart';
@@ -5876,7 +5878,7 @@ document.addEventListener('click',async e=>{
   case 'openvendor':if(!e.target.closest('button'))vendorDrawer(ds.id);break;
   case 'newkirim':kirimForm(ds.spk);break;
   case 'openkirim':if(!e.target.closest('button'))kirimDrawer(ds.id);break;
-  case 'kstep':{const up={status:ds.to};if(ds.to==='Diterima')up.tglTerima=today();await updDoc('kirim',ds.id,up);toast('Status: '+ds.to);break}
+  case 'kstep':{if(ds.to!=='Disiapkan'){const dk=byId('kirim',ds.id);if(!dk||!dk.nopol){toast('Isi no polisi armada (Ubah) sebelum status berangkat atau diterima.');break}}const up={status:ds.to};if(ds.to==='Diterima')up.tglTerima=today();await updDoc('kirim',ds.id,up);toast('Status: '+ds.to);break}
   case 'newspk':openEditor(newEd());break;
   case 'spksheet':openSheet(ds.id);break;
   case 'spkedit':{const s=byId('spk',ds.id);if(s)openEditor(edFrom(s,false));break}
