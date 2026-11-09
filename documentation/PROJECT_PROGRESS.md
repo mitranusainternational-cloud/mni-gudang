@@ -852,3 +852,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: item SPK menyimpan wEst (kg estimasi, plate) di samping w (kg real). Kebutuhan material SPK, reservasi SPK lain, dan analisa/KPI kebutuhan material memakai wEst bila ada; item lama tanpa wEst tetap memakai berat lama; berat manual tetap menjadi dasar.
 - Bukti: verified in browser (mock). spkdimensi DM-01..DM-08 (8 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
 - Hambatan: tonase barang jadi (real) untuk stok dan surat jalan belum (tahap 4). SPK lama baru ikut est setelah dibuka dan disimpan ulang. Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-222 tahap 4: lembar SPK dua total dan tonase real
+- Hasil: lembar SPK (HTML, PDF, Excel) menampilkan Kg estimasi (plate) dan Kg real (barang jadi) bila SPK punya item berkg estimasi. Tonase vendor dan kirim (dashboard, daftar vendor, Kirim customer) memakai berat real lewat wRealDok; sebelumnya item dokumen tidak membawa berat sehingga KPI tonase dihitung 0.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-11 (11 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: Excel lembar SPK belum dibuka visual (hanya regresi tidak crash). Belum diuji katalog perusahaan dan Supabase. Tahap 5 (Supabase dan rilis bertahap) belum.

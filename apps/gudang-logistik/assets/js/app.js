@@ -242,9 +242,9 @@ B.dashboard=()=>{
  const sp=Object.values(c.spk);const spAct=sp.filter(x=>x.st!=='Selesai'&&x.st!=='Draft'&&x.st!=='Batal').length;const spLate=sp.filter(x=>x.st==='Terlambat').length;
  const vOpen=c.vend.filter(x=>x.st==='Di Vendor'||x.st==='Kembali Sebagian');const DI=issues();const vQty=vOpen.reduce((a,x)=>a+x.sisa,0);const vOld=vOpen.reduce((a,x)=>Math.max(a,x.age),0);
  /* tonnage di vendor: sum (qty × berat/pcs) semua item pada SJ vendor yg masih aktif */
- const vTonKg=vOpen.reduce((a,x)=>{const vd=byId('vendor',x.v._id);return a+(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*(+it.w||0),0)},0);
+ const vTonKg=vOpen.reduce((a,x)=>{const vd=byId('vendor',x.v._id);return a+(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*wRealDok(vd,it),0)},0);
  /* tonnage terkirim ke customer bulan ini */
- const kTonKgMonth=S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)&&k.status!=='Batal').reduce((a,k)=>a+(k.items||[]).reduce((b,it)=>b+(+it.q||0)*(+it.w||0),0),0);
+ const kTonKgMonth=S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)&&k.status!=='Batal').reduce((a,k)=>a+(k.items||[]).reduce((b,it)=>b+(+it.q||0)*wRealDok(k,it),0),0);
  const kTrip=S.kirim.filter(k=>k.status==='Dalam Perjalanan').length;const kMonth=S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)).length;
  const bToday=S.bongkar.filter(b=>b.tgl===t);const bProc=S.bongkar.filter(b=>b.status==='Proses').length;
 
@@ -433,7 +433,7 @@ T['pengiriman']=()=>`${segBtns('pengiriman','st',[['','Semua'],['Disiapkan','Dis
 B['pengiriman']=()=>{
  const f=F.pengiriman,q=f.q.toLowerCase(),t=today();
  const xs=S.kirim.filter(k=>{if(f.st&&k.status!==f.st)return false;if(q){const s=byId('spk',k.spk);if(!`${k.noSJ} ${s?.no} ${k.customer} ${k.nopol||''}`.toLowerCase().includes(q))return false}return true}).sort((a,b)=>(b.tgl+(b.at||'')).localeCompare(a.tgl+(a.at||'')));
- const tonBulanIni=S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)&&k.status!=='Batal').reduce((a,k)=>a+(k.items||[]).reduce((b,it)=>b+(+it.q||0)*(+it.w||0),0),0);
+ const tonBulanIni=S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)&&k.status!=='Batal').reduce((a,k)=>a+(k.items||[]).reduce((b,it)=>b+(+it.q||0)*wRealDok(k,it),0),0);
  const summ=`<div class="summ">${chip(`${S.kirim.filter(k=>k.status==='Disiapkan').length} disiapkan`,'plain')}${chip(`${S.kirim.filter(k=>k.status==='Dalam Perjalanan').length} dalam perjalanan`,'info')}${chip(`${S.kirim.filter(k=>(k.tgl||'').slice(0,7)===t.slice(0,7)).length} SJ bulan ini`,'ok')}${tonBulanIni>0?chip(`${ton(tonBulanIni)} ton terkirim bulan ini`,'ok'):''}</div>`;
  const next={Disiapkan:'Dalam Perjalanan','Dalam Perjalanan':'Diterima'};
  const rows=xs.map(k=>{const s=byId('spk',k.spk);const q=(k.items||[]).reduce((a,i)=>a+(+i.q||0),0);const wkg=(k.items||[]).reduce((a,i)=>a+(+i.q||0)*(+i.w||0),0);return `<tr class="click ${k.status==='Batal'?'void':''}" data-act="openkirim" data-id="${k._id}"><td class="mono">${esc(k.noSJ||'–')}</td><td>${fd(k.tgl)}</td><td>${s?'SPK '+s.no:'–'}</td><td><b>${esc(k.customer)}</b></td><td class="num">${(k.items||[]).length} item · <b>${n(q)}</b>${wkg?`<div class="note">${ton(wkg)} ton</div>`:''}</td><td>${k.nopol?`<span class="mono">${esc(k.nopol)}</span>`:''}${k.driver?`<div class="note">${esc(k.driver)}</div>`:''}</td><td>${stChip(k.status)}</td><td>${next[k.status]?`<button class="btn sm ${k.status==='Dalam Perjalanan'?'primary':''}" data-act="kstep" data-id="${k._id}" data-to="${next[k.status]}">${k.status==='Disiapkan'?'Berangkat':'Diterima customer'}</button>`:''}</td></tr>`}).join('');
@@ -804,6 +804,10 @@ function matPanelHtml(items,opt={}){
   ${pr.length&&matBisaPr()?`<button class="btn" data-act="matpr">Buat PR untuk kekurangan (${pr.length} item)</button>`:''}</div></section>`;
 }
 const matBisaPr=()=>myRole()==='admin'||myLevel('bahan-baku')==='ubah';
+/* Berat real per pcs untuk item dokumen vendor/kirim: dari item dokumen bila ada, selain itu dari item SPK yang sama (nama item). */
+function wRealDok(doc,it){const w=+it.w;if(w>0)return w;const s=doc&&doc.spk?byId('spk',doc.spk):null;const si=s&&(s.items||[]).find(x=>x.d===it.d);return +(si&&si.w)||0}
+/* Dua total SPK: kg estimasi (plate yang diambil, tanpa qty dari stok) dan kg real (barang jadi). ada=false bila belum ada item berkg estimasi. */
+function spkKgDua(s){let te=0,tr=0,ada=false;(s.items||[]).forEach(it=>{const q=+it.q||0,w=+it.w||0;tr+=q*w;te+=Math.max(0,q-ambilItem(s,it))*(+it.wEst>0?+it.wEst:w);if(+it.wEst>0)ada=true});return {te,tr,ada}}
 const matSpkItems=s=>(s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w)}));
 function matBuatPr(){
  const pr=MT().usulanPr(matRencana(MAT.items,MAT.opt));if(!pr.length){toast('Tidak ada kekurangan.');return}
@@ -1517,9 +1521,9 @@ B['vendor']=()=>{
  const xs=c.vend.filter(x=>{if(f.st==='aktif'&&(x.st==='Selesai'||x.st==='Batal'))return false;if(f.st==='selesai'&&x.st!=='Selesai')return false;if(f.vendor&&x.v.vendor!==f.vendor)return false;
   if(q){const s=byId('spk',x.v.spk);if(!`${x.v.noSJ} ${s?.no} ${s?.customer} ${x.v.vendor}`.toLowerCase().includes(q))return false}return true}).sort((a,b)=>f.st==='aktif'?b.age-a.age:b.v.tgl.localeCompare(a.v.tgl));
  const open=c.vend.filter(x=>x.st==='Di Vendor'||x.st==='Kembali Sebagian');const rej=c.vend.reduce((a,x)=>a+(x.st==='Batal'?0:x.rej),0);
- const vTonKgOpen=open.reduce((a,x)=>{const vd=byId('vendor',x.v._id);return a+(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*(+it.w||0),0)},0);
+ const vTonKgOpen=open.reduce((a,x)=>{const vd=byId('vendor',x.v._id);return a+(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*wRealDok(vd,it),0)},0);
  const summ=`<div class="summ">${chip(`${open.length} SJ masih di vendor`,'warn')}${chip(`${n(open.reduce((a,x)=>a+x.sisa,0))} btg/pcs belum kembali`,'info')}${vTonKgOpen>0?chip(`${ton(vTonKgOpen)} ton di vendor`,'warn'):''}${chip(`${open.filter(x=>x.age>14).length} lewat 14 hari`,open.some(x=>x.age>14)?'crit':'ok')}${rej?chip(`${n(rej)} reject dari vendor`,'crit'):''}${open.some(x=>UNKNOWN_V(x.v.vendor))?`<a class="chip warn" href="#cek-data">${open.filter(x=>UNKNOWN_V(x.v.vendor)).length} SJ tanpa nama vendor</a>`:''}</div>`;
- const rows=xs.map(x=>{const s=byId('spk',x.v.spk);const act=x.st==='Di Vendor'||x.st==='Kembali Sebagian';const vd=byId('vendor',x.v._id);const wkg=(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*(+it.w||0),0);return `<tr class="click ${x.st==='Batal'?'void':''}" data-act="openvendor" data-id="${x.v._id}"><td class="mono">${esc(x.v.noSJ||'–')}</td><td>${fd(x.v.tgl)}</td><td>${UNKNOWN_V(x.v.vendor)?'<span class="chip warn">belum diisi</span>':`<b>${esc(x.v.vendor)}</b>`}</td><td>${esc(x.v.proses||'')}</td><td>${s?`SPK ${s.no}<div class="note">${esc(s.customer)}</div>`:'–'}</td><td class="num">${n(x.out)}</td><td class="num">${n(x.back)}${x.rej?`<div class="note" style="color:var(--crit)">${n(x.rej)} reject</div>`:''}</td><td class="num big">${n(x.sisa)}${wkg?`<div class="note">${ton(wkg)} ton</div>`:''}</td><td class="num" style="${act&&x.age>14?'color:var(--crit);font-weight:600':act&&x.age>7?'color:var(--warn);font-weight:600':''}">${act?x.age+' hr':'–'}</td><td>${stChip(x.st)}</td><td>${act?`<button class="btn sm" data-act="terima" data-id="${x.v._id}">Terima kembali</button>`:''}</td></tr>`}).join('');
+ const rows=xs.map(x=>{const s=byId('spk',x.v.spk);const act=x.st==='Di Vendor'||x.st==='Kembali Sebagian';const vd=byId('vendor',x.v._id);const wkg=(vd?.items||[]).reduce((b,it)=>b+(+it.q||0)*wRealDok(vd,it),0);return `<tr class="click ${x.st==='Batal'?'void':''}" data-act="openvendor" data-id="${x.v._id}"><td class="mono">${esc(x.v.noSJ||'–')}</td><td>${fd(x.v.tgl)}</td><td>${UNKNOWN_V(x.v.vendor)?'<span class="chip warn">belum diisi</span>':`<b>${esc(x.v.vendor)}</b>`}</td><td>${esc(x.v.proses||'')}</td><td>${s?`SPK ${s.no}<div class="note">${esc(s.customer)}</div>`:'–'}</td><td class="num">${n(x.out)}</td><td class="num">${n(x.back)}${x.rej?`<div class="note" style="color:var(--crit)">${n(x.rej)} reject</div>`:''}</td><td class="num big">${n(x.sisa)}${wkg?`<div class="note">${ton(wkg)} ton</div>`:''}</td><td class="num" style="${act&&x.age>14?'color:var(--crit);font-weight:600':act&&x.age>7?'color:var(--warn);font-weight:600':''}">${act?x.age+' hr':'–'}</td><td>${stChip(x.st)}</td><td>${act?`<button class="btn sm" data-act="terima" data-id="${x.v._id}">Terima kembali</button>`:''}</td></tr>`}).join('');
  return `<section class="panel"><div class="pbody">${summ}</div>${xs.length?`<div class="tbl-wrap"><table><thead><tr><th>No SJ</th><th>Tgl kirim</th><th>Vendor</th><th>Proses</th><th>SPK / Customer</th><th class="num">Kirim</th><th class="num">Kembali</th><th class="num">Sisa</th><th class="num">Umur</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:empty(f.st==='aktif'?'Tidak ada barang di vendor':'Tidak ada data yang cocok','Kiriman barang setengah jadi ke vendor finishing akan tampil di sini dengan umur harinya.')}</section>`;
 };
 
@@ -4402,6 +4406,7 @@ function buildSpkXlsx(ExcelJS,spk,ctx){
  set(r,cPF,{formula:`AVERAGE(${L(cPF)}${f1}:${L(cPF)}${f2})`},{mt:true,nf:'0%'});
  set(r,cPK,{formula:`AVERAGE(${L(cPK)}${f1}:${L(cPK)}${f2})`},{mt:true,nf:'0%'});
  set(r,cKet,'',{});const tr=r;r+=2;
+ {const k2=spkKgDua(spk);if(k2.ada)set(tr+1,1,'Kg estimasi (plate): '+(Math.round(k2.te*100)/100)+'   ·   Kg real (barang jadi): '+(Math.round(k2.tr*100)/100),{sz:9,b:true,border:false,h:'left',wrap:false})}
  // ── Footer: note, dist, signatures ──
  merge(r,0,r+1,5);set(r,0,spk.note||'',{b:true,i:true});boxRange(r,0,r+1,5);ws.getRow(r+1).height=35;
  const dc=Math.min(hl+1,last-3);
@@ -4858,7 +4863,7 @@ function renderSheet(){
     <tr><td colspan="${all}">&nbsp;</td></tr>
     <tr><td></td><td class="c b">Total</td><td class="c b">${n(tq)}</td><td class="c">Btg/Pcs</td><td></td><td class="c b">${tw?tw.toFixed(2):''} Kg</td><td colspan="4"></td><td colspan="3"></td><td class="c b">${pc(avg(pp))}</td><td class="c b">${hasAnyVendor?pc(avg(pf)):'–'}</td><td class="c b">${pc(avg(pk))}</td><td></td></tr>
    </tbody></table>
-   <div class="pp-foot"><div class="pp-note">${esc(s.note||'')}</div><div class="pp-dist"><span>Distributed to:</span><ul>${(s.dist||OPSI().dist).map(d=>`<li>~ ${esc(d)}</li>`).join('')}</ul></div></div>
+   ${(k=>k.ada?`<div class="pp-kg"><span>Kg estimasi (plate): <b>${n(Math.round(k.te*100)/100)}</b></span><span>Kg real (barang jadi): <b>${n(Math.round(k.tr*100)/100)}</b></span></div>`:'')(spkKgDua(s))}<div class="pp-foot"><div class="pp-note">${esc(s.note||'')}</div><div class="pp-dist"><span>Distributed to:</span><ul>${(s.dist||OPSI().dist).map(d=>`<li>~ ${esc(d)}</li>`).join('')}</ul></div></div>
    <div class="pp-sign"><div><b>Procurement/Estimator</b><span class="sp"></span><b>( ${esc(s.signProc||OPSI().signProc)} )</b></div><div><b>PPIC</b><span class="sp"></span><b>( ${esc(s.signPpic||OPSI().signPpic)} )</b></div></div>
   </div>
   ${matPanelHtml(matSpkItems(s),{spkId:s._id,tebal:s.tebal,label:'Material SPK '+s.no+' '+s.customer})}

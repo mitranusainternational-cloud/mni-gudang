@@ -105,3 +105,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ### Diubah (kebutuhan plate dari kg estimasi, 2026-11-09)
 - Kebutuhan plate SPK memakai kg estimasi (plate yang diambil) dari katalog; item lama tanpa kg estimasi tetap memakai berat lama.
+
+### Diperbaiki (tonase dan lembar SPK, 2026-11-09)
+- Lembar SPK menampilkan dua total: Kg estimasi (plate) dan Kg real (barang jadi).
+- KPI tonase vendor dan kirim memakai berat real dari item SPK; sebelumnya dihitung 0 karena item dokumen tidak membawa berat.

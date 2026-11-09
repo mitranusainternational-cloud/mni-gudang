@@ -75,6 +75,22 @@ export async function runSpkDimensi(page, base) {
     const d8 = await page.evaluate(() => matSpkItems({ _id: 'lama', stokReq: false, items: [{ d: 'X', g: 'CABLE TRAY', q: 4, w: 7.5 }] })[0].w);
     ok('DM-08 item lama tanpa wEst: kebutuhan plate memakai berat lama (7,5)', d8 === 7.5, String(d8));
 
+    // DM-09 tonase dokumen vendor/kirim: item dokumen tanpa berat memakai berat real dari item SPK yang sama
+    const d9 = await page.evaluate(() => { const s = S.spk.filter((x) => x.customer === 'PT Uji Dimensi').pop(); const it = s.items[0]; return { dari: wRealDok({ spk: s._id }, { d: it.d, q: 3 }), dokBerat: wRealDok({ spk: s._id }, { d: it.d, q: 3, w: 9 }), tidakAda: wRealDok({ spk: s._id }, { d: 'item tidak ada', q: 3 }), w: it.w }; });
+    ok('DM-09 berat real dokumen: dari item SPK (4,43), berat dokumen didahulukan (9), item tak dikenal 0', Math.abs(d9.dari - d9.w) < 1e-9 && d9.dokBerat === 9 && d9.tidakAda === 0, JSON.stringify(d9));
+
+    // DM-10 lembar SPK: baris dua total (estimasi plate dan real barang jadi) di atas footer
+    await page.evaluate(() => { document.querySelector('#editor [data-act="ed-close"]')?.click(); });
+    await wait(300);
+    const sid = await page.evaluate(() => S.spk.filter((x) => x.customer === 'PT Uji Dimensi').pop()._id);
+    await page.evaluate((id) => openSheet(id), sid); await wait(900);
+    const d10 = await page.evaluate(() => (document.querySelector('#sheet .pp-kg') || {}).textContent || '');
+    ok('DM-10 lembar SPK menampilkan Kg estimasi (plate) 50,61 dan Kg real (barang jadi) 44,26', /Kg estimasi \(plate\): 50,61/.test(d10) && /Kg real \(barang jadi\): 44,26/.test(d10), d10);
+
+    // DM-11 SPK lama tanpa kg estimasi: tidak menampilkan baris dua total
+    const d11 = await page.evaluate(() => spkKgDua({ items: [{ q: 2, w: 3 }, { q: 5, w: 1.5 }] }));
+    ok('DM-11 SPK lama tanpa wEst: ada=false, total real 13,5 dan estimasi sama (tidak ada baris dua total)', d11.ada === false && Math.abs(d11.tr - 13.5) < 1e-9 && Math.abs(d11.te - 13.5) < 1e-9, JSON.stringify(d11));
+
     // DM-06 tidak ada pageerror
     await page.evaluate(() => { const b = document.querySelector('#editor [data-act="ed-close"]'); if (b) { b.click(); b.click(); } });
     await bendera(false);
