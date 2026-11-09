@@ -100,3 +100,5 @@ Migrasi data: SPK lama dibiarkan. Item lama tanpa `kgPcsReal` ditampilkan dengan
 - C. Mode lubang: per item.
 - E. Lembar SPK cetak: dua total saja di footer.
 - D. Lokasi katalog: belum diputuskan (tetap Master Data untuk sekarang).
+
+Lanjutan alur (serah terima plate, rute, antrian produksi): [[documentation/RANCANGAN_ALUR_SPK_PLATE_PRODUKSI]].

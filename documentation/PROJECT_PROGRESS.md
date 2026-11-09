@@ -857,3 +857,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: lembar SPK (HTML, PDF, Excel) menampilkan Kg estimasi (plate) dan Kg real (barang jadi) bila SPK punya item berkg estimasi. Tonase vendor dan kirim (dashboard, daftar vendor, Kirim customer) memakai berat real lewat wRealDok; sebelumnya item dokumen tidak membawa berat sehingga KPI tonase dihitung 0.
 - Bukti: verified in browser (mock). spkdimensi DM-01..DM-11 (11 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
 - Hambatan: Excel lembar SPK belum dibuka visual (hanya regresi tidak crash). Belum diuji katalog perusahaan dan Supabase. Tahap 5 (Supabase dan rilis bertahap) belum.
+
+### 2026-11-09 · Layout dimensi aktif bawaan dan banner Work Centre
+- Hasil: layout SPK per dimensi aktif secara bawaan (pengaturan eksplisit menang; window.__SPK_DIM_LEGACY hanya untuk suite uji lama). Produksi Hari Ini menampilkan banner bila rute memakai Work Centre yang tidak ada di Master Data. Diagnosa: antrian produksi kosong karena nama langkah rute (Shearing, Punching, CNC Laser) tidak ada di Work Centre master mock; antrian muncul otomatis begitu Work Centre sesuai ada. Pemeriksaan visual: Cable Tray = Straight (W, H, L, Lubang); ACCS menampilkan 25 komponen kalkulator; panel kebutuhan plate muncul setelah SPK terbit.
+- Bukti: verified in browser (mock dengan katalog lokal dan sintetis). spkdimensi DM-00..DM-12 (13 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: Work Centre di Supabase production belum diperiksa. Serah terima plate dan matriks rute belum ada (lihat RANCANGAN_ALUR_SPK_PLATE_PRODUKSI).

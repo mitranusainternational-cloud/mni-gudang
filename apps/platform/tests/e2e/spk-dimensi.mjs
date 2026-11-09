@@ -26,6 +26,14 @@ export async function runSpkDimensi(page, base) {
     await wait(900);
     await page.reload(); await wait(3500);
 
+    // DM-00 tanpa pengaturan apa pun: layout per dimensi aktif secara bawaan (kolom W, H, L terpisah)
+    await bukaBaru();
+    await page.selectOption('#ed-hp-0', 'CABLE TRAY'); await wait(500);
+    const h0 = await heads();
+    ok('DM-00 bawaan (tanpa pengaturan): kolom W (mm), H (mm), L (mm) terpisah', h0.includes('W (mm)') && h0.includes('H (mm)') && h0.includes('L (mm)'), JSON.stringify(h0));
+    await page.evaluate(() => { const b = document.querySelector('#editor [data-act="ed-close"]'); if (b) { b.click(); b.click(); } });
+    await wait(300);
+
     // DM-01 bendera mati: header lama (Description), tanpa kolom W H L
     await bendera(false); await page.reload(); await wait(2500);
     await bukaBaru();
@@ -90,6 +98,11 @@ export async function runSpkDimensi(page, base) {
     // DM-11 SPK lama tanpa kg estimasi: tidak menampilkan baris dua total
     const d11 = await page.evaluate(() => spkKgDua({ items: [{ q: 2, w: 3 }, { q: 5, w: 1.5 }] }));
     ok('DM-11 SPK lama tanpa wEst: ada=false, total real 13,5 dan estimasi sama (tidak ada baris dua total)', d11.ada === false && Math.abs(d11.tr - 13.5) < 1e-9 && Math.abs(d11.te - 13.5) < 1e-9, JSON.stringify(d11));
+
+    // DM-12 rute memakai Work Centre yang tidak ada di master: Produksi Hari Ini memberi peringatan
+    await go('#mesin'); await wait(1200);
+    const d12 = await page.evaluate(() => ({ hilang: ruteWcHilang(), teks: (document.querySelector('#body') || document.body).innerText.replace(/\s+/g, ' ') }));
+    ok('DM-12 WC master tidak memuat Shearing dan Punching: banner peringatan muncul dan menyebut keduanya', d12.hilang.includes('Shearing') && d12.hilang.includes('Punching') && /Rute produksi memakai Work Centre yang belum ada di Master Data/.test(d12.teks), JSON.stringify(d12.hilang) + " | " + d12.teks.slice(0, 160));
 
     // DM-06 tidak ada pageerror
     await page.evaluate(() => { const b = document.querySelector('#editor [data-act="ed-close"]'); if (b) { b.click(); b.click(); } });

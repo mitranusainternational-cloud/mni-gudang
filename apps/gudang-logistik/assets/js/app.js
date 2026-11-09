@@ -4462,7 +4462,11 @@ const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
 const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
 /* Bendera layout SPK per dimensi (T-222 tahap 2): kolom W, H, L terpisah, bentuk selalu terlihat, kg estimasi dan real. Mati secara bawaan. */
-function spkDimBaru(){return !!(byId('master','setting')||{}).spkDimBaru}
+function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==undefined)return !!v;return !window.__SPK_DIM_LEGACY}
+/* Langkah rute (rute standar dan rute khusus) yang namanya tidak ada di Work Centre master: antrian langkah itu tidak akan muncul di Produksi Hari Ini. */
+function ruteWcHilang(){const P=PXL();if(!P)return [];const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const miss=new Set();Object.values(ruteStd()).forEach(r=>(r||[]).forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))miss.add(w)}));return [...miss]}
+const _bMesinAsli=B.mesin;
+B.mesin=()=>{const h=ruteWcHilang();const bn=h.length?`<div class="ro" style="margin-bottom:10px"><b>Rute produksi memakai Work Centre yang belum ada di Master Data:</b> ${h.map(esc).join(', ')}. Antrian untuk langkah ini tidak akan muncul. Tambahkan atau samakan namanya di <a href="#master-data">Master Data › Work Centre</a>.</div>`:'';return bn+_bMesinAsli()};
 const SHAPE_LURUS_FB={id:'STRAIGHT',kunci:'STRAIGHT',nama:'Straight',dim:[{k:'w',label:'W'},{k:'h',label:'H'},{k:'l',label:'L'}],fullHole:false};
 const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER']);
 /* tanpa katalog berat: batang lurus tetap bisa diisi W, H, L; kg dihitung setelah katalog dipasang */

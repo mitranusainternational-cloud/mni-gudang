@@ -109,3 +109,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 ### Diperbaiki (tonase dan lembar SPK, 2026-11-09)
 - Lembar SPK menampilkan dua total: Kg estimasi (plate) dan Kg real (barang jadi).
 - KPI tonase vendor dan kirim memakai berat real dari item SPK; sebelumnya dihitung 0 karena item dokumen tidak membawa berat.
+
+### Diubah (SPK dan produksi, 2026-11-09)
+- Layout SPK per dimensi aktif secara bawaan.
+- Produksi Hari Ini memberi peringatan bila rute memakai Work Centre yang belum ada di Master Data.
