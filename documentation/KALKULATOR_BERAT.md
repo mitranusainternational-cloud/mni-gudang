@@ -136,3 +136,6 @@ Perkiraan lama (skala dari berat acuan, mengabaikan lebar dan tinggi) sudah diha
 
 - Workbook terbaru `kalkulator penghitung berat MNI include full hole.xlsx` memuat rumus yang sama (192 bentuk) dan menambah kolom **Total Full Hole (Bawah+Samping)** pada Straight STU dan STC (jumlah lubang bawah dan samping dikurangkan dari berat). Pembangun katalog mendeteksi judul itu (`estimasiFullHole`, `realFullHole`) dan mesin mengembalikannya.
 - Input item di SPK kini dapat berupa bentuk dan ukuran terstruktur: lihat [[INPUT_SPK_TERSTRUKTUR]]. Teks bebas dan parser (bagian 3) tetap dipakai untuk item di luar kalkulator dan SPK lama.
+
+
+Lihat juga rancangan input SPK per dimensi dan kg estimasi/real: [[documentation/RANCANGAN_INPUT_SPK_DIMENSI]].

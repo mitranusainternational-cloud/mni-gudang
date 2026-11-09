@@ -120,3 +120,28 @@ export function hitungBentuk(katalog, { keluarga, bentuk, dim = {}, tebal, mater
   const beratSPK = fh ? berat.realFullHole : (berat.realLubang ?? berat.real ?? berat.estimasi);
   return { ok: true, beratSPK, berat, params: p, fullHole: fh, material: mj.nama };
 }
+
+/** Kg per pcs untuk skema item SPK (rancangan documentation/RANCANGAN_INPUT_SPK_DIMENSI.md, tahap 1).
+ *  kgPcsEst = tonase plate yang diambil untuk produksi; kgPcsReal = tonase barang jadi (WIP) siap kirim.
+ *  lubang 'standar': est = estimasiLubang, real = realLubang (bentuk tanpa kolom lubang memakai estimasi dan real).
+ *  lubang 'full'   : est = estimasiFullHole, real = realFullHole; bila tidak tersedia, kembali ke standar dan diberi catatan.
+ *  Masukan sama dengan hitungBentuk: { keluarga, bentuk, dim, tebal, material, lubang }. */
+export function kgPerPcs(katalog, masukan = {}) {
+  const h = hitungBentuk(katalog, masukan);
+  if (!h.ok) return { ok: false, alasan: h.alasan, params: h.params };
+  const b = h.berat;
+  let lubang = 'standar', est = b.estimasiLubang ?? b.estimasi, real = b.realLubang ?? b.real, catatan = null;
+  if (masukan.lubang === 'full') {
+    if (b.estimasiFullHole != null && b.realFullHole != null) { lubang = 'full'; est = b.estimasiFullHole; real = b.realFullHole; }
+    else catatan = 'Full hole tidak tersedia untuk bentuk ini; memakai lubang standar.';
+  }
+  if (!(est > 0) || !(real > 0)) return { ok: false, alasan: 'Rumus tidak menghasilkan angka untuk ukuran ini.', params: h.params };
+  return { ok: true, kgPcsEst: est, kgPcsReal: real, lubang, catatan, material: h.material, params: h.params };
+}
+
+/** Total kg dari kg per pcs. Qty yang diambil dari stok barang jadi (ambil) tidak butuh plate baru, jadi kg estimasi memakai qty - ambil;
+ *  kg real selalu memakai qty penuh karena barang jadi tetap dihitung sebagai tonase SPK. */
+export function totalKg({ kgPcsEst, kgPcsReal }, qty, ambil = 0) {
+  const q = Math.max(0, +qty || 0), a = Math.min(q, Math.max(0, +ambil || 0));
+  return { kgEstTotal: (+kgPcsEst || 0) * (q - a), kgRealTotal: (+kgPcsReal || 0) * q, qtyProduksi: q - a };
+}
