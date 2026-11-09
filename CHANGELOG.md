@@ -6,6 +6,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Ditambah (Gudang Barang Jadi, 2026-11-09)
+- Tab Siap kirim customer (ceklis SPK lalu Buat surat jalan langsung) dan tab Siap masuk stok (tombol Terima untuk hasil SPK stok).
+
 ### Diperbaiki (logistik dari audit, 2026-11-09)
 - SJ customer dari stok memeriksa hak Barang jadi dan stok kumulatif per produk.
 - SJ Dalam Perjalanan atau Diterima tidak bisa dibatalkan langsung; berangkat atau diterima wajib no polisi.

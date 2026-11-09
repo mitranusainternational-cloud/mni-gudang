@@ -29,7 +29,7 @@ Audit: [[documentation/AUDIT_ALUR_2026-11-09|AUDIT_ALUR_2026-11-09]]
 - [x] Satu sumber massa jenis: kalkulator SPK (kg estimasi dan real, dan baris teks bebas) memakai massa jenis Master Data lewat pengait; tabel di kode hanya cadangan bila Master Data tidak mengenali bahan. Diuji K-10, K-11 (unit) dan MD-06 (e2e)
 - [x] Produksi Hari Ini membuka Work Centre yang punya antrian bila belum ada pilihan tersimpan (F-06). Diuji SP-07
 - [x] Tab **Aturan proses** di Master Data (F-08): pemetaan finishing ke vendor, material tanpa vendor finishing, dan aturan khusus komponen (kata kunci, produk, rute, mesin alternatif, urutan prioritas) bisa diatur; bawaan tampil sebagai data yang bisa diubah, konfigurasi Master Data menggantikannya, dan Pulihkan bawaan. Validasi nama Work Centre, penolakan bila mengubah rute SPK lama yang sudah punya catatan produksi, dan pemeriksaan tiap Finishing di Opsi SPK (vendor jelas atau Belum dikenali). Diuji R-100..R-104 (unit) dan AP-01..AP-06 (e2e)
-- [ ] Gudang Barang Jadi dua tampilan Stok dan Siap kirim customer; antrian SPK stok siap masuk (F-09, F-10)
+- [x] Gudang Barang Jadi: tab **Siap kirim customer** (turunan SPK customer, ceklis SPK lalu Buat surat jalan langsung, gabungan satu customer) dan tab **Siap masuk stok** (SPK stok selesai, tombol Terima). Diuji GK-01..GK-10 (F-09, F-10)
 - [ ] Antrian Siap dikirim ke vendor dan serah terima WIP (F-11)
 - [ ] Aturan Cek Data untuk plate, rute, dan WIP (F-14)
 

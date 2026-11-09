@@ -887,3 +887,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: tab Master Data Aturan proses. Pemetaan finishing ke vendor, material tanpa vendor finishing, dan aturan khusus komponen (kata kunci, produk, rute, mesin alternatif, urutan) bisa diatur; bawaan tampil sebagai data; konfigurasi Master Data menggantikan bawaan lewat pengait di mesin rute. Validasi nama Work Centre; penolakan bila mengubah rute SPK lama yang sudah punya catatan produksi; pemeriksaan tiap Finishing di Opsi SPK; Pulihkan bawaan.
 - Bukti: verified in browser (mock). Unit rute R-100..R-104 (50 PASS); aturanproses AP-01..AP-06 (7 PASS); regresi penuh 30 suite, 0 FAIL; lint 0 error.
 - Hambatan: penjaga dampak ke SPK lama diuji di tingkat kode, belum dengan SPK berproduksi di e2e. Belum diuji katalog perusahaan dan Supabase. Temuan F-09 sampai F-14 masih terbuka.
+
+### 2026-11-09 · T-225 bagian 4: Gudang Barang Jadi siap kirim customer dan siap masuk stok (F-09, F-10)
+- Hasil: Gudang Barang Jadi punya tab Siap kirim customer (turunan dari SPK customer: siap kirim dikurangi sudah dikirim) dengan ceklis SPK dan tombol Buat surat jalan yang membuka formulir terisi (beberapa SPK satu customer digabung), serta tab Siap masuk stok (hasil SPK stok yang belum diterima, tombol Terima). Label tab menampilkan jumlah.
+- Bukti: verified in browser (mock). Suite gbjsiapkirim GK-01..GK-10 (11 PASS); lint 0 error.
+- Hambatan: gabungan beberapa SPK dalam satu surat jalan lewat ceklis belum diuji di e2e (hanya satu SPK). Surat jalan dari stok Posisi stok belum ada ceklisnya. Belum diuji katalog perusahaan dan Supabase. Temuan F-11 sampai F-14 masih terbuka.
