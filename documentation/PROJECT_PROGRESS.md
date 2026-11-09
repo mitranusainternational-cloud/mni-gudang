@@ -892,3 +892,9 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: Gudang Barang Jadi punya tab Siap kirim customer (turunan dari SPK customer: siap kirim dikurangi sudah dikirim) dengan ceklis SPK dan tombol Buat surat jalan yang membuka formulir terisi (beberapa SPK satu customer digabung), serta tab Siap masuk stok (hasil SPK stok yang belum diterima, tombol Terima). Label tab menampilkan jumlah.
 - Bukti: verified in browser (mock). Suite gbjsiapkirim GK-01..GK-10 (11 PASS); lint 0 error.
 - Hambatan: gabungan beberapa SPK dalam satu surat jalan lewat ceklis belum diuji di e2e (hanya satu SPK). Surat jalan dari stok Posisi stok belum ada ceklisnya. Belum diuji katalog perusahaan dan Supabase. Temuan F-11 sampai F-14 masih terbuka.
+
+## 2026-11-09 · Koneksi dipindah ke akun baru; production dibiarkan; pengembangan lokal berlanjut
+
+- Pemilik memindahkan koneksi ke akun baru untuk pengembangan. Hasil cek: GitHub (repo `mni-gudang`, `main` ad73c89) dan Supabase akun baru terhubung; Supabase production tidak terlihat dari akun baru; Vercel tim MNI belum bisa diakses dari konektor baru.
+- Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
+- Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.

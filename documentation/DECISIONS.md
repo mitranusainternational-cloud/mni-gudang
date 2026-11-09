@@ -160,3 +160,10 @@ updated: 2026-11-02
 
 - **Keputusan:** dialog nama sebelum cetak atau unduh; nama dan jabatannya diingat di `localStorage` (`mni-signers`) sebagai saran dan isian otomatis. Belum dibagi antar pengguna karena memerlukan tabel baru dan persetujuan.
 - **Rujukan:** [[T-201-nama-penanda-tangan-dokumen]].
+
+## 2026-11-09 — Production dibiarkan; migrasi data ditunda; pengembangan lokal dilanjutkan
+
+- **Keputusan pemilik:** sistem yang sudah live (`main` ad73c89, Supabase production `lggqigmvtefkquqjrjsb`, Vercel `mni-gudang`) tidak diganggu. Migrasi data ke akun baru ditunda; pengembangan dilanjutkan di lokal. Koneksi ke Supabase dan GitHub baru disiapkan kemudian.
+- **Alasan:** konektor Supabase sudah beralih ke akun baru (`nurilhamj@gmail.com`) dan project production tidak lagi terlihat dari sana; Vercel tim MNI juga belum bisa diakses dari konektor baru.
+- **Konsekuensi:** tidak ada migration, deploy, atau perubahan di production. Tugas T-203 (rilis) tetap menunggu persetujuan. Saat migrasi nanti: ekspor data dari akun lama, buat project baru, migrasi 1 sampai 13 lalu draf 14 sampai 18 satu per satu, dan undang ulang pengguna karena akun login tidak bisa disalin lewat SQL.
+- **Rujukan:** [[HANDOFF]], [[SERTIJOB]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]].
