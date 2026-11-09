@@ -116,3 +116,6 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ### Ditambahkan (Matriks rute, 2026-11-09)
 - Master Data › Matriks rute: atur rute produk dan komponen terhadap Work Centre dalam satu layar, dengan sumber rute dan tombol Pulihkan.
+
+### Ditambahkan (Serah terima plate, 2026-11-09)
+- Gudang Bahan Baku › Serah terima plate: SPK terbit yang plate-nya belum lengkap, dengan tombol Serahkan ke produksi (form pengeluaran terisi). Peringatan "Plate belum diserahkan" di daftar SPK dan antrian produksi.

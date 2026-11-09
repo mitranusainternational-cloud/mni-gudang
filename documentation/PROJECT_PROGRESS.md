@@ -867,3 +867,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: tab Master Data Matriks rute (produk dan komponen x Work Centre) dengan sumber rute (Kustom, Aturan khusus, Ikut produk), rute kustom dari centang, tombol Pulihkan, batas minimal satu Work Centre, penjaga dampak ke SPK lama, pencarian, dan banner Work Centre yang belum ada. Komponen kecil yang belum ditetapkan ikut rute ACCS sampai pemilik mengubahnya.
 - Bukti: verified in browser (mock, katalog sintetis). matriksrute MR-01..MR-07 (8 PASS); regresi penuh 27 suite, 0 FAIL; lint 0 error.
 - Hambatan: serah terima plate, Cek Data rute, dan laporan susut belum. Work Centre di Supabase production belum diperiksa. Belum diuji katalog perusahaan.
+
+### 2026-11-09 · T-224 Serah terima plate
+- Hasil: status plate per SPK (Menunggu, Sebagian, Lengkap) dari kebutuhan bruto dibanding yang sudah dikeluarkan untuk SPK itu; tab Serah terima plate di Gudang Bahan Baku; tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, qty sisa lembar); chip peringatan di daftar SPK dan kartu antrian produksi. Peringatan saja, produksi tidak dikunci.
+- Bukti: verified in browser (mock). serahplate SP-01..SP-06 (7 PASS); regresi penuh 28 suite, 0 FAIL; lint 0 error.
+- Hambatan: Cek Data (SPK lewat batas belum diserahi plate) dan laporan susut belum. Belum diuji katalog perusahaan dan Supabase.
