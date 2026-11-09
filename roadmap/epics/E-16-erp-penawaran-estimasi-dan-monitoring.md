@@ -6,8 +6,8 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 10
-tasks_total: 18
+progress: 9
+tasks_total: 19
 tasks_done: 4
 updated: 2026-11-09
 ---
@@ -45,5 +45,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-222-input-spk-dimensi-kg-estimasi-real|T-222]] Input SPK per dimensi (W, H, L) dengan KG estimasi dan KG real · doing · P1 · 5 hari
 - [ ] [[tasks/T-223-matriks-rute-produksi|T-223]] Matriks rute produksi di Master Data (produk dan komponen x Work Centre) · doing · P1 · 2 hari
 - [ ] [[tasks/T-224-serah-terima-plate|T-224]] Serah terima plate gudang ke produksi · review · P1 · 2 hari
+- [ ] [[tasks/T-225-perapian-master-data-dan-audit-alur|T-225]] Perapian Master Data (tanpa duplikasi, tanpa data tertanam) dan audit alur Master Data sampai Kinerja · doing · P1 · 3 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

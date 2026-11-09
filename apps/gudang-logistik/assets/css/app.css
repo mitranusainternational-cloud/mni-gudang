@@ -1334,3 +1334,5 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .ar-t th.c,.ar-t td.c{text-align:center}.ar-t tr.ar-g td{background:var(--hover);font-weight:700;font-size:11px;letter-spacing:.04em}
 
 .pp-kg{display:flex;gap:22px;justify-content:flex-end;font-size:12px;margin-top:8px}.pp-kg b{font-weight:700}
+
+.edt td.c-dm{width:92px;min-width:76px}.edt th.dmh{width:92px}.edt td.c-lub{width:96px}

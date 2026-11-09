@@ -872,3 +872,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: status plate per SPK (Menunggu, Sebagian, Lengkap) dari kebutuhan bruto dibanding yang sudah dikeluarkan untuk SPK itu; tab Serah terima plate di Gudang Bahan Baku; tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, qty sisa lembar); chip peringatan di daftar SPK dan kartu antrian produksi. Peringatan saja, produksi tidak dikunci.
 - Bukti: verified in browser (mock). serahplate SP-01..SP-06 (7 PASS); regresi penuh 28 suite, 0 FAIL; lint 0 error.
 - Hambatan: Cek Data (SPK lewat batas belum diserahi plate) dan laporan susut belum. Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-225 perapian Master Data dan audit alur (bagian 1)
+- Hasil: kolom W H L ringkas; satu tab Rute produksi (matriks, kode lama dihapus); jenis material eksplisit pada item bahan baku; Aturan section memuat semua produk Opsi SPK. Audit alur satu SPK dari Terbit sampai Diterima: semua tahap terhubung; 14 temuan di dokumen audit (6 diperbaiki, 8 terbuka).
+- Bukti: verified in browser (mock). masterdata MD-01..MD-05 (6 PASS); regresi penuh 29 suite, 0 FAIL; lint 0 error.
+- Hambatan: massa jenis ganda (F-01) dan default Work Centre produksi (F-06) dikerjakan di bagian 2; aturan proses, Gudang Barang Jadi siap kirim, antrian WIP vendor, dan aturan Cek Data masih terbuka.

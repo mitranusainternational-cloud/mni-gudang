@@ -175,7 +175,6 @@ export async function runSpkTerstruktur(page, base) {
   await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(500);
   const tabelAda = await ada('rute-tabel');
   const awal = await page.evaluate(() => itemRute({ g: 'ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }));
-  await page.selectOption('#rute-baru', 'ACCS TRAY|ELBOW'); await page.click('[data-act="ruteadd"]'); await wait(600);
   await page.click('#rute-tabel input[data-rk="ACCS TRAY|ELBOW"][value="Punching"]'); await wait(700);
   const sesudah = await page.evaluate(() => ({ elbow: itemRute({ g: 'ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }), lurus: itemRute({ g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'STRAIGHT_STU' }) }));
   ok('S-21 tab Rute produksi: rute khusus Elbow di ACCS TRAY dengan Punching berlaku untuk Elbow; Straight tetap rute produk; langkah vendor tetap mengikuti finishing', tabelAda && !awal.includes('Punching') && sesudah.elbow.includes('Punching') && sesudah.elbow.at(-1) === 'Vendor ELG' && sesudah.lurus.includes('Punching'), JSON.stringify({ awal, sesudah }));

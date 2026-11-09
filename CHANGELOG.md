@@ -119,3 +119,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ### Ditambahkan (Serah terima plate, 2026-11-09)
 - Gudang Bahan Baku › Serah terima plate: SPK terbit yang plate-nya belum lengkap, dengan tombol Serahkan ke produksi (form pengeluaran terisi). Peringatan "Plate belum diserahkan" di daftar SPK dan antrian produksi.
+
+### Diubah (Master Data, 2026-11-09)
+- Satu tab Rute produksi (matriks produk dan komponen x Work Centre); tab Matriks rute dihapus.
+- Form Ubah item bahan baku punya pilihan Jenis material; Aturan section memuat semua produk dari Opsi SPK; kolom W H L di editor SPK lebih ringkas.
