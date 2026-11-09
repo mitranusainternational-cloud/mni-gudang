@@ -64,6 +64,17 @@ export async function runSpkDimensi(page, base) {
     const d5 = await page.evaluate(() => ({ kg: (document.querySelector('#ed-secs .kgsub') || {}).textContent || '', tot: (document.getElementById('ed-tot') || {}).textContent || '' }));
     ok('DM-05 katalog terpasang: baris menampilkan est dan real per pcs; footer menampilkan plate (est) dan barang jadi (real)', /est .* real .* Kg/.test(d5.kg) && /plate \(est\)/.test(d5.tot) && /barang jadi \(real\)/.test(d5.tot), JSON.stringify(d5));
 
+    // DM-07 simpan draft: item menyimpan kg estimasi (wEst, plate) dan real (w, barang jadi) yang berbeda
+    await page.fill('#ed-cust', 'PT Uji Dimensi'); await page.fill('#ed-po', 'PO-DIM-1'); await wait(300);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#editor button')].find((x) => /Simpan draft/.test(x.textContent)); if (b) b.click(); });
+    await wait(1500);
+    const d7 = await page.evaluate(() => { const s = S.spk.filter((x) => x.customer === 'PT Uji Dimensi').pop(); const it = s && s.items && s.items[0]; return it ? { wEst: it.wEst, w: it.w, dEst: matSpkItems(s)[0].w } : null; });
+    ok('DM-07 item tersimpan membawa wEst (plate, ~5,06) dan w (real, ~4,43); kebutuhan plate memakai wEst', !!d7 && Math.abs(d7.wEst - 5.06) < 0.01 && Math.abs(d7.w - 4.43) < 0.01 && Math.abs(d7.dEst - d7.wEst) < 1e-9, JSON.stringify(d7));
+
+    // DM-08 item lama tanpa wEst tetap memakai berat lama (tidak berubah sebelum dibuka ulang)
+    const d8 = await page.evaluate(() => matSpkItems({ _id: 'lama', stokReq: false, items: [{ d: 'X', g: 'CABLE TRAY', q: 4, w: 7.5 }] })[0].w);
+    ok('DM-08 item lama tanpa wEst: kebutuhan plate memakai berat lama (7,5)', d8 === 7.5, String(d8));
+
     // DM-06 tidak ada pageerror
     await page.evaluate(() => { const b = document.querySelector('#editor [data-act="ed-close"]'); if (b) { b.click(); b.click(); } });
     await bendera(false);

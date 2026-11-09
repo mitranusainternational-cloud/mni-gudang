@@ -847,3 +847,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: bendera spkDimBaru (Opsi SPK, mati secara bawaan). Kolom W, H, L terpisah; bentuk Straight default; nama dari dimensi; kg est dan real per pcs dan footer plate (est) dan barang jadi (real) bila katalog terpasang.
 - Bukti: verified in browser (mock). spkdimensi DM-01..DM-06 (6 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error; kg-item 9 PASS; bentuk 16 PASS.
 - Hambatan: tombol bendera di Opsi SPK belum diuji langsung (tes memakai saveSetting). Cover, ACCS, dan fitting belum memakai layout baru. Kebutuhan plate masih memakai angka lama (tahap 3). Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-222 tahap 3: kebutuhan plate memakai kg estimasi
+- Hasil: item SPK menyimpan wEst (kg estimasi, plate) di samping w (kg real). Kebutuhan material SPK, reservasi SPK lain, dan analisa/KPI kebutuhan material memakai wEst bila ada; item lama tanpa wEst tetap memakai berat lama; berat manual tetap menjadi dasar.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-08 (8 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: tonase barang jadi (real) untuk stok dan surat jalan belum (tahap 4). SPK lama baru ikut est setelah dibuka dan disimpan ulang. Belum diuji katalog perusahaan dan Supabase.

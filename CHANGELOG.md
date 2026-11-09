@@ -102,3 +102,6 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ### Ditambahkan (SPK per dimensi, 2026-11-09)
 - Bendera layout SPK per dimensi di Opsi SPK (mati secara bawaan): kolom W, H, L terpisah, bentuk Straight default, kg estimasi dan real per pcs, footer plate dan barang jadi.
+
+### Diubah (kebutuhan plate dari kg estimasi, 2026-11-09)
+- Kebutuhan plate SPK memakai kg estimasi (plate yang diambil) dari katalog; item lama tanpa kg estimasi tetap memakai berat lama.

@@ -25,7 +25,7 @@ Bergantung pada: T-220, T-221
 
 - [x] Tahap 1: fungsi murni `kgPerPcs` (KG estimasi dan KG real per pcs, lubang standar atau full hole) dan `totalKg` (estimasi memakai qty - ambil, real memakai qty penuh) di `apps/platform/src/lib/berat/bentuk.js`. Diuji K-01..K-09 (`tests/unit/kg-item.test.mjs`, 9 PASS) memakai fixture sintetis
 - [x] Tahap 2: layar input di balik bendera `spkDimBaru` (Opsi SPK, mati secara bawaan). Kolom W (mm), H (mm), L (mm) terpisah dan selalu terlihat untuk Cable Tray, Perforated, dan Ladder; bentuk Straight default; nama item terbentuk dari dimensi; kg estimasi dan real per pcs dan footer plate (est) dan barang jadi (real) muncul bila katalog terpasang. Tanpa katalog, kg belum dihitung (berat manual tetap ada). Diuji DM-01..DM-06 (spkdimensi, 6 PASS). Cover, ACCS, dan fitting di layar ini belum mengikuti layout baru; kebutuhan plate belum berpindah ke kg estimasi (tahap 3)
-- [ ] Tahap 3: kebutuhan plate memakai `kgEstTotal` (bukan `w` lama), reservasi dan stok barang jadi memakai `kgRealTotal`
+- [x] Tahap 3: kebutuhan plate memakai kg estimasi (`wEst`, dari katalog) bila item punya; item lama tanpa `wEst` tetap memakai berat lama sampai dibuka ulang. Diterapkan ke kebutuhan material SPK, reservasi SPK lain, dan analisa/KPI kebutuhan material. Berat manual tetap menjadi dasar kebutuhan. Diuji DM-07 dan DM-08 (spkdimensi). Tonase barang jadi (real) untuk stok dan surat jalan belum: tahap 4
 - [ ] Tahap 4: lembar SPK dan footer menampilkan dua total (estimasi plate dan real barang jadi); tonase siap kirim memakai real
 - [ ] Tahap 5: verifikasi di Supabase dan rilis bertahap
 
