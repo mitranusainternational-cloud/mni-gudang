@@ -2183,12 +2183,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='mesin'||k==='rute'||k==='opsi'||k==='kop'||k==='aturan';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['mesin','Mesin'],['rute','Rute produksi'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='mesin'||k==='rute'||k==='matriks'||k==='opsi'||k==='kop'||k==='aturan';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['mesin','Mesin'],['rute','Rute produksi'],['matriks','Matriks rute'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'||k==='matriks'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='mesin')return mesinTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='mesin')return mesinTab();if(F['master-data'].tab==='rute')return ruteTab();if(F['master-data'].tab==='matriks')return ruteMatriksTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2449,6 +2449,37 @@ async function ruteCentang(el){const rk=el.dataset.rk;const wcs=wcInternal();con
  renderBody()}
 async function ruteTambah(){const k=(document.getElementById('rute-baru')||{}).value;if(!k)return;const peta={...ruteStd()};const p=k.split('|')[0];peta[k]=(peta[p]||[]).slice();try{await ruteSimpan(peta);toast('Rute khusus dibuat; sesuaikan work centre-nya')}catch(e){toast(e.message||String(e))}renderBody()}
 async function ruteHapus(k){const peta={...ruteStd()};delete peta[k];const dmp=ruteDampak(peta);if(dmp.length){toast(ruteTolak(dmp));return}try{await ruteSimpan(peta);toast('Rute khusus dihapus; bentuk itu kembali ke rute produk')}catch(e){toast(e.message||String(e))}renderBody()}
+/* ---------- Master Data: Matriks rute (produk dan komponen x Work Centre), T-223 ----------
+   Satu layar untuk melihat dan mengatur rute: tiap baris produk atau komponen, tiap kolom Work Centre internal. Komponen ikut rute produk
+   (atau aturan khusus) sampai pengguna mengubah centangnya; itu membuat rute kustom 'PRODUK|BENTUK' yang bisa dipulihkan. */
+function ruteEfektif(p,bentuk,nm){const P=PXL();if(!P)return {rute:[],sumber:'belum'};return P.tentukanRute({judulSection:p,deskripsi:nm||'',ruteItem:null},ruteStd(),P.ATURAN_KHUSUS,bentuk?{bentuk}:{})}
+function ruteMatriksTab(){const P=PXL(),wcs=wcInternal(),ok=canManage(),q=String(F['master-data'].q||'').toLowerCase();
+ if(!P)return empty('Mesin rute belum siap','Muat ulang halaman.');
+ if(!wcs.length)return `<section class="panel"><div class="pbody note">Isi daftar Work Centre dulu (tab Work Centre); rute dipilih dari Work Centre internal.</div></section>`;
+ const peta=ruteStd(),produk=[...new Set([...OPSI().p,...Object.keys(peta).filter(k=>!k.includes('|'))])],nmWc=new Set(wcs.map(w=>w.nama));
+ const SUM={bentuk:['Kustom','info'],aturan:['Aturan khusus','warn'],produk:['Ikut produk','plain'],belum:['Belum ada rute','crit']};
+ const sel=(rk,rute)=>wcs.map(w=>`<td style="text-align:center"><input type="checkbox" data-act="matck" data-rk="${esc(rk)}" value="${esc(w.nama)}" ${rute.includes(w.nama)?'checked':''} ${ok?'':'disabled'} aria-label="${esc(w.nama)}"></td>`).join('');
+ const baris=(rk,judul,sub,r,bisaPulih)=>{const [sl,sc]=SUM[r.sumber]||SUM.belum,hil=r.rute.filter(w=>!nmWc.has(w)&&!P.langkahVendor(w));
+  return `<tr data-rk="${esc(rk)}"><td><b>${esc(judul)}</b>${sub?`<div class="note">${esc(sub)}</div>`:''}</td>${sel(rk,r.rute)}<td>${chip(sl,sc)}${hil.length?` <span class="chip warn" title="Tidak ada di Work Centre aktif">${hil.map(esc).join(', ')}</span>`:''}</td><td class="muted">${esc(r.rute.join(' → ')||'–')}</td><td class="acts-r">${bisaPulih&&ok?`<button class="btn sm ghost" data-act="rutedel" data-rk="${esc(rk)}">Pulihkan</button>`:''}</td></tr>`};
+ let rows='';
+ produk.forEach(p=>{const bent=ruteBentukDaftar(p),cocokP=!q||p.toLowerCase().includes(q),rb=bent.filter(b=>cocokP||b.nama.toLowerCase().includes(q));if(!cocokP&&!rb.length)return;
+  rows+=baris(p,p,'rute standar produk (semua komponen yang tidak diatur khusus)',{rute:peta[p]||[],sumber:peta[p]?'produk':'belum'},false);
+  rb.forEach(b=>{const rk=p+'|'+b.kunci,e=ruteEfektif(p,b.kunci,b.nama);rows+=baris(rk,'\u00a0\u00a0\u00a0\u21b3 '+b.nama,'',e,!!(peta[rk]&&peta[rk].length))})});
+ const hilang=ruteWcHilang();
+ const banner=hilang.length?`<div class="ro" style="margin-bottom:10px"><b>Rute memakai Work Centre yang belum ada di Master Data:</b> ${hilang.map(esc).join(', ')}. Antrian untuk langkah itu tidak muncul di Produksi Hari Ini. Tambahkan atau samakan namanya di tab Work Centre.</div>`:'';
+ const tanpaKat=!ruteBentukDaftar(produk[0]||'').length?'<div class="note" style="margin:6px 0">Daftar komponen muncul setelah katalog berat terpasang (Master Data › Katalog berat).</div>':'';
+ return `<section class="panel"><div class="pbody note">Centang Work Centre yang dilewati. Baris komponen (↳) ikut rute produk atau aturan khusus; mengubah centangnya membuat rute kustom untuk komponen itu, dan tombol Pulihkan mengembalikannya. Langkah vendor finishing otomatis dari finishing dan material, tidak diatur di sini. Urutan langkah mengikuti urutan Work Centre.</div>${banner}${tanpaKat}
+ <div class="tbl-wrap"><table id="rute-matriks"><thead><tr><th>Produk / komponen</th>${wcs.map(w=>`<th style="text-align:center">${esc(w.nama)}</th>`).join('')}<th>Sumber</th><th>Rute</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="99" class="muted">Tidak ada yang cocok dengan pencarian.</td></tr>'}</tbody></table></div></section>`}
+async function matrikCentang(el){const rk=el.dataset.rk,wcs=wcInternal(),peta={...ruteStd()},[p,bk]=rk.split('|');
+ const baris=[...document.querySelectorAll('#rute-matriks input[data-rk]')].filter(x=>x.dataset.rk===rk),pilih=wcs.map(w=>w.nama).filter(n=>baris.some(x=>x.value===n&&x.checked));
+ if(!pilih.length){el.checked=true;toast('Rute minimal satu work center.');return}
+ const nm=bk?((ruteBentukDaftar(p).find(b=>b.kunci===bk)||{}).nama||bk):'',lama=bk?ruteEfektif(p,bk,nm).rute:(peta[rk]||[]);
+ const pos=w=>wcs.findIndex(x=>x.nama===w),hasil=lama.filter(w=>pilih.includes(w)||pos(w)<0);
+ for(const w of pilih.filter(x=>!lama.includes(x))){const i=hasil.findIndex(x=>pos(x)>pos(w));if(i<0)hasil.push(w);else hasil.splice(i,0,w)}
+ peta[rk]=hasil;
+ const dmp=ruteDampak(peta);if(dmp.length){el.checked=!el.checked;toast(ruteTolak(dmp));renderBody();return}
+ try{await ruteSimpan(peta);toast('Rute '+rk.replace('|',' · ')+' disimpan')}catch(e){toast(e.message||String(e));el.checked=!el.checked}
+ renderBody()}
 async function seedWc(){
  if(S.mwc.length>0)return;
  for(const w of WC_SEED)await addDoc('mwc',{...w,aktif:true,ket:'',mesin:mesinSeedDari(w.nama)});
@@ -5992,6 +6023,7 @@ document.addEventListener('click',async e=>{
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
   case 'ruteck':await ruteCentang(el);break;
+  case 'matck':await matrikCentang(el);break;
   case 'opsisimpan':await opsiSimpan(false);break;case 'spkdimtoggle':{await saveSetting({spkDimBaru:!spkDimBaru()});toast(spkDimBaru()?'Layout SPK per dimensi diaktifkan':'Layout SPK per dimensi dinonaktifkan');renderBody();break}
   case 'aturansimpan':await aturanSimpan(false);break;case 'aturanreset':if(confirm('Pulihkan aturan section ke standar MNI?'))await aturanSimpan(true);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;
   case 'opsireset':if(confirm('Pulihkan semua opsi SPK ke bawaan?'))await opsiSimpan(true);break;

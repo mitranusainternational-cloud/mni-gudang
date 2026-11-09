@@ -11,11 +11,11 @@ generated: 2026-11-09
 
 ## Ringkasan
 
-- Tugas selesai: **39 / 143** (27%)
-- Bobot effort selesai: **42 / 253.59999999999997 hari kerja** (17%)
-- Sisa effort: **211.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
+- Tugas selesai: **39 / 144** (27%)
+- Bobot effort selesai: **42 / 255.59999999999997 hari kerja** (16%)
+- Sisa effort: **213.60000000000002 hari kerja**; jalur kritis sisa menuju go-live (T-065): **26.5 hari kerja** (T-030 → T-033 → T-034 → T-035 → T-050 → T-051 → T-052 → T-053 → T-063 → T-065)
 - Cakupan go-live (fase P0-P7): **35 / 105** tugas selesai; tugas pasca go-live (P8-P10) sengaja dijadwalkan ulang setelah hypercare.
-- Diblokir: **1**, sedang dikerjakan: **8**
+- Diblokir: **1**, sedang dikerjakan: **9**
 - Estimasi effort bersifat indikatif dan belum memuat waktu tunggu pihak lain.
 
 ## Per fase
@@ -31,7 +31,7 @@ generated: 2026-11-09
 | P6 Hardening dan rilis | 1/7 | 0.5/9.5 hari (5%) | berjalan |
 | P7 Operasi dan dokumentasi | 0/5 | 0/5.5 hari (0%) | belum mulai |
 | P8 v1.1 Stabilisasi, akses, kualitas data | 1/8 | 3/21 hari (14%) | berjalan |
-| P9 v1.2 Integrasi dan pelaporan | 3/22 | 4.5/68.5 hari (7%) | berjalan |
+| P9 v1.2 Integrasi dan pelaporan | 3/23 | 4.5/70.5 hari (6%) | berjalan |
 | P10 v2.0 Modernisasi dan perluasan | 0/8 | 0/27 hari (0%) | belum mulai |
 
 ## Per rilis
@@ -41,7 +41,7 @@ generated: 2026-11-09
 | v0.9 | Fondasi | 18/41 | 14.75/50.45 hari (29%) | active |
 | v1.0 | Pilot go-live | 15/55 | 18.5/75.9 hari (24%) | active |
 | v1.1 | Stabilisasi, akses, kualitas data | 2/14 | 4/30 hari (13%) | active |
-| v1.2 | Integrasi dan pelaporan | 4/24 | 4.75/69.75 hari (7%) | active |
+| v1.2 | Integrasi dan pelaporan | 4/25 | 4.75/71.75 hari (7%) | active |
 | v2.0 | Modernisasi dan perluasan | 0/9 | 0/27.5 hari (0%) | active |
 
 ## Per epic
@@ -63,7 +63,7 @@ generated: 2026-11-09
 | [[roadmap/epics/E-13-modernisasi-frontend-dan-pengujian\|E-13]] Modernisasi frontend dan pengujian | v2.0 | 0/5 | 0% | active |
 | [[roadmap/epics/E-14-multi-site-dan-mobile\|E-14]] Multi-site dan mobile | v2.0 | 0/2 | 0% | planned |
 | [[roadmap/epics/E-15-self-host-vps-dan-layanan-pendamping\|E-15]] Self-host VPS dan layanan pendamping | v2.0 | 0/2 | 0% | planned |
-| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 4/16 | 11% | active |
+| [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring\|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring operasional | v1.2 | 4/17 | 10% | active |
 
 ## Siap dikerjakan sekarang (dependensi terpenuhi)
 
@@ -89,6 +89,7 @@ generated: 2026-11-09
 - [[tasks/T-173-berat-otomatis-pada-spk-dari-kalkulator|T-173]] Berat otomatis pada SPK dari kalkulator penghitung berat · dev + pemilik
 - [[tasks/T-221-master-mesin-dan-alur-sparepart-standar|T-221]] Master Mesin dan alur sparepart standar (terima via PR, keluar ke mesin) serta audit lintas modul · dev + pemilik
 - [[tasks/T-222-input-spk-dimensi-kg-estimasi-real|T-222]] Input SPK per dimensi (W, H, L) dengan KG estimasi dan KG real · dev + pemilik
+- [[tasks/T-223-matriks-rute-produksi|T-223]] Matriks rute produksi di Master Data (produk dan komponen x Work Centre) · dev + pemilik
 
 ## Diblokir
 

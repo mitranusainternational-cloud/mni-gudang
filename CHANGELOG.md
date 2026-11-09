@@ -113,3 +113,6 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 ### Diubah (SPK dan produksi, 2026-11-09)
 - Layout SPK per dimensi aktif secara bawaan.
 - Produksi Hari Ini memberi peringatan bila rute memakai Work Centre yang belum ada di Master Data.
+
+### Ditambahkan (Matriks rute, 2026-11-09)
+- Master Data › Matriks rute: atur rute produk dan komponen terhadap Work Centre dalam satu layar, dengan sumber rute dan tombol Pulihkan.

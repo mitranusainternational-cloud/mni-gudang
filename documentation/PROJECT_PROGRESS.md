@@ -862,3 +862,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: layout SPK per dimensi aktif secara bawaan (pengaturan eksplisit menang; window.__SPK_DIM_LEGACY hanya untuk suite uji lama). Produksi Hari Ini menampilkan banner bila rute memakai Work Centre yang tidak ada di Master Data. Diagnosa: antrian produksi kosong karena nama langkah rute (Shearing, Punching, CNC Laser) tidak ada di Work Centre master mock; antrian muncul otomatis begitu Work Centre sesuai ada. Pemeriksaan visual: Cable Tray = Straight (W, H, L, Lubang); ACCS menampilkan 25 komponen kalkulator; panel kebutuhan plate muncul setelah SPK terbit.
 - Bukti: verified in browser (mock dengan katalog lokal dan sintetis). spkdimensi DM-00..DM-12 (13 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
 - Hambatan: Work Centre di Supabase production belum diperiksa. Serah terima plate dan matriks rute belum ada (lihat RANCANGAN_ALUR_SPK_PLATE_PRODUKSI).
+
+### 2026-11-09 · T-223 Matriks rute produksi
+- Hasil: tab Master Data Matriks rute (produk dan komponen x Work Centre) dengan sumber rute (Kustom, Aturan khusus, Ikut produk), rute kustom dari centang, tombol Pulihkan, batas minimal satu Work Centre, penjaga dampak ke SPK lama, pencarian, dan banner Work Centre yang belum ada. Komponen kecil yang belum ditetapkan ikut rute ACCS sampai pemilik mengubahnya.
+- Bukti: verified in browser (mock, katalog sintetis). matriksrute MR-01..MR-07 (8 PASS); regresi penuh 27 suite, 0 FAIL; lint 0 error.
+- Hambatan: serah terima plate, Cek Data rute, dan laporan susut belum. Work Centre di Supabase production belum diperiksa. Belum diuji katalog perusahaan.
