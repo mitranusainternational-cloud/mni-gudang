@@ -2349,7 +2349,7 @@ function opsiTab(){const o=OPSI();const ok=canManage();const ta=(k,j,ket,baris)=
  return `<section class="panel"><div class="pbody note">Daftar pilihan yang dipakai editor SPK dan lembar SPK. Satu baris satu pilihan. Mengubah daftar tidak mengubah SPK yang sudah ada. Produk baru muncul di tab Rute produksi untuk diatur work center-nya.</div>
  <div class="pbody opsi-g">${ta('p','Produk (judul section)','Huruf besar. Nama yang lebih panjang dicocokkan lebih dulu.',9)}${ta('t','Type','mis. STU, STC, SLU',9)}${ta('tb','Tebal (mm)','Angka dengan titik, mis. 1.2',9)}${ta('f','Finishing','Kata ELECTRO, HOTDIP, POWDER atau PDC menentukan vendor finishing (ELG, HDG, PDC); STAINLESS dan ALUMIN tanpa vendor.',9)}${ta('dist','Distribusi lembar SPK (Distributed to)','Daftar bawaan di SPK baru',5)}${ta('lead','Pilihan lead time','Saran isian Lead time di header SPK',5)}
  <div class="fld"><label for="op-signProc">Procurement / Estimator (bawaan)</label><input class="inp" id="op-signProc" data-op="signProc" value="${esc(o.signProc)}" ${ok?'':'disabled'}></div><div class="fld"><label for="op-signPpic">PPIC (bawaan)</label><input class="inp" id="op-signPpic" data-op="signPpic" value="${esc(o.signPpic)}" ${ok?'':'disabled'}></div></div>
- <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?`<button class="btn primary" data-act="opsisimpan">Simpan opsi SPK</button><button class="btn ghost" data-act="opsireset">Pulihkan bawaan</button>`:''}<button class="btn ghost" data-act="spktarget">Target waktu proses</button></div></section>`}
+ <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?`<button class="btn primary" data-act="opsisimpan">Simpan opsi SPK</button><button class="btn ghost" data-act="opsireset">Pulihkan bawaan</button>`:''}<button class="btn ghost" data-act="spktarget">Target waktu proses</button>${ok?`<button class="btn ghost" data-act="spkdimtoggle">Layout SPK per dimensi: ${spkDimBaru()?'Aktif':'Nonaktif'}</button>`:''}</div></section>`}
 async function opsiSimpan(reset){const baca=k=>{const e=document.getElementById('op-'+k);return e?String(e.value).split('\n').map(x=>x.trim()).filter(Boolean):[]};
  const cur={...(byId('master','setting')||{})};delete cur._id;
  let spkOpsi=null;
@@ -4456,7 +4456,18 @@ const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 /* ----- input item terstruktur: bentuk dan ukuran per section, nama dan berat otomatis dari kalkulator ----- */
 const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
 const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
-function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
+/* Bendera layout SPK per dimensi (T-222 tahap 2): kolom W, H, L terpisah, bentuk selalu terlihat, kg estimasi dan real. Mati secara bawaan. */
+function spkDimBaru(){return !!(byId('master','setting')||{}).spkDimBaru}
+const SHAPE_LURUS_FB={id:'STRAIGHT',kunci:'STRAIGHT',nama:'Straight',dim:[{k:'w',label:'W'},{k:'h',label:'H'},{k:'l',label:'L'}],fullHole:false};
+const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER']);
+/* tanpa katalog berat: batang lurus tetap bisa diisi W, H, L; kg dihitung setelah katalog dipasang */
+function edCapTanpaKatalog(s){const hb=parseH(s.h);if(!hb.p||!PRODUK_LURUS_FB.has(hb.p))return null;return {fam:null,prod:hb.p,shapes:[SHAPE_LURUS_FB],all:[SHAPE_LURUS_FB],fallback:true}}
+/* kolom dimensi terpisah: gabungan dimensi semua bentuk yang diizinkan di section */
+function edDimCols(cap){const out=[],seen=new Set();cap.shapes.forEach(x=>x.dim.forEach(d=>{if(!seen.has(d.k)){seen.add(d.k);out.push(d)}}));return out}
+/* kg per pcs dari katalog (estimasi = plate yang diambil, real = barang jadi); null bila belum bisa dihitung */
+function edKgPair(s,l,cap){const B=window.MNIBerat;if(!cap||cap.fallback||!l.sb||!B||!B.kgPerPcs)return null;const dv=derive(s.h);const r=B.kgPerPcs({keluarga:cap.fam,bentuk:l.sb,dim:l.dim||{},tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});return r&&r.ok?r:null}
+function edKgSub(s,l,cap){const r=edKgPair(s,l,cap);return r?'<div class="kgsub">est '+n(Math.round(r.kgPcsEst*100)/100)+' · real '+n(Math.round(r.kgPcsReal*100)/100)+' Kg</div>':''}
+function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
 /* Perforated Cable Tray otomatis Full hole; produk lain Bawah. Pilihan manual pengguna (lubangManual) tidak diganti oleh bawaan. */
 const lubangBawaan=cap=>cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
 function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&cap.shapes.length&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}
@@ -4464,6 +4475,7 @@ const dimKosong=(sh,l)=>sh.dim.every(d=>l.dim==null||l.dim[d.k]===''||l.dim[d.k]
 /* hitung nama dan berat satu baris terstruktur; berat manual (diketik pengguna) tidak ditimpa */
 function edHitungBaris(s,l){
  const cap=edCap(s);if(!l.sb||!cap)return null;const sh=cap.all.find(x=>x.id===l.sb);if(!sh)return null;
+ if(cap.fallback){l.dim=l.dim||{};l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim);l.galat='';return null}
  l.dim=l.dim||{};if(!sh.fullHole)l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);
  l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim)+(l.lubang==='full'&&sh.fullHole?' Full Hole':'');
  const dv=derive(s.h);const h=window.MNIBerat.hitungBentuk({keluarga:cap.fam,bentuk:l.sb,dim:l.dim,tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});
@@ -4533,7 +4545,9 @@ function edKolomItem(s,si,li,l,cap,hb){
  const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>'+(ada?'':'<div class="ed-galat" id="ed-lr-'+si+'-'+li+'">'+esc(sh.nama)+' di luar aturan section '+esc(cap.prod)+(edSaranSection(s,sh)?'; biasanya di section '+esc(edSaranSection(s,sh)):'')+'. Tetap bisa disimpan.</div>'):'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
  const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span>'+edVendorHtml(s,si,li,l)+'</td>';
  const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
- return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
+ if(spkDimBaru()&&cap){const dc=edDimCols(cap),lub=cap.shapes.some(x=>x.fullHole);const galat='<div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div>';
+  return '<td class="c-d">'+pilih+nama+galat+'</td>'+spek+dc.map(c=>{const d=sh&&sh.dim.find(x=>x.k===c.k);return d?'<td class="c-dim"><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+c.k+'" id="ed-dm-'+si+'-'+li+'-'+c.k+'" value="'+esc((l.dim||{})[c.k]==null?'':(l.dim||{})[c.k])+'" aria-label="'+esc(c.label)+'"></td>':'<td class="c-dim muted">–</td>'}).join('')+(lub?(sh&&sh.fullHole?'<td class="c-lub"><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></td>':'<td class="c-lub muted">–</td>'):'');}
+  return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
 }
 /* Sel "Dari stok": pilih produk gudang barang jadi dan jumlah yang diambil dari stok (sisanya diproduksi). */
 function edStokHint(l,res){if(!l.fg)return '';const tersedia=(calc().stock.fg[l.fg]||0)-((res||fgResMap(ED&&ED.id))[l.fg]||0);const am=Math.max(0,+l.ambil||0),q=+l.q||0;
@@ -4577,7 +4591,7 @@ function edSecHtml(s,si,startNo){
   <td class="c-q"><input class="inp num" data-f="q" type="number" min="0" step="any" value="${esc(l.q)}" id="ed-q-${si}-${li}" inputmode="decimal"></td>
   <td class="c-u"><input class="inp" data-f="u" value="${esc(l.u)}" list="dl-sat" id="ed-u-${si}-${li}"></td>
   ${edStokHtml(si,li,l,RES,s)}
-  <td class="c-w"><input class="inp num" data-f="w" type="number" min="0" step="any" value="${esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal">${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}</td>
+  <td class="c-w"><input class="inp num" data-f="w" type="number" min="0" step="any" value="${esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal">${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}${spkDimBaru()&&cap?`<span id="ed-kg-${si}-${li}">${edKgSub(s,l,cap)}</span>`:''}</td>
   <td class="c-bi num" data-bi>${bi?n(bi):'–'}</td>
   <td class="c-cat"><input class="inp" data-f="catatan" value="${esc(l.catatan)}" id="ed-c-${si}-${li}"></td>
   <td><button type="button" class="ibtn" data-act="ed-delline" data-s="${si}" data-l="${li}" aria-label="Hapus baris">×</button></td></tr>`}).join('');
@@ -4585,11 +4599,12 @@ function edSecHtml(s,si,startNo){
   <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p,hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
   <span class="esec-acts"><button type="button" class="ibtn" data-act="ed-up" data-s="${si}" aria-label="Naikkan" ${si?'':'disabled'}>↑</button><button type="button" class="ibtn" data-act="ed-down" data-s="${si}" aria-label="Turunkan" ${si<ED.sections.length-1?'':'disabled'}>↓</button><button type="button" class="ibtn" data-act="ed-delsec" data-s="${si}" aria-label="Hapus section" ${ED.sections.length>1?'':'disabled'}>×</button></span>
   <input class="inp esec-title" data-sf="h" data-s="${si}" value="${esc(s.h)}" list="dl-grup" placeholder="JUDUL SECTION, mis. CABLE TRAY TYPE STU 1.5 ELECTRO GALVANIZED" id="ed-h-${si}"></div>
-  <div class="tbl-wrap"><table class="edt"><thead><tr><th>No</th>${cap?'<th>Bentuk dan nama item</th><th>Spesifikasi</th><th>Ukuran (mm)</th>':'<th>Description</th>'}<th>Catatan merah</th><th class="num">Qty</th><th>Satuan</th><th>${ED&&ED.stokReq?'':'Dari stok'}</th><th class="num">Berat/pcs</th><th class="num">Berat/item</th><th>Keterangan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="tbl-wrap"><table class="edt"><thead><tr><th>No</th>${cap?(spkDimBaru()?'<th>Bentuk dan nama item</th><th>Spesifikasi</th>'+edDimCols(cap).map(c=>'<th class="num">'+esc(c.label)+' (mm)</th>').join('')+(cap.shapes.some(x=>x.fullHole)?'<th>Lubang</th>':''):'<th>Bentuk dan nama item</th><th>Spesifikasi</th><th>Ukuran (mm)</th>'):'<th>Description</th>'}<th>Catatan merah</th><th class="num">Qty</th><th>Satuan</th><th>${ED&&ED.stokReq?'':'Dari stok'}</th><th class="num">Berat/pcs</th><th class="num">Berat/item</th><th>Keterangan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
   <button type="button" class="btn sm ghost" data-act="ed-addline" data-s="${si}">${ic('plus')}Baris</button></div>`;
 }
 function edTotals(){let q=0,w=0,c=0;ED.sections.forEach(s=>s.lines.forEach(l=>{if(String(l.d).trim()){c++;q+= +l.q||0;w+=(+l.q||0)*(+l.w||0)}}));return {q,w,c}}
-function renderTotals(){const t=edTotals();const el=$('#ed-tot');if(el)el.innerHTML=`<b>${t.c}</b> item · Total <b>${n(t.q)}</b> Btg/Pcs · <b>${n(Math.round(t.w*100)/100)}</b> Kg${t.w>=1000?` <span class="muted">(${ton(t.w)} ton)</span>`:t.w>0?` <span class="muted">(${n(Math.round(t.w/100)/10)} ton)</span>`:''}`}
+function renderTotals(){const t=edTotals();const el=$('#ed-tot');if(!el)return;let ke=0,kr=0,ada=false;if(spkDimBaru()){ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const r=edKgPair(s,l,cap);if(r&&String(l.d).trim()){ada=true;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));ke+=r.kgPcsEst*(q-am);kr+=r.kgPcsReal*q}})})}
+ el.innerHTML=`<b>${t.c}</b> item · Total <b>${n(t.q)}</b> Btg/Pcs · <b>${n(Math.round(t.w*100)/100)}</b> Kg${t.w>=1000?` <span class="muted">(${ton(t.w)} ton)</span>`:t.w>0?` <span class="muted">(${n(Math.round(t.w/100)/10)} ton)</span>`:''}${ada?` · plate (est) <b>${n(Math.round(ke*100)/100)}</b> Kg · barang jadi (real) <b>${n(Math.round(kr*100)/100)}</b> Kg`:''}`}
 function renderEditor(){
  const e=ED,k=KAT();const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
  let no=0;const secs=e.sections.map((s,i)=>{const h=edSecHtml(s,i,no);no+=s.lines.length;return h}).join('');
@@ -4681,7 +4696,7 @@ function edBarisBerubah(tr,si,li,fokusDim){
  const nm=$('#ed-nm-'+si+'-'+li);if(nm)nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>';
  const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';edStokRefresh(si,li);
  const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=L.w===''?'':L.w;wTag(tr,L);
- const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';renderTotals();
+ const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';const kgEl=$('#ed-kg-'+si+'-'+li);if(kgEl)kgEl.innerHTML=edKgSub(s,L,edCap(s));renderTotals();
  /* baris terakhir mulai diisi: sediakan baris berikutnya */
  if(fokusDim&&li===s.lines.length-1&&!tr.nextElementSibling){s.lines.push(lineBaru(s.h));const id=document.activeElement&&document.activeElement.id;const pos=document.activeElement&&document.activeElement.selectionStart;rerenderSecs();const x=id&&$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
 }
@@ -5967,7 +5982,8 @@ document.addEventListener('click',async e=>{
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
   case 'ruteck':await ruteCentang(el);break;
-  case 'opsisimpan':await opsiSimpan(false);break;case 'aturansimpan':await aturanSimpan(false);break;case 'aturanreset':if(confirm('Pulihkan aturan section ke standar MNI?'))await aturanSimpan(true);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;
+  case 'opsisimpan':await opsiSimpan(false);break;case 'spkdimtoggle':{await saveSetting({spkDimBaru:!spkDimBaru()});toast(spkDimBaru()?'Layout SPK per dimensi diaktifkan':'Layout SPK per dimensi dinonaktifkan');renderBody();break}
+  case 'aturansimpan':await aturanSimpan(false);break;case 'aturanreset':if(confirm('Pulihkan aturan section ke standar MNI?'))await aturanSimpan(true);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;
   case 'opsireset':if(confirm('Pulihkan semua opsi SPK ke bawaan?'))await opsiSimpan(true);break;
   case 'ruteadd':await ruteTambah();break;
   case 'rutedel':await ruteHapus(ds.rk);break;

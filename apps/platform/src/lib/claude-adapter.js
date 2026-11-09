@@ -579,6 +579,7 @@ window.MNIBerat = {
   diizinkan: (produk, kunci) => _bentuk.bentukDiizinkan(produk, kunci, _aturanSection),
   keluargaDaftar: () => (_katalogBerat ? Object.keys(_katalogBerat.keluarga) : []),
   hitungBentuk: (o) => (_katalogBerat ? _bentuk.hitungBentuk(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  kgPerPcs: (o) => (_katalogBerat ? _bentuk.kgPerPcs(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
   namaItem: _bentuk.namaItem,
 };
 

@@ -842,3 +842,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 
 - **Dikerjakan:** katalog dari kalkulator baru (full hole pada Straight STU dan STC), modul `bentuk.js` (unit 11), editor SPK terstruktur, uji `spk-terstruktur.mjs` 18.
 - **Belum (tahap berikut):** routing per produk dan bentuk di Master Data, aturan vendor per material, pengecualian per item (kriteria terbuka T-174); menunggu jawaban pemilik; unggah katalog baru di production.
+
+### 2026-11-09 · T-222 tahap 2: layar input per dimensi (di balik bendera)
+- Hasil: bendera spkDimBaru (Opsi SPK, mati secara bawaan). Kolom W, H, L terpisah; bentuk Straight default; nama dari dimensi; kg est dan real per pcs dan footer plate (est) dan barang jadi (real) bila katalog terpasang.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-06 (6 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error; kg-item 9 PASS; bentuk 16 PASS.
+- Hambatan: tombol bendera di Opsi SPK belum diuji langsung (tes memakai saveSetting). Cover, ACCS, dan fitting belum memakai layout baru. Kebutuhan plate masih memakai angka lama (tahap 3). Belum diuji katalog perusahaan dan Supabase.

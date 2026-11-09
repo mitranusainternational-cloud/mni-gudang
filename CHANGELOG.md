@@ -99,3 +99,6 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 ### Keamanan
 - RLS aktif di 21 tabel; role lama (manager, gudang, produksi) tidak lagi punya hak; viewer tidak dapat menulis log.
 - `anon` dicabut dari fungsi pembantu; `pg_trgm` dipindah dari schema `public`; secret scanning dan push protection aktif.
+
+### Ditambahkan (SPK per dimensi, 2026-11-09)
+- Bendera layout SPK per dimensi di Opsi SPK (mati secara bawaan): kolom W, H, L terpisah, bentuk Straight default, kg estimasi dan real per pcs, footer plate dan barang jadi.
