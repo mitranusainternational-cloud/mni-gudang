@@ -26,8 +26,8 @@ Audit: [[documentation/AUDIT_ALUR_2026-11-09|AUDIT_ALUR_2026-11-09]]
 - [x] **Satu tab Rute produksi** (matriks produk dan komponen x Work Centre); tab Matriks rute dan tabel rute lama yang menduplikasi dihapus beserta kodenya
 - [x] **Jenis material dan item bahan baku** dihubungkan eksplisit: form Ubah item punya pilihan Jenis material; item tanpa pilihan tetap ditebak dari kata kunci nama; penjelasan perbedaan Jenis material (massa jenis) dan Item bahan baku (barang gudang) di layar
 - [x] **Aturan section** memuat semua produk dari Opsi SPK, bukan hanya tujuh produk bawaan kode
-- [ ] Satu sumber massa jenis: kalkulator SPK memakai massa jenis Master Data (F-01 audit)
-- [ ] Produksi Hari Ini membuka Work Centre yang punya antrian (F-06)
+- [x] Satu sumber massa jenis: kalkulator SPK (kg estimasi dan real, dan baris teks bebas) memakai massa jenis Master Data lewat pengait; tabel di kode hanya cadangan bila Master Data tidak mengenali bahan. Diuji K-10, K-11 (unit) dan MD-06 (e2e)
+- [x] Produksi Hari Ini membuka Work Centre yang punya antrian bila belum ada pilihan tersimpan (F-06). Diuji SP-07
 - [ ] Tab **Aturan proses** di Master Data: aturan khusus komponen, pemetaan finishing ke vendor, material tanpa vendor (F-08)
 - [ ] Gudang Barang Jadi dua tampilan Stok dan Siap kirim customer; antrian SPK stok siap masuk (F-09, F-10)
 - [ ] Antrian Siap dikirim ke vendor dan serah terima WIP (F-11)

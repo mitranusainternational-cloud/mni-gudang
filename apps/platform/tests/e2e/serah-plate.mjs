@@ -70,6 +70,10 @@ export async function runSerahPlate(page, base) {
     await page.click('[data-view="bahan-baku"][data-key="tab"][data-val="plate"]').catch(() => {}); await wait(600);
     const t6 = await body();
     ok('SP-06 setelah diserahkan: status Lengkap, dua mutasi keluar bertanda SPK, SPK hilang dari tab dan peringatan hilang', p6.st === 'Lengkap' && p6.sisa <= 0.0005 && p6.mut === 2 && !/PT Uji Plate/.test(t6) && (await page.evaluate((id) => platChip(id), sid)) === '', JSON.stringify(p6));
+    // SP-07 Produksi Hari Ini membuka Work Centre yang punya antrian (bukan yang pertama dan kosong)
+    const w7 = await page.evaluate(() => { localStorage.removeItem('mni-wc'); F.mesin.wc = ''; return { wc: mesinPilih().wc, pertama: wcInternal()[0].nama }; });
+    ok('SP-07 tanpa pilihan tersimpan: Work Centre bawaan = yang punya antrian (Shearing), bukan yang pertama', w7.wc === 'Shearing' && w7.pertama !== 'Shearing', JSON.stringify(w7));
+
   } catch (e) {
     R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
   }

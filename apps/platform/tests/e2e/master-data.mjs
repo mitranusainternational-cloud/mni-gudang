@@ -63,6 +63,12 @@ export async function runMasterData(page, base) {
     await submit();
     const j5 = await page.evaluate((id) => byId('rm', id).jenis, id);
     ok('MD-05 form Ubah item memuat pilihan Jenis material (SS304 terpilih); memilih SPCC tersimpan di item', f5.ada && f5.nilai === 'SS304' && j5 === 'SPCC', JSON.stringify({ f5, j5 }));
+    // MD-06 satu sumber massa jenis: kalkulator SPK mengikuti massa jenis di Master Data
+    const kg1 = await page.evaluate(() => { bjHook(); return window.MNIBerat.kgPerPcs({ keluarga: 'STU', bentuk: 'STRAIGHT_STU', dim: { w: 100, h: 50, l: 3000 }, tebal: '1.2', material: 'SPHC' }).kgPcsEst; });
+    await page.evaluate(async () => { await saveSetting({ dens: { SPHC: 8.0 } }); }); await wait(900);
+    const kg2 = await page.evaluate(() => window.MNIBerat.kgPerPcs({ keluarga: 'STU', bentuk: 'STRAIGHT_STU', dim: { w: 100, h: 50, l: 3000 }, tebal: '1.2', material: 'SPHC' }).kgPcsEst);
+    ok('MD-06 massa jenis SPHC diubah di Master Data (7,85 → 8,0): kg per pcs di kalkulator SPK ikut naik sebanding', Math.abs(kg2 / kg1 - 8.0 / 7.85) < 1e-6, JSON.stringify({ kg1, kg2, rasio: kg2 / kg1 }));
+
   } catch (e) {
     R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
   }

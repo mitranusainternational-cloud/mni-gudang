@@ -2651,7 +2651,7 @@ const lsSet=(k,v)=>{try{if(v)localStorage.setItem(k,v);else localStorage.removeI
 function mesinPilih(){
  const w=wcInternal();
  if(!F.mesin.wc)F.mesin.wc=lsGet('mni-wc');
- if(!w.some(x=>x.nama===F.mesin.wc))F.mesin.wc=(w[0]||{}).nama||'';
+ if(!w.some(x=>x.nama===F.mesin.wc))F.mesin.wc=((w.find(x=>antrianMesin(x.nama).length>0)||w[0]||{}).nama)||'';
  const daftar=mesinWC(F.mesin.wc);
  if(daftar.length){if(!F.mesin.mesin)F.mesin.mesin=lsGet('mni-mesin');if(!daftar.some(m=>m.nama===F.mesin.mesin))F.mesin.mesin=daftar[0].nama}else F.mesin.mesin='';
  return {wc:F.mesin.wc,mesin:F.mesin.mesin||F.mesin.wc,daftar};
@@ -4462,7 +4462,7 @@ function beratOf(d,h){const k=KAT().berat||{};const t=thkOf(h);if(k[d+'|'+t])ret
    Scaling: berat ∝ l (straight) dan ∝ t (semua tipe) */
 /* Berat per pcs dari kalkulator berat (katalog rumus Excel di database). 0 bila katalog belum terpasang atau item tidak dikenali:
    lebih baik kosong (diisi manual) daripada angka perkiraan yang salah. */
-function weightInfo(desc,sectionHeader){const B=window.MNIBerat;if(!B||!B.siap())return null;return B.hitungItem({judulSection:sectionHeader,deskripsi:desc,material:ED?ED.material:'',tebal:ED?(parseFloat(ED.tebal)||null):null})}
+function weightInfo(desc,sectionHeader){bjHook();const B=window.MNIBerat;if(!B||!B.siap())return null;return B.hitungItem({judulSection:sectionHeader,deskripsi:desc,material:ED?ED.material:'',tebal:ED?(parseFloat(ED.tebal)||null):null})}
 function weightCalc(desc,sectionHeader){const r=weightInfo(desc,sectionHeader);return r&&r.ok?Math.round(r.beratSPK*1000)/1000:0}
 function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
  if(!s){s=document.createElement('span');td.appendChild(s)}s.className='wtag '+L.wsrc;s.textContent=L.wsrc==='kalkulator'?'auto':'manual';s.title=L.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}
@@ -4489,6 +4489,9 @@ const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
 const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
 /* Bendera layout SPK per dimensi (T-222 tahap 2): kolom W, H, L terpisah, bentuk selalu terlihat, kg estimasi dan real. Mati secara bawaan. */
+/* Massa jenis dari Master Data (Bahan baku > Jenis material): kalkulator berat SPK memakai angka yang sama dengan stok bahan baku. */
+function bjMaster(mat){const s=String(mat||'').trim();if(!s)return 0;const g=GRADES().find(x=>x.toLowerCase()===s.toLowerCase())||grade({item:s});return g&&g!=='Lainnya'?densG(g):0}
+function bjHook(){const B=window.MNIBerat;if(B&&B.setMassaJenisMaster&&!B._bjHooked){B.setMassaJenisMaster(bjMaster);B._bjHooked=true}}
 function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==undefined)return !!v;return !window.__SPK_DIM_LEGACY}
 /* Langkah rute (rute standar dan rute khusus) yang namanya tidak ada di Work Centre master: antrian langkah itu tidak akan muncul di Produksi Hari Ini. */
 function ruteWcHilang(){const P=PXL();if(!P)return [];const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const miss=new Set();Object.values(ruteStd()).forEach(r=>(r||[]).forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))miss.add(w)}));return [...miss]}
@@ -4503,7 +4506,7 @@ function edDimCols(cap){const out=[],seen=new Set();cap.shapes.forEach(x=>x.dim.
 /* kg per pcs dari katalog (estimasi = plate yang diambil, real = barang jadi); null bila belum bisa dihitung */
 function edKgPair(s,l,cap){const B=window.MNIBerat;if(!cap||cap.fallback||!l.sb||!B||!B.kgPerPcs)return null;const dv=derive(s.h);const r=B.kgPerPcs({keluarga:cap.fam,bentuk:l.sb,dim:l.dim||{},tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});return r&&r.ok?r:null}
 function edKgSub(s,l,cap){const r=edKgPair(s,l,cap);return r?'<div class="kgsub">est '+n(Math.round(r.kgPcsEst*100)/100)+' · real '+n(Math.round(r.kgPcsReal*100)/100)+' Kg</div>':''}
-function edCap(s){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
+function edCap(s){bjHook();const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
 /* Perforated Cable Tray otomatis Full hole; produk lain Bawah. Pilihan manual pengguna (lubangManual) tidak diganti oleh bawaan. */
 const lubangBawaan=cap=>cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
 function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&cap.shapes.length&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}

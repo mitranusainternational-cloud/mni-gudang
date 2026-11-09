@@ -25,7 +25,7 @@ Metode: satu SPK customer (Cable Tray Straight 300 x 100 x 3000, 10 pcs) dijalan
 
 | ID | Temuan | Status |
 |---|---|---|
-| F-01 | Dua sumber massa jenis: kalkulator SPK memakai konstanta di kode, stok bahan baku memakai Master Data. Mengubah massa jenis di Master Data tidak mengubah berat SPK | Diperbaiki (satu sumber: Master Data) |
+| F-01 | Dua sumber massa jenis: kalkulator SPK memakai konstanta di kode, stok bahan baku memakai Master Data. Mengubah massa jenis di Master Data tidak mengubah berat SPK | Diperbaiki (satu sumber: Master Data; tabel di kode hanya cadangan) |
 | F-02 | Jenis material item bahan baku hanya ditebak dari kata kunci di nama (6 item "Belum dikenali") | Diperbaiki (pilihan Jenis eksplisit di form Ubah) |
 | F-03 | Tab Rute produksi dan Matriks rute menduplikasi fungsi | Diperbaiki (satu tab) |
 | F-04 | Aturan section hanya memuat tujuh produk bawaan kode | Diperbaiki (semua produk Opsi SPK) |

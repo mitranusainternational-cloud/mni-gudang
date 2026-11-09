@@ -123,3 +123,7 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 ### Diubah (Master Data, 2026-11-09)
 - Satu tab Rute produksi (matriks produk dan komponen x Work Centre); tab Matriks rute dihapus.
 - Form Ubah item bahan baku punya pilihan Jenis material; Aturan section memuat semua produk dari Opsi SPK; kolom W H L di editor SPK lebih ringkas.
+
+### Diperbaiki (massa jenis dan Work Centre produksi, 2026-11-09)
+- Berat SPK dari kalkulator memakai massa jenis di Master Data (satu sumber dengan stok bahan baku).
+- Produksi Hari Ini membuka Work Centre yang punya antrian.

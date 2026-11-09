@@ -2,6 +2,7 @@
 // Memakai katalog sintetis di tests/e2e/fixtures (bukan rumus perusahaan), sehingga aman dijalankan di CI.
 import fs from 'node:fs';
 import { kgPerPcs, totalKg, hitungBentuk } from '../../src/lib/berat/bentuk.js';
+import { setMassaJenisMaster } from '../../src/lib/berat/parser.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 const kat = JSON.parse(fs.readFileSync(new URL('../e2e/fixtures/katalog-berat-uji.json', import.meta.url), 'utf8'));
@@ -44,6 +45,17 @@ ok('K-08 ambil melebihi qty dipotong; qty kosong menghasilkan nol', t2.qtyProduk
 // K-09 konsistensi: total estimasi per pcs sama dengan kgPerPcs x qty produksi
 const tot = totalKg(a, 7, 2);
 ok('K-09 total estimasi = kgPcsEst x (qty - ambil) dengan kgPcsEst dari katalog', dekat(tot.kgEstTotal, a.kgPcsEst * 5), JSON.stringify(tot));
+
+// K-10 pengait massa jenis Master Data: massa jenis dari Master Data menggantikan tabel di kode (kg ikut berubah sebanding)
+setMassaJenisMaster((m) => (/sphc/i.test(m) ? 8.0 : 0));
+const mst = kgPerPcs(kat, { ...straight, lubang: 'standar' });
+ok('K-10 massa jenis SPHC dari Master Data 8,0 (bukan 7,85): estimasi dan real naik sebanding 8,0/7,85', mst.ok && dekat(mst.kgPcsEst / a.kgPcsEst, 8.0 / 7.85) && dekat(mst.kgPcsReal / a.kgPcsReal, 8.0 / 7.85), JSON.stringify({ r: mst.kgPcsEst / a.kgPcsEst }));
+// K-11 bahan yang tidak dikenali Master Data kembali ke tabel di kode; pengait dilepas = angka awal
+setMassaJenisMaster((m) => 0);
+const cad = kgPerPcs(kat, { ...straight, lubang: 'standar' });
+setMassaJenisMaster(null);
+const awal = kgPerPcs(kat, { ...straight, lubang: 'standar' });
+ok('K-11 Master Data tidak mengenali bahan: memakai cadangan di kode; pengait dilepas kembali ke angka awal', dekat(cad.kgPcsEst, a.kgPcsEst) && dekat(awal.kgPcsEst, a.kgPcsEst), JSON.stringify({ cad: cad.kgPcsEst, awal: awal.kgPcsEst, a: a.kgPcsEst }));
 
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n') + `\n${R.length - fail} PASS, ${fail} FAIL`);
