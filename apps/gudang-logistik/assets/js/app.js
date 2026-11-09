@@ -1735,7 +1735,7 @@ function newItemForm(g){
  else openModal('Produk barang jadi baru',fld('Kategori',inp('kategori','Cable Tray','text','list="dl-kat" required'))+fld('Type',inp('type','STU','text','placeholder="STU / STC / SLU / SLHD"'))+fld('Ukuran (W×H)',inp('ukuran','','text','placeholder="200x100" required'))+fld('Panjang (mm)',inp('panjang','3000','number'))+fld('Finishing',inp('finishing','HDG','text','list="dl-fin"'))+fld('Tebal (mm)',inp('tebal','1.8'))+fld('Satuan',inp('satuan','Btg'))+fld('Stok awal',inp('stokAwal','0','number','min="0"'))+fld('Buffer stok (target)',inp('buffer','0','number','min="0"'))+`<datalist id="dl-kat">${[...new Set(S.fg.map(r=>r.kategori))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist><datalist id="dl-fin">${[...new Set(S.fg.map(r=>r.finishing))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`,
   async d=>{if(!d.ukuran)throw new Error('Ukuran wajib diisi.');await addDoc('fg',{kategori:d.kategori,type:d.type,ukuran:d.ukuran,panjang:num0(d.panjang)||d.panjang,finishing:d.finishing,tebal:d.tebal,satuan:d.satuan||'Btg',stokAwal:num0(d.stokAwal),buffer:num0(d.buffer),tglStokAwal:today(),ket:''})});
 }
-function render(){renderNav();renderTools();renderBody()}
+function render(){apHook();renderNav();renderTools();renderBody()}
 /* ---------- forms ---------- */
 // ---------- Mesin (master) dan pemakaian sparepart ke mesin ----------
 const TUJUAN_SP=[['perawatan','Perawatan rutin'],['perbaikan','Perbaikan (breakdown)'],['ganti','Penggantian komponen aus'],['tools','Tools / consumable produksi'],['umum','Umum (bukan untuk satu mesin)']];
@@ -2199,12 +2199,12 @@ const usage=()=>{const u={vendor:{},customer:{},supplier:{},armada:{}};const inc
 // KPI summary per tab
 const masterKpi=k=>{const u=usage()[k];const col=MK[k];const aktif=S[col].filter(x=>x.aktif!==false).length;const nonaktif=S[col].filter(x=>x.aktif===false).length;const totalUsage=Object.values(u).reduce((a,b)=>a+b,0);const unreg=Object.keys(u).filter(nm=>!S[col].some(x=>(k==='armada'?x.nopol:x.nama)===nm)).length;return {aktif,nonaktif,totalUsage,unreg}};
 
-T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='mesin'||k==='rute'||k==='matriks'||k==='opsi'||k==='kop'||k==='aturan';
- return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['mesin','Mesin'],['rute','Rute produksi'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'||k==='matriks'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
+T['master-data']=()=>{const f=F['master-data'];const k=f.tab;const isKatalog=['item','grup','satuan','bb'].includes(k);const isWc=k==='wc'||k==='mesin'||k==='rute'||k==='matriks'||k==='proses'||k==='opsi'||k==='kop'||k==='aturan';
+ return `${segBtns('master-data','tab',[['vendor','Vendor'],['customer','Customer'],['supplier','Supplier'],['armada','Armada'],['bb','Bahan baku'],['wc','Work Centre'],['mesin','Mesin'],['rute','Rute produksi'],['proses','Aturan proses'],['opsi','Opsi SPK'],['aturan','Aturan section'],['kop','Kop dokumen'],['item','Item SPK'],['grup','Judul section'],['satuan','Satuan & sales']])}<input class="inp search" id="q-master" placeholder="Cari nama…" value="${esc(f.q)}" data-act="q" data-view="master-data">${!isKatalog&&!isWc?`<label class="ck" style="font-size:13px;white-space:nowrap"><input type="checkbox" data-act="mshowInactive" ${f.showInactive?'checked':''}> Tampilkan nonaktif</label><button class="btn ghost sm" data-act="mcsv" title="Export CSV">${ic('download')} CSV</button>`:'<span class="grow"></span>'}${canManage()?`<button class="btn ghost sm" data-act="katberat" title="Katalog rumus berat">Katalog berat</button><button class="btn ghost sm" data-act="importcsv" title="Impor dari CSV">${ic('dl')} Impor CSV</button>`:''}${k==='rute'||k==='opsi'||k==='matriks'||k==='proses'?'':`<button class="btn primary" data-act="mnew">${ic('plus')}Tambah</button>`}`};
 
 B['master-data']=()=>{
  if(F['master-data'].tab==='bb')return bbTab();
- if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='mesin')return mesinTab();if(F['master-data'].tab==='rute'||F['master-data'].tab==='matriks')return ruteMatriksTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
+ if(F['master-data'].tab==='item')return katItemTab();if(F['master-data'].tab==='grup')return katGrupTab();if(F['master-data'].tab==='satuan')return katListTab();if(F['master-data'].tab==='wc')return wcTab();if(F['master-data'].tab==='mesin')return mesinTab();if(F['master-data'].tab==='rute'||F['master-data'].tab==='matriks')return ruteMatriksTab();if(F['master-data'].tab==='proses')return aturanProsesTab();if(F['master-data'].tab==='opsi')return opsiTab();if(F['master-data'].tab==='kop')return kopTab();if(F['master-data'].tab==='aturan')return aturanTab();
  const f=F['master-data'],k=f.tab,q=f.q.toLowerCase(),u=usage()[k],si=f.showInactive;const key=k==='armada'?'nopol':'nama';
  const kpi=masterKpi(k);
  // KPI row
@@ -2439,7 +2439,7 @@ function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap(
 function ruteDampak(petaBaru){const P=PXL();const hit=new Set();if(!P)return [];
  S.spk.forEach(s=>{const x=calc().spk[s._id];if(!x||x.st==='Selesai'||x.st==='Draft'||x.st==='Batal')return;
   (s.items||[]).forEach((it,ix)=>{if(Array.isArray(it.rute)&&it.rute.length)return;/* item bersnapshot tidak terpengaruh perubahan master */const st=itemState(s,it,ix);if(!st||!(st.ev.length||(+it.prod||0)>0))return;
-   const baru=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},petaBaru,P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''}).rute;
+   const baru=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute},petaBaru,P.aturanKhususAktif(),{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''}).rute;
    if(baru.join('>')!==st.rute.join('>'))hit.add(s.no)})});
  return [...hit].sort((a,b)=>a-b)}
 const ruteTolak=d=>'Rute tidak diubah: '+d.length+' SPK lama (tanpa snapshot rute) sudah punya catatan produksi dengan rute lama (SPK '+d.slice(0,5).join(', ')+(d.length>5?' dan lainnya':'')+'). Selesaikan atau batalkan SPK itu dulu.';
@@ -2448,7 +2448,7 @@ async function ruteHapus(k){const peta={...ruteStd()};delete peta[k];const dmp=r
 /* ---------- Master Data: Matriks rute (produk dan komponen x Work Centre), T-223 ----------
    Satu layar untuk melihat dan mengatur rute: tiap baris produk atau komponen, tiap kolom Work Centre internal. Komponen ikut rute produk
    (atau aturan khusus) sampai pengguna mengubah centangnya; itu membuat rute kustom 'PRODUK|BENTUK' yang bisa dipulihkan. */
-function ruteEfektif(p,bentuk,nm){const P=PXL();if(!P)return {rute:[],sumber:'belum'};return P.tentukanRute({judulSection:p,deskripsi:nm||'',ruteItem:null},ruteStd(),P.ATURAN_KHUSUS,bentuk?{bentuk}:{})}
+function ruteEfektif(p,bentuk,nm){const P=PXL();if(!P)return {rute:[],sumber:'belum'};return P.tentukanRute({judulSection:p,deskripsi:nm||'',ruteItem:null},ruteStd(),P.aturanKhususAktif(),bentuk?{bentuk}:{})}
 function ruteMatriksTab(){const P=PXL(),wcs=wcInternal(),ok=canManage(),q=String(F['master-data'].q||'').toLowerCase();
  if(!P)return empty('Mesin rute belum siap','Muat ulang halaman.');
  if(!wcs.length)return `<section class="panel"><div class="pbody note">Isi daftar Work Centre dulu (tab Work Centre); rute dipilih dari Work Centre internal.</div></section>`;
@@ -2475,6 +2475,64 @@ async function matrikCentang(el){const rk=el.dataset.rk,wcs=wcInternal(),peta={.
  peta[rk]=hasil;
  const dmp=ruteDampak(peta);if(dmp.length){el.checked=!el.checked;toast(ruteTolak(dmp));renderBody();return}
  try{await ruteSimpan(peta);toast('Rute '+rk.replace('|',' · ')+' disimpan')}catch(e){toast(e.message||String(e));el.checked=!el.checked}
+ renderBody()}
+/* ---------- Master Data: Aturan proses (F-08): aturan khusus komponen, finishing ke vendor, material tanpa vendor ----------
+   Bawaan ada di mesin rute (rute.js) sebagai data; konfigurasi di sini (master/setting.aturanProses) menggantikannya. */
+let AP_ED=null,_apKey=null;
+function apHook(){const P=PXL();if(!P||!P.setAturanProses)return;const ap=(byId('master','setting')||{}).aturanProses||null,k=ap?JSON.stringify(ap):'';if(k!==_apKey){_apKey=k;P.setAturanProses(ap)}}
+const apKata=s=>String(s||'').split(/[,|]/).map(x=>x.trim()).filter(Boolean);
+const apAltTeks=a=>Object.entries(a||{}).map(([w,l])=>w+': '+(l||[]).join(', ')).join('; ');
+const apAltParse=s=>{const o={};String(s||'').split(';').forEach(p=>{const i=p.indexOf(':');if(i<0)return;const w=p.slice(0,i).trim(),xs=apKata(p.slice(i+1));if(w&&xs.length)o[w]=xs});return o};
+const apSalin=x=>JSON.parse(JSON.stringify(x));
+function apAwal(){const P=PXL(),ap=(byId('master','setting')||{}).aturanProses||null,pilih=(a,b)=>apSalin(a&&a.length?a:b);
+ return {kustom:!!ap,khusus:pilih(ap&&ap.khusus,P.ATURAN_KHUSUS_BAWAAN),finishing:pilih(ap&&ap.finishing,P.FINISHING_BAWAAN),material:pilih(ap&&ap.material,P.MATERIAL_TANPA_VENDOR_BAWAAN)}}
+function aturanProsesTab(){const P=PXL();if(!P||!P.ATURAN_KHUSUS_BAWAAN)return empty('Mesin rute belum siap','Muat ulang halaman.');
+ if(!AP_ED)AP_ED=apAwal();
+ const ok=canManage(),dis=ok?'':' disabled',E=AP_ED;
+ const ci=(s,i,f,v,ph,cls)=>`<input class="inp ${cls||''}" data-ap="${s}" data-i="${i}" data-f="${f}" value="${esc(v)}" placeholder="${esc(ph||'')}"${dis}>`;
+ const hps=(s,i)=>ok?`<button class="btn sm ghost danger" data-act="apdel" data-s="${s}" data-i="${i}" aria-label="Hapus baris">${ic('trash')}</button>`:'';
+ const fin=E.finishing.map((r,i)=>`<tr><td>${ci('finishing',i,'kata',(r.kata||[]).join(', '),'mis. ELECTRO')}</td><td style="width:140px">${ci('finishing',i,'kode',r.kode||'','mis. ELG','mono')}</td><td class="acts-r">${hps('finishing',i)}</td></tr>`).join('');
+ const mat=E.material.map((r,i)=>`<tr><td>${ci('material',i,'kata',(r.kata||[]).join(', '),'mis. STAINLESS, SS304, SUS')}</td><td style="width:180px">${ci('material',i,'nama',r.nama||'','mis. stainless')}</td><td class="acts-r">${hps('material',i)}</td></tr>`).join('');
+ const khu=E.khusus.map((r,i)=>`<tr><td>${ci('khusus',i,'kata',(r.kata||[]).join(', '),'mis. clamp, hanger')}</td><td>${ci('khusus',i,'produk',(r.produk||[]).join(', '),'kosong = semua produk')}</td><td>${ci('khusus',i,'rute',(r.rute||[]).join(', '),'mis. CNC Laser, Bending')}</td><td>${ci('khusus',i,'alt',apAltTeks(r.alt),'mis. CNC Laser: Shearing')}</td><td>${ci('khusus',i,'alasan',r.alasan||'','keterangan')}</td><td class="acts-r" style="white-space:nowrap">${ok?`<button class="btn sm ghost" data-act="apup" data-i="${i}" ${i?'':'disabled'} aria-label="Naikkan">↑</button><button class="btn sm ghost" data-act="apdn" data-i="${i}" ${i<E.khusus.length-1?'':'disabled'} aria-label="Turunkan">↓</button>`:''}${hps('khusus',i)}</td></tr>`).join('');
+ const tam=s=>ok?`<button class="btn sm" data-act="apadd" data-s="${s}">${ic('plus')}Tambah baris</button>`:'';
+ const hasil=(OPSI().f||[]).map(f=>{const m=P.materialDari(f),k=P.finishingDari(f);let t,c;
+  if(/(^|[^A-Z])NON([^A-Z]|$)/.test(String(f).toUpperCase())){t='Tanpa vendor (non finishing)';c='plain'}
+  else if(m!=='baja'){t='Tanpa vendor (material '+m+')';c='plain'}
+  else if(k){t='Vendor '+k;c='ok'}
+  else{t='Belum dikenali: tambahkan kata kunci finishing di atas';c='warn'}
+  return `<tr><td>${esc(f)}</td><td>${chip(t,c)}</td></tr>`}).join('');
+ return `<section class="panel"><div class="pbody note">Aturan proses menentukan bagaimana rute dan vendor finishing terbentuk dari judul section dan nama item SPK. Kata kunci dipisah koma; kata pendek (3 huruf atau kurang) dicocokkan sebagai kata utuh, yang panjang sebagai bagian teks, tanpa membedakan huruf besar kecil. ${E.kustom?'<b>Aturan kustom aktif.</b>':'Sekarang memakai bawaan; ubah lalu tekan Simpan untuk mengaturnya sendiri.'} Perubahan ditolak bila mengubah rute SPK lama yang sudah punya catatan produksi.</div>
+ <div class="pbody"><h3 class="h3">Pemetaan finishing ke vendor</h3><p class="note" style="margin:0 0 6px">Kata di judul section menentukan kode vendor finishing (langkah akhir rute: Vendor ELG, HDG, PDC, dan seterusnya). Kata NON (Non Finishing) selalu tanpa vendor.</p><div class="tbl-wrap"><table class="lines"><thead><tr><th>Kata kunci di judul section</th><th>Kode vendor</th><th></th></tr></thead><tbody>${fin}</tbody></table></div>${tam('finishing')}</div>
+ <div class="pbody"><h3 class="h3">Material tanpa vendor finishing</h3><p class="note" style="margin:0 0 6px">Material dengan kata kunci ini tidak dikirim ke vendor finishing (kecuali dipaksa per baris di editor SPK). Selain itu dianggap baja yang finishingnya dikerjakan vendor.</p><div class="tbl-wrap"><table class="lines"><thead><tr><th>Kata kunci di judul section</th><th>Nama material</th><th></th></tr></thead><tbody>${mat}</tbody></table></div>${tam('material')}</div>
+ <div class="pbody"><h3 class="h3">Aturan khusus komponen</h3><p class="note" style="margin:0 0 6px">Komponen yang tidak melewati semua mesin produknya. Dicek berurutan dari atas, yang pertama cocok menang, dan mengalahkan rute produk (rute kustom per komponen di tab Rute produksi tetap yang paling kuat). Rute memakai nama Work Centre persis; mesin alternatif ditulis <span class="mono">WC: alternatif1, alternatif2; WC lain: alternatif</span>.</p><div class="tbl-wrap"><table class="lines"><thead><tr><th>Kata di nama item</th><th>Hanya produk</th><th>Rute (urutan Work Centre)</th><th>Mesin alternatif</th><th>Keterangan</th><th></th></tr></thead><tbody>${khu}</tbody></table></div>${tam('khusus')}</div>
+ <div class="pbody"><h3 class="h3">Hasil untuk Finishing di Opsi SPK</h3><p class="note" style="margin:0 0 6px">Pemeriksaan: tiap pilihan Finishing di Opsi SPK harus jelas vendornya.</p><div class="tbl-wrap"><table class="lines"><thead><tr><th>Finishing (Opsi SPK)</th><th>Hasil</th></tr></thead><tbody>${hasil}</tbody></table></div></div>
+ <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?'<button class="btn primary" data-act="apsimpan">Simpan aturan proses</button><button class="btn ghost" data-act="apreset">Pulihkan bawaan</button>':'<span class="note">Hanya admin yang dapat mengubah aturan proses.</span>'}</div></section>`}
+document.addEventListener('input',e=>{const el=e.target;if(!el||!el.dataset||!el.dataset.ap||!AP_ED)return;const r=(AP_ED[el.dataset.ap]||[])[+el.dataset.i];if(!r)return;const f=el.dataset.f,v=el.value;
+ if(f==='kata'||f==='produk'||f==='rute')r[f]=apKata(v);else if(f==='alt')r.alt=apAltParse(v);else r[f]=v});
+function apTambah(s){if(!AP_ED)return;AP_ED[s].push(s==='finishing'?{kata:[],kode:''}:s==='material'?{kata:[],nama:''}:{kata:[],produk:[],rute:[],alt:{},alasan:''});renderBody()}
+function apHapus(s,i){if(!AP_ED)return;AP_ED[s].splice(i,1);renderBody()}
+function apGeser(i,d){const a=AP_ED&&AP_ED.khusus;if(!a||i+d<0||i+d>=a.length)return;[a[i],a[i+d]]=[a[i+d],a[i]];renderBody()}
+/* SPK lama tanpa snapshot rute yang sudah punya catatan produksi: rute dihitung dengan konfigurasi lama dan baru; beda = ditolak */
+function apDampak(ap,lama){const P=PXL(),hit=new Set();
+ try{S.spk.forEach(s=>{const x=calc().spk[s._id];if(!x||x.st==='Selesai'||x.st==='Draft'||x.st==='Batal')return;
+  (s.items||[]).forEach((it,ix)=>{if(Array.isArray(it.rute)&&it.rute.length)return;const st=itemState(s,it,ix);if(!st||!(st.ev.length||(+it.prod||0)>0))return;
+   P.setAturanProses(lama);const r0=itemRute(it).join('>');P.setAturanProses(ap);const r1=itemRute(it).join('>');if(r0!==r1)hit.add(s.no)})})}finally{P.setAturanProses(lama)}
+ return [...hit].sort((a,b)=>a-b)}
+async function apSimpan(){const P=PXL(),E=AP_ED;if(!E)return;const wc=new Set(S.mwc.map(w=>String(w.nama).trim().toLowerCase()));
+ const fin=E.finishing.map(r=>({kata:r.kata||[],kode:String(r.kode||'').trim().toUpperCase()})),mat=E.material.map(r=>({kata:r.kata||[],nama:String(r.nama||'').trim().toLowerCase()}));
+ const khu=E.khusus.map(r=>({kata:r.kata||[],...(r.produk&&r.produk.length?{produk:r.produk}:{}),rute:r.rute||[],alt:r.alt||{},alasan:String(r.alasan||'').trim()}));
+ if(fin.some(r=>!r.kata.length||!/^[A-Z0-9]{1,8}$/.test(r.kode))){toast('Finishing: isi kata kunci dan kode vendor (huruf atau angka, maksimal 8 karakter).');return}
+ if(mat.some(r=>!r.kata.length||!r.nama)){toast('Material: isi kata kunci dan nama material.');return}
+ if(khu.some(r=>!r.kata.length||!r.rute.length)){toast('Aturan khusus: isi kata kunci dan rute.');return}
+ const hil=[...new Set(khu.flatMap(r=>[...r.rute,...Object.keys(r.alt),...Object.values(r.alt).flat()]).filter(w=>!wc.has(String(w).trim().toLowerCase())))];
+ if(hil.length){toast('Work Centre tidak ada di Master Data: '+hil.join(', ')+'. Tambahkan di tab Work Centre atau samakan namanya.');return}
+ const ap={finishing:fin,material:mat,khusus:khu},lama=(byId('master','setting')||{}).aturanProses||null,dmp=apDampak(ap,lama);
+ if(dmp.length){toast(ruteTolak(dmp));return}
+ try{await saveSetting({aturanProses:ap});AP_ED=null;toast('Aturan proses disimpan')}catch(e){toast(e.message||String(e))}
+ renderBody()}
+async function apReset(){const lama=(byId('master','setting')||{}).aturanProses||null,dmp=lama?apDampak(null,lama):[];
+ if(dmp.length){toast(ruteTolak(dmp));return}
+ try{await saveSetting({aturanProses:null});AP_ED=null;toast('Aturan proses dipulihkan ke bawaan')}catch(e){toast(e.message||String(e))}
  renderBody()}
 async function seedWc(){
  if(S.mwc.length>0)return;
@@ -2540,15 +2598,15 @@ function wcTab(){
 let EVX=null;
 const PXL=()=>window.MNIProduksi||null;
 function evIdx(){if(EVX)return EVX;EVX={};for(const e of evData()){if(e.jenis==='mulai'||e.jenis==='batal')continue;const k=e.spk_id+'|'+e.item_idx;(EVX[k]=EVX[k]||[]).push(e)}return EVX}
-const ruteStd=()=>{const m=byId('master','rute_produksi');return (m&&m.rute)||PXL().RUTE_STANDAR};
-function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute,altItem:it.alt},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});return {rute:r.rute,alt:r.alt||{}}}
+const ruteStd=()=>{apHook();const m=byId('master','rute_produksi');return (m&&m.rute)||PXL().RUTE_STANDAR};
+function itemRuteInfo(it){const P=PXL();if(!P)return {rute:[],alt:{}};const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:it.rute,altItem:it.alt},ruteStd(),P.aturanKhususAktif(),{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});return {rute:r.rute,alt:r.alt||{}}}
 /* Snapshot rute: rute dan mesin alternatif disalin ke tiap item saat SPK diterbitkan (atau direvisi, untuk item tanpa catatan) supaya perubahan
    rute produk di Master Data tidak menggeser SPK berjalan dan database bisa menghitung progres produksi dari rute yang sama. */
 function itemAktif(s,idx){const it=(s.items||[])[idx];if(!it)return false;const st=itemState(s,it,idx);const ln=((calc().spk[s._id]||{}).lines||[])[idx]||{};return !!((st&&st.ev.length)||(+it.prod||0)>0||(+ln.vOut||0)>0||(+ln.kirim||0)>0)}
 function snapItems(items,orig,oiList){const P=PXL();if(!P)return items;
  return items.map((it,k)=>{const oi=orig&&oiList?oiList[k]:null;const oit=oi!=null&&orig?(orig.items||[])[oi]:null;const {rute:_r0,alt:_a0,...dasar}=it;
   if(oit&&Array.isArray(oit.rute)&&oit.rute.length&&itemAktif(orig,oi))return {...dasar,rute:oit.rute.slice(),...(oit.alt&&Object.keys(oit.alt).length?{alt:oit.alt}:{})};
-  const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:null},ruteStd(),P.ATURAN_KHUSUS,{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});
+  const r=P.tentukanRute({judulSection:it.g,deskripsi:it.d,ruteItem:null},ruteStd(),P.aturanKhususAktif(),{vendor:true,vv:it.vv||'',bentuk:it.sb?kunciDariId(it.sb):''});
   return r.rute.length?{...dasar,rute:r.rute,...(r.alt&&Object.keys(r.alt).length?{alt:r.alt}:{})}:dasar})}
 const itemRute=it=>itemRuteInfo(it).rute;
 /* Keadaan item: rute, kumulatif per langkah, qty. Tanpa kejadian: progres lama (item.prod) dianggap sudah melewati semua langkah. */
@@ -4574,7 +4632,7 @@ function closeEditor(){clearInterval(EDT);ED=null;$('#editor').hidden=true;$('#e
 const opt=(arr,sel,ph)=>`<option value="">${ph}</option>`+arr.map(x=>`<option ${x===sel?'selected':''}>${esc(x)}</option>`).join('');
 const FIN_PENDEK={'ELECTRO GALVANIZED':'ELG','HOTDIP GALVANIZED':'HDG','STAINLESS STEEL 304':'SS304','STAINLESS STEEL 316L':'SS316L','POWDER COATING WHITE':'PDC putih','POWDER COATING ORANGE RAL 2000':'PDC oranye','POWDER COATING BLUE RAL 5017':'PDC biru','ALUMINIUM 1100':'Alu 1100','NON FINISHING':'Non finishing'};
 /* Vendor per baris: bawaan mengikuti material (SPHC ke vendor sesuai finishing; stainless dan aluminium tanpa vendor); pengecualian dipilih di sini. */
-function edVendorHtml(s,si,li,l){const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');
+function edVendorHtml(s,si,li,l){apHook();const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');
  const bawaan=fin?'ke vendor '+fin:(P.perluFinishing(s.h)?'finishing belum jelas':'tanpa vendor');
  const peringatan=P.perluFinishing(s.h)&&l.vv!=='tidak'?'<div class="ed-galat" id="ed-vw-'+si+'-'+li+'">Baja tanpa finishing di judul section: vendor tidak terbentuk. Pilih finishing atau tandai tanpa vendor.</div>':'';
  return '<div class="ed-vv"><select class="sel" data-f="vv" id="ed-vv-'+si+'-'+li+'" aria-label="Vendor"><option value="">Ikut aturan: '+esc(bawaan)+'</option><option value="ya" '+(l.vv==='ya'?'selected':'')+'>Wajib ke vendor</option><option value="tidak" '+(l.vv==='tidak'?'selected':'')+'>Tanpa vendor</option></select></div>'+peringatan}
@@ -6022,6 +6080,7 @@ document.addEventListener('click',async e=>{
   case 'wcdel':await wcDel(ds.id);break;
   case 'wcseed':await seedWc();break;
   case 'ruteck':case 'matck':await matrikCentang(el);break;
+  case 'apadd':apTambah(ds.s);break;case 'apdel':apHapus(ds.s,+ds.i);break;case 'apup':apGeser(+ds.i,-1);break;case 'apdn':apGeser(+ds.i,1);break;case 'apsimpan':await apSimpan();break;case 'apreset':if(confirm('Pulihkan aturan proses ke bawaan?'))await apReset();break;
   case 'platserah':platSerahForm(ds.id);break;
   case 'opsisimpan':await opsiSimpan(false);break;case 'spkdimtoggle':{await saveSetting({spkDimBaru:!spkDimBaru()});toast(spkDimBaru()?'Layout SPK per dimensi diaktifkan':'Layout SPK per dimensi dinonaktifkan');renderBody();break}
   case 'aturansimpan':await aturanSimpan(false);break;case 'aturanreset':if(confirm('Pulihkan aturan section ke standar MNI?'))await aturanSimpan(true);break;case 'kopsimpan':await kopSimpan(false);break;case 'kopreset':if(confirm('Pulihkan kop dokumen ke bawaan (logo dan alamat semula)?'))await kopSimpan(true);break;

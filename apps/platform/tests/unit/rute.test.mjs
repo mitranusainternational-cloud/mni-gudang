@@ -1,5 +1,5 @@
 // Uji mesin rute produksi multi work center.  node tests/unit/rute.test.mjs
-import { finishingDari, langkahVendor, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual, materialDari, vendorUntuk, perluFinishing, RUTE_STANDAR } from '../../src/lib/produksi/rute.js';
+import { finishingDari, langkahVendor, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual, materialDari, vendorUntuk, perluFinishing, RUTE_STANDAR, setAturanProses, kataCocok, aturanKhususAktif, ATURAN_KHUSUS_BAWAAN, FINISHING_BAWAAN, MATERIAL_TANPA_VENDOR_BAWAAN } from '../../src/lib/produksi/rute.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -99,6 +99,21 @@ const ruteAccs = ['CNC Laser', 'Bending', 'Welding'];
 ok('R-97 Elbow, Tee, Cross, Riser, Reducer di section ACCS memakai rute produk ACCS (CNC Laser, Bending, Welding) lalu vendor', ['ELBOW', 'TEE', 'CROSS', 'INSIDE_RISER', 'OUTSIDE_RISER', 'REDUCER'].every((b) => { const h = tentukanRute({ judulSection: jdA, deskripsi: 'Cable Tray Elbow 90 W100xH50xR300' }, RUTE_STANDAR, undefined, { vendor: true, bentuk: b }); return h.sumber === 'produk' && eq(h.rute, [...ruteAccs, 'Vendor ELG']); }));
 ok('R-98 ACCS LADDER dan ACCS DUCT juga memakai rute produknya; Hanger Beam di ACCS tetap aturan khusus', eq(tentukanRute({ judulSection: 'ACCS LADDER TYPE STU 1.5 NON FINISHING', deskripsi: 'Cable Ladder Elbow 90 W100xH50xR300' }).rute, ruteAccs) && eq(tentukanRute({ judulSection: 'ACCS DUCT 1.2 NON FINISHING', deskripsi: 'Cable Duct Tee W100xH50' }).rute, ruteAccs) && tentukanRute({ judulSection: jdA, deskripsi: 'Hanger Beam W100' }).sumber === 'aturan');
 ok('R-99 rute khusus bentuk ACCS TRAY|ELBOW (bila pemilik mengaturnya) menimpa rute produk, bentuk lain tidak terpengaruh', eq(tentukanRute({ judulSection: jdA, deskripsi: 'x' }, { ...RUTE_STANDAR, 'ACCS TRAY|ELBOW': ['CNC Laser', 'Bending'] }, undefined, { bentuk: 'ELBOW' }).rute, ['CNC Laser', 'Bending']) && eq(tentukanRute({ judulSection: jdA, deskripsi: 'x' }, { ...RUTE_STANDAR, 'ACCS TRAY|ELBOW': ['CNC Laser', 'Bending'] }, undefined, { bentuk: 'TEE' }).rute, ruteAccs));
+
+
+// Aturan proses dari Master Data (F-08): finishing, material tanpa vendor, dan aturan khusus komponen bisa diganti; null = bawaan di kode
+ok('R-100 kata kunci pendek (3 huruf atau kurang) cocok sebagai kata utuh, yang panjang sebagai bagian teks', kataCocok('CABLE TRAY AL 1.2', ['AL']) === true && kataCocok('CABLE TRAY GALVANIZED', ['AL']) === false && kataCocok('HANGER BEAM', ['hanger']) === true && kataCocok('X', []) === false);
+setAturanProses({ finishing: [{ kata: ['GALVALUME'], kode: 'glm' }, { kata: ['ELECTRO'], kode: 'ELG' }] });
+ok('R-101 finishing dari Master Data: GALVALUME = GLM (kode huruf besar); ELECTRO tetap ELG; HOTDIP tidak lagi dikenali (konfigurasi menggantikan bawaan); NON tetap tanpa vendor', finishingDari('CABLE TRAY 1.2 GALVALUME') === 'GLM' && finishingDari('CABLE TRAY ELECTRO GALVANIZED') === 'ELG' && finishingDari('CABLE TRAY HOTDIP') === '' && finishingDari('CABLE TRAY NON FINISHING GALVALUME') === '' && vendorUntuk('CABLE TRAY GALVALUME 1.2') === 'GLM');
+setAturanProses({ material: [{ kata: ['TITANIUM'], nama: 'Titanium' }] });
+ok('R-102 material tanpa vendor dari Master Data: TITANIUM tanpa vendor; stainless dari kode tidak lagi berlaku; baja tetap ke vendor', materialDari('X TITANIUM 1.5') === 'titanium' && vendorUntuk('CABLE TRAY TITANIUM ELECTRO') === '' && materialDari('CABLE TRAY SS304') === 'baja' && vendorUntuk('CABLE TRAY SPHC ELECTRO') === 'ELG');
+setAturanProses({ khusus: [{ kata: ['bracket'], rute: ['Shearing', 'Bending'], alt: {}, alasan: 'Bracket: potong dan tekuk' }] });
+const rb = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Bracket Support W200' });
+const rh = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Hanger Beam W100' });
+ok('R-103 aturan khusus dari Master Data: Bracket = Shearing, Bending (sumber aturan); Hanger tidak lagi aturan khusus (ikut rute produk ACCS)', JSON.stringify(rb.rute) === JSON.stringify(['Shearing', 'Bending']) && rb.sumber === 'aturan' && rh.sumber === 'produk' && aturanKhususAktif().length === 1);
+setAturanProses(null);
+const rh0 = tentukanRute({ judulSection: 'ACCS TRAY TYPE STU 1.2 NON FINISHING', deskripsi: 'Hanger Beam W100' });
+ok('R-104 setelah konfigurasi dilepas: bawaan kembali (Hanger = aturan khusus CNC Laser, Bending; ELG; stainless tanpa vendor); data bawaan tampil sebagai data', rh0.sumber === 'aturan' && finishingDari('X HOTDIP') === 'HDG' && materialDari('X SS304') === 'stainless' && ATURAN_KHUSUS_BAWAAN.length === 3 && FINISHING_BAWAAN.length === 3 && MATERIAL_TANPA_VENDOR_BAWAAN.length === 2 && aturanKhususAktif().length === 3);
 
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n') + `\n${R.length - fail} PASS, ${fail} FAIL`);

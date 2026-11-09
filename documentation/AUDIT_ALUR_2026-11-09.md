@@ -32,7 +32,7 @@ Metode: satu SPK customer (Cable Tray Straight 300 x 100 x 3000, 10 pcs) dijalan
 | F-05 | Kolom W, H, L terlalu lebar | Diperbaiki |
 | F-06 | Produksi Hari Ini membuka Work Centre pertama (kosong), bukan yang punya antrian | Diperbaiki (membuka Work Centre yang punya antrian) |
 | F-07 | Nama langkah rute tidak sama dengan Work Centre master, antrian tidak muncul | Banner peringatan (T-223); cek Supabase production masih perlu |
-| F-08 | Aturan khusus komponen (clamp, hanger, jointing, cover), pemetaan finishing ke vendor, dan material tanpa vendor (stainless, aluminium) tertanam di kode, tidak bisa diatur di Master Data | Terbuka |
+| F-08 | Aturan khusus komponen (clamp, hanger, jointing, cover), pemetaan finishing ke vendor, dan material tanpa vendor (stainless, aluminium) tertanam di kode, tidak bisa diatur di Master Data | Diperbaiki (tab Aturan proses; bawaan tampil sebagai data) |
 | F-09 | Gudang Barang Jadi tidak punya tampilan **siap kirim ke customer**; SPK customer tidak masuk gudang, hanya terlihat sebagai tahap di SPK | Terbuka |
 | F-10 | SPK stok: barang masuk ke Gudang Barang Jadi stok lewat form Barang masuk manual setelah produksi, tidak otomatis | Terbuka |
 | F-11 | Serah terima WIP produksi ke vendor tidak punya antrian atau dokumen; hanya terbaca dari jumlah siap kirim | Terbuka |

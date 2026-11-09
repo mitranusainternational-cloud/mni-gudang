@@ -34,6 +34,7 @@ import { runSpkDimensi } from './spk-dimensi.mjs';
 import { runMatriksRute } from './matriks-rute.mjs';
 import { runSerahPlate } from './serah-plate.mjs';
 import { runMasterData } from './master-data.mjs';
+import { runAturanProses } from './aturan-proses.mjs';
 
 const base = process.argv[2] || 'http://127.0.0.1:5173/';
 const only = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -42,7 +43,7 @@ const penjualanOff = false;
 
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['spkaturan', runSpkAturan], ['mesinsparepart', runMesinSparepart], ['kebutuhanplat', runKebutuhanPlat], ['logistiksj', runLogistikSj], ['spkdimensi', runSpkDimensi], ['matriksrute', runMatriksRute], ['serahplate', runSerahPlate], ['masterdata', runMasterData], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['penawaran', runPenawaran], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['spkaturan', runSpkAturan], ['mesinsparepart', runMesinSparepart], ['kebutuhanplat', runKebutuhanPlat], ['logistiksj', runLogistikSj], ['spkdimensi', runSpkDimensi], ['matriksrute', runMatriksRute], ['serahplate', runSerahPlate], ['masterdata', runMasterData], ['aturanproses', runAturanProses], ['tampilan', runSweep]]) {
   if (only.length && !only.includes(name)) continue;
   if (name === 'penawaran' && penjualanOff) {
     console.log(`== ${name} ==\nDILEWATI: modul Penjualan disembunyikan (MODUL_PENJUALAN=false)\n`);

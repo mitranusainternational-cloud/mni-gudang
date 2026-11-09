@@ -882,3 +882,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: kalkulator berat SPK memakai massa jenis Master Data (pengait setMassaJenisMaster; tabel di kode hanya cadangan). Produksi Hari Ini membuka Work Centre yang punya antrian bila belum ada pilihan tersimpan.
 - Bukti: verified in browser (mock). Unit kg-item K-10 dan K-11 (11 PASS); masterdata MD-06 (7 PASS); serahplate SP-07 (8 PASS); regresi penuh 29 suite, 0 FAIL; lint 0 error.
 - Hambatan: temuan audit F-08 sampai F-14 masih terbuka (aturan proses, Gudang Barang Jadi siap kirim, antrian WIP vendor, aturan Cek Data, keputusan status Terkirim).
+
+### 2026-11-09 · T-225 bagian 3: tab Aturan proses (F-08)
+- Hasil: tab Master Data Aturan proses. Pemetaan finishing ke vendor, material tanpa vendor finishing, dan aturan khusus komponen (kata kunci, produk, rute, mesin alternatif, urutan) bisa diatur; bawaan tampil sebagai data; konfigurasi Master Data menggantikan bawaan lewat pengait di mesin rute. Validasi nama Work Centre; penolakan bila mengubah rute SPK lama yang sudah punya catatan produksi; pemeriksaan tiap Finishing di Opsi SPK; Pulihkan bawaan.
+- Bukti: verified in browser (mock). Unit rute R-100..R-104 (50 PASS); aturanproses AP-01..AP-06 (7 PASS); regresi penuh 30 suite, 0 FAIL; lint 0 error.
+- Hambatan: penjaga dampak ke SPK lama diuji di tingkat kode, belum dengan SPK berproduksi di e2e. Belum diuji katalog perusahaan dan Supabase. Temuan F-09 sampai F-14 masih terbuka.

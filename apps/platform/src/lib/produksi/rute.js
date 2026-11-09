@@ -16,11 +16,39 @@ export const RUTE_STANDAR = {
 
 // Pengecualian berdasarkan kata di deskripsi (dicek berurutan, yang pertama cocok menang): bentuk tertentu tidak melewati semua mesin.
 // alt: mesin alternatif per langkah, { Shearing: ['CNC Laser'] } = langkah Shearing boleh dikerjakan di CNC Laser (operator memilih; sistem mencatat mesin sebenarnya).
-export const ATURAN_KHUSUS = [
-  { cocok: /clamp|hanger/i, rute: ['CNC Laser', 'Bending'], alt: { 'CNC Laser': ['Shearing'] }, alasan: 'Clamp dan hanger: potong di Laser atau Shearing, lalu Bending' },
-  { cocok: /jointing|splice/i, rute: ['Shearing', 'Punching'], alt: { Shearing: ['CNC Laser'] }, alasan: 'Jointing: potong di Shearing atau Laser, lalu Punching' },
-  { cocok: /cover/i, produk: /LADDER|TRAY|DUCT/, rute: ['Shearing', 'Bending'], alt: { Shearing: ['CNC Laser'] }, alasan: 'Cover: tanpa punching dan welding; potong di Shearing atau Laser' },
+// Aturan proses dapat diatur di Master Data (Aturan proses). Bawaan di bawah dipakai bila Master Data belum diatur; bila sudah, konfigurasi Master Data menggantikannya.
+// Kata kunci: pendek (3 huruf atau kurang) dicocokkan sebagai kata utuh, lebih panjang sebagai bagian teks; tanpa membedakan huruf besar kecil.
+const esc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function kataCocok(teks, daftar) {
+  const H = String(teks || '').toUpperCase();
+  return (daftar || []).some((k) => { const w = String(k || '').trim().toUpperCase(); if (!w) return false; return w.length <= 3 ? new RegExp('(^|[^A-Z0-9])' + esc(w) + '([^A-Z0-9]|$)').test(H) : H.includes(w); });
+}
+// Pengecualian berdasarkan kata di deskripsi (dicek berurutan, yang pertama cocok menang): bentuk tertentu tidak melewati semua mesin.
+// alt: mesin alternatif per langkah, { Shearing: ['CNC Laser'] } = langkah Shearing boleh dikerjakan di CNC Laser (operator memilih; sistem mencatat mesin sebenarnya).
+export const ATURAN_KHUSUS_BAWAAN = [
+  { kata: ['clamp', 'hanger'], rute: ['CNC Laser', 'Bending'], alt: { 'CNC Laser': ['Shearing'] }, alasan: 'Clamp dan hanger: potong di Laser atau Shearing, lalu Bending' },
+  { kata: ['jointing', 'splice'], rute: ['Shearing', 'Punching'], alt: { Shearing: ['CNC Laser'] }, alasan: 'Jointing: potong di Shearing atau Laser, lalu Punching' },
+  { kata: ['cover'], produk: ['LADDER', 'TRAY', 'DUCT'], rute: ['Shearing', 'Bending'], alt: { Shearing: ['CNC Laser'] }, alasan: 'Cover: tanpa punching dan welding; potong di Shearing atau Laser' },
 ];
+export function bangunAturanKhusus(daftar) {
+  return (daftar || []).filter((a) => a && Array.isArray(a.kata) && a.kata.length && Array.isArray(a.rute) && a.rute.length).map((a) => ({
+    cocok: { test: (s) => kataCocok(s, a.kata) },
+    ...(Array.isArray(a.produk) && a.produk.length ? { produk: { test: (s) => kataCocok(s, a.produk) } } : {}),
+    rute: a.rute.slice(), alt: a.alt || {}, alasan: a.alasan || '',
+  }));
+}
+export const ATURAN_KHUSUS = bangunAturanKhusus(ATURAN_KHUSUS_BAWAAN);
+// Finishing ke kode vendor (Vendor ELG, HDG, PDC) dan material yang tidak dikirim ke vendor finishing; bawaan dalam bentuk data agar tampil dan bisa diubah di Master Data.
+export const FINISHING_BAWAAN = [{ kata: ['ELECTRO'], kode: 'ELG' }, { kata: ['HOTDIP', 'HOT DIP'], kode: 'HDG' }, { kata: ['POWDER', 'PDC'], kode: 'PDC' }];
+export const MATERIAL_TANPA_VENDOR_BAWAAN = [{ kata: ['STAINLESS', 'SS304', 'SS316', 'SS 304', 'SS 316', 'SUS'], nama: 'stainless' }, { kata: ['ALUMIN', 'AL'], nama: 'aluminium' }];
+// Konfigurasi dari Master Data: { khusus: [...], finishing: [...], material: [...] } atau null (pakai bawaan). Tiap bagian yang kosong memakai bawaan di kode.
+let _AP = null, _khususAktif = null;
+export function setAturanProses(ap) {
+  _AP = ap && typeof ap === 'object' ? ap : null;
+  _khususAktif = _AP && Array.isArray(_AP.khusus) && _AP.khusus.length ? bangunAturanKhusus(_AP.khusus) : null;
+}
+export const aturanProsesAktif = () => _AP;
+export const aturanKhususAktif = () => _khususAktif || ATURAN_KHUSUS;
 
 // Langkah rute yang dipenuhi oleh sebuah mesin: langkahnya sendiri, atau langkah yang menjadikannya mesin alternatif. Tidak ada: -1.
 export function indeksLangkah(rute, alt, wc) {
@@ -37,6 +65,10 @@ export const produkDari = (judul, peta = RUTE_STANDAR) => {
 // Material dari judul section: stainless dan aluminium tanpa vendor finishing; selain itu baja (SPHC) yang finishingnya dikerjakan vendor.
 export function materialDari(judul) {
   const H = String(judul || '').toUpperCase();
+  if (_AP && Array.isArray(_AP.material) && _AP.material.length) {
+    for (const m of _AP.material) if (kataCocok(H, m.kata)) return String(m.nama || 'khusus').toLowerCase();
+    return 'baja';
+  }
   if (/STAINLESS|(^|[^A-Z])SS ?\d|(^|[^A-Z])SUS([^A-Z]|$)/.test(H)) return 'stainless';
   if (/ALUMIN|(^|[^A-Z])AL([^A-Z]|$)/.test(H)) return 'aluminium';
   return 'baja';
@@ -61,6 +93,10 @@ export const langkahVendor = (w) => /^vendor/i.test(String(w || ''));
 export function finishingDari(judul) {
   const H = String(judul || '').toUpperCase();
   if (/(^|[^A-Z])NON([^A-Z]|$)/.test(H)) return '';
+  if (_AP && Array.isArray(_AP.finishing) && _AP.finishing.length) {
+    for (const f of _AP.finishing) if (kataCocok(H, f.kata)) return String(f.kode || '').toUpperCase();
+    return '';
+  }
   if (H.includes('ELECTRO')) return 'ELG';
   if (H.includes('HOTDIP') || H.includes('HOT DIP')) return 'HDG';
   if (H.includes('POWDER') || /(^|[^A-Z])PDC([^A-Z]|$)/.test(H)) return 'PDC';
@@ -69,7 +105,7 @@ export function finishingDari(judul) {
 
 // Rute untuk sebuah item: dari kolom rute item bila sudah diatur (snapshot), selain itu dari aturan khusus, selain itu rute produk.
 // opsi.vendor: bila true dan finishing dikenali dari judul section, ditambahkan langkah akhir "Vendor <finishing>" (rute item yang diatur tidak diubah).
-export function tentukanRute({ judulSection, deskripsi, ruteItem, altItem }, rute = RUTE_STANDAR, aturan = ATURAN_KHUSUS, opsi = {}) {
+export function tentukanRute({ judulSection, deskripsi, ruteItem, altItem }, rute = RUTE_STANDAR, aturan = aturanKhususAktif(), opsi = {}) {
   // snapshot di item (disalin saat SPK terbit): rute dan mesin alternatifnya (alt) ikut tersimpan
   if (Array.isArray(ruteItem) && ruteItem.length) return { rute: ruteItem.slice(), sumber: 'item', alt: altItem && typeof altItem === 'object' ? altItem : {} };
   const p = produkDari(judulSection, rute);

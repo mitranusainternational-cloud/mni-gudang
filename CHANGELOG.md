@@ -127,3 +127,6 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 ### Diperbaiki (massa jenis dan Work Centre produksi, 2026-11-09)
 - Berat SPK dari kalkulator memakai massa jenis di Master Data (satu sumber dengan stok bahan baku).
 - Produksi Hari Ini membuka Work Centre yang punya antrian.
+
+### Ditambahkan (Aturan proses, 2026-11-09)
+- Master Data › Aturan proses: pemetaan finishing ke vendor, material tanpa vendor, dan aturan khusus komponen bisa diatur tanpa mengubah kode.
