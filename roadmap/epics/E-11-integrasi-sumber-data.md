@@ -9,7 +9,7 @@ status: planned
 progress: 0
 tasks_total: 3
 tasks_done: 0
-updated: 2026-11-08
+updated: 2026-11-09
 ---
 
 # E-11 Integrasi sumber data

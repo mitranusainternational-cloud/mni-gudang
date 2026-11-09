@@ -42,6 +42,12 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 
 ## Log kerja
 
+### 2026-11-09 · Penelusuran M-161 dan M-162 (Timeline produksi)
+- Penyebab: bukan dari perubahan kode. Timeline memakai jendela 14 hari dari Senin minggu ini. Hari ini Senin, jadi SPK 1002 (jadwal selesai sebelum 9 November) keluar dari jendela dan aplikasi menampilkan "sebelum rentang ini" tanpa batang. Uji sebelumnya memakai asumsi hari Minggu.
+- Perbaikan: uji M-161 dan M-162 kini menghitung baris "sebelum rentang" dan hanya membandingkan status dengan batang yang tampil. Aplikasi tidak diubah.
+- Bukti: verified in browser (mock). Regresi penuh 25 suite, 0 FAIL. Produksi 134 PASS, 0 FAIL.
+- Catatan: uji produksi tetap bergantung pada hari dalam minggu; bila dijalankan pada hari lain, hasilnya bisa berbeda.
+
 ### 2026-11-09 · Perbaikan logistik dari audit
 - Hasil: 7 temuan logistik diperbaiki (SJ dari stok dan hak Barang jadi, stok kumulatif, batas pembatalan SJ, antrian bongkar tertaut, no polisi wajib untuk berangkat, checklist Unloading, modul PR sparepart). Uji regresi F-25 disesuaikan ke aturan no polisi.
 - Bukti: verified in browser (mock). Suite logistiksj LG-01..LG-06 (7 PASS); regresi 24 suite: 42 PASS di regresi, dan suite lain 0 FAIL kecuali produksi M-161 dan M-162 (lihat hambatan); unit bentuk 16 PASS, rute 45 PASS; lint 0 error.
