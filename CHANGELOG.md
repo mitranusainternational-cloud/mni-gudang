@@ -6,6 +6,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Dikembalikan (versi sebelumnya sebagai bawaan, 2026-11-10)
+- Metode input SPK kembali ke versi sebelumnya (Dari stok tetap); layout per dimensi hanya lewat setting.
+- Menu Produksi bawaan = Dashboard Produksi versi sebelumnya; Kinerja & Analisa baru lewat setting.
+- SPK Berjalan: tab Berjalan disembunyikan; Jadwal tetap.
+- Pengguna & Akses: modul Penawaran dan peran Sales tidak tampil selama modul penjualan disembunyikan.
+
 ### Diubah (produksi hulu ke hilir, 2026-11-10)
 - Work Centre bawaan selaras dengan rute (Shearing, Punching, Bending, CNC Laser, Welding); banner WC hilang punya tombol Tambahkan otomatis.
 - Produksi Hari Ini menampilkan Akan datang ke WC sejak SPK terbit; tab Progres WC di Kinerja & Analisa (tabel per WC, matriks SPK x WC, CSV).
