@@ -11,7 +11,7 @@ env: development
 effort_days: 1
 depends: [T-012, T-013]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-020 Verifikasi login OTP end-to-end (lokal)
@@ -33,3 +33,6 @@ Bergantung pada: T-012, T-013
 ## Catatan
 
 -
+
+> [!note] Audit 2026-11-06
+> Login OTP berjalan di production (pemilik dan pengguna terdaftar masuk); bukti uji end-to-end terdokumentasi di [[ENVIRONMENTS]] dan T-163. Verifikasi pada stack lokal tetap terhalang Docker (T-010).

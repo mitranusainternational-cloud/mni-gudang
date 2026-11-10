@@ -5,13 +5,13 @@ title: "Filter Type di Gudang Barang Jadi (STU, STC, SLU, SLW, SLHD)"
 phase: P2
 epic: E-02
 release: v0.9
-status: review
+status: done
 priority: P2
 env: dev
 effort_days: 0.25
 depends: []
 owner: "dev + pemilik"
-updated: 2026-11-04
+updated: 2026-11-07
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -27,4 +27,9 @@ Fase: P2
 - [x] Ganti kategori yang tidak punya type terpilih mengembalikan type ke Semua
 - [x] Uji e2e mock F-15 sampai F-18; regresi penuh 150 PASS, 0 FAIL (`source-level` dan mock, bukan bukti Supabase)
 - [x] Dikerjakan di branch `fitur/filter-type-barang-jadi` dari `development`, terpisah dari produksi multi work center
-- [ ] Naik ke GitHub, Vercel preview, lalu PR ke `main` setelah persetujuan pemilik
+- [x] PR 14 digabung ke `main` (commit 43e8da2) oleh pemilik; production memuat kode filter (`source-level`: berkas aplikasi di mni-gudang.vercel.app memuat f-type; tampilan belum dilihat penulis)
+
+## Bukti
+
+- `verified in browser` (mock): uji F-15 sampai F-18 lulus dan masih lulus pada regresi penuh 2026-11-07.
+- `source-level` di production: berkas aplikasi di mni-gudang.vercel.app memuat filter Type (tayang lewat PR 14, CI hijau 2026-11-04). Tampilan di production belum dilihat penulis: belum `verified in browser` di production.

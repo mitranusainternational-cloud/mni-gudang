@@ -33,3 +33,12 @@ MNI-cadangan-*.json
 # Katalog rumus berat diturunkan dari workbook internal; tidak masuk Git selama repo publik
 apps/platform/src/lib/berat/catalog.json
 apps/platform/tests/unit/berat-excel-expected.json
+
+# keluaran sementara Playwright MCP (tangkapan layar, log)
+.playwright-mcp/
+
+# Katalog dan skenario harga penawaran, serta nilai pembanding Excel: rumus dan harga perusahaan, tidak masuk Git
+apps/platform/src/lib/erp/katalog-harga.json
+apps/platform/src/lib/erp/skenario-harga.json
+apps/platform/tests/unit/erp-excel-expected.json
+apps/platform/tests/unit/erp-excel-totals.json

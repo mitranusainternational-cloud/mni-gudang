@@ -34,7 +34,7 @@ jobs:
   app:
     name: Aplikasi (build dan regresi mock)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     defaults:
       run:
         working-directory: apps/platform
@@ -49,6 +49,10 @@ jobs:
           cache-dependency-path: apps/platform/package-lock.json
       - name: Pasang dependensi
         run: npm ci --ignore-scripts
+      - name: Lint (galat nyata)
+        run: npm run lint
+      - name: Uji unit (tanpa katalog privat)
+        run: npm run test:unit
       - name: Ekstrak UI
         run: npm run extract
       - name: Build

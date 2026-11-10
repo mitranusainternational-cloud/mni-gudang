@@ -1,0 +1,181 @@
+{
+ "versi": 1,
+ "sumber": "katalog sintetis untuk uji (angka buatan, bukan data perusahaan)",
+ "param": [
+  "AW2",
+  "AW6",
+  "AW7"
+ ],
+ "bentuk": [
+  {
+   "id": "SLU_STRAIGHT_LADDER",
+   "keluarga": "SLU",
+   "judul": "Straight Ladder",
+   "no": 10,
+   "baris": 10,
+   "masukan": {
+    "D": "w",
+    "F": "h",
+    "H": "l"
+   },
+   "konstanta": {},
+   "qtyKolom": "O",
+   "rumus": {
+    "AF": "(D10*F10*H10/1000000)*$AW$6",
+    "S": "ROUND(AF10*$AW$2,-2)",
+    "U": "S10*O10",
+    "AG": "AF10*O10",
+    "AS": "(D10*F10*H10/1000000)*$AW$7",
+    "AT": "AS10*O10"
+   },
+   "param": [
+    "AW2",
+    "AW6",
+    "AW7"
+   ],
+   "keluaran": {
+    "harga": "S",
+    "jumlah": "U",
+    "estimasi": "AF",
+    "estimasiQty": "AG",
+    "real": "AS",
+    "realQty": "AT"
+   }
+  },
+  {
+   "id": "SLU_HORIZONTAL_ELBOW_90",
+   "keluarga": "SLU",
+   "judul": "Horizontal Elbow 90",
+   "no": 12,
+   "baris": 12,
+   "masukan": {
+    "D": "w",
+    "F": "h",
+    "H": "r"
+   },
+   "konstanta": {},
+   "qtyKolom": "O",
+   "rumus": {
+    "AF": "(D12*F12*H12/500000)*$AW$6",
+    "S": "ROUND(AF12*$AW$2,-2)",
+    "U": "S12*O12",
+    "AG": "AF12*O12",
+    "AS": "(D12*F12*H12/500000)*$AW$7",
+    "AT": "AS12*O12"
+   },
+   "param": [
+    "AW2",
+    "AW6",
+    "AW7"
+   ],
+   "keluaran": {
+    "harga": "S",
+    "jumlah": "U",
+    "estimasi": "AF",
+    "estimasiQty": "AG",
+    "real": "AS",
+    "realQty": "AT"
+   }
+  },
+  {
+   "id": "SLW_STRAIGHT_LADDER",
+   "keluarga": "SLW",
+   "judul": "Straight Ladder",
+   "no": 14,
+   "baris": 14,
+   "masukan": {
+    "D": "w",
+    "F": "h",
+    "H": "l"
+   },
+   "konstanta": {},
+   "qtyKolom": "O",
+   "rumus": {
+    "AF": "(D14*F14*H14/900000)*$AW$6",
+    "S": "ROUND(AF14*$AW$2,-2)",
+    "U": "S14*O14",
+    "AG": "AF14*O14",
+    "AS": "(D14*F14*H14/900000)*$AW$7",
+    "AT": "AS14*O14"
+   },
+   "param": [
+    "AW2",
+    "AW6",
+    "AW7"
+   ],
+   "keluaran": {
+    "harga": "S",
+    "jumlah": "U",
+    "estimasi": "AF",
+    "estimasiQty": "AG",
+    "real": "AS",
+    "realQty": "AT"
+   }
+  },
+  {
+   "id": "STU_STRAIGHT_TRAY",
+   "keluarga": "STU",
+   "judul": "Straight Tray",
+   "no": 16,
+   "baris": 16,
+   "masukan": {
+    "D": "w",
+    "F": "l"
+   },
+   "konstanta": {},
+   "qtyKolom": "O",
+   "rumus": {
+    "AF": "(D16*F16/50000)*$AW$6",
+    "S": "ROUND(AF16*$AW$2,-2)",
+    "U": "S16*O16",
+    "AG": "AF16*O16",
+    "AS": "(D16*F16/50000)*$AW$7",
+    "AT": "AS16*O16"
+   },
+   "param": [
+    "AW2",
+    "AW6",
+    "AW7"
+   ],
+   "keluaran": {
+    "harga": "S",
+    "jumlah": "U",
+    "estimasi": "AF",
+    "estimasiQty": "AG",
+    "real": "AS",
+    "realQty": "AT"
+   }
+  },
+  {
+   "id": "STU_END_STOP",
+   "keluarga": "STU",
+   "judul": "End Stop",
+   "no": 18,
+   "baris": 18,
+   "masukan": {},
+   "konstanta": {},
+   "qtyKolom": "O",
+   "rumus": {
+    "AF": "(0.3)*$AW$6",
+    "S": "ROUND(AF18*$AW$2,-2)",
+    "U": "S18*O18",
+    "AG": "AF18*O18",
+    "AS": "(0.3)*$AW$7",
+    "AT": "AS18*O18"
+   },
+   "param": [
+    "AW2",
+    "AW6",
+    "AW7"
+   ],
+   "keluaran": {
+    "harga": "S",
+    "jumlah": "U",
+    "estimasi": "AF",
+    "estimasiQty": "AG",
+    "real": "AS",
+    "realQty": "AT"
+   }
+  }
+ ]
+}

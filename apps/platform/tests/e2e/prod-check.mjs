@@ -38,7 +38,7 @@ const rest = (t) => page.evaluate(async (t) => {
 }, t);
 const cnt = async (t) => { const x = await rest(t); return Array.isArray(x) ? x.length : -1; };
 const closeAll = async () => { await page.evaluate(() => { document.querySelector('#modal [data-act="closemodal"]')?.click(); document.querySelector('#drawer [data-act="closedrawer"]')?.click(); document.querySelector('#sheet [data-act="sheet-close"]')?.click(); if (!document.getElementById('editor').hidden) document.querySelector('#editor [data-act="ed-close"]')?.click(); }); await page.waitForTimeout(500); };
-const go = async (r) => { await closeAll(); await page.click(`#nav a[href="#${r}"]`); await page.waitForTimeout(1000); };
+const go = async (r) => { await closeAll(); { const l = await page.$(`#nav a[href="#${r}"]`); if (l) await l.click(); else await page.evaluate((h) => { location.hash = h; }, r); await page.waitForTimeout(300); if (r === 'spk') { const b = await page.$('#tools [data-view="spk"][data-val="list"]'); if (b) await b.click(); } } await page.waitForTimeout(1000); };
 const opt = (sel, n) => page.evaluate(([s, n]) => [...document.querySelector(s).options].find((o) => o.text.includes(n))?.value, [sel, n]);
 const dockOff = () => page.evaluate(() => { const d = document.getElementById('m-dock'); if (d && d.checked) d.click(); });
 const submit = async (twice = false) => { for (let i = 0; i < (twice ? 2 : 1); i++) { await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(2200); if (await page.evaluate(() => document.getElementById('modal').hidden)) break; } };

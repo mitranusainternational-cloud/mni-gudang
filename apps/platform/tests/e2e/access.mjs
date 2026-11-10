@@ -15,7 +15,7 @@ export async function runAccess(page, base) {
     await page.waitForTimeout(300);
   };
   const navIds = () => page.evaluate(() => [...document.querySelectorAll('#nav a')].map((a) => a.getAttribute('href').slice(1)));
-  const go = async (r) => { await closeAll(); await page.click(`#nav a[href="#${r}"]`); await page.waitForTimeout(550); };
+  const go = async (r) => { await closeAll(); { const l = await page.$(`#nav a[href="#${r}"]`); if (l) await l.click(); else await page.evaluate((h) => { location.hash = h; }, r); await page.waitForTimeout(300); if (r === 'spk') { const b = await page.$('#tools [data-view="spk"][data-val="list"]'); if (b) await b.click(); } } await page.waitForTimeout(550); };
   const submit = async () => { await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(1500); };
   const login = async (email) => {
     await page.evaluate(() => localStorage.removeItem('mni-local-mock-session'));
@@ -54,7 +54,7 @@ export async function runAccess(page, base) {
   // anggota baru hanya melihat modul yang diizinkan
   await login('timgudang@mni.local');
   const ids = await navIds();
-  ok('A-06 menu hanya modul yang diizinkan', sameSet(ids, ['dashboard', 'bahan-baku', 'bongkar-muat', 'master-data']), ids.join(','));
+  ok('A-06 menu hanya modul yang diizinkan', sameSet(ids, ['dashboard', 'bahan-baku', 'sparepart', 'bongkar-muat', 'master-data']), ids.join(','));
   await page.evaluate(() => { location.hash = '#spk'; }); await page.waitForTimeout(600);
   ok('A-07 membuka modul tanpa akses dialihkan ke dashboard', (await page.evaluate(() => document.getElementById('ttl').textContent)) === 'Dashboard');
   const nSpk = await page.evaluate(() => new Promise(async (res) => { const db = await window.claude.use('db'); db.collection('spk').onSnapshot((s) => res(s.docs.length)); }));
@@ -163,7 +163,9 @@ export async function runAccess(page, base) {
   ok('A-29 katalog berat terpasang dari database', await page.evaluate(() => !!(window.MNIBerat && window.MNIBerat.siap())), JSON.stringify(await page.evaluate(() => window.MNIBerat && window.MNIBerat.info())));
   await go('spk');
   await page.click('#tools [data-act="newspk"]'); await page.waitForTimeout(700);
-  await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(300);
+  await page.fill('#ed-h-0', 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'); await page.dispatchEvent('#ed-h-0', 'change'); await page.waitForTimeout(500);
+  // dengan katalog terpasang baris awal berbentuk terstruktur; jalur teks bebas (tempel dari Excel, SPK lama) diuji di sini
+  if (await page.$('#ed-sb-0-0')) { await page.selectOption('#ed-sb-0-0', ''); await page.waitForSelector('#ed-d-0-0'); }
   await page.fill('#ed-d-0-0', 'Cable Tray W100xH100xL3000 1.2'); await page.dispatchEvent('#ed-d-0-0', 'change'); await page.waitForTimeout(400);
   const w1 = parseFloat(await page.inputValue('#ed-w-0-0'));
   ok('A-30 berat terisi otomatis dari kalkulator', Math.abs(w1 - 8.69) < 0.005 && (await page.textContent('#ed-w-0-0 >> xpath=..')).includes('auto'), String(w1));

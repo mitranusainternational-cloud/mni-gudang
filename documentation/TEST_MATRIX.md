@@ -8,6 +8,29 @@ updated: 2026-11-02
 
 # Matriks uji modul dan fitur (pratinjau lokal mode mock)
 
+> [!summary] Status uji terkini (2026-11-06, cabang `fitur/produksi-multi-wc` di 35bf7f7, mock)
+> Semua suite 0 FAIL. Suite `penawaran` dilewati karena modul disembunyikan ([[T-202-sembunyikan-modul-penjualan-fokus-operasional]]). Jalankan: `cd apps/platform && node tests/e2e/run.mjs http://127.0.0.1:5173/` (`ONLY=<suite>` untuk satu suite).
+>
+> | Suite | Berkas | Lulus | Cakupan |
+> |---|---|---|---|
+> | regresi | `regression.mjs` | 42 | alur inti dan regresi bug lama |
+> | role | `roles.mjs` | 12 | penegakan peran |
+> | akses | `access.mjs` | 34 | hak per pengguna dan modul (A-06 memuat sparepart) |
+> | produksi | `produksi.mjs` | 134 | multi work center, jadwal, laporan |
+> | sparepart | `sparepart.mjs` | 36 | sparepart SP-1 sampai SP-21, barang jadi dan SPK stok SP-17 sampai SP-35, nama penanda tangan SP-27 dan SP-28 |
+> | fitur | `fitur.mjs` | 18 | audit fitur: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname, unduhan Excel, jenis material ([[FEATURE_AUDIT]]) |
+> | menyeluruh | `menyeluruh.mjs` | 24 | Master Data (ganti nama berantai, gabung, hapus), bahan baku, unduhan, bongkar muat, kendala SPK, work center, invarian, pemindai kejanggalan ([[T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug]]) |
+> | keamanan | `keamanan.mjs` | 8 | uji XSS: payload di 53 bidang teks, semua menu, laci, lembar, kartu, dokumen ([[STANDAR_INDUSTRI]]) |
+> | aksesibilitas | `aksesibilitas.mjs` | 3 | axe-core WCAG 2 A dan AA: 16 menu x 2 tema, 11 form, laci, kartu x 2 tema |
+> | tampilan | `sweep.mjs` | 72 | sapu tampilan semua modul |
+>
+> Pemindai kejanggalan (`kejanggalan.mjs`: teks undefined, NaN, null, gambar rusak, meluap di HP, tabel tanpa keterangan, galat konsol di 16 menu desktop dan HP) dijalankan di suite fitur (F-19) dan menyeluruh (M-24). Invarian data (`invarian.mjs`, 10 invarian: stok tidak minus, nomor unik, tautan sah, koreksi, SPK stok) dijalankan di akhir suite sparepart (SP-36) dan fitur (F-15). Lint: `npm run lint` (0 galat, 43 peringatan); unit di CI: `npm run test:unit` (11 berkas, 214 uji tanpa katalog privat; total unit 266 termasuk berat dan harga yang butuh katalog lokal).
+> | unit | `tests/unit/*.test.mjs` | 266 | berat, harga, produksi, kinerja, laporan, rencana, material, penawaran, Sales Order |
+>
+> Bukti database: tidak ada untuk migration 14 sampai 18 (belum diterapkan). Pra-cek production baca-saja 2026-11-06: nama kebijakan dan pemicu cocok dengan draf 18.
+
+Catatan di bawah adalah hasil uji 2026-11-02 yang dipertahankan sebagai riwayat.
+
 Hasil uji `apps/platform` di browser (Playwright) pada mode mock lokal: data sintetis di `localStorage`, tanpa Supabase. **Yang dibuktikan:** UI dan alur bisnis di sisi klien berjalan dan datanya tersimpan di penyimpanan lokal. **Yang tidak dibuktikan:** Supabase, Auth nyata, RLS, realtime antar pengguna, dan kinerja. Itu tetap tugas [[tasks/T-020-verifikasi-login-otp-end-to-end-lokal|T-020]], T-021, dan T-022 setelah Docker hidup ([[DOCKER_SETUP]]).
 
 Tanggal uji: 2026-11-02 · Cabang: `development` · Panduan menjalankan: [[LOCAL_PREVIEW]] · Skrip: `apps/platform/tests/e2e/`.
@@ -78,6 +101,26 @@ Kriteria PASS: judul benar, isi tampil, tidak ada `pageerror`. Skrip: `tests/e2e
 
 | ID | Temuan | Penyebab | Perbaikan | Status |
 |---|---|---|---|---|
+| B-026 | SPK galvanis yang produksinya selesai tetapi belum pernah dikirim ke vendor boleh dikirim ke customer (dan SPK stok boleh diterima gudang) tanpa finishing | Batas siap kirim memakai produksi dikurangi yang di vendor ditambah kembali, sehingga barang yang tidak pernah dikirim ke vendor dihitung siap | Rute dengan langkah vendor memakai jumlah yang sudah kembali dari vendor (`siapKirim` dari `itemState`); rute tanpa vendor dan SPK lama tetap rumus lama | Selesai; uji A-05, B-04 (`alur-lengkap.mjs`) |
+| B-027 | Tahap SPK langsung "Siap kirim" setelah mesin terakhir walau rutenya masih harus ke vendor | Tahap tidak membaca rute | Tahap baru "Siap ke vendor" (juga dihitung sebagai kelompok vendor pada filter dan funnel) | Selesai; uji A-04, B-04 |
+| B-028 | SPK stok selalu berberat 0 kg walau katalog berat terpasang, sehingga tonase dan kebutuhan material tidak terhitung | `spkStokBuat` menulis `w:0` | Berat per pcs dari kalkulator bila ada (bertanda otomatis) | Selesai; uji D-01b (kalkulator ditiru) |
+| B-029 | Drawer SPK (Update produksi) dan riwayat/ekspor tidak membaca hasil yang dicatat di Produksi Hari Ini: "Terakhir update" kosong, riwayat dan CSV kosong, tanggal produksi selesai tidak terisi | `prodLog` lama saja yang dibaca; hasil mesin ada di `produksi_log` | Riwayat gabungan `logProduksi(s)` dipakai drawer, lembar SPK, ekspor, dan alur lead time | E2E K-02, K-07, K-08 |
+| B-030 | Drawer hanya menawarkan Catat di satu langkah (yang pertama berantrian) padahal batch bisa menunggu di beberapa langkah; hitungan "item selesai" memakai kolom lama sehingga 0/2 walau mesin sudah menyelesaikan | Tombol tunggal dan `item.prod` lama | Tombol Catat per langkah berantrian lengkap dengan jumlah siap; item selesai dari progres efektif | E2E K-03, K-04, K-06 |
+| B-031 | Total manual lama (`item.prod`) hilang dari progres begitu operator mencatat hasil mesin pertama | `itemState` dan `prodFromEvents` hanya memakai kejadian bila ada | Total manual dihitung sebagai dasar yang sudah melewati semua langkah | E2E K-09 |
+| B-032 | Revisi SPK terbit bisa menghapus, memindah, atau mengganti nama item yang sudah punya catatan produksi/vendor/kirim, atau menurunkan qty di bawah yang sudah diproduksi; catatan menempel pada nomor urut item sehingga berpindah ke item lain | Tidak ada penjaga saat simpan revisi | `revisiGuard`: item aktif tidak boleh dihapus, dipindah, diganti nama/section, qty tidak di bawah yang sudah berjalan | E2E AF-01..AF-05 |
+| B-033 | SPK tidak bisa dibatalkan dari UI dan `calc` tidak pernah menghasilkan status Batal, sehingga SPK batal tetap muncul sebagai aktif di KPI, antrian, dan pilihan dokumen | Alur batal SPK belum dibangun | Batalkan SPK (alasan wajib, ditolak bila ada surat jalan aktif), Aktifkan kembali, status Batal dikecualikan dari hitungan aktif | E2E AF-06..AF-10 |
+| B-034 | Mengubah rute produk di Master Data menggeser progres SPK yang sedang berjalan karena rute belum disalin ke item | Rute dihitung ulang dari master | Perubahan rute yang mengubah rute item bercatatan produksi ditolak dengan daftar SPK | E2E AF-11, AF-12 |
+| B-035 | Surat jalan vendor yang sudah menerima barang kembali (OK atau reject) masih bisa dibatalkan sehingga progres dan stok bergeser | Tanpa penjaga di form batal | Pembatalan ditolak bila kembali + reject lebih dari 0 | E2E AF-13 |
+| B-036 | SPK stok yang sudah selesai diproduksi dan kembali dari vendor tidak bisa diterima di Gudang Barang Jadi ("Belum ada hasil produksi yang siap diterima"), progres masuk gudang 0% | Editor SPK membangun ulang item dan menghilangkan tautan `fg` ke produk gudang | Editor membawa `fg`; tautan yang sudah hilang dipulihkan dari kecocokan nama item (tepat satu produk); pesan alasan kosong dibedakan (belum terhubung, sudah diterima semua, belum siap) | E2E SF-02, SF-03, SF-06 |
+| B-037 | Form Barang masuk gudang jadi tidak mengisi produk dan jumlah dari SPK stok yang dipilih | Hanya tombol Terima di SPK yang mengisi baris; pilihan SPK di form tidak | Memilih SPK stok di form mengisi baris dan jumlah dari hasil produksi yang siap (bisa diubah) | E2E SF-04, SF-05 |
+| B-038 | SPK stok menampilkan "Terkirim ke customer" dan "surat jalan customer" di jejak produksi dan matriks Berjalan | Label akhir alur sama untuk semua SPK | Label SPK stok: Masuk gudang barang jadi, diterima di gudang barang jadi, Siap masuk gudang | E2E SF-07, SF-08 |
+| B-019 | Work Center yang dilewati rute SPK aktif atau sudah punya catatan produksi bisa dihapus permanen; dialog menyatakan "tidak dipakai SPK aktif manapun" | Pengecekan memakai kode WC bawaan lama (`WC-CT-01` dan sebagainya) dan kecocokan teks tahap, bukan rute item; data nyata memakai kode lain sehingga selalu lolos | `wcPakai()` membaca rute tiap item SPK aktif, catatan `produksi_log`, dan aturan rute standar; bila terpakai tawarkan Nonaktifkan; hapus hanya bila belum dipakai | Selesai; uji E-10, E-11, E-13 (`editor.mjs`) |
+| B-020 | Mengganti nama Work Center yang dipakai memutus rute dan catatan produksi (rute dan log mengacu nama) | Form ubah WC menulis nama baru tanpa memeriksa pemakaian | Nama tidak bisa diubah selama WC terpakai; pesan menyarankan WC baru atau nonaktif | Selesai; uji E-12 |
+| B-021 | Hapus permanen yang ditolak kebijakan database tampak berhasil di UI | Supabase tidak mengembalikan galat untuk DELETE yang diblokir RLS (hanya nol baris); adapter tidak memeriksa; mock tidak meniru migration 13 | Adapter memeriksa baris yang terhapus dan melempar galat jelas; mock meniru penolakan pada tabel yang kebijakan DELETE-nya dicabut; hapus item bahan baku jatuh ke Nonaktifkan | Selesai (laten: tombol hapus item belum ada di UI, `rmdel` kode yatim); tanpa uji klik |
+| B-022 | Modal dan laci tanpa pengelolaan fokus: Tab keluar ke halaman di belakang, fokus tidak pindah ke laci, fokus tidak kembali ke tombol pemicu (WCAG 2.4.3) | Dialog hanya memfokuskan isian pertama modal; tidak ada perangkap fokus; axe tidak mendeteksi ini | Perangkap fokus untuk modal, laci, lembar, dan editor; fokus kembali ke pemicu saat ditutup | Selesai; uji E-14, E-15 |
+| B-023 | Rangkaian uji Penawaran dilewati otomatis saat modul disembunyikan, sehingga Penawaran, Sales Order, dan kebutuhan material berstatus `review` tanpa regresi | Runner melewati suite bila `MODUL_PENJUALAN=false` | Mock menyalakan modul lewat kunci uji `mni-uji-penjualan` (production tetap tersembunyi); suite berjalan lagi (42 lulus) | Selesai |
+| B-025 | Panel Kebutuhan material memberi status "Tanpa item RM" untuk jenis material kustom Master Data (mis. A5052) sehingga kebutuhan aluminium tidak dicocokkan ke stoknya | Pemetaan bahan hanya mengenal nama bawaan; jenis kustom dipakai apa adanya | `bahanDariJenis()` (murni, diuji K-13) memetakan jenis kustom lewat keluarga dasar, massa jenis, dan nama | Selesai; uji unit K-13 |
+| B-024 | Tugas `done` tanpa bagian Bukti (T-046, T-175, T-176) dan kriteria sama dihitung di dua tugas (T-133, T-143, T-208, T-211) | Catatan ditulis di bagian lain atau dirujuk silang tanpa pemilik tunggal | Bukti dibaca ulang (API GitHub, tahap CI) dan ditulis; satu pemilik per kriteria; T-180 dan T-185 ditutup sebagai digantikan T-186 | Selesai |
 | B-001 | `USER.profiles is not a function` pada setiap render | Adapter user tidak menyediakan `profiles()` yang dipanggil app | `profiles(ids)` ditambahkan di `claude-adapter.js` | Selesai |
 | B-002 | Sidebar tetap "Tamu" setelah login | app.js membaca user sekali saat boot (sebelum login) | `index.html` memuat ulang halaman saat `SIGNED_IN`/`SIGNED_OUT` | Selesai |
 | B-003 | SPK baru bernomor `1` dan seed tidak terbaca | `no` harus numerik (`nextNo` memakai `+s.no`); seed memakai `SPK-1001` | Seed mock memakai `1001`, `1002` | Selesai (seed). Catatan: schema `spk.no` bertipe TEXT, jadi jangan diisi non-numerik |

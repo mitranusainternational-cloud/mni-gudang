@@ -1,12 +1,12 @@
 ---
 type: project-progress
 status: active
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
 
-# Progress MNI OS Operational
+# Progress MNI Gudang & Logistik
 
 Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutnya berada di [[ROADMAP|roadmap]].
 
@@ -41,6 +41,106 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 - Lihat [[FOUNDATION_BASELINE|baseline fondasi]] untuk daftar bukti, gap, advisor, dan gate berikutnya.
 
 ## Log kerja
+
+### 2026-11-09 · Penelusuran M-161 dan M-162 (Timeline produksi)
+- Penyebab: bukan dari perubahan kode. Timeline memakai jendela 14 hari dari Senin minggu ini. Hari ini Senin, jadi SPK 1002 (jadwal selesai sebelum 9 November) keluar dari jendela dan aplikasi menampilkan "sebelum rentang ini" tanpa batang. Uji sebelumnya memakai asumsi hari Minggu.
+- Perbaikan: uji M-161 dan M-162 kini menghitung baris "sebelum rentang" dan hanya membandingkan status dengan batang yang tampil. Aplikasi tidak diubah.
+- Bukti: verified in browser (mock). Regresi penuh 25 suite, 0 FAIL. Produksi 134 PASS, 0 FAIL.
+- Catatan: uji produksi tetap bergantung pada hari dalam minggu; bila dijalankan pada hari lain, hasilnya bisa berbeda.
+
+### 2026-11-09 · Perbaikan logistik dari audit
+- Hasil: 7 temuan logistik diperbaiki (SJ dari stok dan hak Barang jadi, stok kumulatif, batas pembatalan SJ, antrian bongkar tertaut, no polisi wajib untuk berangkat, checklist Unloading, modul PR sparepart). Uji regresi F-25 disesuaikan ke aturan no polisi.
+- Bukti: verified in browser (mock). Suite logistiksj LG-01..LG-06 (7 PASS); regresi 24 suite: 42 PASS di regresi, dan suite lain 0 FAIL kecuali produksi M-161 dan M-162 (lihat hambatan); unit bentuk 16 PASS, rute 45 PASS; lint 0 error.
+- Hambatan: M-161 dan M-162 (produksi, Timeline dan status prediksi) gagal juga di versi HEAD, jadi bukan dari perubahan hari ini; penyebab belum ditelusuri. LG-04 belum mereproduksi kunci noSJ undefined. Belum diuji peran Logistik untuk jalur stok (#2) dan stok kumulatif (#14). Enam temuan audit lain belum diperbaiki (lihat T-221).
+
+### 2026-11-08 · Keterhubungan kebutuhan plat SPK
+- Hasil: 5 temuan audit di rantai material diperbaiki (satuan Lembar, pengurangan ambil dari stok barang jadi, koreksi penerimaan, SPK Batal/Draft pada KPI dan analisa, batas sisa PR). Skill .claude/skills/keterhubungan-data dibuat.
+- Bukti: verified in browser (mock). Suite kebutuhanplat KP-01..KP-05 (7 PASS); regresi penuh 24 suite 0 FAIL; lint 0 error.
+- Hambatan: 14 temuan audit lain belum diperbaiki (lihat T-221). Belum diuji dengan katalog perusahaan dan belum di Supabase.
+
+### 2026-11-08 · T-221 Master Mesin dan alur sparepart standar
+- Hasil: tab Master Data Mesin, sparepart keluar ke mesin (bukan SPK), masuk via PR atau alasan tanpa PR, tab Pemakaian mesin, koreksi penerimaan PR mengembalikan sisa PR. Bukti: verified in browser (mock), suite mesinsparepart 20 PASS, sparepart 38 PASS.
+- Hambatan: audit lintas modul (workflow 9 modul) terhenti oleh batas pemakaian; baru modul PR dan sparepart tuntas (1 temuan, diperbaiki). Langkah berikut: ulang audit modul lain, PR untuk bahan baku, aturan Cek Data mesin.
+
+### 2026-11-08 — Aturan section SPK sesuai standar dan stok di editor (T-220, lokal)
+Permintaan pemilik: isi section harus sesuai standar (ACCS memuat elbow, tee, dst; cover dan cable tray masing-masing) dan tidak tertanam di kode, serta pemakaian stok terlihat saat membuat SPK. Aturan kini data (Master Data › Aturan section), SPK lama aman, editor menampilkan status stok per baris. Bukti: `verified in browser` (mock, katalog sintetis) unit B-01..B-16 dan e2e `spkaturan` AR-01..AR-17 (peninjauan independen: 17 temuan, yang terbukti sudah diperbaiki). Belum: rute default fitting di ACCS (butuh keputusan pemilik), pencocokan stok fitting/aksesori, uji dengan katalog perusahaan dan Supabase.
+
+### 2026-11-08 — Desain dokumen modern dan kop di Master Data (T-219, lokal)
+Kop (logo, nama, alamat, kontak, warna) dapat diatur di Master Data dan dipakai semua dokumen utama; PDF, Excel, dan pratinjau memakai tata letak bersih bertema dengan kode dan warna pembeda per jenis. Bukti: `verified in browser` (mock) suite `kopdokumen` KO-01..KO-10 (11 PASS), PDF dicek visual. Belum: PR, mutasi, kartu stok, penawaran cetak, dan lembar SPK memakai tema baru; Excel belum dibuka visual; belum diuji di Supabase.
+
+### 2026-11-08 — Surat jalan gabungan beberapa SPK (T-218, lokal)
+Beberapa SPK dalam satu armada memakai satu nomor surat jalan (dokumen tetap satu per SPK, tanpa perubahan skema); cetak, ceklis Bongkar Muat, dan foto mengikuti kelompok. Bukti: `verified in browser` (mock) suite `gabungan` GB-01..GB-08 (9 PASS); regresi penuh 0 FAIL di semua 20 suite, unit 34 PASS, lint 0 error. Belum: subtotal per SPK, pengiriman SPK stok murni ke customer, uji di Supabase.
+
+### 2026-11-08 — SPK customer memakai stok barang jadi sebagian (T-216, lokal)
+Item SPK customer bisa mengambil sebagian dari stok Gudang Barang Jadi: cadangan sejak terbit, produksi hanya sisanya, keluar stok otomatis lewat surat jalan, pembalikan saat batal, neraca stok terjaga. Bukti: `verified in browser` (mock) suite `ambilstok` AM-01..AM-08 (13 PASS); regresi penuh 0 FAIL di semua 19 suite (auditflow diulang sekali setelah timeout page.goto), unit 34 PASS, lint 0 error. Belum diuji di Supabase; cadangan hanya diperiksa di klien (tanpa kunci database) dan belum ada draf migration. Berikutnya: T-218 (surat jalan gabungan beberapa SPK).
+
+### 2026-11-08 — Bongkar Muat: ceklis, foto bukti, dan surat jalan terintegrasi (T-217, lokal)
+Ceklis digital tersimpan dan tampil sebagai ✓ di surat jalan vendor/customer; foto bukti (kamera atau unggah, dikompres, dipilih per foto) menjadi lampiran di cetak (pratinjau, PDF, Excel); antrian dirapikan (kartu ringkas, pencarian, Selesai dibatasi). Bukti: `verified in browser` (mock) suite `bongkarmuat` BM-01..BM-14 (15 PASS); regresi penuh 0 FAIL di semua 18 suite (role diulang sekali setelah galat jaringan lokal ERR_NO_BUFFER_SPACE), unit 34 PASS, lint 0 error. Belum diuji di Supabase; foto masih inline di dokumen, bucket privat baru draf migration 23. Berikutnya: T-216 (SPK customer memakai stok sebagian) dan T-218 (surat jalan gabungan beberapa SPK, ceklis per SPK).
+
+### 2026-11-07 — SPK stok ke Gudang Barang Jadi (B-036..B-038, lokal)
+Penyebab SPK stok tidak bisa diterima: editor SPK menghilangkan tautan `fg` pada item. Diperbaiki, tautan lama dipulihkan, form Barang masuk terisi otomatis dari SPK stok, label SPK stok disesuaikan. Bukti: `verified in browser` (mock) suite baru `stokflow` SF-01..SF-08. Permintaan lanjutan pemilik (SPK customer memakai stok sebagian, tata letak Bongkar Muat dengan foto dan ceklis terintegrasi surat jalan, surat jalan vendor gabungan beberapa SPK) dikerjakan bertahap, belum dimulai.
+
+### 2026-11-07 — Snapshot rute per item saat SPK terbit (T-215, lokal)
+Rute dan alt disalin ke `items[].rute` dan `items[].alt` saat terbit atau revisi; item bercatatan mempertahankan snapshot lama; guard perubahan rute master hanya untuk SPK lama tanpa snapshot. Draf 22 menghitung mesin alternatif langkah terakhir. Bukti: `verified in browser` (mock) AF-11a..d dan regresi penuh; unit R-96; SQL lokal 86 PASS. Belum diuji di Supabase.
+
+### 2026-11-07 — Langkah 4 database: view dashboard dan Realtime (T-215, draf lokal)
+Draf migration 22: `v_dash_ringkas`, `v_spk_status`, `v_dash_bahan_baku`, `v_spk_otd`, `v_item_produksi`, `hari_ini()` (Jakarta), Realtime untuk produksi_log dan spk_materials. Postgres lokal (PGlite) 85 PASS. Progres produksi akurat hanya bila item membawa snapshot rute (belum ada di aplikasi); frontend belum diubah; belum di Supabase. Rangkaian empat langkah blueprint selesai sebagai draf.
+
+### 2026-11-07 — Langkah 3 database: posisi barang dan vendor finishing (T-215, draf lokal)
+Draf migration 21: view angka kembali/kirim vendor (0/231), posisi barang per item (enum posisi_barang), penjaga kembali + reject <= kirim, SPK Selesai hanya dari Terbit dan tanpa barang tersisa di vendor. Postgres lokal (PGlite) 67 PASS. Belum di Supabase; aplikasi sekarang menurunkan Selesai di JavaScript sehingga penjaga baru berpengaruh bila status itu mulai ditulis.
+
+### 2026-11-07 — K-3 diputuskan: SPK tanpa PO sah dengan alasan (T-215, draf lokal)
+Draf 19 menambah kolom `tanpa_po_alasan` (sampel, komplain, garansi, lainnya) dan aturan tahap ketat customer_id dan (PO atau alasan); uji SQL lokal 52 PASS. UI editor SPK untuk memilih alasan belum dibuat. Belum diterapkan ke Supabase.
+
+### 2026-11-07 — Langkah 2 database: cadangan bahan saat SPK terbit (T-215, draf lokal)
+K-1 diputuskan (cadangan dulu). Draf migration 20 dan revisi draf 19 ditinjau empat peninjau independen (21 temuan, 19 nyata) lalu diperbaiki; diuji di Postgres lokal (PGlite) 48 PASS. Belum diterapkan ke Supabase mana pun; konkurensi sungguhan dan RLS peran asli belum teruji. Lihat [[BLUEPRINT_DB_ERP]].
+
+### 2026-11-07 — Pemusatan opsi SPK di Master Data (lokal)
+Tab Master Data Opsi SPK (`master/setting.spkOpsi`) menggantikan daftar yang tertanam di kode: produk, type, tebal, finishing, distribusi, lead time, penandatangan bawaan. Bukti: `verified in browser` (mock) AF-14..AF-17. Masih tertanam di kode (belum dipusatkan): singkatan finishing dan pemetaan vendor finishing berdasarkan kata kunci, massa jenis bawaan material, role, jam kerja shift 480 menit.
+
+### 2026-11-07 — Audit alur hulu ke hilir: revisi, pembatalan, rute (B-032..B-035, lokal)
+Empat celah alur ditutup dan diuji (suite `auditflow` AF-00..AF-13, mock): penjaga revisi SPK terbit, alur Batalkan/Aktifkan kembali SPK, penjaga perubahan rute produk terhadap SPK berjalan, penjaga pembatalan surat jalan vendor yang sudah menerima barang. Belum diaudit ulang: modul Penawaran dan Sales Order (tersembunyi) terhadap SPK yang dibatalkan, dan perilaku RLS di Supabase production.
+
+### 2026-11-07 — Keseimbangan update produksi SPK dan Produksi Hari Ini (B-029..B-031, lokal)
+Drawer SPK, riwayat, lembar, ekspor, dan alur lead time hanya membaca catatan lama; hasil mesin tidak terlihat. Kini memakai riwayat gabungan. Tombol Catat per langkah berantrian, item selesai dari progres efektif, total manual lama dipertahankan. Bukti: `verified in browser` (mock) suite baru `keseimbangan` K-00..K-10. Kode monitoring lama yang mati (`_bProduksiLama`) dihapus.
+
+### 2026-11-07 — Routing dan vendor per material, Full hole otomatis Perforated (T-214, lokal)
+Perforated Cable Tray otomatis Full hole (pilihan manual dipertahankan). Tab Master Data Rute produksi (per produk dan rute khusus bentuk), vendor mengikuti material (SPHC sesuai finishing; stainless dan aluminium tanpa), pilihan vendor per baris, peringatan baja tanpa finishing. Bukti: `verified in browser` (mock) E2E S-19..S-23 dan unit R-90..R-95; belum diuji di Supabase. Asumsi tahap 2 menunggu koreksi pemilik ([[INPUT_SPK_TERSTRUKTUR]] bagian 4a). Penyempurnaan: uji axe editor dan tab Rute (A-4), urutan langkah rute tidak diacak, kolom editor dirapikan.
+
+### 2026-11-06 — Rumus sheet utama dinyatakan baku (T-189 selesai)
+
+Pemilik menetapkan rumus sheet utama workbook penawaran sebagai baku; dua sheet lain hanya sumber parameter skenario. T-189 ditutup (done); pemuatan katalog dari tabel master setelah login dipindah ke T-190. Dicatat di [[documentation/DECISIONS]]. Langkah berikut: T-190 (modul Penawaran lokal). Production tidak disentuh.
+
+### 2026-11-06 — Mesin harga penawaran dan uji emas (T-189, lokal)
+
+Dibangun mesin murni harga dan estimasi di `apps/platform/src/lib/erp/harga.js` dan pembangun katalog dari workbook. Hasil uji emas terhadap Excel di skenario utama: 192 bentuk dan 2.195 nilai rumus sama (0 selisih), total, PPN, kg, dan biaya saat PO sama. Unit 22 PASS (15 sintetis untuk CI); semua uji unit lain tetap PASS. Temuan workbook: satu cacat rujukan baris lain (diperbaiki dan diuji), angka tetap tersembunyi di Straight Reducer, dua kolom parameter, dan dua sheet lain memuat rumus versi lama (302 sel berbeda; Straight Reducer di sana hampir dua kali harga sheet utama). Katalog, skenario, dan nilai pembanding diabaikan Git. Langkah berikut: pemilik mengonfirmasi rumus sheet utama sebagai baku, lalu T-190 (modul Penawaran lokal) termasuk memuat katalog dari master setelah login. Production tidak disentuh. Rincian di [[ERP_QUOTATION_ANALISIS]] bagian 10.
+
+### 2026-11-06 — Cakupan modul Penawaran diputuskan pemilik
+
+Enam pertanyaan di [[ERP_QUOTATION_ANALISIS]] dijawab pemilik: sistem ini menangani penawaran sampai produksi (akuntansi dan faktur di sistem lain); Sales membuat dengan nomor format lama; beberapa varian per penawaran; katalog awal 6 keluarga; batas diskon per peran dengan persetujuan; uji emas memakai workbook. Dicatat di [[documentation/DECISIONS]] dan tugas T-189 dan T-190. Langkah berikut: T-189 (mesin harga dan uji emas). Belum ada kode; production tidak disentuh.
+
+### 2026-11-05 — Workbook penawaran dibedah dan skill serta agen ERP dibuat (T-187, T-188)
+
+Pemilik menyerahkan workbook penawaran Cable Tray dan Ladder dan ingin penawaran menjadi hulu (SPK, material, monitoring turun darinya), dikerjakan sebagai modul terpisah, lokal dulu. Hasil pembacaan: tiga sheet = tiga skenario dengan tata letak sama; 192 produk per sheet (6 keluarga × 32 bentuk) dengan perhitungan estimasi dan real berdampingan; harga satuan = berat estimasi × harga per kg (dibulatkan) ditambah baut; total dengan diskon dan PPN; blok biaya saat PO. Strukturnya sama dengan kalkulator berat, sehingga fondasi sekitar 70% sudah ada. Dibuat: [[ERP_QUOTATION_ANALISIS]], epic [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]] dengan tugas T-187 sampai T-193, empat skill dan empat agen ERP di .claude, keputusan di [[documentation/DECISIONS]]. Bukti: source-level (isi workbook); belum ada kode. Production dan Vercel tidak disentuh. Langkah berikut: jawaban pemilik atas pertanyaan di analisis, lalu T-189 (mesin harga dan uji emas).
+
+### 2026-11-05 — Berjalan dan Jadwal dibedakan (T-186, lokal)
+
+Tinjauan pemilik berurutan: Gantt kurang bagus untuk memantau; Jadwal dan Berjalan masih sama; minta papan jadwal seperti Antlia (Production Calendar) tetapi lebih baik; papan per work center terlalu membingungkan; Jadwal cukup timeline bersih dengan nama PT. Hasil: **Berjalan** memuat matriks posisi tiap item per langkah (centang, cincin posisi, strip posisi, penanda Diam N hari, mode Ringkas dan Rinci); **Jadwal** menjadi timeline satu batang per SPK dengan nama customer, status prediksi, bendera due date, perkiraan siap kirim dari mesin baru rencana.js (kapasitas terbatas, urut due date), tanpa rincian work center; Rinci per item dan Per mesin tetap ada. Bukti: unit rencana 11 (semua unit PASS), e2e regresi 42, role 12, akses 34, produksi 134, tampilan 72, alur lengkap 15 (0 FAIL; mock, bukan bukti Supabase). Kebutuhan di [[PRD_PRODUKSI]] bagian 16. Belum ditayangkan; migration 14 tetap draf. Langkah berikut: tinjauan pemilik.
+
+### 2026-11-05 — Papan jadwal v3 interaktif dan urutan tab SPK (T-185, lokal)
+
+Tinjauan pemilik: urutan tab diubah menjadi Daftar SPK, Jadwal, Berjalan, KPI & Analisa (Daftar SPK dibuka lebih dulu); Gantt bagus secara tampilan tetapi kaku dipakai. Hasil: hover batang menampilkan kartu keterangan, klik batang membuka panel detail SPK (item dan langkah mesin), penunjuk tanggal mengikuti kursor, zoom Detail, Harian, Ringkas, Buka semua dan Lipat semua, geser garis waktu dengan drag. Bukti: e2e regresi 42, role 12, akses 34, produksi 118, tampilan 72, alur lengkap 15 (0 FAIL; mock, bukan bukti Supabase). Kebutuhan di [[PRD_PRODUKSI]] bagian 15. Belum ditayangkan; migration 14 tetap draf. Langkah berikut: tinjauan pemilik.
+
+### 2026-11-05 — Audit progres proyek
+
+- Selesai: audit silang vault, git, GitHub, dan Supabase production; laporan di [[AUDIT_PROGRESS_2026-11-05]]. Posisi: tugas selesai 29 dari 105 (28%), effort 16%, jalur kritis sisa 26,5 hari kerja menuju go-live.
+- Temuan utama: jalur proses dan data (T-030 sampai T-036) belum mulai; fitur produksi multi-WC (T-174 sampai T-183) selesai di lokal tetapi belum tayang, 110 commit di depan `main`; aturan lingkup 3 Nov terlewati; 13 tugas menunggu tinjauan pemilik.
+- Langkah berikut: keputusan pemilik pada tujuh butir di laporan audit.
+
+### 2026-11-05 — Data bahan baku Oktober dimuat ke production (T-184)
+
+- Selesai: data uji RM dicadangkan ke skema `arsip_20261105` lalu dihapus; 23 item plat dari workbook 27 Oktober dimuat (stok awal 2026-10-27, total 408). Aplikasi tidak diubah.
+- Bukti: `verified in database`. Tampilan live belum diperiksa. Langkah berikut: pemilik memeriksa Gudang Bahan Baku.
 
 ### 2026-11-02 — Workspace dan dashboard
 
@@ -415,3 +515,403 @@ Halaman ini menyimpan pekerjaan, temuan, bukti, dan hambatan. Checklist berikutn
 ### 2026-11-03 — Kesiapan pilot (T-170)
 
 Menjawab penilaian kesiapan: data uji dibersihkan, cadangan dan pemulihan (unduh JSON, peringatan dashboard, skrip pulih, runbook), impor CSV master dan stok awal (templat, pratinjau, tanpa menimpa), akun saya dan ganti password, dashboard baru. Sisa tugas pemilik: SMTP kustom, admin kedua, jadwal cadangan dan latihan pulih, keputusan repo. Sisa yang butuh tim: walkthrough, sumber data resmi, peserta pilot. Lihat [[RENCANA_ADOPSI]] bagian status gerbang.
+
+### 2026-11-04 — Stok barang jadi diimpor ke production (T-175)
+
+Stok awal 92 item barang jadi (1.382 batang) dari file Stock Barang 2026 dimasukkan ke tabel `fg` di Supabase production, hanya data. Sumber: sheet Straight; sheet transaksi tidak diimpor agar tidak terhitung dua kali. Cut-off 2026-10-17 (asumsi, menunggu konfirmasi pemilik). Cocok dengan file per kategori. Bukti: `verified in database`. Detail di [[T-175-impor-stok-barang-jadi-oktober-2026]].
+
+### 2026-11-04 — Filter Type di Gudang Barang Jadi tayang (T-176)
+
+Dropdown Type (STU, STC, SLU, SLW, SLHD, lainnya, Tanpa type) mengikuti kategori. PR 14 digabung ke `main` oleh pemilik; production memuat kode filter. Regresi 150 lulus di mock. Detail di [[T-176-filter-type-gudang-barang-jadi]].
+
+### 2026-11-04 — Skema produksi tiga pintu (T-177, lokal)
+
+Hasil tinjauan pemilik: tampilan produksi membingungkan karena terlalu banyak menu dan tempat input. Pembanding: Operations Kanban Antlia. Skema baru: **SPK Berjalan**, **Produksi Hari Ini** (satu-satunya input produksi), dan **Kinerja & Analisa**. Kebutuhan lengkap di [[PRD_PRODUKSI]]; rancangan di [[RUTE_PRODUKSI]] bagian 17 dan 18. Uji e2e mock lulus (produksi 68, regresi 42, role 12, akses 34, tampilan 71). Belum ditayangkan; migration 14 tetap draf. Langkah berikut: tinjauan pemilik, lalu Tahap 2 ([[T-178-kinerja-dan-analisa-produksi-tahap-2]]).
+
+### 2026-11-04 — Kinerja & Analisa lengkap (T-178, lokal)
+
+Tahap 2 selesai di lokal: empat tab analisa baru di Kinerja & Analisa (Work Center, Produk, Vendor, Pengiriman) di samping Laporan harian. Pemeriksaan data: antrian Bongkar Muat sudah menyimpan jam masuk, mulai, dan selesai, sehingga loading dan unloading dianalisa tanpa input baru. Bukti: uji unit analisa 21 lulus; e2e produksi 74, regresi 42, role 12, akses 34, tampilan 71 (mock, bukan bukti Supabase). Kebutuhan dipetakan di [[PRD_PRODUKSI]] bagian 10; hitungan di [[RUTE_PRODUKSI]] bagian 19. Belum ditayangkan; migration 14 tetap draf. Langkah berikut: tinjauan pemilik, konfirmasi aturan rute Jointing dan Clamp serta kapasitas per mesin.
+
+### 2026-11-04 — Produksi Hari Ini v2 dan Laporan Produksi (T-179, lokal)
+
+Tinjauan pemilik: layout kaku, input masih merepotkan, catatan terakhir tanpa nama PT, laporan kurang analitis. Hasil: tata letak dua kolom dan kartu rapi; tanggal dan jam otomatis; Selesai satu ketukan; catatan terakhir dengan customer; Laporan Produksi baru (jumlah, tonase, kecepatan; periode hari sampai tahun; tren; produk bertingkat Cable Tray, Cable Ladder, Cable Duct, Aksesoris dan type STU, STC, SLU, SLW, SLHD serta material); akumulasi KPI operator dan mesin. Bukti: uji unit statistik 34 (total unit 125); e2e produksi 92, regresi 42, role 12, akses 34, tampilan 71 (mock, bukan bukti Supabase). Kebutuhan di [[PRD_PRODUKSI]] bagian 11; rancangan di [[RUTE_PRODUKSI]] bagian 20. Draf migration 14 ditambah kolom klasifikasi produk; belum diterapkan. Belum ditayangkan.
+
+### 2026-11-04 — Jadwal SPK (Gantt) (T-180, lokal)
+
+Permintaan pemilik: papan jadwal seperti timeline proyek untuk SPK berjalan, dengan input tetap mudah. Hasil: tab Jadwal di SPK Berjalan dengan batang rencana, produksi, vendor, pengiriman, due date, perkiraan selesai, dan garis hari ini; status Telat dan Berisiko telat; jadwal tiap item; skala minggu dan bulan; nyaman di HP. Tanpa input baru dan tanpa perubahan skema. Bukti: unit jadwal 17 (total unit 142); e2e produksi 100, regresi 42, role 12, akses 34, tampilan 71 (mock, bukan bukti Supabase). Kebutuhan di [[PRD_PRODUKSI]] bagian 12; rancangan di [[RUTE_PRODUKSI]] bagian 21. Belum ditayangkan.
+
+### 2026-11-05 — Uji alur lengkap SPK dengan tangkapan layar (T-181, lokal)
+
+Permintaan pemilik: uji dari SPK sampai akhir, ambil tangkapan layar, dan dokumentasikan. Hasil: skrip `alur-spk.mjs` menjalankan satu SPK dari terbit, Shearing, Punching, Bending, kirim dan terima kembali vendor, surat jalan customer, sampai Diterima, dengan 27 tangkapan layar. 15 PASS, 0 FAIL. Bukti: `verified in browser` (mock), bukan bukti Supabase. Temuan: Jadwal berfilter awal Berjalan sehingga SPK selesai tidak tampil sampai filter Selesai dipilih; seluruh alur satu hari sehingga batang pendek. Dokumen: [[UJI_ALUR_SPK]]; tugas [[T-181-uji-alur-spk-awal-sampai-akhir]].
+
+### 2026-11-05 — Papan jadwal v2 dan perapian layout (T-182, lokal)
+
+Masukan pemilik: jadwal kaku, layout Berjalan, KPI & Analisa, dan Target waktu proses kurang nyaman. Hasil: Jadwal menjadi schedule board dengan tampilan Per SPK (langkah mesin berwarna per work center) dan Per mesin (balok pekerjaan per mesin); kartu SPK Berjalan, KPI & Analisa, dan dialog Target dirapikan. Bukti: unit semua PASS (jadwal 21); e2e regresi 42, role 12, akses 34, produksi 106, tampilan 71, alur lengkap 15, semuanya 0 FAIL (mock, bukan bukti Supabase). Tangkapan layar di `documentation/screenshots/layout-v2/`. Tugas [[T-182-papan-jadwal-v2-dan-rapikan-layout-spk]]; kebutuhan [[PRD_PRODUKSI]] bagian 13.
+
+### 2026-11-05 — Produksi Hari Ini: papan mesin dan kapasitas aktual (T-183, lokal)
+
+Masukan pemilik: layar kaku; tujuan mengetahui kapasitas aktual mesin realtime sebagai dasar KPI per work center atau mesin. Hasil: kartu per mesin, panel Kapasitas aktual (output, laju pcs/jam, pemakaian mesin, proyeksi), grafik per jam dan tren 7 hari, kartu antrian lebih lapang; input tidak berubah. Bukti: unit kapasitas 10; e2e regresi 42, role 12, akses 34, produksi 111, tampilan 71 (0 FAIL; mock, bukan bukti Supabase). Keputusan terbuka: jam kerja standar dan target KPI per mesin. Tugas [[T-183-produksi-hari-ini-papan-mesin-dan-kapasitas-aktual]]; kebutuhan [[PRD_PRODUKSI]] bagian 14.
+
+### 2026-11-06 — Modul Penawaran lokal (T-190, lokal)
+
+Hasil: menu Penawaran dengan hak modul sendiri dan peran Sales; lembar penawaran dengan varian A sampai H, harga dan berat dari mesin T-189, diskon dan PPN, batas diskon per peran dengan status Menunggu persetujuan, nomor format lama dengan kunci atomik, revisi bernomor dengan riwayat, cetak untuk customer tanpa berat dan biaya. Tabel penawaran hanya berupa draf migration 15 (belum diterapkan). Bukti: verified in browser (mock); unit 18 PASS, e2e penawaran 27 PASS, regresi penuh 0 FAIL, alur-spk 15 PASS. Perbaikan: tanggal data contoh dan uji produksi memakai waktu lokal. Menunggu pemilik: nilai batas diskon, penyetuju, kode nomor, tinjauan tampilan. Langkah berikut: T-191 (muat dari penawaran ke SPK).
+
+### 2026-11-06 — Muat dari penawaran ke SPK dan snapshot PO (T-191, lokal)
+
+Hasil: penawaran Disetujui dapat dimuat ke SPK Draft (editor SPK terisi customer, PO, item per judul produk, jumlah, dan berat real per pcs) tanpa membawa harga; harga, berat, dan biaya saat PO dibekukan sebagai snapshot di penawaran dan tidak berubah oleh perubahan skenario. Tautan dua arah, idempoten, dan revisi penawaran yang disetujui lagi menawarkan Perbarui SPK (jumlah produksi dipertahankan). Bukti: verified in browser (mock); unit 25 PASS, e2e penawaran 35 PASS, alur hulu ke hilir 6 PASS dengan tangkapan layar, regresi penuh 0 FAIL. Ditemukan dan diperbaiki: judul section SPK harus mengikuti konvensi rute (CABLE LADDER TYPE SLU dan seterusnya), kalau tidak antrian mesin kosong. Menunggu pemilik: konfirmasi pemetaan keluarga ke produk dengan katalog asli. Langkah berikut: T-192 (kebutuhan material dan reservasi).
+
+### 2026-11-06 — Sales Order sebagai penghubung Penawaran dan SPK (T-194, lokal)
+
+Usul pemilik: input cukup di penawaran, lalu SO, lalu SPK menarik otomatis tanpa mengetik ulang. Hasil: menu Sales Order (hak modul penawaran); tombol Buat Sales Order di penawaran Disetujui; SO menyimpan PO, tanggal PO, due date, alamat, item yang bisa disesuaikan dengan PO, tebal dan finishing, serta snapshot harga dan biaya saat PO; konfirmasi SO membuat SPK Draft otomatis dengan judul section sesuai konvensi rute, lalu PPIC memeriksa dan menerbitkan; amandemen SO bernomor Rev memuat perubahan ke SPK yang sama. Bukti: verified in browser (mock); unit 10 + 25 PASS, e2e penawaran 37 PASS, alur hulu ke hilir 7 PASS dengan tangkapan layar, regresi penuh 0 FAIL. Draf migration 16 belum diterapkan. Menunggu pemilik: pemetaan keluarga ke produk dengan katalog asli. Langkah berikut: T-192 (kebutuhan material dan reservasi dari SO atau SPK).
+
+### 2026-11-06 — Kebutuhan material dan reservasi (T-192, lokal)
+
+Hasil: panel Kebutuhan material di Sales Order dan lembar SPK (netto, bruto dengan faktor sisa potong 1,1, lembar, stok fisik, reservasi SPK Terbit lain, tersedia, status Cukup, Kurang, Sudah dipesan, Tanpa item RM); tombol Buat PR untuk kekurangan; PR terbuka menutup kekurangan sehingga tidak ada PR ganda; faktor sisa potong dapat diatur. Pratinjau tidak mengubah stok; pengeluaran gudang dengan nomor SPK mengurangi reservasi. Bukti: verified in browser (mock); unit 12 PASS, e2e penawaran 42 PASS, regresi penuh 0 FAIL. Menunggu pemilik: stok berkurang otomatis saat SPK terbit atau tetap saat Pakai, faktor sisa potong sebenarnya, pencatatan sisa potongan, dan pencocokan dengan SPK nyata. Langkah berikut: T-193 (monitoring estimasi lawan aktual).
+
+### 2026-11-06 — Pindah akun Claude dan validasi koneksi (read-only, tanpa perubahan production)
+
+Konteks: pengembangan dilanjutkan dengan akun Claude lain; serah terima di [[HANDOFF]]. Aturan sesi: perubahan hanya di lokal; GitHub, Supabase production, dan Vercel yang tayang tidak diubah tanpa instruksi pemilik; deploy menunggu persetujuan setelah pemilik menilai hasil lokal.
+
+Hasil validasi (semua baca-saja):
+- GitHub: remote `mitranusainternational-cloud/mni-gudang`, `gh` aktif di akun itu. Cabang `fitur/produksi-multi-wc` sudah ada di GitHub (sama dengan lokal, 41 commit di depan `development`); `main` di `43e8da2` (PR 14), CI Vault dan Aplikasi sukses, status Vercel sukses.
+- Supabase production (`lggqigmvtefkquqjrjsb`): 13 migration terpasang, sama dengan `apps/platform/supabase/migrations` 1–13; 22 tabel public ber-RLS. Migration 14, 15, 16 belum diterapkan (sesuai rencana). Bukti: verified in database (metadata).
+- App live `mni-gudang.vercel.app`: login pemilik berhasil dan seluruh permintaan data menuju project production di atas. Bukti: verified in browser.
+- Vercel: tim `mitranusainternational-8337`, project `mni-gudang`; variabel `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` hanya berlabel Production (belum Preview). Keputusan soal Preview ditunda sampai tahap deploy.
+- Konektor Supabase `plugin_supabase` masih mengarah ke akun lama (dev, dipensiunkan): jangan dipakai untuk production. Konektor Vercel bawaan Claude tidak punya tim: tidak dipakai.
+- Composio: tidak konklusif dari sesi ini (konektor membuat koneksi baru tiap panggilan); menunggu tangkapan layar Connected accounts dari pemilik.
+- Pratinjau lokal mock (`localhost:5173`, admin@mni.local) dibuka dan berjalan; menu Penawaran dan Sales Order tampil, belum ada di versi live.
+
+Menunggu pemilik: tangkapan layar Composio; keputusan variabel Preview Vercel; tujuh keputusan terbuka di [[HANDOFF]] bagian 5. Langkah berikut: T-193 (monitoring estimasi lawan aktual), tetap lokal.
+
+### 2026-11-06 — Koreksi data production atas permintaan pemilik (satu baris)
+
+Permintaan pemilik: salah input pada riwayat mutasi bahan baku. Satu baris `mutasi` di Supabase Production (SPK 639, keluar 4 lembar Plat SPHC 1.5 x 1200 x 3000, dok `PK/2026/11/004`, Shearing) diubah hanya pada kolom `ket` (keterangan lengkap: PO PT. Enindo, kegunaan plat Tray STU W 600 H 100 = 4 btg dan Jointing tray h100 = 16 pcs, pemakaian 4 lbr) dan `tgl` (06-11-2026 menjadi 04-11-2026). Jumlah (`delta` -4), dokumen, SPK, pihak, dan semua baris lain tidak diubah. Bukti: verified in database (UPDATE terbatas dengan id dan keterangan lama sebagai syarat, 1 baris). Tidak ada deploy, push, atau perubahan skema; kode aplikasi tidak disentuh.
+
+### 2026-11-06 — Pencatatan pemakaian bahan baku SPK 640 dan 641 di production (atas permintaan pemilik)
+
+Permintaan pemilik: dua SPK sudah selesai tetapi pemakaian bahan bakunya belum dilaporkan. Dua baris `mutasi` keluar ditambahkan di Supabase Production, meniru alur "Pakai produksi" aplikasi (satu dokumen PK per transaksi, counter `PK-202611` dinaikkan dari 5 ke 7):
+- `PK/2026/11/006`, SPK 640 (PT Mandiri Plastindo): Plat SPHC 1.5 x 1200 x 3000, keluar 7 lembar (stok 66 menjadi 59), keterangan memuat potong side rail ladder H 100 dan rung ladder W 200 SLW serta plat sisa.
+- `PK/2026/11/007`, SPK 641 (PT Waruna Shipyard Indonesia): Plate Strip 5.0 x 38 x 6000, keluar 6 batang (stok 6 menjadi 0).
+Tanggal dicatat 04-11-2026 (tanggal SPK; tanggal pemakaian sebenarnya tidak disebut pemilik). Tujuan "Shearing" untuk SPK 640, kosong untuk SPK 641. Tidak ada baris lain, skema, atau kode yang diubah; tidak ada deploy. Bukti: verified in database (INSERT 2 baris dalam satu pernyataan, stok dihitung ulang dari `stok_awal` + mutasi).
+
+## 2026-11-06 · Gudang Bahan Baku: massa jenis dapat diatur dan dokumen pengeluaran (lokal)
+
+Permintaan pemilik, hanya di lokal (`fitur/produksi-multi-wc`), tidak ada deploy dan production tidak disentuh.
+
+- Asal kg per lembar dijelaskan di tab Posisi stok: tebal × lebar × panjang (mm) ÷ 1.000.000 × massa jenis. Massa jenis bisa diubah di Pengaturan bahan baku (SPHC, SPCC, SS304, SS316, aluminium), disimpan di `master/setting.dens`; kosong memakai standar (baja 7,85).
+- Riwayat mutasi: baris Keluar yang punya nomor dokumen kini punya tombol PDF (cetak/simpan PDF) dan Excel, yaitu Bukti Pengeluaran Bahan Baku per nomor PK (SPK, customer, tujuan, item, qty, kg, keterangan, tanda tangan).
+- Bukti: `verified in browser` (mock): tombol muncul, isi PDF benar, Excel terunduh, massa jenis tersimpan dan tampil. Belum diuji di Supabase.
+
+## 2026-11-06 · Gudang Bahan Baku: jenis material fleksibel (lokal)
+
+Agar pemakaian di lapangan tidak kaku. Hanya lokal, tanpa migration (disimpan di `master/setting.mats`), production tidak disentuh.
+
+- Pengaturan bahan baku: bagian "Jenis material lain" (nama jenis, kata kunci dipisah koma, massa jenis). Item yang namanya memuat kata kunci otomatis memakai massa jenis itu, tampil sebagai kelompok sendiri di Posisi stok/Analisa/Kartu Stok, dan muncul di filter material. Kata kunci buatan pengguna menang atas pengenalan bawaan.
+- Cek Data: peringatan info bila ada item bahan baku berjenis "Lainnya" (berat dihitung seperti baja 7,85) dengan tombol ke Pengaturan.
+- Bukti: `verified in browser` (mock): item tembaga 31,4 kg/lbr (baja) berubah ke 35,8 setelah jenis didaftarkan, kelompok dan filter muncul, peringatan Cek Data tampil, 0 galat konsol. Regresi penuh belum dijalankan. Berat manual per item belum dibuat (perlu kolom baru, menunggu keputusan).
+
+Penyempurnaan (2026-11-06, lokal): jenis material kini dipilih saat **Item baru** (bukan hanya di Pengaturan). Form punya pilihan "Jenis material" (SPHC, SPCC, SS304, SS316, Aluminium, jenis buatan sendiri, atau "＋ Jenis material baru…" dengan nama dan massa jenis), pratinjau nama item dan berat per lembar langsung saat mengetik, dan jenis baru otomatis terdaftar di `master/setting.mats`. Bila nama item belum memuat kata kunci jenis, kata kunci ditambahkan ke nama agar pengenalan tetap konsisten tanpa kolom database baru. Pengaturan tetap dipakai untuk mengubah atau menghapus jenis. Bukti: `verified in browser` (mock), 0 galat konsol.
+
+## 2026-11-06 · Master Data › Bahan baku (lokal)
+
+Atas permintaan pemilik: pengaturan material dipusatkan di Master Data. Hanya lokal, tanpa migration, tanpa deploy.
+
+- Tab baru **Bahan baku** di Master Data: (1) tabel Jenis material dan massa jenis (5 jenis bawaan bisa diubah massa jenisnya, jenis buatan sendiri bisa ditambah, diubah, dihapus bila tidak dipakai; kolom sumber, kata kunci, jumlah item), (2) tabel Item bahan baku (jenis, kg/lbr, satuan, min, buffer, lokasi, tombol Ubah dan Item baru). Item yang jenisnya belum dikenali ditandai.
+- Pengaturan bahan baku kini hanya lead time, target stok, dan faktor sisa potong, dengan tautan ke Master Data › Bahan baku; Item baru tetap bisa membuat jenis baru langsung.
+- Bukti: `verified in browser` (mock): ubah massa jenis, tambah jenis, hapus jenis tak terpakai, penolakan hapus jenis terpakai, 0 galat konsol. Regresi penuh belum dijalankan.
+
+Penyempurnaan Master Data › Bahan baku (2026-11-06, lokal): semua jenis material kini punya tombol **Hapus**, termasuk jenis bawaan (disimpan sebagai `master/setting.jenisOff`, bisa **Pulihkan**); jenis yang masih dipakai item boleh dihapus setelah konfirmasi (itemnya menjadi "Belum dikenali"). Tabel Item bahan baku punya tombol **Hapus**: item tanpa riwayat mutasi dan tanpa PR dapat dihapus setelah konfirmasi, item yang punya riwayat ditolak dengan penjelasan agar riwayat stok tetap utuh. Bukti: `verified in browser` (mock), 0 galat konsol. Regresi penuh belum dijalankan; belum diuji di Supabase (penghapusan item memakai `delDoc`, perlu dicek terhadap RLS sebelum deploy).
+
+## 2026-11-06 · Gudang Bahan Baku: perapian pemakaian lapangan (lokal)
+
+Fokus hanya Gudang Bahan Baku; tanpa migration, tanpa deploy.
+
+- Riwayat mutasi: filter **Semua SPK / Tanpa SPK / SPK tertentu** (membaca SPK dari tautan atau dari teks referensi, sehingga pencatatan lama ikut), chip SPK di kolom Dokumen, dan **keterangan multi-baris** tampil per baris (sebelumnya menyatu).
+- Form Pakai produksi dan Terima material: **total lembar dan kg langsung** terhitung saat mengetik.
+- Hasil cek read-only production (2026-11-06): izin hapus pada `rm` dan `rmhist` belum ada, jadi tombol Hapus item di Master Data akan ditolak database sampai ada migration kecil; jenis material dan massa jenis tidak butuh perubahan skema. Branch lokal juga mengandung migration 14–16 yang belum terpasang, jadi rilis disarankan sebagai paket kecil dari `main`.
+- Bukti: `verified in browser` (mock), 0 galat konsol. Regresi penuh belum dijalankan.
+
+## 2026-11-06 · Gudang Bahan Baku: dokumen untuk semua jenis mutasi (lokal)
+
+Permintaan pemilik: setiap mutasi punya dokumen. Hanya lokal, tanpa migration, tanpa deploy.
+
+- Di Riwayat mutasi, **setiap baris** (Masuk, Keluar, Opname, Koreksi) punya tombol **PDF** (cetak/simpan PDF) dan **Excel**. Satu nomor dokumen = satu dokumen berisi semua barisnya.
+- Empat bentuk dokumen: **Bukti Penerimaan** (supplier, PO/SJ, qty, kg), **Bukti Pengeluaran** (SPK, customer, tujuan), **Berita Acara Stock Opname** (stok sistem, stok fisik, selisih lbr dan kg, kolom tanda tangan dihitung/diperiksa/disetujui), **Bukti Koreksi** (dokumen yang dikoreksi, qty dan kg pembalik, alasan).
+- Mutasi tanpa nomor dokumen (mis. opname satu item) tetap bisa dicetak dengan kode sementara `MUT-xxxxxxxx`.
+- Bukti: `verified in browser` (mock) untuk keempat jenis, Excel terunduh, 0 galat konsol. Regresi penuh belum dijalankan.
+
+## 2026-11-06 · Surat Jalan ke customer: alamat dan dokumen baru (branch terpisah dari versi live)
+
+Permintaan pemilik: kerjakan untuk versi yang sudah tayang, lokal dulu, tayangkan hanya setelah disetujui. Dikerjakan di worktree `../mni-gudang-sj`, branch lokal `fitur/surat-jalan` dari `origin/main` (43e8da2), terpisah dari `fitur/produksi-multi-wc`. Belum di-commit, belum di-push, tidak ada deploy, production tidak disentuh.
+
+- **Alamat pengiriman:** isian baru di form Buat surat jalan (otomatis dari Master Data customer bila sudah ada, bisa diubah per surat jalan; kotak untuk menyimpan juga sebagai alamat customer) dan tombol **Ubah alamat** di laci surat jalan. Disimpan di bidang tambahan surat jalan (`kirim.data.alamat`), tanpa migration. Mengubah alamat tidak mengubah status pengiriman.
+- **Status tidak lagi ikut di dokumen** PDF dan Excel.
+- **Tampilan dokumen baru:** kop dengan logo dan alamat perusahaan, judul besar, kotak No. SJ dan tanggal, kotak Kepada (alamat multi-baris) dan Detail pengiriman (PO, SPK, kendaraan, no polisi, driver), tabel bergaris dengan header biru dan baris selang-seling, total, catatan, banner bila dibatalkan, pernyataan penerimaan, tiga kotak tanda tangan (Hormat kami, Pengemudi, Diterima oleh plus tanggal terima), footer halaman. Excel mengikuti tata letak yang sama dan siap cetak A4.
+- Bukti: `verified in browser` (mock, port 5176): form, simpan alamat ke SJ dan master customer, preview, PDF dirender dan diperiksa visual, Excel dibaca ulang, status tetap Disiapkan. Tes unit lulus; regresi e2e penuh belum dijalankan.
+
+Lanjutan Surat Jalan (2026-11-06, branch lokal `fitur/surat-jalan`, belum di-commit, tidak ada deploy):
+
+- **Rincian pengiriman partial:** tabel otomatis muncul di preview, PDF, dan Excel hanya bila barang pada surat jalan itu dikirim bertahap (ada pengiriman sebelumnya atau jumlah belum memenuhi order SPK). Kolom Partial 1, Partial 2, dan seterusnya (maksimal 4 kolom, partial awal digabung bila lebih), Total terkirim, Sisa; kolom surat jalan ini diberi warna. Dihitung per barang sampai dengan surat jalan itu. Bila langsung penuh, tabel tidak tampil. Surat jalan batal tidak dihitung.
+- **Penomoran surat jalan:** format default `{tahun 2 digit}/{bulan romawi}/MNI/{nomor urut}`, mis. `26/XI/MNI/1799`. Dikosongkan = otomatis melanjutkan nomor urut terbesar yang sudah ada (1799 jadi 1800, nol di depan dipertahankan, SJ batal ikut dihitung agar tidak dipakai ulang), tahun dan bulan mengikuti tanggal surat jalan. Nomor tetap bisa diketik manual. Asumsi: 26 = tahun, XI = bulan, 1799 = nomor urut; perlu dikonfirmasi pemilik. Awalan "# " pada nomor lama tidak ikut dibawa.
+- Bukti: `verified in browser` (mock port 5176): tabel partial dua tahap (3 lalu 1 dari 10, sisa 6) pada preview, PDF (dirender), dan Excel; barang yang langsung penuh tidak muncul; nomor otomatis 1 menjadi 1800 setelah 1799. Regresi e2e penuh belum dijalankan.
+
+Konfirmasi pemilik (2026-11-06): pada nomor surat jalan `26/XI/MNI/1799`, **26 = tahun**, XI = bulan romawi, 1799 = nomor urut. Asumsi penomoran otomatis di atas benar dan tidak perlu diubah.
+
+## 2026-11-06 · Rilis ke live: fitur Surat Jalan (PR 15)
+
+Atas perintah eksplisit pemilik ("Ya, gabungkan"). PR 15 `fitur/surat-jalan` digabung ke `main` oleh akun pemilik (merge commit `ad73c89`, 08:12 UTC) dengan melewati syarat 1 approval seperti PR 14; pemeriksaan wajib lulus semua sebelum digabung (Vault, Aplikasi build dan regresi mock, Vercel). Tes e2e lokal sebelum rilis: 34 lulus, 0 gagal.
+
+- **Vercel:** deploy production selesai (status Success); situs https://mni-gudang.vercel.app melayani `app.js` baru (memuat `sjMniNext`, `sjPartial`, `simpanAlamatCustomer`, judul tabel partial).
+- **Supabase production:** tidak ada migration atau perubahan skema; migration tetap 13. Jumlah baris dan `max(updated_at)` kirim, spk, mutasi, rm, master, mcustomer, vendor, fg sama persis dengan potret sebelum rilis (`verified in database`, baca-saja).
+- **Isi rilis:** alamat pengiriman (+ Ubah alamat), PDF dan Excel baru tanpa status, tabel partial otomatis, nomor surat jalan otomatis format `26/XI/MNI/1800`.
+- Catatan: pengujian fitur di live belum dilakukan dengan membuat data (agar tidak menambah data); pemakaian pertama oleh tim adalah uji lapangan. Kembali ke versi sebelumnya bisa lewat Vercel rollback ke deploy `43e8da2`, tanpa efek ke data.
+- Worktree `../mni-gudang-sj` dan branch lokal `fitur/surat-jalan` masih ada untuk perbaikan lanjutan.
+
+## 2026-11-06 · Gudang Bahan Baku: Posisi stok dan Stock opname dipoles (lokal)
+
+Hanya lokal, tanpa migration, tanpa deploy.
+
+- **Posisi stok:** barang yang jenisnya belum dikenali kini punya grup sendiri "Belum dikenali" dengan peringatan (sebelumnya tersembunyi di grup Baja sehingga total ton menyesatkan); label jenis (SPHC, SS304, dst.) di samping nama item; tombol cepat **Pakai**, **Terima**, **Ubah** di tiap baris (klik baris tetap membuka detail item); catatan kaki memberi tahu massa jenis kini diatur di Master Data › Bahan baku.
+- **Stock opname:** **Lembar hitung kosong** (PDF dan Excel) berisi semua item terurut per jenis dengan kolom Stok sistem, Hitung fisik, Selisih, Catatan, dan tanda tangan, untuk dibawa petugas menghitung; **PDF/Excel berita acara** tiap sesi di Riwayat opname (sesi tanpa selisih diberi keterangan karena tidak menghasilkan mutasi).
+- Bukti: `verified in browser` (mock): grup dan tombol baris, Pakai membuka form dengan item terpilih, lembar hitung PDF dan Excel, sesi opname dengan tombol dokumen, 0 galat konsol. Tes e2e penuh dijalankan terpisah.
+
+Regresi penuh lokal (2026-11-06, setelah poles Posisi stok dan Stock opname): regresi 42, role 12, akses 34, produksi 134, tampilan 72, **total 294 PASS, 0 FAIL**; rangkaian Penawaran dilewati karena modul Penjualan disembunyikan. Runner `tests/e2e/run.mjs` diperbaiki: melewati Penawaran otomatis bila `MODUL_PENJUALAN=false`, satu rangkaian yang galat tidak menghentikan yang lain, dan `ONLY=nama,nama` memilih rangkaian tertentu. Belum di-commit.
+
+## 2026-11-06 · Master Data › Bahan baku: nama jenis bisa diganti dan mengikuti semua modul (lokal)
+
+Permintaan pemilik. Hanya lokal, tanpa migration, tanpa deploy.
+
+- **Ubah jenis** kini mengizinkan mengganti **nama**, kata kunci, dan massa jenis untuk semua jenis, termasuk jenis bawaan. Jenis bawaan yang diganti nama disimpan sebagai jenis buatan dengan penanda `dasar` (jenis asal), sehingga perhitungan kebutuhan SPK (SPHC/SPCC, SS, Aluminium) tetap cocok; jenis asalnya disembunyikan. Mengganti kembali ke nama asal mengembalikan jenis bawaan.
+- Karena jenis diturunkan dari kata kunci pada nama item, nama baru otomatis tampil di Posisi stok (judul grup dan label), filter material, Analisa, Kartu Stok, Rencana pembelian, Stock opname, Riwayat mutasi, dan dokumen, tanpa mengubah nama item. Form menampilkan jumlah item yang terdampak dan notifikasi simpan menyebutnya.
+- Ganti nama customer, vendor, supplier di Master Data sudah memakai mekanisme `renameEverywhere` (SPK, surat jalan, mutasi, bongkar muat ikut berubah); diuji ulang di mock, SPK ikut mengikuti. Item bahan baku direferensikan lewat id sehingga perubahan item di Master Data langsung tampil di semua modul.
+- Bukti: `verified in browser` (mock): ganti nama Aluminium menjadi Alumunium (grup, label, filter, Analisa, tabel item, berat tetap 10,8), hapus lalu pulihkan jenis bawaan, 0 galat konsol. Regresi dijalankan terpisah.
+
+## 2026-11-06 · Audit mandiri dan perbaikan pemakaian di HP (lokal)
+
+Pemilik menyerahkan penilaian "apa yang kurang". Hasil audit (baca-saja untuk production, pengujian di Playwright untuk aplikasi), semuanya lokal tanpa migration dan tanpa deploy.
+
+**Temuan nyata (bukti `verified in browser`, layar 390 px)**
+1. Tabel Posisi stok selebar 1.237 px: kolom **Stok** terpotong di luar layar HP, harus digeser ke samping.
+2. Form Terima, Pakai, dan Barang masuk/keluar: kolom **Qty terpotong** di HP.
+3. Form **Buat surat jalan** dan **Kirim ke vendor**: kolom **Qty kirim terpotong** (tabel 454 px di dalam 303 px).
+4. Stock opname: kolom Hitung fisik berada di luar layar.
+5. Tombol kecil (di bawah 32 px) sulit ditekan jari.
+
+**Perbaikan (CSS dan label, tanpa mengubah logika)**
+- Posisi stok di HP menjadi kartu per item: stok (lbr) besar, kg, status, tombol Pakai/Terima/Ubah.
+- Baris item di form Terima/Pakai bertumpuk (material, lalu Qty dan stok, tombol hapus), placeholder "Qty".
+- Item di form surat jalan dan kirim vendor menjadi kartu berlabel (Order, Terkirim, Sisa, Qty kirim) tanpa terpotong.
+- Stock opname di HP: Stok sistem dan kolom hitung fisik berdampingan per item.
+- Tombol dan isian minimal 36–40 px di layar sempit. Tampilan desktop tidak berubah.
+- Audit otomatis 11 form utama di 6 modul pada 390 px: 0 isian terpotong setelah perbaikan.
+
+**Pemeriksaan production (baca-saja):** penasihat keamanan Supabase hanya melaporkan 8 peringatan fungsi bantu RLS yang disengaja dan proteksi password bocor yang belum aktif (aksi pemilik). Tidak ada celah baru.
+
+**Rekomendasi yang belum dikerjakan:** (a) paket library PDF/Excel dilayani dari aplikasi, bukan CDN, agar unduhan tidak gagal bila CDN terblokir; (b) status nonaktif untuk item bahan baku berriwayat; (c) aturan database untuk mencegah stok negatif dan penimpaan bersamaan (risiko 9 audit lama); (d) backup terjadwal, Dependabot, dan proteksi password bocor (aksi pemilik).
+
+## 2026-11-06 · Tiga penyesuaian dari audit mandiri (lokal)
+
+Atas perintah pemilik ("Kerjakan semua"). Hanya lokal, tanpa migration terpasang, tanpa deploy.
+
+1. **Pustaka PDF dan Excel dari aplikasi sendiri:** ExcelJS 4.4.0, jsPDF 2.5.1, jsPDF-AutoTable 3.8.2, html2canvas 1.4.1 disimpan di `apps/platform/public/vendor/` (diunduh dari cdnjs dan jsDelivr, identik byte demi byte; versi, lisensi, dan hash di `public/vendor/README.md`). Pemuat mencoba `/vendor/` dulu, CDN sebagai cadangan. CSP production hanya mengizinkan cdnjs, jadi cadangan jsDelivr sebelumnya tidak berguna. Bukti: unduhan Excel memakai `/vendor/exceljs.min.js`; pustaka PDF dan html2canvas termuat lokal; 0 galat konsol.
+2. **Status nonaktif untuk item bahan baku** (disimpan di kolom data tambahan `rm.data.aktif`, tanpa migration). Master Data › Bahan baku: tombol **Nonaktifkan** dan **Aktifkan**. Item nonaktif tidak muncul di Posisi stok, pilihan form, Stock opname, usulan pembelian, Analisa, dashboard, dan ekspor CSV; riwayat mutasi dan Kartu Stok tetap lengkap dengan penanda "nonaktif"; chip "Nonaktif · N" di Posisi stok menampilkannya dan tombol Aktifkan. Bukti: `verified in browser` (mock): nonaktif, tersembunyi di daftar, pilihan form, dan opname, riwayat tetap ada, aktifkan kembali.
+   - **Koreksi:** tombol **Hapus item** di Master Data dihapus. Migration 13 (terpasang di production) sengaja mencabut izin hapus pada data transaksi termasuk bahan baku, jadi hapus akan ditolak database; nonaktif adalah cara yang benar. Pernyataan sebelumnya bahwa izin hapus "belum ada dan perlu migration" keliru sebagai kekurangan: itu desain.
+3. **Draf migration 17 anti stok negatif** (`supabase/draft/20240101000017_stok_tidak_negatif.sql`): pemicu BEFORE pada `mutasi` yang memeriksa ulang stok di database, diserialkan per item dengan kunci advisory. Pengecekan production (baca-saja): tidak ada mutasi tanpa item_id, tidak ada gudang selain rm dan fg, tidak ada stok negatif saat ini. **Belum dijalankan di database mana pun dan belum diuji**; berkas memuat 5 langkah uji dan rollback. Ditambahkan ke daftar tindakan yang menunggu persetujuan di HANDOFF.
+
+## 2026-11-06 · Gudang Sparepart (modul baru, lokal)
+
+Atas permintaan pemilik: tambahkan gudang sparepart sesuai file "Tabel Stock Sparepart november 2026.xlsx", dulu di lokal. Tidak ada deploy, tidak ada perubahan pada production.
+
+**Isi file sumber:** lembar *Stok Barang* (49 jenis: oli, spring dies, V-belt, nozzle, kontaktip, mata gerinda, baut, mur, dan lain-lain; kolom No, Nama, Satuan, Stok Awal, Barang Masuk, Barang Keluar, Stok Akhir, Stok Minimum, Status), lembar *BARANG KELUAR* (13 pengeluaran 2–5 November dengan tujuan), lembar *Ringkasan* (702 stok akhir, 5 barang stok minimum).
+
+**Rancangan:** item di koleksi baru `sp`; pergerakan stok memakai `mutasi` dengan `gudang='sp'` (tidak ada CHECK atau FK yang menghalangi, diperiksa di production). Stok = stok awal + delta, sama seperti gudang lain. Hak akses modul baru `sparepart` (peran gbb mengubah, viewer melihat, per pengguna lewat Pengguna & Akses).
+
+**Fitur:** menu Gudang Sparepart; KPI (jenis, stok minimum, habis, keluar 30 hari); Posisi stok (No, nama, satuan, stok awal, masuk, keluar, stok akhir, minimum, status Aman/Stok minimum/Habis; tombol Keluar, Terima, Ubah; kartu stok per item); Terima dan Keluarkan sparepart (nomor SP-M dan SP-K, penolakan stok kurang, tujuan/penerima); Stock opname (SP-OPN) berdokumen; Riwayat mutasi dengan PDF/Excel (bukti penerimaan, pengeluaran, berita acara opname, koreksi); Item baru/ubah/nonaktif (tanpa hapus permanen); CSV; **Impor Excel** (membaca lembar Stok Barang dan BARANG KELUAR, pratinjau, membandingkan total dengan lembar Ringkasan, melaporkan baris bermasalah, aman diulang). Tampilan HP berupa kartu. Data perusahaan tidak disimpan di repo: impor dilakukan dari file saat dipakai.
+
+**Hasil impor file asli di mock:** 49 barang, 13 pengeluaran, total stok akhir 702 (cocok dengan lembar Ringkasan), stok minimum/habis 5 (cocok dengan Ringkasan: 3 stok minimum + 2 habis). 6 baris dilewati dan dilaporkan: nomor 2, 18, 42, 55, 56 tanpa nama barang di Stok Barang, dan baris "Kawat renceng" tanpa nomor barang di BARANG KELUAR.
+
+**Draf database:** `supabase/draft/20240101000018_sparepart.sql` (tabel `sp`, RLS tanpa DELETE, audit, kebijakan `mutasi` diperluas, role gbb). Belum dijalankan di database mana pun. Adapter menandai `sp` opsional agar versi yang tayang tidak galat bila tabel belum ada.
+
+**Bukti:** `verified in browser` (mock): impor file asli, transaksi, opname, dokumen, kartu stok, nonaktif, impor ulang, HP; tes e2e baru `tests/e2e/sparepart.mjs` 14 PASS (data sintetis). Tes penuh dijalankan terpisah.
+
+## 2026-11-06 · Buffer di Gudang Sparepart dan Gudang Barang Jadi (lokal)
+
+Permintaan pemilik: opsi mengatur buffer (target stok) di sparepart dan barang jadi, seperti di bahan baku. Lokal, tanpa deploy.
+
+- **Sparepart:** kolom **Buffer** di Posisi stok; status baru **Di bawah buffer** (stok di atas minimum tetapi di bawah target) dengan keterangan "kurang N ke buffer"; kartu ringkasan **Di bawah buffer** (jumlah jenis dan total kekurangan); filter status; hitungan di lencana menu; kolom Buffer dan Kurang ke buffer di CSV. Diatur di form **Item baru/Ubah** (validasi minimum tidak boleh lebih besar dari buffer) dan di kartu stok lewat **Ubah minimum & buffer**. Kolom `buffer` ditambahkan ke tabel `sp` di draf migration 18 dan `schema-columns.js`.
+- **Barang jadi:** kolom **Buffer**, status **Di bawah buffer**, filter "N di bawah buffer" di ringkasan (sebelumnya hanya bahan baku), field **Buffer stok (target)** di form Produk baru, dan tombol **Ubah buffer** di kartu stok. Tersimpan di kolom data tambahan `fg.data`, tanpa migration.
+- **Bahan baku:** perilaku buffer tidak berubah; tombol Ubah buffer di kartu memakai fungsi umum yang sama.
+- Bukti: `verified in browser` (mock) untuk sparepart (status, kurang ke buffer, validasi, kartu, KPI, filter, lencana menu) dan barang jadi (kolom, status, filter, produk baru); tes e2e `sparepart.mjs` ditambah SP-15 sampai SP-17. Tes penuh dijalankan terpisah.
+
+## 2026-11-06 · Barang jadi & sparepart: dokumen mutasi, tren, PR, rencana produksi (lokal, belum rilis)
+- **Barang jadi**: Riwayat mutasi punya nomor dokumen BJ-M/BJ-K, PDF/Excel, filter periode dan SPK. Barang keluar ditautkan ke SPK (customer terisi otomatis) dan laci SPK menampilkan "Barang jadi terkait SPK ini".
+- **Rencana produksi (barang jadi)**: produk di bawah buffer diusulkan; tombol membuat SPK Draft untuk customer STOK MNI (`spk.data.stokReq`). Barang masuk yang ditautkan ke SPK itu mengurangi angka "sedang diproduksi".
+- **Sparepart**: tab Rencana pembelian (usulan sampai buffer dikurangi yang sudah dipesan) membuat PR (`pr.data.gudang='sp'`), tandai dipesan, Excel, terima PR menambah stok.
+- **Tren** (sparepart & barang jadi): grafik masuk/keluar per bulan, sparkline, label naik/turun; "Data baru" bila riwayat < 45 hari.
+- Tes: sparepart.mjs SP-1..SP-26; regresi penuh hijau (regresi 42, role 12, akses 34, produksi 134, sparepart 26, tampilan 72).
+- Catatan rilis: kebijakan `pr` untuk modul sparepart ada di draf migrasi 18 (belum diterapkan); membuat SPK stok butuh hak ubah modul SPK.
+
+## 2026-11-06 · SPK stok end-to-end, filter jenis SPK, nama penanda tangan dokumen (lokal, belum rilis)
+- **Buat SPK stok**: di Gudang Barang Jadi, ceklis produk di Posisi stok (atau tombol "SPK stok" di toolbar) lalu "Buat SPK stok" menghasilkan SPK Draft customer STOK MNI; qty bisa diisi per produk dan produk lain bisa ditambah.
+- **Monitoring SPK**: filter Semua SPK / SPK Customer / SPK Stok di Daftar, Jadwal, dan Berjalan; SPK stok diberi chip "SPK Stok".
+- **SPK stok tidak dikirim ke customer**: tombol diganti "Terima di gudang barang jadi" (form terisi dari item SPK, menghasilkan dokumen BJ-M bertaut SPK); Kirim ke vendor tetap ada. Progres "Terkirim" untuk SPK stok dihitung dari barang masuk gudang, label posisi menjadi Siap masuk gudang / Masuk sebagian / Masuk gudang, timeline menampilkan dokumen masuk. SPK stok tidak muncul di pilihan surat jalan customer.
+- **Nama penanda tangan**: semua dokumen berbaris tanda tangan (mutasi bahan baku/barang jadi/sparepart, opname, PR, dokumen pusat seperti surat jalan dan laporan) menampilkan dialog nama; nama yang pernah diketik tersimpan di browser (per perangkat) sebagai saran dan terisi otomatis per jabatan. SPK mempunyai kolom tanda tangan sendiri; pratinjau surat jalan di layar belum memakai dialog ini.
+- Perbaikan: teks progres di laci SPK ("N dari M item dikirim") selalu 0 karena memakai field yang salah; kini memakai jumlah terkirim sebenarnya.
+- Tes: sparepart.mjs SP-1..SP-33; regresi penuh hijau.
+
+## 2026-11-06 · Penerimaan dan pengiriman hanya untuk hasil produksi yang selesai (lokal, belum rilis)
+- SPK stok: barang jadi hanya bisa diterima bila SPK sudah terbit dan produksinya selesai (dikurangi yang masih di vendor finishing, ditambah yang sudah kembali). Berlaku di tombol "Terima di gudang barang jadi" dan di form Barang masuk yang memilih SPK stok.
+- SPK customer: kirim ke customer dibatasi ke hasil produksi yang siap (selesai produksi, kembali dari vendor). Ada centang "kirim lebih / sebelum produksi tercatat selesai" untuk kasus lapangan, wajib isi keterangan.
+- Catatan rilis: SPK lama yang produksinya tidak pernah dicatat akan tertahan di pengiriman sampai produksinya dicatat atau centang override dipakai.
+- Tes: SP-34 dan SP-35; sparepart.mjs 35 lulus.
+
+## 2026-11-06 · Audit dokumentasi dan peta modul hulu ke hilir (T-204)
+
+Atas permintaan pemilik ("kembali ke jalur", cross-check perencanaan, tugas, roadmap, dokumen, Obsidian, skill, dan agen; fokus lokal). Rilis ke production dijeda; tidak ada yang dideploy dan tidak ada migration diterapkan.
+
+- **Temuan:** dokumen status tertinggal (PRODUCT_ROADMAP menulis belum ada Supabase production; ROADMAP bertanggal 2026-11-02; CLAUDE.md hanya memuat 8 skill dan 6 agen, padahal ada 12 dan 10; tidak ada catatan tugas untuk surat jalan, gudang, sparepart, SPK stok; tiga rencana berjalan tanpa peta modul). Cabang `fitur/produksi-multi-wc` ternyata membawa 175 berkas (bukan hanya gudang) sehingga "rilis kecil" tidak dapat dipotong bersih.
+- **Dibuat:** [[PETA_MODUL]], [[PRD_GUDANG]], tugas T-195 sampai T-204; T-174 dikoreksi ke `review`.
+- **Diperbarui:** ROADMAP, PRODUCT_ROADMAP, SISTEM_MAP (migration dan draf), HANDOFF, Home, CLAUDE.md, TEAM_AND_SKILLS (matriks agen dan skill), DECISIONS (4 keputusan), TEST_MATRIX (status uji terkini).
+- **Skill dan agen:** skill `gudang-stok-flow` baru; `e2e-regression`, `adapter-contract`, `rls-roles`, `release-pipeline`, `vault-progress` dan agen `app-engineer`, `qa-regression`, `release-manager`, `progress-keeper`, `supabase-engineer` disegarkan.
+- **Git:** merge `main` (surat jalan) ke `fitur/produksi-multi-wc` dengan satu konflik di form surat jalan (digabung: alamat dan nomor otomatis dari main ditambah penjaga hasil produksi); regresi setelah merge 0 FAIL; commit lokal 4be17cd, f62c395, 35bf7f7; belum di-push.
+- **Pra-cek production (baca-saja):** baris rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10; kebijakan `pr` dan `mutasi` serta pemicu `trigger_<tabel>_updated_at` cocok dengan draf 18; draf 18 dilengkapi pemicu `updated_at` dan `table_stamps` memuat `sp`.
+- **Langkah berikut:** pemolesan modul sesuai arahan pemilik di lokal; rilis bertahap menunggu persetujuan ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+
+## 2026-11-06 · Audit silang kedua: selesai vs belum, semua terdeteksi (T-204)
+
+Permintaan pemilik: perbarui progress di Obsidian, cek mana yang belum dan sudah dikerjakan, pastikan semua terdeteksi. Laporan lengkap: [[AUDIT_PROGRESS_2026-11-06]].
+
+- **Terdeteksi baru:** T-205 audit mandiri dan perbaikan HP, T-206 draf migration 17, T-207 Master Data bahan baku, T-208 pustaka PDF/Excel lokal, T-209 Posisi stok dan opname bahan baku (melengkapi T-195 sampai T-204).
+- **Status dikoreksi:** T-102 done (dipenuhi T-172); T-103, T-101, T-023, T-060 ke review dengan bukti; T-133 dan T-143 ke doing; catatan keadaan terbaru pada T-011 sampai T-013, T-017, T-020, T-027, T-044, T-045, T-047, T-061, T-064, T-065, T-142, T-199, T-203.
+- **Bukti baru production (baca-saja):** advisor keamanan 8 WARN fungsi bantu RLS (disengaja) dan proteksi password bocor belum aktif; advisor performa 3 WARN kebijakan permisif ganda, INFO 22 indeks belum terpakai dan 4 tabel arsip tanpa kunci primer; tidak ada temuan kritis.
+- **Angka:** 130 tugas (37 done, 33 review, 6 doing, 1 blocked, 53 todo); selesai 37 dari 130 (28%), effort 40 dari 219,6 hari (18%); jalur kritis menuju go-live tetap 26,5 hari karena jalur proses dan data belum dimulai.
+- **Tes terakhir:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, tampilan 72 (329) dan unit 266, semua 0 FAIL.
+
+## 2026-11-06 · Audit fitur dan rencana, suite uji fitur (T-210)
+
+Permintaan pemilik: "update semua dan audit fitur dan plan". Laporan: [[FEATURE_AUDIT]].
+
+- **Audit fitur:** 167 aksi UI dibandingkan dengan uji otomatis; yang diacu langsung naik dari 77 (46%) ke 91 (54%) lewat suite baru `tests/e2e/fitur.mjs` (13 uji: koreksi, nonaktif, baris form, SPK Draft terbit, ceklis SPK stok, opname bahan baku, unduhan Excel, jenis material, alamat surat jalan, tanpa pageerror), semua lulus; tidak ada bug fungsional baru. Prioritas uji berikut: editor SPK, Master Data (ganti nama, gabung), opname sparepart, dokumen kartu stok dan PR.
+- **Audit rencana:** deviasi, usul penyesuaian (fase P2b, walkthrough memakai modul jadi, rilis bertahap setelah backup, tutup T-011 sampai T-013, sesi tinjauan per modul, aturan lingkup), dan risiko aktif dicatat; keputusan di pemilik.
+- **Dokumen disegarkan:** GO_LIVE_PLAN, INTEGRATION_PATH (status S0 sampai S6), ENVIRONMENTS (keadaan terkini), RELEASE_CHECKLIST (rilis bertahap), VERSION_STRATEGY, USER_GUIDE (ditulis ulang per modul), INVENTORY, DEVELOPMENT, DATA_DICTIONARY (koleksi aplikasi), CHANGELOG (belum dirilis), LOCAL_PREVIEW, README, AUDIT_KESIAPAN, TEST_MATRIX, PETA_MODUL, HANDOFF, skill e2e-regression.
+- **Tes:** regresi 42, role 12, akses 34, produksi 134, sparepart 35, fitur 13, tampilan 72 (342) dan unit 266.
+
+## 2026-11-06 · Audit kerangka dan standar industri (T-211)
+
+Permintaan pemilik: cek kerangka dan setiap fitur dari hulu ke hilir sampai tidak ada bug, kejanggalan, atau hal kurang bagus; jadikan sistem standar industri; kerjakan di lokal, buka di Playwright, dan pakai Context7. Laporan: [[STANDAR_INDUSTRI]].
+
+- **Kerangka:** dokumentasi supabase-js dan Vite diperiksa lewat Context7; `npm audit --omit=dev` 0 kerentanan; 4 temuan hanya di alat pengembangan (CLI Supabase memakai `tar` rentan).
+- **Keamanan:** uji XSS permanen `keamanan.mjs` (8 uji) lulus tanpa celah. CSP production masih `unsafe-inline`; rencana ada di T-211.
+- **Aksesibilitas:** axe-core menemukan 5 kelas pelanggaran WCAG 2 A dan AA (kontras dua tema, select tanpa nama, isian tanpa label, tabel gulir tanpa fokus keyboard, avatar); semua dibenahi dan dikunci oleh `aksesibilitas.mjs` (0 pelanggaran).
+- **Kualitas kode:** ESLint dipasang (0 galat, 43 peringatan kode mati), `npm run lint` dan `npm run test:unit` masuk CI; `kartu()` tidak lagi ditimpa; dua kunci ganda dibuang.
+- **Bug fungsional (2):** pembaca angka berpemisah ribuan (F-16); koreksi barang masuk SPK stok tidak mengurangi progres (F-17).
+- **Invarian data:** 10 invarian hulu ke hilir lulus pada data uji; alur SPK ujung ke ujung (alur-spk.mjs) 15 lulus bersama penjaga hasil produksi.
+- **Dicoba dan dibuang:** minifikasi `app.js` (hemat 9 persen saja).
+- **Kesenjangan standar industri** dan rencana pemenuhan: lihat [[STANDAR_INDUSTRI]] bagian 3 dan 5.
+
+## 2026-11-07 · Uji menyeluruh semua modul hulu ke hilir (T-212)
+
+Permintaan pemilik: buka di Playwright dan uji semuanya dari hulu ke hilir, semua modul dan fitur, sampai tidak ada bug. Laporan: [[STANDAR_INDUSTRI]] bagian 2.3, tugas [[T-212-uji-menyeluruh-semua-modul-dan-perbaikan-bug]].
+
+- **Suite baru:** `menyeluruh.mjs` (24 uji) untuk aksi yang belum diacu uji lain; pemindai kejanggalan `kejanggalan.mjs` (16 menu desktop dan HP) di suite fitur dan menyeluruh; fitur bertambah ke 18 uji.
+- **Bug ditemukan dan diperbaiki (4 kelompok, selain 2 dari T-211):** supplier diganti nama tidak mengikutkan PR; hitungan pemakaian master tidak lengkap sehingga supplier atau customer terpakai dapat terhapus permanen; ganti nama customer tidak mengikutkan Penawaran dan Sales Order; Dashboard memasukkan SPK stok ke Top customer, funnel pengiriman, dan hitungan telat.
+- **Penelusuran visual Playwright:** Dashboard, Bahan Baku, Barang Jadi, Sparepart, SPK, Produksi Hari Ini ditinjau di tema terang; tidak ada kejanggalan lain. Alur SPK ujung ke ujung (15) lulus.
+- **Catatan:** data contoh mock memakai nama material generik sehingga tampil "Belum dikenali" (bukan bug production).
+
+## 2026-11-07 · Audit silang ketiga dan perbaikan bug (T-212)
+
+Permintaan pemilik setelah berganti akun: audit fitur, cari bug hulu ke hilir, pastikan tidak ada tugas ganda dan status sesuai roadmap. Laporan: [[AUDIT_PROGRESS_2026-11-07]].
+
+- **Verifikasi ulang:** seluruh angka uji sesi sebelumnya cocok; suite Penawaran yang terlewati dihidupkan (42 lulus).
+- **Bug (7):** B-019 sampai B-025 ([[TEST_MATRIX]]): Work Center terpakai bisa dihapus dan diganti nama, penolakan hapus oleh database tampak berhasil, dialog tanpa perangkap fokus, jenis material kustom tak dikenali kebutuhan material, suite Penawaran terlewati, tugas selesai tanpa bukti.
+- **Uji baru:** `editor.mjs` 17 uji, opname sparepart; aksi UI belum diuji turun dari 76 ke 43.
+- **Tugas dan roadmap:** bukti ditulis (T-046, T-175, T-176, T-178); T-180 dan T-185 ditutup (digantikan T-186); kriteria ganda dirapikan; dependensi T-034 dilepas dari Docker; roadmap diselaraskan.
+- **Belum:** keputusan pemilik di [[AUDIT_PROGRESS_2026-11-07]] bagian 4; semua bukti masih mock.
+
+## 2026-11-07 · Uji alur SPK lengkap dan penjaga vendor berbasis rute (T-213)
+
+Permintaan pemilik: uji dari buat SPK ke vendor ke customer, SPK stok ke vendor ke customer, dan SPK tanpa vendor (stainless dan aluminium), lalu sesuaikan. Tugas [[T-213-uji-alur-spk-lengkap-dan-penjaga-vendor-berbasis-rute]].
+
+- **Suite baru** `alur-lengkap.mjs` 31 uji (empat alur, UI sungguhan, stabil tiga kali).
+- **Bug:** B-026 (kirim ke customer atau terima gudang sebelum vendor), B-027 (tahap Siap kirim salah), B-028 (SPK stok 0 kg). Jalur tanpa vendor terbukti benar.
+- **Belum:** keputusan pemilik untuk SPK lama; bukti masih mock.
+
+## 2026-11-07 · Input item SPK terstruktur dan kalkulator full hole (T-214)
+
+Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) dengan nama, type, tebal, finishing, berat, dan tonase otomatis; routing per produk diatur di Master Data. Rancangan [[INPUT_SPK_TERSTRUKTUR]], tugas [[T-214-input-item-spk-terstruktur-dan-kalkulator-full-hole]].
+
+- **Dikerjakan:** katalog dari kalkulator baru (full hole pada Straight STU dan STC), modul `bentuk.js` (unit 11), editor SPK terstruktur, uji `spk-terstruktur.mjs` 18.
+- **Belum (tahap berikut):** routing per produk dan bentuk di Master Data, aturan vendor per material, pengecualian per item (kriteria terbuka T-174); menunggu jawaban pemilik; unggah katalog baru di production.
+
+### 2026-11-09 · T-222 tahap 2: layar input per dimensi (di balik bendera)
+- Hasil: bendera spkDimBaru (Opsi SPK, mati secara bawaan). Kolom W, H, L terpisah; bentuk Straight default; nama dari dimensi; kg est dan real per pcs dan footer plate (est) dan barang jadi (real) bila katalog terpasang.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-06 (6 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error; kg-item 9 PASS; bentuk 16 PASS.
+- Hambatan: tombol bendera di Opsi SPK belum diuji langsung (tes memakai saveSetting). Cover, ACCS, dan fitting belum memakai layout baru. Kebutuhan plate masih memakai angka lama (tahap 3). Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-222 tahap 3: kebutuhan plate memakai kg estimasi
+- Hasil: item SPK menyimpan wEst (kg estimasi, plate) di samping w (kg real). Kebutuhan material SPK, reservasi SPK lain, dan analisa/KPI kebutuhan material memakai wEst bila ada; item lama tanpa wEst tetap memakai berat lama; berat manual tetap menjadi dasar.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-08 (8 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: tonase barang jadi (real) untuk stok dan surat jalan belum (tahap 4). SPK lama baru ikut est setelah dibuka dan disimpan ulang. Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-222 tahap 4: lembar SPK dua total dan tonase real
+- Hasil: lembar SPK (HTML, PDF, Excel) menampilkan Kg estimasi (plate) dan Kg real (barang jadi) bila SPK punya item berkg estimasi. Tonase vendor dan kirim (dashboard, daftar vendor, Kirim customer) memakai berat real lewat wRealDok; sebelumnya item dokumen tidak membawa berat sehingga KPI tonase dihitung 0.
+- Bukti: verified in browser (mock). spkdimensi DM-01..DM-11 (11 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: Excel lembar SPK belum dibuka visual (hanya regresi tidak crash). Belum diuji katalog perusahaan dan Supabase. Tahap 5 (Supabase dan rilis bertahap) belum.
+
+### 2026-11-09 · Layout dimensi aktif bawaan dan banner Work Centre
+- Hasil: layout SPK per dimensi aktif secara bawaan (pengaturan eksplisit menang; window.__SPK_DIM_LEGACY hanya untuk suite uji lama). Produksi Hari Ini menampilkan banner bila rute memakai Work Centre yang tidak ada di Master Data. Diagnosa: antrian produksi kosong karena nama langkah rute (Shearing, Punching, CNC Laser) tidak ada di Work Centre master mock; antrian muncul otomatis begitu Work Centre sesuai ada. Pemeriksaan visual: Cable Tray = Straight (W, H, L, Lubang); ACCS menampilkan 25 komponen kalkulator; panel kebutuhan plate muncul setelah SPK terbit.
+- Bukti: verified in browser (mock dengan katalog lokal dan sintetis). spkdimensi DM-00..DM-12 (13 PASS); regresi penuh 26 suite, 0 FAIL; lint 0 error.
+- Hambatan: Work Centre di Supabase production belum diperiksa. Serah terima plate dan matriks rute belum ada (lihat RANCANGAN_ALUR_SPK_PLATE_PRODUKSI).
+
+### 2026-11-09 · T-223 Matriks rute produksi
+- Hasil: tab Master Data Matriks rute (produk dan komponen x Work Centre) dengan sumber rute (Kustom, Aturan khusus, Ikut produk), rute kustom dari centang, tombol Pulihkan, batas minimal satu Work Centre, penjaga dampak ke SPK lama, pencarian, dan banner Work Centre yang belum ada. Komponen kecil yang belum ditetapkan ikut rute ACCS sampai pemilik mengubahnya.
+- Bukti: verified in browser (mock, katalog sintetis). matriksrute MR-01..MR-07 (8 PASS); regresi penuh 27 suite, 0 FAIL; lint 0 error.
+- Hambatan: serah terima plate, Cek Data rute, dan laporan susut belum. Work Centre di Supabase production belum diperiksa. Belum diuji katalog perusahaan.
+
+### 2026-11-09 · T-224 Serah terima plate
+- Hasil: status plate per SPK (Menunggu, Sebagian, Lengkap) dari kebutuhan bruto dibanding yang sudah dikeluarkan untuk SPK itu; tab Serah terima plate di Gudang Bahan Baku; tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, qty sisa lembar); chip peringatan di daftar SPK dan kartu antrian produksi. Peringatan saja, produksi tidak dikunci.
+- Bukti: verified in browser (mock). serahplate SP-01..SP-06 (7 PASS); regresi penuh 28 suite, 0 FAIL; lint 0 error.
+- Hambatan: Cek Data (SPK lewat batas belum diserahi plate) dan laporan susut belum. Belum diuji katalog perusahaan dan Supabase.
+
+### 2026-11-09 · T-225 perapian Master Data dan audit alur (bagian 1)
+- Hasil: kolom W H L ringkas; satu tab Rute produksi (matriks, kode lama dihapus); jenis material eksplisit pada item bahan baku; Aturan section memuat semua produk Opsi SPK. Audit alur satu SPK dari Terbit sampai Diterima: semua tahap terhubung; 14 temuan di dokumen audit (6 diperbaiki, 8 terbuka).
+- Bukti: verified in browser (mock). masterdata MD-01..MD-05 (6 PASS); regresi penuh 29 suite, 0 FAIL; lint 0 error.
+- Hambatan: massa jenis ganda (F-01) dan default Work Centre produksi (F-06) dikerjakan di bagian 2; aturan proses, Gudang Barang Jadi siap kirim, antrian WIP vendor, dan aturan Cek Data masih terbuka.
+
+### 2026-11-09 · T-225 bagian 2: satu sumber massa jenis dan Work Centre bawaan
+- Hasil: kalkulator berat SPK memakai massa jenis Master Data (pengait setMassaJenisMaster; tabel di kode hanya cadangan). Produksi Hari Ini membuka Work Centre yang punya antrian bila belum ada pilihan tersimpan.
+- Bukti: verified in browser (mock). Unit kg-item K-10 dan K-11 (11 PASS); masterdata MD-06 (7 PASS); serahplate SP-07 (8 PASS); regresi penuh 29 suite, 0 FAIL; lint 0 error.
+- Hambatan: temuan audit F-08 sampai F-14 masih terbuka (aturan proses, Gudang Barang Jadi siap kirim, antrian WIP vendor, aturan Cek Data, keputusan status Terkirim).
+
+### 2026-11-09 · T-225 bagian 3: tab Aturan proses (F-08)
+- Hasil: tab Master Data Aturan proses. Pemetaan finishing ke vendor, material tanpa vendor finishing, dan aturan khusus komponen (kata kunci, produk, rute, mesin alternatif, urutan) bisa diatur; bawaan tampil sebagai data; konfigurasi Master Data menggantikan bawaan lewat pengait di mesin rute. Validasi nama Work Centre; penolakan bila mengubah rute SPK lama yang sudah punya catatan produksi; pemeriksaan tiap Finishing di Opsi SPK; Pulihkan bawaan.
+- Bukti: verified in browser (mock). Unit rute R-100..R-104 (50 PASS); aturanproses AP-01..AP-06 (7 PASS); regresi penuh 30 suite, 0 FAIL; lint 0 error.
+- Hambatan: penjaga dampak ke SPK lama diuji di tingkat kode, belum dengan SPK berproduksi di e2e. Belum diuji katalog perusahaan dan Supabase. Temuan F-09 sampai F-14 masih terbuka.
+
+### 2026-11-09 · T-225 bagian 4: Gudang Barang Jadi siap kirim customer dan siap masuk stok (F-09, F-10)
+- Hasil: Gudang Barang Jadi punya tab Siap kirim customer (turunan dari SPK customer: siap kirim dikurangi sudah dikirim) dengan ceklis SPK dan tombol Buat surat jalan yang membuka formulir terisi (beberapa SPK satu customer digabung), serta tab Siap masuk stok (hasil SPK stok yang belum diterima, tombol Terima). Label tab menampilkan jumlah.
+- Bukti: verified in browser (mock). Suite gbjsiapkirim GK-01..GK-10 (11 PASS); lint 0 error.
+- Hambatan: gabungan beberapa SPK dalam satu surat jalan lewat ceklis belum diuji di e2e (hanya satu SPK). Surat jalan dari stok Posisi stok belum ada ceklisnya. Belum diuji katalog perusahaan dan Supabase. Temuan F-11 sampai F-14 masih terbuka.
+
+## 2026-11-09 · Koneksi dipindah ke akun baru; production dibiarkan; pengembangan lokal berlanjut
+
+- Pemilik memindahkan koneksi ke akun baru untuk pengembangan. Hasil cek: GitHub (repo `mni-gudang`, `main` ad73c89) dan Supabase akun baru terhubung; Supabase production tidak terlihat dari akun baru; Vercel tim MNI belum bisa diakses dari konektor baru.
+- Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
+- Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
+
+### 2026-11-10 · Rilis bertahap, Tahap 1: migration 14 dan 18 diterapkan ke production
+
+- Persetujuan pemilik: "Setuju Tahap 1". Backup baru lebih dulu; diterapkan `produksi_log` dan `sparepart` (hanya menambah tabel dan melonggarkan kebijakan mutasi dan pr untuk sparepart).
+- **Bukti** (`verified in database`): jumlah baris tabel lama sama dengan snapshot; tabel baru kosong dengan RLS; advisor tanpa temuan baru. Rincian: [[documentation/RENCANA_RILIS_BERTAHAP_2026-11-10|rencana rilis]].
+- **Langkah berikut:** Tahap 2 (push cabang, PR, CI, Preview) menunggu persetujuan.
+
+### 2026-11-10 · T-227: produksi hulu ke hilir, WC selaras rute dan Progres WC
+
+- **Penyebab temuan:** data awal memakai WC "CNC Cutting" dan tanpa Punching/Shearing, sedangkan rute memakai nama lain; antrian langkah itu tidak muncul. Diperbaiki di data awal, ditambah tombol Tambahkan otomatis, bagian Akan datang di Produksi Hari Ini, dan tab Progres WC.
+- **Bukti:** `verified in browser` (mock): suite produksihh PH-01..PH-14, uji lama disesuaikan (DM-12, SP-07, MR-01); regresi penuh dan lint dicatat di akhir tugas. Rincian: [[tasks/T-227-produksi-hulu-hilir-wc-selaras-progres-per-wc|T-227]].
+- **Langkah berikut:** cek nama WC di Supabase production sebelum rilis; laporan susut per WC.
+
+### 2026-11-10 · T-226: input SPK ringkas, berat estimasi dan real langsung tampil
+- Hasil: editor SPK (layout dimensi) dirombak sesuai keputusan A sampai D. Baris tanpa kolom Spesifikasi; catatan, vendor, dan produk stok di menu ⋯; stok sebagai angka dengan tombol Pakai stok; dua kolom berat tebal (Kg est untuk plate, Kg real untuk barang jadi), subtotal per section, dan ringkasan di bawah layar. Berat hasil kalkulator tidak bisa diketik. Deskripsi teks dikenali jadi baris terstruktur dan ada Tempel daftar dari Excel.
+- Bukti: verified in browser (mock). Suite spkringkas RK-01..RK-13 (14 PASS), unit kenali KN-01..KN-06, spkdimensi 13 PASS; lint 0 error. Regresi penuh 32 suite, 0 FAIL (produksi dijalankan ulang: uji Timeline M-166b dibuat sadar jendela hari karena bergantung hari dalam minggu).
+- Hambatan: belum diuji dengan katalog perusahaan dan Supabase. Gabungan Tee dan Cross dengan W1..W4 diuji di unit tingkat pengenal, belum di e2e.

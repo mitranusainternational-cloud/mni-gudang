@@ -7,7 +7,7 @@
 
 import fs from 'node:fs';
 
-const VIEWS = ['dashboard', 'bahan-baku', 'barang-jadi', 'bongkar-muat', 'vendor', 'pengiriman', 'spk', 'produksi', 'cek-data', 'master-data', 'kinerja', 'pengguna'];
+const VIEWS = ['dashboard', 'bahan-baku', 'barang-jadi', 'bongkar-muat', 'vendor', 'pengiriman', 'spk', 'produksi', 'mesin', 'laporan-produksi', 'cek-data', 'master-data', 'kinerja', 'pengguna'];
 const SIZES = [['desktop', 1440, 900], ['tablet', 768, 1024], ['ponsel', 390, 844]];
 
 export async function runSweep(page, base) {

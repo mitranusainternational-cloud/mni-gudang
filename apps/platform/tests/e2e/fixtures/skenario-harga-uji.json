@@ -1,0 +1,47 @@
+{
+ "versi": 1,
+ "skenario": [
+  {
+   "nama": "Skenario A",
+   "param": {
+    "AW2": {
+     "label": "Harga/kg",
+     "kolom": "AW",
+     "v": 10000
+    },
+    "AW6": {
+     "label": "Waste EST",
+     "kolom": "AW",
+     "v": 1.1
+    },
+    "AW7": {
+     "label": "Waste Real",
+     "kolom": "AW",
+     "v": 1
+    }
+   },
+   "biaya": {}
+  },
+  {
+   "nama": "Skenario B",
+   "param": {
+    "AW2": {
+     "label": "Harga/kg",
+     "kolom": "AW",
+     "v": 8000
+    },
+    "AW6": {
+     "label": "Waste EST",
+     "kolom": "AW",
+     "v": 1.1
+    },
+    "AW7": {
+     "label": "Waste Real",
+     "kolom": "AW",
+     "v": 1
+    }
+   },
+   "biaya": {}
+  }
+ ]
+}

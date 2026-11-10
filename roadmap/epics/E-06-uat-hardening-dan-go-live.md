@@ -9,7 +9,7 @@ status: active
 progress: 2
 tasks_total: 13
 tasks_done: 1
-updated: 2026-11-04
+updated: 2026-11-10
 ---
 
 # E-06 UAT, hardening, dan go-live
@@ -31,7 +31,7 @@ Waktu perbaikan setelah UAT sulit diprediksi.
 - [ ] [[tasks/T-051-jalankan-uat-skenario-pilot|T-051]] Jalankan UAT skenario pilot · todo · P0 · 5 hari
 - [ ] [[tasks/T-052-perbaiki-issue-uat-dan-regresi|T-052]] Perbaiki issue UAT dan regresi · todo · P0 · 3 hari
 - [ ] [[tasks/T-053-sign-off-uat|T-053]] Sign-off UAT · todo · P0 · 0.5 hari
-- [ ] [[tasks/T-060-review-security-dan-performance-advisor|T-060]] Review security dan performance advisor · todo · P0 · 1 hari
+- [ ] [[tasks/T-060-review-security-dan-performance-advisor|T-060]] Review security dan performance advisor · review · P0 · 1 hari
 - [ ] [[tasks/T-061-backup-restore-drill-dan-rencana-rollback|T-061]] Backup, restore drill, dan rencana rollback · todo · P0 · 1 hari
 - [x] [[tasks/T-062-header-keamanan-dan-https|T-062]] Header keamanan dan HTTPS · done · P1 · 0.5 hari
 - [ ] [[tasks/T-063-impor-data-awal-ke-production-dan-rekonsiliasi|T-063]] Impor data awal ke production dan rekonsiliasi · todo · P0 · 1 hari

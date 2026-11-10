@@ -1,7 +1,7 @@
 ---
 type: product-roadmap
 status: proposed
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="../documentation/assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -10,19 +10,19 @@ updated: 2026-11-02
 
 Roadmap ini mengurutkan **hasil** (bukan tanggal) dari kondisi sekarang sampai sistem dipakai dan berkembang. Status hidup dihitung otomatis dari catatan tugas: lihat [[PROGRESS_SNAPSHOT]] dan [[PROGRESS_DASHBOARD]]. Rencana operasional menuju rilis pertama: [[GO_LIVE_PLAN]]. Daftar periksa Now/Next/Later yang lebih rinci: [[ROADMAP]].
 
-## 1. Posisi sekarang (fakta, 2026-11-02)
+## 1. Posisi sekarang (fakta, 2026-11-06)
 
 | Aspek          | Kondisi                                                                                                                                                                    | Bukti                                                       |
 | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Kode aplikasi  | Prototipe vanilla JS (sekitar 3.500 baris `app.js`) memakai 20 koleksi; scaffold `apps/platform` (Vite + Supabase + Vercel) memuatnya dan build lolos                      | [[documentation/ENVIRONMENTS]], [[documentation/DECISIONS]] |
-| Browser        | Halaman login dan shell aplikasi termuat tanpa error JS dengan environment dummy                                                                                           | [[documentation/screenshots/README]]                        |
-| Database       | Schema 20 tabel + RLS per role ada sebagai migration; belum pernah dijalankan; Docker belum bisa start (virtualisasi BIOS nonaktif); pratinjau lokal berjalan di mode mock | [[documentation/FOUNDATION_BASELINE]]                       |
-| Data           | Enam workbook operasional dibaca read-only; saldo antar file belum direkonsiliasi                                                                                          | [[documentation/DATA_SOURCE_CATALOG]]                       |
-| Kebutuhan      | Discovery bersama tim Operasional belum dilakukan; pilot belum dipilih                                                                                                     | [[documentation/OPERATIONAL_DISCOVERY]]                     |
-| Repo dan versi | 4 branch di GitHub, `development` dan `docs` terkini; `main` belum berisi pekerjaan baru                                                                                   | [[documentation/VERSION_STRATEGY]]                          |
-| Cloud          | Belum ada Supabase dev/prod, Vercel, CI, atau pengguna                                                                                                                     | [[documentation/PROJECT_PROGRESS]]                          |
+| Kode aplikasi  | Vite + Supabase + Vercel; UI vanilla JS (sekitar 776 KB `app.js` terbangun) dengan mesin berat, produksi, dan harga di `apps/platform/src/lib`; 17 uji unit (266 lulus) | [[documentation/PETA_MODUL]], [[documentation/ENVIRONMENTS]] |
+| Production     | **Tayang** di mni-gudang.vercel.app, Supabase Production migration 1 sampai 13, RLS per peran, riwayat perubahan, 10 pengguna; `main` ad73c89 (surat jalan)                | [[documentation/SISTEM_MAP]]                                |
+| Lokal          | Cabang `fitur/produksi-multi-wc`: produksi multi WC, Gudang Bahan Baku, Barang Jadi, Sparepart, SPK stok, tren, dokumen; Penawaran dan Sales Order disembunyikan; belum dirilis | [[documentation/PETA_MODUL]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]] |
+| Pengujian      | Regresi mock 2026-11-07 (semua 0 FAIL): regresi 42, role 12, akses 34, produksi 134, penawaran 42, sparepart 38, fitur 18, keamanan 8, aksesibilitas 3, menyeluruh 24, editor 17, tampilan 72; unit 266; lint 0 galat. Belum ada uji terhadap database nyata untuk migration 14 sampai 18 | [[documentation/TEST_MATRIX]]                               |
+| Data           | Data bahan baku (T-184) dan stok barang jadi (T-175) dimuat ke production; saldo antar workbook belum direkonsiliasi                                                       | [[documentation/DATA_SOURCE_CATALOG]]                       |
+| Kebutuhan      | Pemolesan berdasarkan masukan langsung pemilik; wawancara process owner bersama tim belum dilakukan; pilot memakai data nyata di production                                 | [[documentation/OPERATIONAL_DISCOVERY]], [[documentation/PRD_GUDANG]] |
+| Repo dan versi | `main` terproteksi (PR, 1 approval, CI); kerja fitur di cabang `fitur/*`; `development` dan `docs` tertinggal                                                          | [[documentation/VERSION_STRATEGY]]                          |
 
-Terverifikasi di mode mock (bukan Supabase): 10 modul UI dan 30 fitur ([[documentation/TEST_MATRIX]]). Belum diverifikasi: login OTP nyata, baca/tulis database, realtime, dan RLS.
+Terverifikasi di mode mock (bukan Supabase): modul UI dan alur lintas modul ([[documentation/TEST_MATRIX]]). Terverifikasi di production (baca-saja): skema, kebijakan, jumlah baris.
 
 > [!info] Jalur integrasi
 > Tahap S0 sampai S6 (lokal → Supabase dev → GitHub CI → Vercel preview → UAT → production → VPS opsional), gerbang tiap tahap, dan kriteria VPS ada di [[documentation/INTEGRATION_PATH]]. Agen dan skill proyek: [[documentation/TEAM_AND_SKILLS]].
@@ -43,11 +43,11 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
  (sedang jalan)   (hasil utama)          (akses, kualitas)     (otomasi, nilai manajemen)     (teknik, hipotesis kebutuhan)
 ```
 
-### v0.9 Fondasi (sedang berjalan)
+### v0.9 Fondasi (dilampaui kenyataan: production sudah tayang tanpa Docker lokal)
 **Tujuan:** pengembang dapat menjalankan, menguji, dan melacak pekerjaan dengan andal.
 **Epic:** [[roadmap/epics/E-01-fondasi-workspace-dan-repo|E-01]] workspace dan repo, [[roadmap/epics/E-02-aplikasi-berjalan-lokal|E-02]] aplikasi berjalan lokal.
 **Keluar bila:** Supabase lokal hidup dengan 20 tabel, mni-app tersambung dan dapat login dengan user seed, `main` terproteksi.
-**Blocker:** virtualisasi BIOS untuk Docker (T-010, panduan [[documentation/DOCKER_SETUP]]). Proteksi `main` (T-041) sudah selesai. Pratinjau lokal mock tersedia ([[documentation/LOCAL_PREVIEW]]).
+**Catatan kenyataan (2026-11-07):** Docker lokal (T-010) tetap terblokir virtualisasi BIOS dan tidak lagi di jalur kritis karena production Supabase dipakai langsung; T-011, T-012, T-013 menunggu keputusan pemilik apakah ditutup sebagai digantikan. Proteksi `main` (T-041) selesai. Pratinjau lokal mock tersedia ([[documentation/LOCAL_PREVIEW]]).
 
 ### v1.0 Pilot go-live (rilis utama)
 **Tujuan:** satu alur Operasional dipakai nyata oleh user awal di production.
@@ -64,7 +64,7 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
 
 ### v1.2 Integrasi dan pelaporan
 **Tujuan:** kurangi kerja manual dan beri nilai bagi manajemen.
-**Epic:** [[roadmap/epics/E-11-integrasi-sumber-data|E-11]] integrasi sumber data, [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen|E-12]] pelaporan, notifikasi, dokumen.
+**Epic:** [[roadmap/epics/E-11-integrasi-sumber-data|E-11]] integrasi sumber data, [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen|E-12]] pelaporan, notifikasi, dokumen. Ditambah [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring (modul terpisah, lokal dulu; lihat [[documentation/ERP_QUOTATION_ANALISIS]]).
 **Hasil (hipotesis):** impor terjadwal dari sumber resmi, satu sumber master data, dashboard kinerja, notifikasi SPK jatuh tempo dan stok di bawah buffer, dokumen cetak terstandar.
 **Syarat masuk:** discovery integrasi (T-121) membuktikan kebutuhan, owner, dan scope; kanal notifikasi dipilih tim.
 
@@ -78,8 +78,8 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
 
 | Kolom | Isi | Pemicu pindah |
 |---|---|---|
-| **Sekarang** | E-01, E-02; mulai paralel T-030/T-032 (proses dan data), T-040 selesai, T-041 sisa proteksi `main` | Docker aktif membuka E-02 dan E-03 |
-| **Berikutnya** | E-03, E-04, E-05 | Seed dan lokal siap; pilot dipilih |
+| **Sekarang** | Pemolesan modul lokal atas permintaan pemilik (E-02, E-03, E-10); jalur proses dan data (T-030 sampai T-036) belum dimulai dan tetap penentu go-live; rilis paket gudang dan produksi dijeda ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]) | Persetujuan pemilik untuk rilis bertahap; jadwal walkthrough |
+| **Berikutnya** | E-04, E-05 (hardening: T-044, T-047, T-061), lalu E-06 | Pilot dipilih; cadangan dan uji pulih (T-061) siap |
 | **Lalu** | E-06, E-07, E-08 | UAT disetujui |
 | **Kemudian** | E-09 sampai E-12 | Go-live dan hypercare |
 | **Hipotesis** | E-13, E-14 | Keputusan dan bukti kebutuhan |
@@ -130,3 +130,7 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
 2. Tiap epic berada di `roadmap/epics/` dengan properti `status`, `progress`, dan daftar tugas otomatis; tampilan Bases `Epic.base` menyusunnya per rilis.
 3. Perbarui status tugas, jalankan `node scripts/progress-report.mjs`, lalu `node scripts/check-vault.mjs` untuk memastikan tidak ada link rusak.
 4. Tinjau roadmap ini setiap akhir rilis dan di gerbang G5.
+
+## 10. Catatan pembaruan: modul produksi (2026-11-04)
+
+Modul produksi multi work center dibangun **lokal saja** (ditahan dari penayangan). Skema tiga pintu (SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa) selesai di Tahap 1 ([[T-177-skema-produksi-tiga-pintu-spk-berjalan]]); Tahap 2 (analisa per work center, produk, vendor, dan pengiriman, [[T-178-kinerja-dan-analisa-produksi-tahap-2]]) selesai di lokal pada 2026-11-04; disusul Produksi Hari Ini v2 dan Laporan Produksi ([[T-179-produksi-hari-ini-v2-dan-laporan-produksi]]) dan Jadwal SPK Gantt ([[T-180-jadwal-spk-gantt]]). Kebutuhan di [[PRD_PRODUKSI]]. Penayangan menunggu persetujuan pemilik: migration 14, push, lalu PR ke `main`.

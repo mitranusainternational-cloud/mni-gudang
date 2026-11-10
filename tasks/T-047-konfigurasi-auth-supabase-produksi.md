@@ -11,7 +11,7 @@ env: main
 effort_days: 1
 depends: [T-042]
 owner: "dev"
-updated: 2026-11-03
+updated: 2026-11-06
 ---
 
 # T-047 Konfigurasi Auth Supabase produksi
@@ -35,3 +35,6 @@ Bergantung pada: T-042
 Prioritas naik: tanpa SMTP sendiri login OTP terkena batas email (HTTP 429) setelah beberapa permintaan, dan templat email perlu memuat {{ .Token }}. Lihat [[documentation/ENVIRONMENTS]].
 
 -
+
+> [!note] Audit 2026-11-06
+> Sisa: Redirect URL tanpa tanda bintang, SMTP sendiri (batas email 429), proteksi password bocor (paket berbayar). Semua aksi pemilik di dashboard Supabase.

@@ -1,7 +1,7 @@
 filters:
   and:
     - file.inFolder("roadmap/epics")
-    - 'type == "epic"'
+    - type == "epic"
 properties:
   id:
     displayName: Epic
@@ -43,7 +43,7 @@ views:
     name: Epic aktif
     filters:
       and:
-        - 'status == "active"'
+        - status == "active"
     order:
       - id
       - title
@@ -55,7 +55,7 @@ views:
     name: Belum dimulai
     filters:
       and:
-        - 'status == "planned"'
+        - status == "planned"
     order:
       - id
       - title

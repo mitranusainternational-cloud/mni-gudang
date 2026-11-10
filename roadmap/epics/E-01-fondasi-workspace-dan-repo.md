@@ -9,7 +9,7 @@ status: active
 progress: 96
 tasks_total: 8
 tasks_done: 7
-updated: 2026-11-04
+updated: 2026-11-10
 ---
 
 # E-01 Fondasi workspace dan repo
@@ -34,6 +34,6 @@ Proteksi branch main belum aktif (T-041).
 - [x] [[tasks/T-041-push-empat-branch-dan-proteksi-main|T-041]] Push empat branch dan proteksi main · done · P0 · 0.5 hari
 - [x] [[tasks/T-075-bangun-agen-dan-skill-proyek-di-claude|T-075]] Bangun agen dan skill proyek di .claude · done · P1 · 1 hari
 - [x] [[tasks/T-076-tulis-jalur-integrasi-bertahap-dan-matriks-environ|T-076]] Tulis jalur integrasi bertahap dan matriks environment · done · P1 · 0.5 hari
-- [ ] [[tasks/T-164-samakan-nama-folder-lokal-ke-mni-gudang|T-164]] Samakan nama folder lokal ke mni-gudang · todo · P2 · 0.2 hari
+- [ ] [[tasks/T-164-samakan-nama-folder-lokal-ke-mni-gudang|T-164]] Samakan nama folder lokal ke mni-gudang · doing · P2 · 0.2 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

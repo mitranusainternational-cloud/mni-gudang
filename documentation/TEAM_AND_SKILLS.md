@@ -1,7 +1,7 @@
 ---
 type: team-operating-model
 status: active
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
@@ -68,6 +68,10 @@ Dibuat untuk alur kerja yang sudah terbukti di proyek ini; berada di `.claude/` 
 | `release-pipeline` | Tahap dan gerbang S0 sampai S6, CI, Vercel, PR ke `main` |
 | `vps-readiness` | Penilaian dan keputusan VPS sebelum menyentuh server |
 | `discovery-session` | Menyiapkan, menjalankan, dan mencatat sesi dengan tim Operasional |
+| `excel-model-extraction` | Membaca model hitung di workbook Excel dengan aman (salinan, hanya baca) dan menyiapkan fixture uji |
+| `erp-quotation-engine` | Mesin harga dan estimasi penawaran dari workbook, skenario harga, uji emas |
+| `erp-module-boundary` | Modul ERP terpisah: batas, tabel draf, hak modul, tangga penayangan E0 sampai E5 |
+| `erp-flow-hulu-hilir` | Kontrak alur penawaran ke SPK, material, produksi, vendor, kirim, dan estimasi lawan aktual |
 
 | Agen (`.claude/agents/`) | Peran | Skill utama |
 |---|---|---|
@@ -77,5 +81,25 @@ Dibuat untuk alur kerja yang sudah terbukti di proyek ini; berada di `.claude/` 
 | `app-engineer` | Perubahan UI dan adapter yang kecil dan teruji | `adapter-contract` |
 | `release-manager` | CI, preview, PR, rilis, dan rollback | `release-pipeline` |
 | `ops-analyst` | Discovery, katalog data, pemetaan workbook (read-only terhadap sumber) | `discovery-session` |
+| `erp-architect` | Rancangan modul ERP hulu ke hilir, batas, tahap, risiko, tugas | `erp-module-boundary` |
+| `pricing-engineer` | Mesin harga dan estimasi dengan uji emas terhadap Excel | `erp-quotation-engine` |
+| `erp-integrator` | Modul Penawaran dan sambungan ke SPK, material, produksi (mock lokal) | `erp-flow-hulu-hilir` |
+| `ops-monitor-analyst` | Definisi dan keakuratan monitoring operasional, estimasi lawan aktual (read-only) | `erp-flow-hulu-hilir` |
 
 Aturan bersama: bukti sebelum klaim, mock bukan bukti Supabase, tanpa secret atau data nyata, tindakan akun hanya setelah persetujuan pemilik. Tugas: [[tasks/T-075-bangun-agen-dan-skill-proyek-di-claude|T-075]].
+
+## Matriks agen dan skill Claude (2026-11-06)
+
+| Modul atau tugas | Skill | Agen |
+|---|---|---|
+| Status, tugas, roadmap, Obsidian | `vault-progress` | `progress-keeper` |
+| Mengubah UI atau adapter | `adapter-contract`, `gudang-stok-flow` (gudang dan SPK stok) | `app-engineer` |
+| Regresi penuh dan suite | `e2e-regression` | `qa-regression` |
+| Skema, migration, RLS, peran dan modul | `supabase-dev-ops`, `rls-roles` | `supabase-engineer` |
+| Rilis bertahap ke production | `release-pipeline` | `release-manager` |
+| Discovery proses | `discovery-session` | `ops-analyst` |
+| Monitoring estimasi lawan aktual | `erp-flow-hulu-hilir` | `ops-monitor-analyst` |
+| Penawaran, harga, Sales Order | `erp-quotation-engine`, `excel-model-extraction`, `erp-module-boundary` | `erp-architect`, `pricing-engineer`, `erp-integrator` |
+| Persiapan VPS | `vps-readiness` | `release-manager` |
+
+Peta modul yang dipakai agen sebagai konteks: [[PETA_MODUL]]. Aturan gudang: [[PRD_GUDANG]]. Setiap perubahan modul diakhiri skill `vault-progress` dan regresi penuh.

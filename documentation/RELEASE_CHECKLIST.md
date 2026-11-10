@@ -36,3 +36,18 @@ Gunakan daftar ini saat meninjau perubahan dari `development` ke `main`. Setiap 
 4. Catat commit/versi hasil rilis, tanggal, dan verifikasi pasca-rilis di [[PROJECT_PROGRESS|log progress]].
 
 Checklist ini bukan persetujuan otomatis. Branch `main` hanya diperbarui setelah peninjauan dan persetujuan pemilik rilis.
+
+## Rilis bertahap ke production (ditambahkan 2026-11-06)
+
+Dipakai bila rilis menyentuh database nyata. Rujukan: skill `release-pipeline`, [[T-203-rilis-paket-gudang-dan-produksi-ke-production]].
+
+- [ ] Cakupan nyata diukur (`git diff --stat origin/main...HEAD`) dan dilaporkan; dampak perilaku bagi tim dicatat (contoh penjaga kirim ke customer).
+- [ ] Pra-cek production baca-saja: jumlah baris tabel inti (baseline), `pg_policies`, `pg_trigger`, `list_migrations`, advisor.
+- [ ] Cadangan: ekspor tabel inti atau backup Supabase yang dapat dipulihkan (T-061) sebelum migration.
+- [ ] `main` digabung ke cabang rilis; konflik diselesaikan menjaga kedua sisi; regresi penuh dan unit 0 FAIL.
+- [ ] Migration diterapkan **satu per satu** (hanya menambah), jumlah baris sesudahnya sama dengan baseline, advisor dijalankan. Migration yang belum teruji tidak ikut.
+- [ ] PR ke `main`: CI dua pemeriksaan hijau (setelah regresi selesai), 1 approval atau `--admin` oleh pemilik.
+- [ ] Deploy Vercel Ready; `main` sama dengan deploy.
+- [ ] Verifikasi production: login, tiap modul terbuka, dokumen terunduh, jumlah baris tidak berubah.
+- [ ] Rollback siap: promosikan deploy sebelumnya di Vercel; `DROP TABLE` tabel baru yang kosong dan `ALTER POLICY` kembali.
+- [ ] Persetujuan pemilik tercatat untuk tiap langkah yang menyentuh data nyata; catat hasil di [[PROJECT_PROGRESS]], [[CHANGELOG]], dan [[TEST_MATRIX]].

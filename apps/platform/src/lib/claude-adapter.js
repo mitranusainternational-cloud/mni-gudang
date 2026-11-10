@@ -61,6 +61,8 @@ async function toDbId(id) {
 
 // Kolom spk.no bertipe TEXT di database, tetapi app memperlakukannya sebagai angka
 // (parseInt, perbandingan !==). Tanpa konversi, mengedit SPK dianggap "ganti nomor".
+// Tabel yang boleh belum ada di database (migration draf belum diterapkan): dibaca sebagai kosong, bukan galat.
+const OPSIONAL = new Set(['produksi_log', 'penawaran', 'salesorder', 'sp']);
 const numericNo = (table, row) => {
   if (table === 'spk' && row && row.no !== undefined && row.no !== null && /^\d+$/.test(String(row.no))) row.no = Number(row.no);
   return row;
@@ -208,6 +210,7 @@ function makeCollection(col) {
         let q = supabase.from(table).select('*');
         if (orderCol) q = q.order(orderCol, { ascending: false });
         const { data, error } = await q;
+        if (error && OPSIONAL.has(table) && new RegExp(table + '|schema cache|does not exist', 'i').test(error.message || '')) { if (lastSig !== '[]') { lastSig = '[]'; cb({ docs: [] }); } return; }
         if (error) { errCb && errCb(error); return; }
         const docs = (data || []).map((r) => (table === 'master' ? masterToDoc(r) : rowToDoc(numericNo(table, r))));
         // Lewati bila isi sama dengan pemuatan sebelumnya agar polling tidak merender ulang UI tanpa perubahan.
@@ -227,7 +230,7 @@ function makeCollection(col) {
       // Cek sidik perubahan (satu panggilan kecil bersama) tiap beberapa detik; bila fungsinya belum ada, kembali ke muat ulang berkala per tabel.
       startStampPoll();
       const pollMs = Number(window.__ENV?.POLL_MS) || 15000;
-      const timer = setInterval(() => { if (!document.hidden && !STAMP.ok) load(); }, pollMs);
+      const timer = setInterval(() => { if (!document.hidden && (!STAMP.ok || !(STAMP.last && table in STAMP.last))) load(); }, pollMs);
       const onVis = () => { if (!document.hidden) { load(); checkStamps(); } };
       document.addEventListener('visibilitychange', onVis);
 
@@ -343,8 +346,10 @@ function makeDoc(path) {
         const { error } = await supabase.from(table).update({ status: 'Batal' }).eq('id', id);
         if (error) throw new Error(`[softDel:${table}:${id}] ${error.message}`);
       } else {
-        const { error } = await supabase.from(table).delete().eq('id', id);
+        // Kebijakan RLS yang menolak DELETE tidak mengembalikan galat, hanya nol baris: tanpa pemeriksaan ini UI melaporkan sukses palsu.
+        const { data, error } = await supabase.from(table).delete().eq('id', id).select('id');
         if (error) throw new Error(`[delete:${table}:${id}] ${error.message}`);
+        if (!data || !data.length) throw new Error('Penghapusan permanen ditolak database (larangan hapus permanen, migration 13). Gunakan Nonaktifkan atau koreksi dengan transaksi pembalik.');
       }
       notifyWrite(table);
     },
@@ -428,7 +433,7 @@ const DB_ADAPTER = {
 
 // ── User adapter (replaces window.claude.use('user')) ────────────────────────
 // Role model aplikasi (ROLES di app.js); sama dengan role_modules di database. viewer tidak menulis.
-const WRITE_ROLES = ['admin', 'ppic', 'gbb', 'gbj', 'logistik', 'produksi'];
+const WRITE_ROLES = ['admin', 'ppic', 'gbb', 'gbj', 'logistik', 'produksi', 'sales'];
 
 // Hak ubah efektif: admin selalu; hak khusus (muser.data.modul) bila ada, selain itu mengikuti peran bawaan.
 const bisaMengubah = (muser) => {
@@ -489,13 +494,13 @@ async function makeUserAdapter() {
     })),
     // Cadangan: semua tabel mentah (urutan aman untuk pemulihan). Hanya super admin yang membaca semuanya (RLS).
     exportAll: async () => {
-      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log'];
+      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'penawaran', 'salesorder', 'sp'];
       const out = {};
       for (const t of tables) {
         const rows = [];
         for (let from = 0; ; from += 1000) {
           const { data, error } = await supabase.from(t).select('*').range(from, from + 999);
-          if (error && t === 'audit_log') break; // migration 13 belum terpasang: lewati
+          if (error && (t === 'audit_log' || OPSIONAL.has(t))) break; // migration 13 belum terpasang: lewati
           if (error) throw new Error('Gagal membaca ' + t + ': ' + error.message);
           rows.push(...data);
           if (data.length < 1000) break;
@@ -554,16 +559,64 @@ const CLAUDE_SHIM = {
 
 // Inject before main app loads
 // Mesin hitung berat (kalkulator Excel). Katalog rumus dimuat aplikasi dari database setelah login (bukan dikemas di JS publik).
-import { hitungItem as _hitungItem } from './berat/parser.js';
+import { hitungItem as _hitungItem, bacaSection as _bacaSection, setMassaJenisMaster as _setBjMaster, kenaliDeskripsi as _kenali } from './berat/parser.js';
+import * as _bentuk from './berat/bentuk.js';
 let _katalogBerat = null;
+let _aturanSection = null;
 window.MNIBerat = {
   siap: () => !!_katalogBerat,
   setKatalog: (c) => { _katalogBerat = c; },
   info: () => (_katalogBerat ? { versi: _katalogBerat.versi, keluarga: Object.keys(_katalogBerat.keluarga).length, bentuk: Object.values(_katalogBerat.keluarga).reduce((a, f) => a + f.bentuk.length, 0) } : null),
   hitungItem: (o) => (_katalogBerat ? _hitungItem(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  kenaliDeskripsi: (d) => _kenali(d),
+  // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
+  keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
+  // aturan section dari Master Data (setting.aturanSection); kosong = bawaan standar (berat/bentuk.js ATURAN_DEFAULT)
+  setAturan: (a) => { _aturanSection = a && typeof a === 'object' ? a : null; },
+  aturanBawaan: () => JSON.parse(JSON.stringify(_bentuk.ATURAN_DEFAULT)),
+  bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk, _aturanSection) : []),
+  bentukSemua: (keluarga) => (_katalogBerat ? _bentuk.bentukSemua(_katalogBerat, keluarga) : []),
+  produkBentuk: () => _bentuk.PRODUK_BENTUK.slice(),
+  diizinkan: (produk, kunci) => _bentuk.bentukDiizinkan(produk, kunci, _aturanSection),
+  keluargaDaftar: () => (_katalogBerat ? Object.keys(_katalogBerat.keluarga) : []),
+  hitungBentuk: (o) => (_katalogBerat ? _bentuk.hitungBentuk(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  setMassaJenisMaster: (fn) => _setBjMaster(fn),
+  kgPerPcs: (o) => (_katalogBerat ? _bentuk.kgPerPcs(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  namaItem: _bentuk.namaItem,
+};
+
+// Mesin rute produksi multi work center: rute, antrian, beban, kapasitas, posisi, vendor (fungsi murni)
+import * as _rute from './produksi/rute.js';
+import * as _kinerja from './produksi/kinerja.js';
+import * as _laporan from './produksi/laporan.js';
+import * as _analisa from './produksi/analisa.js';
+import * as _statistik from './produksi/statistik.js';
+import * as _jadwal from './produksi/jadwal.js';
+import * as _kapasitas from './produksi/kapasitas.js';
+import * as _rencana from './produksi/rencana.js';
+import * as _harga from './erp/harga.js';
+import * as _penawaran from './erp/penawaran.js';
+import * as _salesorder from './erp/salesorder.js';
+import * as _material from './erp/material.js';
+window.MNIProduksi = { ..._rute, ..._kinerja, ..._laporan, ..._analisa, ..._statistik, ..._jadwal, ..._kapasitas, ..._rencana };
+// Mesin penawaran (harga, aturan, alur). Katalog dan skenario harga dimuat dari tabel master setelah login (setKatalog).
+window.MNIMaterial = { ..._material };
+window.MNIHarga = {
+  ..._harga, ..._penawaran, ..._salesorder, katalog: null, skenario: null,
+  setKatalog(k, s) { this.katalog = k; this.skenario = s; },
+  ada() { return !!(this.katalog && this.skenario && this.skenario.length); },
+  info() { return this.katalog ? { bentuk: this.katalog.bentuk.length, keluarga: _penawaran.daftarKeluarga(this.katalog).length, skenario: (this.skenario || []).length } : null; },
 };
 
 window.claude = CLAUDE_SHIM;
 window.__supabase = supabase;
 
 console.log('[MNI Gudang] Adapter siap.', LOCAL_MOCK ? 'MODE MOCK LOKAL (bukan Supabase)' : 'Supabase URL: ' + (SUPABASE_URL || '(NOT SET)'));
+
+// Pratinjau lokal saja: pasang katalog berat dari berkas lokal (gitignored) bila VITE_KATALOG_LOKAL=1, agar input SPK terstruktur
+// langsung terlihat tanpa mengunggah katalog. Tanpa flag (uji otomatis, production) katalog hanya dari database.
+if (import.meta.env && import.meta.env.VITE_KATALOG_LOKAL === '1') {
+  const lokal = import.meta.glob('./berat/catalog.json');
+  const muat = Object.values(lokal)[0];
+  if (muat) muat().then((m) => { if (!_katalogBerat) _katalogBerat = m.default || m; }).catch(() => {});
+}

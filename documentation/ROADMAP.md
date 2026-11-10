@@ -1,17 +1,17 @@
 ---
 type: roadmap
 status: active
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 <img src="assets/logo-mni.png" alt="PT Mitra Nusa Internasional" width="190">
 
-# Roadmap MNI OS Operational
+# Roadmap MNI Gudang & Logistik
 
 Roadmap ini menunjukkan urutan hasil yang perlu dibangun, bukan komitmen tanggal rilis. Perbarui status bersama bukti di [[PROJECT_PROGRESS|progress proyek]]. Jangan menandai item `Done` hanya karena file sudah dibuat.
 
-> [!summary] Status Now — diperbarui 2026-11-02
-> Arah produk: **MNI OS custom untuk kebutuhan tim Operasional MNI**. ERP eksternal bukan blueprint. Sumber kebutuhan adalah proses tim, bukti kerja yang diizinkan, dan validasi pemilik proses. Aplikasi **belum terhubung** ke Supabase; blocker teknis dan catatan lengkap ada di [[FOUNDATION_BASELINE|baseline fondasi]].
+> [!summary] Status Now — diperbarui 2026-11-06
+> Arah produk: **MNI Gudang & Logistik custom untuk tim Operasional MNI**. Production **sudah tayang** (https://mni-gudang.vercel.app, Supabase Production, migration 1 sampai 13, `main` di ad73c89). Pekerjaan terbaru (produksi multi work center, Gudang Bahan Baku, Barang Jadi, Sparepart, SPK stok, tren, dokumen) ada di cabang lokal `fitur/produksi-multi-wc` dan **belum dirilis**; rilis dijeda atas permintaan pemilik. Bagian "Now" di bawah adalah catatan awal proyek (2026-11-02) yang dipertahankan sebagai riwayat; peta terkini ada di [[PETA_MODUL]] dan bagian "Gudang, SPK stok, dan dokumen" di akhir halaman.
 
 > [!info] Rencana detail
 > Arah produk per rilis dan epic: [[roadmap/PRODUCT_ROADMAP]]. Langkah, dependensi, dan status per tugas ada di [[GO_LIVE_PLAN]] dan [[PROGRESS_DASHBOARD]]. Roadmap ini tetap menjadi urutan hasil tingkat tinggi.
@@ -120,13 +120,34 @@ Checklist ini menjelaskan urutan kerja antar-tools. Status hanya dicentang jika 
 5. **Integration gate:** setiap Composio/Vercel/Supabase credential scoped ke environment dan role yang tepat; tidak pernah dimasukkan ke browser/repository.
 6. **Release gate:** pemeriksaan, UAT, security, backup/rollback, domain, dan persetujuan rilis ditautkan dari [[RELEASE_CHECKLIST|checklist]].
 
-## Dependency yang sedang menahan progress
+## Dependency yang sedang menahan progress (2026-11-06)
 
-- **Browser lokal:** server preview `localhost:8002` telah membuktikan respons 200 untuk halaman dan asset CSS/JS. Render visual/console belum terverifikasi oleh runner; screenshot pengguna sebelumnya memperlihatkan CSS belum termuat sebelum pemetaan server diperbaiki.
-- **Docker/virtualisasi:** diagnosis 2026-11-02: `VirtualizationFirmwareEnabled=False`, hypervisor tidak ada, engine Docker tidak start. Panduan perbaikan: [[DOCKER_SETUP]]. Local Supabase stack belum dapat dijalankan.
-- **Supabase CLI/app connection:** CLI belum authenticated dan `projects list` meminta access token; management connector hanya read-only. Project kandidat tidak memiliki development branch. App belum punya Supabase SDK/Auth atau backend connection.
-- **Supabase target/schema lineage:** project hosted belum dipastikan sebagai backend checkout ini; SQL sibling menggunakan model `organizations`, bukan hosted `tenants`.
-- **Discovery Operasional:** current-state, requirement, prioritas, dan pilot pertama belum divalidasi bersama tim/pemilik proses.
-- **Discovery Operasional:** validasi proses langsung dari tim MNI dan pemilik proses belum dilakukan; backlog/pilot yang ada masih hipotesis.
-- **Google Sheets:** koneksi Composio OAuth belum selesai; data workbook belum dibaca.
-- **Backend aplikasi:** source bergantung pada adapter `window.claude`; server/database bersama belum diverifikasi.
+- **Persetujuan rilis pemilik:** paket gudang, SPK stok, dan produksi multi WC siap secara teknis (regresi penuh hijau, pra-cek production baca-saja selesai) tetapi dijeda ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+- **Keputusan pemilik terbuka:** daftar WC dan aturan khusus (T-174), perlakuan SPK lama saat penjaga kirim aktif (T-199), hak modul sparepart per peran, aturan Cek Data (T-111), ambang tren dan buffer (T-113), batas diskon dan penyetuju penawaran ([[HANDOFF]] bagian 5).
+- **Docker/virtualisasi (T-010):** masih nonaktif; uji database memakai Supabase production secara baca-saja dan branch bila perlu, bukan stack lokal.
+- **Discovery Operasional:** wawancara bersama tim belum dilakukan; pemolesan memakai masukan langsung pemilik.
+- Catatan lama (browser lokal, Supabase dev, Composio, workbook) sudah tidak menahan: browser dan Playwright berfungsi, production memakai konektor Supabase kedua, workbook dibaca lokal.
+
+## Produksi dan tracking (2026-11-04, lokal)
+
+- [x] Skema tiga pintu: SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa ([[T-177-skema-produksi-tiga-pintu-spk-berjalan]])
+- [x] Analisa per work center, produk, vendor, dan pengiriman termasuk loading dan unloading ([[T-178-kinerja-dan-analisa-produksi-tahap-2]]), lokal
+- [x] Produksi Hari Ini v2 dan Laporan Produksi (input otomatis, analisa jumlah, tonase, kecepatan, produk bertingkat, KPI operator dan mesin) ([[T-179-produksi-hari-ini-v2-dan-laporan-produksi]]), lokal
+- [x] Jadwal SPK (Gantt): garis waktu SPK berjalan dari terbit sampai due date ([[T-180-jadwal-spk-gantt]]), lokal
+- [x] Uji alur lengkap SPK awal sampai akhir dengan tangkapan layar ([[T-181-uji-alur-spk-awal-sampai-akhir]], [[UJI_ALUR_SPK]]), lokal
+- [x] Papan jadwal v2 (Per SPK dan Per mesin) dan perapian layout Berjalan, KPI & Analisa, Target ([[T-182-papan-jadwal-v2-dan-rapikan-layout-spk]]), lokal
+- [x] Produksi Hari Ini: papan mesin dan kapasitas aktual ([[T-183-produksi-hari-ini-papan-mesin-dan-kapasitas-aktual]]), lokal
+- [ ] Penayangan: migration 14, push, PR ke `main` setelah persetujuan pemilik. Kebutuhan: [[PRD_PRODUKSI]]
+
+## Gudang, SPK stok, dan dokumen (2026-11-05 sampai 2026-11-06, lokal)
+
+- [x] Surat jalan: alamat, tabel partial, penomoran otomatis ([[T-195-surat-jalan-alamat-partial-dan-penomoran-otomatis]]), **tayang** (PR 15)
+- [x] Gudang Bahan Baku: dokumen semua mutasi, jenis material fleksibel, item nonaktif, kartu HP ([[T-196-gudang-bahan-baku-dokumen-mutasi-dan-master-fleksibel]]), lokal
+- [x] Gudang Sparepart modul baru dengan impor Excel, buffer, opname, dokumen ([[T-197-gudang-sparepart-modul-baru]]), lokal, migration 18 draf
+- [x] Barang jadi: buffer, mutasi berdokumen tertaut SPK, rencana produksi ([[T-198-barang-jadi-buffer-mutasi-berdokumen-dan-rencana-produksi]]), lokal
+- [x] SPK stok ujung ke ujung dan penjaga hasil produksi ([[T-199-spk-stok-alur-ujung-ke-ujung]]), lokal
+- [x] Tren pergerakan stok dan rencana pembelian PR sparepart ([[T-200-tren-pergerakan-stok-dan-rencana-pembelian-sparepart]]), lokal
+- [x] Nama penanda tangan pada dokumen ([[T-201-nama-penanda-tangan-dokumen]]), lokal
+- [x] Modul Penawaran dan Sales Order disembunyikan, fokus operasional ([[T-202-sembunyikan-modul-penjualan-fokus-operasional]])
+- [ ] Rilis bertahap ke production: migration 14 lalu 18, PR ke `main`, deploy, verifikasi ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]), menunggu persetujuan pemilik
+- [ ] Keputusan pemilik atas penjaga kirim, hak modul sparepart, ambang tren dan buffer ([[PRD_GUDANG]])

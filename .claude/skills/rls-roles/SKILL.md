@@ -7,7 +7,7 @@ description: Model role dan RLS MNI OS (role_modules, can_mod/can_any/is_admin, 
 
 ## Model (satu sumber hak, dua tempat penegakan)
 
-- UI: `ROLES`, `MODS`, `modOf()`, `canMod()`, `guard()` di `apps/gudang-logistik/assets/js/app.js`. Role: admin (semua), ppic (spk, vendor), gbb (bahan-baku, bongkar-muat), gbj (barang-jadi, vendor, pengiriman, bongkar-muat), logistik (pengiriman, bongkar-muat), viewer (tidak ada).
+- UI: `ROLES`, `MODS`, `modOf()`, `canMod()`, `guard()` di `apps/gudang-logistik/assets/js/app.js`. Role: admin (semua), ppic (spk, vendor), gbb (bahan-baku, bongkar-muat, sparepart), gbj (barang-jadi, vendor, pengiriman, bongkar-muat), logistik (pengiriman, bongkar-muat), viewer (tidak ada).
 - Database: tabel `role_modules(role, module)`, fungsi `is_admin()`, `can_mod(modul)`, `can_any()` (SECURITY DEFINER, EXECUTE hanya untuk authenticated). Policy `*_write` (hasil ALTER di migration 6) dan `*_v2` memakai fungsi itu.
 - Peta role ke modul bersifat **sementara** sampai disahkan tim Operasional (T-036). Mengubah hak = mengubah isi `role_modules` (dan `ROLES` di UI), bukan policy.
 - Penegakan UI tanpa `ROLE_ON`: bila adapter memberi `me().role`, `myAcc()` memakainya dan `guard()` aktif. `ROLE_ON` mengatur fitur menu Pengguna, undangan, klaim (T-101). Platform asli tidak memberi `role`, perilaku lama tetap.
@@ -32,3 +32,11 @@ description: Model role dan RLS MNI OS (role_modules, can_mod/can_any/is_admin, 
 - 1–4 buat schema, policy awal, kompatibilitas, dan model role; **5 menghapus policy lama** (DROP); 6 dan 9 meng-ALTER hanya bila policy-nya ada; 7 mencabut hak anon; 8 backfill kolom relasi.
 - Di dev, 5 tidak dijalankan (DROP ditolak konektor): policy lama dan `_v2` berdampingan dengan isi identik.
 - Lingkungan baru wajib diuji penuh (matriks role dengan rollback, advisor) sebelum dipakai; urutan 1–9 belum dijalankan penuh di project kosong.
+
+## Modul sparepart dan PR bersama (2026-11-06)
+
+- Modul baru `sparepart` (tabel `sp`, mutasi gudang `sp`); `role_modules` memberi peran `gbb` modul itu, admin otomatis. Peran lain belum dibahas dengan pemilik.
+- Draf migration 18 mengubah `mutasi_read`, `mutasi_ins_v2`, `mutasi_upd_v2` agar gudang `sp` mengikuti modul `sparepart` (sebelumnya semua selain `rm` dianggap `barang-jadi`), dan `pr_read`, `pr_ins_v2`, `pr_upd_v2` agar pemegang `bahan-baku` atau `sparepart` dapat memakai PR. Semua lewat `ALTER POLICY` (bukan DROP) dan hanya memperluas hak.
+- Membuat SPK stok butuh hak ubah `spk`; peran `gbj` hanya melihat SPK.
+- Tidak ada kebijakan DELETE pada tabel transaksi (migration 13): jangan menambahkannya; item diganti nonaktif lewat kolom `aktif` atau `data.aktif`.
+- Sebelum menerapkan draf: bandingkan nama kebijakan dan pemicu dengan `pg_policies` dan `pg_trigger` production (baca-saja), dan catat angka baris sebelum dan sesudah.

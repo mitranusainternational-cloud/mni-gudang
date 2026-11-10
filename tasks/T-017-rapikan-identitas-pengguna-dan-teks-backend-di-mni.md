@@ -11,7 +11,7 @@ env: development
 effort_days: 0.5
 depends: [T-016]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-017 Rapikan identitas pengguna dan teks backend di mni-app
@@ -32,3 +32,6 @@ Bergantung pada: T-016
 ## Catatan
 
 Sumber teks ada di apps/gudang-logistik/index.html (prototipe). Perubahan memengaruhi kedua aplikasi; uji keduanya.
+
+> [!note] Audit 2026-11-06
+> Kemungkinan sudah tercapai: sidebar menampilkan nama dan peran pengguna ("Admin Lokal / Super Admin") dan kaki halaman menampilkan status koneksi pada tangkapan layar 2026-11-06 di mock. Perlu diverifikasi di production sebelum ditutup.

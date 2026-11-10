@@ -27,7 +27,9 @@ Bergantung pada: T-041, T-023
 
 ## Bukti
 
-- Belum ada.
+- `verified in GitHub` (dibaca ulang 2026-11-07): proteksi `main` mewajibkan dua status check ("Vault (tautan dan properti)" dan "Aplikasi (build dan regresi mock)") lewat API cabang terproteksi.
+- Run CI pada PR ke `main` dan push `main` berhasil: PR 13 (2026-11-03), PR 14 (2026-11-04), PR 15 (2026-11-06), masing-masing sekitar 4,5 menit.
+- Bukan bukti database. Workflow: `.github/workflows/ci.yml`.
 
 ## Catatan
 

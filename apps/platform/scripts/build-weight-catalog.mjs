@@ -121,13 +121,17 @@ for (const sh of sheets) {
       cached[c] = cells[addr].v;
     }
     // kolom keluaran menurut judul: Total (estimasi dan real), Total Dikurangi Lubang
-    const outs = { estimasi: null, estimasiLubang: null, real: null, realLubang: null };
+    const outs = { estimasi: null, estimasiLubang: null, real: null, realLubang: null, estimasiFullHole: null, realFullHole: null };
     const totals = Object.keys(formulas).filter((c) => /^total$/i.test(heads[c])).sort((a, b) => colNum(a) - colNum(b));
     const holes = Object.keys(formulas).filter((c) => /dikurangi lubang/i.test(heads[c])).sort((a, b) => colNum(a) - colNum(b));
     if (totals[0]) outs.estimasi = totals[0];
     if (totals[1]) outs.real = totals[1];
     if (holes[0]) outs.estimasiLubang = holes[0];
     if (holes[1]) outs.realLubang = holes[1];
+    // kalkulator "include full hole": Total Full Hole (Bawah+Samping), estimasi di kiri dan real di kanan
+    const full = Object.keys(formulas).filter((c) => /full hole/i.test(heads[c])).sort((a, b) => colNum(a) - colNum(b));
+    if (full[0]) outs.estimasiFullHole = full[0];
+    if (full[1]) outs.realFullHole = full[1];
     const id = slug(label).replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
     fam.push({ id, label: slug(label), baris: r, masukan: inputs, rumus: formulas, judul: heads, keluaran: outs });
     exp.push({ id, sample, cached });

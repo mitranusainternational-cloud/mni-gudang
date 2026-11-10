@@ -6,10 +6,10 @@ release: v1.0
 theme: Platform
 priority: P0
 status: active
-progress: 55
-tasks_total: 10
+progress: 44
+tasks_total: 11
 tasks_done: 5
-updated: 2026-11-04
+updated: 2026-11-10
 ---
 
 # E-05 Environment cloud dan CI/CD
@@ -37,5 +37,6 @@ Biaya dan manajemen secret; akun pemilik harus tersedia.
 - [x] [[tasks/T-163-aktifkan-supabase-production-dan-arahkan-vercel|T-163]] Aktifkan Supabase production dan arahkan Vercel · done · P0 · 1 hari
 - [ ] [[tasks/T-165-pensiunkan-project-supabase-dev-lama|T-165]] Pensiunkan project Supabase dev lama · todo · P2 · 0.2 hari
 - [ ] [[tasks/T-166-putuskan-repo-publik-atau-privat-dan-aktifkan-depe|T-166]] Putuskan repo publik atau privat dan aktifkan Dependabot · todo · P1 · 0.2 hari
+- [ ] [[tasks/T-203-rilis-paket-gudang-dan-produksi-ke-production|T-203]] Rilis paket Gudang, SPK stok, dan produksi multi WC ke production (bertahap) · todo · P1 · 1.5 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

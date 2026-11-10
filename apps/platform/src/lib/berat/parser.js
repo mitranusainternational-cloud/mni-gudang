@@ -14,7 +14,11 @@ export const MASSA_JENIS = [
   { cocok: /(ss\s*304|304|stainless|\bss\b|\bsus\b)/i, bj: 7.93, nama: 'Stainless 304' },
   { cocok: /(sphc|spcc|secc|spha|\bgi\b|galv|mild|\bms\b|besi|baja|steel)/i, bj: 7.85, nama: 'Baja karbon / galvanis' },
 ];
+// Pengait ke Master Data: bila terpasang dan mengenali bahan, massa jenis diambil dari Master Data (satu sumber); daftar di atas hanya cadangan.
+let _bjMaster = null;
+export function setMassaJenisMaster(fn) { _bjMaster = typeof fn === 'function' ? fn : null; }
 export function massaJenis(material) {
+  if (_bjMaster) { const bj = +_bjMaster(String(material || '')); if (bj > 0) return { bj, nama: String(material || 'Master Data'), sumber: 'master' }; }
   const m = MASSA_JENIS.find((x) => x.cocok.test(String(material || '')));
   return m ? m : null;
 }
@@ -71,6 +75,16 @@ export function bacaUkuran(deskripsi) {
   const tail = sisa[sisa.length - 1];
   if (tail && /^[0-9]+([.,][0-9]+)?$/.test(tail) && num(tail) > 0 && num(tail) <= 6) t = num(tail);
   return { dim, tebal: t };
+}
+
+// Bentuk dan ukuran dari deskripsi teks bebas ("Elbow 90 W300xH100xR300"): untuk mengubah teks menjadi baris terstruktur.
+export function kenaliDeskripsi(deskripsi) {
+  const teks = String(deskripsi || '').trim();
+  if (!teks) return null;
+  const a = ATURAN.find((x) => x.re.test(teks));
+  if (!a) return null;
+  const { dim, tebal } = bacaUkuran(teks);
+  return { kunci: a.id, dim, tebal };
 }
 
 // Keluarga dan tebal dari judul section SPK: "CABLE LADDER TYPE SLW 2.0 HOTDIP GALVANIZED"

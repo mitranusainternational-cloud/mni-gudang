@@ -89,3 +89,81 @@ updated: 2026-11-02
 - **Keputusan:** label `source-level`, `verified in browser`, dan `verified in database` dipakai terpisah; screenshot aktual menunggu akses preview yang dapat diverifikasi.
 - **Alasan:** mencegah inventaris kode atau screenshot UI dianggap sebagai bukti transaksi/persistence.
 - **Rujukan:** [[PROJECT_PROGRESS|Progress proyek]] dan [[apps/gudang-logistik/docs/DATA_INVENTORY|inventaris data indikatif]].
+
+## 2026-11-04 — Produksi dengan tiga menu dan input di tiga tempat
+
+- **Konteks:** pemilik menilai menu produksi (Monitoring SPK, Dashboard Produksi, Antrian Mesin, Papan Produksi, Laporan Produksi, tombol Input per SPK) membingungkan; kebutuhan intinya hanya SPK yang berjalan, progres per item dan output per work center, serta posisi SPK.
+- **Keputusan:** menu Produksi menjadi SPK Berjalan, Produksi Hari Ini, dan Kinerja & Analisa. Input hanya di Produksi Hari Ini (operator), Kirim ke Vendor, dan Bongkar Muat atau Kirim ke Customer; layar lain hanya untuk dilihat.
+- **Alasan:** satu tempat input per jenis kejadian menghindari data ganda dan kebingungan operator; manajemen membaca semuanya dari kejadian yang sama.
+- **Konsekuensi:** Papan Produksi dan Laporan Produksi menjadi rute tersembunyi (laporan harian pindah ke tab Kinerja & Analisa); tombol Input di tabel SPK dihapus. Tahap 2 menambah analisa per produk, vendor, dan pengiriman.
+- **Rujukan:** [[PRD_PRODUKSI]], [[T-177-skema-produksi-tiga-pintu-spk-berjalan]].
+
+## 2026-11-05 — Penawaran sebagai hulu ERP, modul terpisah dan lokal dulu
+
+- **Konteks:** pemilik menyerahkan workbook penawaran Cable Tray dan Ladder dan ingin penawaran menjadi hulu sistem (SPK dibuat dari penawaran, material dan monitoring mengikuti). Workbook memakai model rumus yang sama dengan kalkulator berat (192 produk, estimasi dan real) ditambah lapisan harga.
+- **Keputusan:** Penawaran dibangun sebagai **modul terpisah** (epic E-16, rilis v1.2) dengan tabel baru, menu baru berhak modul sendiri, dan mesin murni di apps/platform/src/lib/erp yang memakai kembali mesin berat. Dikerjakan **lokal dulu**, tanpa menyentuh Supabase production dan Vercel; ditayangkan bertahap E0 sampai E5, tahap terakhir hanya dengan persetujuan eksplisit. Cakupan awal: penawaran, estimasi, SPK dari penawaran, kebutuhan material, monitoring estimasi lawan aktual. Bukan ERP penuh (tanpa akuntansi, pajak, penggajian) sampai ada keputusan tertulis.
+- **Alasan:** fondasi sekitar 70% sudah ada; satu mesin untuk berat dan harga menghindari rumus ganda; modul terpisah menjaga sistem live tetap aman.
+- **Konsekuensi:** katalog rumus dan harga disimpan di database setelah login (rumus dan harga adalah aset perusahaan, repo publik); angka komersial tidak masuk Git. Jalur pilot (T-030 dan seterusnya) tetap prioritas dan tidak boleh tertahan. Aturan lingkup 2026-11-03 dikecualikan hanya untuk jalur lokal paralel ini atas permintaan pemilik.
+- **Rujukan:** [[ERP_QUOTATION_ANALISIS]], [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]].
+
+## 2026-11-06 — Jawaban pemilik untuk cakupan modul Penawaran
+
+- **Konteks:** enam pertanyaan di [[ERP_QUOTATION_ANALISIS]] bagian 9.
+- **Keputusan:** (1) sistem ini menangani penawaran sampai produksi, akuntansi dan faktur tetap di sistem lain; (2) Sales membuat penawaran, nomor mengikuti format lama, revisi bernomor Rev.; (3) satu penawaran boleh punya beberapa varian yang dipilih customer; (4) katalog awal 6 keluarga di workbook, produk lain menyusul; (5) batas diskon per peran dengan persetujuan di atas batas; (6) workbook ini menjadi pembanding uji emas.
+- **Konsekuensi:** E-16 tidak memuat faktur atau piutang; T-190 memuat varian, status Menunggu persetujuan, dan batas diskon per peran; T-189 memakai nilai hitung workbook sebagai pembanding.
+- **Rujukan:** [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]].
+
+## 2026-11-06 — Rumus sheet utama menjadi baku untuk mesin harga
+
+- **Konteks:** uji emas T-189 menunjukkan dua sheet lain di workbook penawaran memuat versi rumus lebih lama (302 sel berbeda; Straight Reducer hampir dua kali harga sheet utama).
+- **Keputusan:** rumus sheet utama adalah model baku. Dua sheet lain dipakai hanya sebagai sumber parameter skenario (harga per kg, tebal, waste, harga baut). Harga lama di dua sheet itu untuk Straight Reducer, Hold Down Clamp, dan Cover Clamp tidak dipakai.
+- **Alasan:** sheet utama paling baru dan sudah memperbaiki Reducer; satu model rumus mencegah hasil berbeda antar skenario.
+- **Konsekuensi:** katalog harga dibangun dari sheet utama; satu cacat rujukan baris lain diperbaiki dan diuji; bila ada penawaran lama yang harus direproduksi persis dengan rumus lama, perlu versi rumus tersendiri (belum dikerjakan).
+- **Rujukan:** [[ERP_QUOTATION_ANALISIS]] bagian 10, [[T-189-mesin-harga-penawaran-dan-uji-emas]].
+
+## 2026-11-06 — Sales Order menjadi penghubung Penawaran dan SPK
+
+- **Konteks:** pemilik bertanya apakah SPK sebaiknya otomatis menarik data dari penawaran atau dari Sales Order, seperti alur ERP baku.
+- **Keputusan:** alur menjadi Penawaran, Sales Order (SO), SPK. SO dibuat dari penawaran Disetujui, memegang PO customer, due date, alamat, dan snapshot harga dan biaya. Konfirmasi SO membuat SPK Draft otomatis; PPIC memeriksa dan menerbitkan (gerbang terbit tetap manusia). Perubahan PO setelah deal lewat amandemen SO, bukan revisi penawaran. Tebal dan finishing diisi di penawaran atau SO agar rute produksi dan vendor terbentuk dari judul SPK.
+- **Alasan:** PO customer dapat berbeda dari penawaran, satu penawaran dapat menjadi beberapa PO, dan harga yang dijanjikan harus terkunci di dokumen komitmen, bukan di penawaran.
+- **Konsekuensi:** tabel salesorder (draf migration 16) memakai hak modul penawaran karena memuat harga; SPK tidak menyimpan harga; T-192 (kebutuhan material) dihitung dari SO atau SPK, bukan dari penawaran.
+- **Rujukan:** [[tasks/T-194-sales-order-penghubung-penawaran-dan-spk|T-194]].
+
+## 2026-11-06 — Reservasi material diturunkan dari SPK, bukan disimpan
+
+- **Konteks:** T-192 butuh reservasi material saat SPK terbit tanpa mengubah stok fisik dan tanpa menambah tabel di production.
+- **Keputusan:** reservasi dihitung dari SPK berstatus Terbit yang belum Selesai atau Batal: kebutuhan bruto (netto x faktor sisa potong 1,1) per (bahan, tebal) dikurangi material yang sudah dikeluarkan gudang untuk SPK itu (mutasi Pakai bertanda SPK). Stok tersedia = stok fisik dikurangi reservasi SPK lain. Stok fisik hanya berkurang saat gudang mencatat Pakai. PR terbuka dihitung sebagai pasokan yang menutup kekurangan.
+- **Alasan:** tanpa tabel baru tidak ada migration dan tidak ada risiko reservasi menyimpang dari SPK; revisi, selesai, dan batal SPK otomatis tercermin.
+- **Konsekuensi:** keputusan pemilik tentang pengurangan stok otomatis saat SPK terbit masih terbuka; bila dipilih, reservasi diubah menjadi mutasi otomatis. Faktor 1,1 dan pemetaan per (bahan, tebal) bersifat sementara.
+- **Rujukan:** [[tasks/T-192-kebutuhan-material-dan-reservasi-stok|T-192]].
+
+## 2026-11-06 — SPK stok tidak dikirim ke customer; hanya hasil produksi selesai yang dapat diterima atau dikirim
+
+- **Konteks:** pemilik menemukan SPK stok yang belum diproduksi dan belum ke vendor sudah dapat "diterima" dan langsung menambah stok; SPK customer juga dapat langsung dikirim tanpa hasil produksi.
+- **Keputusan:** SPK stok (`spk.stokReq`, customer STOK MNI) berakhir di **Gudang Barang Jadi** lewat Terima di gudang barang jadi (BJ-M tertaut SPK), bukan surat jalan customer. Penerimaan dan pengiriman dibatasi ke hasil produksi siap = produksi efektif − di vendor + kembali dari vendor; SPK Draft tidak dapat menerima. Kirim ke customer memiliki override "kirim lebih" dengan keterangan wajib.
+- **Alasan:** stok hanya boleh bertambah bila barangnya benar ada; jejak SPK stok lawan SPK customer harus bisa dilacak.
+- **Konsekuensi:** SPK lama yang produksinya tidak pernah dicatat tertahan di pengiriman sampai dicatat atau override dipakai; catat saat rilis ([[T-203-rilis-paket-gudang-dan-produksi-ke-production]]).
+- **Rujukan:** [[PRD_GUDANG]], [[T-199-spk-stok-alur-ujung-ke-ujung]].
+
+## 2026-11-06 — Modul Penjualan disembunyikan, fokus operasional
+
+- **Keputusan pemilik:** menu Penawaran dan Sales Order tidak tampil; kode, data, dan draf migration 15 dan 16 dipertahankan di balik saklar `MODUL_PENJUALAN`. T-193 ditunda.
+- **Rujukan:** [[T-202-sembunyikan-modul-penjualan-fokus-operasional]].
+
+## 2026-11-06 — Rilis bertahap, database dahulu, migration 17 tidak ikut
+
+- **Konteks:** cabang `fitur/produksi-multi-wc` membawa 175 berkas selain gudang (produksi multi WC dan lainnya), sehingga rilis gudang saja tidak dapat dipotong bersih.
+- **Keputusan:** rilis dilakukan bertahap: pra-cek baca-saja, merge `main` ke cabang dan regresi, migration 14 lalu 18 (hanya menambah; adapter memperlakukan `produksi_log` dan `sp` sebagai opsional), PR dan CI, deploy, verifikasi, rollback siap. Migration 17 (anti stok negatif) ditunda sampai diuji di branch database karena dapat menahan transaksi sah bila data lama memuat stok negatif. Pemilik menjeda rilis untuk memoles lokal terlebih dahulu.
+- **Rujukan:** [[T-203-rilis-paket-gudang-dan-produksi-ke-production]], [[SISTEM_MAP]].
+
+## 2026-11-06 — Nama penanda tangan dokumen disimpan per perangkat
+
+- **Keputusan:** dialog nama sebelum cetak atau unduh; nama dan jabatannya diingat di `localStorage` (`mni-signers`) sebagai saran dan isian otomatis. Belum dibagi antar pengguna karena memerlukan tabel baru dan persetujuan.
+- **Rujukan:** [[T-201-nama-penanda-tangan-dokumen]].
+
+## 2026-11-09 — Production dibiarkan; migrasi data ditunda; pengembangan lokal dilanjutkan
+
+- **Keputusan pemilik:** sistem yang sudah live (`main` ad73c89, Supabase production `lggqigmvtefkquqjrjsb`, Vercel `mni-gudang`) tidak diganggu. Migrasi data ke akun baru ditunda; pengembangan dilanjutkan di lokal. Koneksi ke Supabase dan GitHub baru disiapkan kemudian.
+- **Alasan:** konektor Supabase sudah beralih ke akun baru (`nurilhamj@gmail.com`) dan project production tidak lagi terlihat dari sana; Vercel tim MNI juga belum bisa diakses dari konektor baru.
+- **Konsekuensi:** tidak ada migration, deploy, atau perubahan di production. Tugas T-203 (rilis) tetap menunggu persetujuan. Saat migrasi nanti: ekspor data dari akun lama, buat project baru, migrasi 1 sampai 13 lalu draf 14 sampai 18 satu per satu, dan undang ulang pengguna karena akun login tidak bisa disalin lewat SQL.
+- **Rujukan:** [[HANDOFF]], [[SERTIJOB]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]].

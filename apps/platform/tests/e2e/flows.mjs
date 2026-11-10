@@ -16,7 +16,7 @@ const closeOverlays = async (page) => {
   });
   await page.waitForTimeout(250);
 };
-const go = async (page, route) => { await closeOverlays(page); await page.click(`#nav a[href="#${route}"]`); await page.waitForTimeout(500); };
+const go = async (page, route) => { await closeOverlays(page); { const l = await page.$(`#nav a[href="#${route}"]`); if (l) await l.click(); else await page.evaluate((h) => { location.hash = h; }, route); await page.waitForTimeout(300); if (route === 'spk') { const b = await page.$('#tools [data-view="spk"][data-val="list"]'); if (b) await b.click(); } } await page.waitForTimeout(500); };
 
 export async function runFlows(page, base) {
   const r = [];

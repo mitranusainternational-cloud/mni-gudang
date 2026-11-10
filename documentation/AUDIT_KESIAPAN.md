@@ -8,6 +8,9 @@ updated: 2026-11-03
 
 # Audit kesiapan sebelum dipakai tim (2026-11-03)
 
+> [!note] Pembaruan 2026-11-06
+> Audit progres terbaru: [[AUDIT_PROGRESS_2026-11-06]]. Advisor production hari ini: tidak ada temuan kritis (8 WARN fungsi bantu RLS yang disengaja, proteksi password bocor belum aktif, 3 WARN kebijakan permisif ganda, 22 indeks belum terpakai). Yang masih terbuka dari audit ini: backup terjadwal dan uji pulih (T-061), Dependabot dan keputusan repo publik (T-166), SMTP dan Redirect URL (T-047), skema cadangan `arsip_20261105`.
+
 Pemeriksaan silang lokal, GitHub, Supabase dev, dan Vercel. Bukti: [[TEST_MATRIX]], [[ENVIRONMENTS]], [[PROJECT_PROGRESS]].
 
 ## Hasil pemeriksaan

@@ -9,11 +9,12 @@ Repository ini sekaligus menjadi Obsidian vault untuk mengembangkan aplikasi MNI
 | Versi | Branch | Kegunaan |
 |---|---|---|
 | Versi Awal | `versi-awal` | Snapshot referensi kondisi awal. |
-| Development | `development` | Pengembangan dan pengujian lokal; branch kerja. |
+| Fitur | `fitur/<nama>` | Kerja fitur, dibuat dari `main`, digabung lewat PR (aktif: `fitur/produksi-multi-wc`). |
+| Development | `development` | Tertinggal; tidak dipakai harian. |
 | Main | `main` | Versi stabil untuk pengguna setelah tinjauan rilis. |
 | Docs | `docs` | Dokumentasi pengembangan dan materi website dokumentasi. |
 
-Rincian alur dan batas tiap environment ada di [`documentation/VERSION_STRATEGY.md`](documentation/VERSION_STRATEGY.md). Peta tugas ada di [`documentation/PROJECT_PROGRESS.md`](documentation/PROJECT_PROGRESS.md). Branch saja belum memisahkan deployment atau database.
+Peta modul dari hulu ke hilir: [`documentation/PETA_MODUL.md`](documentation/PETA_MODUL.md). Rincian alur dan batas tiap environment ada di [`documentation/VERSION_STRATEGY.md`](documentation/VERSION_STRATEGY.md). Peta tugas ada di [`documentation/PROJECT_PROGRESS.md`](documentation/PROJECT_PROGRESS.md). Branch saja belum memisahkan deployment atau database.
 
 ## Peta workspace
 

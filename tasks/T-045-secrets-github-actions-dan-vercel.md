@@ -11,7 +11,7 @@ env: main
 effort_days: 0.5
 depends: [T-044]
 owner: "dev"
-updated: 2026-11-02
+updated: 2026-11-06
 ---
 
 # T-045 Secrets GitHub Actions dan Vercel
@@ -32,3 +32,6 @@ Bergantung pada: T-044
 ## Catatan
 
 -
+
+> [!note] Audit 2026-11-06
+> Variabel Vercel Production terpasang (publishable saja; kunci service-role tidak di klien atau repo). CI memakai variabel dummy. Sisa: pemeriksaan ulang daftar variabel per environment.
