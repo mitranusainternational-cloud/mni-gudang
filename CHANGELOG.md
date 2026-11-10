@@ -6,6 +6,10 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Diubah (editor SPK ringkas, 2026-11-10)
+- Baris SPK lebih ringkas: bentuk, ukuran, qty; Kg estimasi (plate) dan Kg real (barang jadi) langsung tampil per baris, section, dan ringkasan. Catatan, vendor, dan produk stok ada di menu ⋯; stok sebagai angka dengan tombol Pakai stok.
+- Berat hasil kalkulator tidak bisa diketik; deskripsi teks dikenali otomatis dan ada Tempel daftar dari Excel.
+
 ### Ditambah (Gudang Barang Jadi, 2026-11-09)
 - Tab Siap kirim customer (ceklis SPK lalu Buat surat jalan langsung) dan tab Siap masuk stok (tombol Terima untuk hasil SPK stok).
 

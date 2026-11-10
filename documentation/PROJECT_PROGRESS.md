@@ -898,3 +898,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Pemilik memindahkan koneksi ke akun baru untuk pengembangan. Hasil cek: GitHub (repo `mni-gudang`, `main` ad73c89) dan Supabase akun baru terhubung; Supabase production tidak terlihat dari akun baru; Vercel tim MNI belum bisa diakses dari konektor baru.
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
+
+### 2026-11-10 · T-226: input SPK ringkas, berat estimasi dan real langsung tampil
+- Hasil: editor SPK (layout dimensi) dirombak sesuai keputusan A sampai D. Baris tanpa kolom Spesifikasi; catatan, vendor, dan produk stok di menu ⋯; stok sebagai angka dengan tombol Pakai stok; dua kolom berat tebal (Kg est untuk plate, Kg real untuk barang jadi), subtotal per section, dan ringkasan di bawah layar. Berat hasil kalkulator tidak bisa diketik. Deskripsi teks dikenali jadi baris terstruktur dan ada Tempel daftar dari Excel.
+- Bukti: verified in browser (mock). Suite spkringkas RK-01..RK-13 (14 PASS), unit kenali KN-01..KN-06, spkdimensi 13 PASS; lint 0 error. Regresi penuh 32 suite, 0 FAIL (produksi dijalankan ulang: uji Timeline M-166b dibuat sadar jendela hari karena bergantung hari dalam minggu).
+- Hambatan: belum diuji dengan katalog perusahaan dan Supabase. Gabungan Tee dan Cross dengan W1..W4 diuji di unit tingkat pengenal, belum di e2e.

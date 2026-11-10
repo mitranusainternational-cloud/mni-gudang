@@ -77,6 +77,16 @@ export function bacaUkuran(deskripsi) {
   return { dim, tebal: t };
 }
 
+// Bentuk dan ukuran dari deskripsi teks bebas ("Elbow 90 W300xH100xR300"): untuk mengubah teks menjadi baris terstruktur.
+export function kenaliDeskripsi(deskripsi) {
+  const teks = String(deskripsi || '').trim();
+  if (!teks) return null;
+  const a = ATURAN.find((x) => x.re.test(teks));
+  if (!a) return null;
+  const { dim, tebal } = bacaUkuran(teks);
+  return { kunci: a.id, dim, tebal };
+}
+
 // Keluarga dan tebal dari judul section SPK: "CABLE LADDER TYPE SLW 2.0 HOTDIP GALVANIZED"
 export function bacaSection(judul) {
   const s = String(judul || '').toUpperCase();

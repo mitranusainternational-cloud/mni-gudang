@@ -559,7 +559,7 @@ const CLAUDE_SHIM = {
 
 // Inject before main app loads
 // Mesin hitung berat (kalkulator Excel). Katalog rumus dimuat aplikasi dari database setelah login (bukan dikemas di JS publik).
-import { hitungItem as _hitungItem, bacaSection as _bacaSection, setMassaJenisMaster as _setBjMaster } from './berat/parser.js';
+import { hitungItem as _hitungItem, bacaSection as _bacaSection, setMassaJenisMaster as _setBjMaster, kenaliDeskripsi as _kenali } from './berat/parser.js';
 import * as _bentuk from './berat/bentuk.js';
 let _katalogBerat = null;
 let _aturanSection = null;
@@ -568,6 +568,7 @@ window.MNIBerat = {
   setKatalog: (c) => { _katalogBerat = c; },
   info: () => (_katalogBerat ? { versi: _katalogBerat.versi, keluarga: Object.keys(_katalogBerat.keluarga).length, bentuk: Object.values(_katalogBerat.keluarga).reduce((a, f) => a + f.bentuk.length, 0) } : null),
   hitungItem: (o) => (_katalogBerat ? _hitungItem(_katalogBerat, o) : { ok: false, alasan: 'Katalog berat belum dipasang.' }),
+  kenaliDeskripsi: (d) => _kenali(d),
   // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
   keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
   // aturan section dari Master Data (setting.aturanSection); kosong = bawaan standar (berat/bentuk.js ATURAN_DEFAULT)

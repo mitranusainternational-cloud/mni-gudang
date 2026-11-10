@@ -4537,7 +4537,7 @@ function beratOf(d,h){const k=KAT().berat||{};const t=thkOf(h);if(k[d+'|'+t])ret
    lebih baik kosong (diisi manual) daripada angka perkiraan yang salah. */
 function weightInfo(desc,sectionHeader){bjHook();const B=window.MNIBerat;if(!B||!B.siap())return null;return B.hitungItem({judulSection:sectionHeader,deskripsi:desc,material:ED?ED.material:'',tebal:ED?(parseFloat(ED.tebal)||null):null})}
 function weightCalc(desc,sectionHeader){const r=weightInfo(desc,sectionHeader);return r&&r.ok?Math.round(r.beratSPK*1000)/1000:0}
-function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
+function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;if(tr.closest('.edr')){const wi=td.querySelector('[data-f=w]');if(wi){const ro=!!(L.sb&&edKatalogSiap());wi.readOnly=ro;wi.tabIndex=ro?-1:0}}let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
  if(!s){s=document.createElement('span');td.appendChild(s)}s.className='wtag '+L.wsrc;s.textContent=L.wsrc==='kalkulator'?'auto':'manual';s.title=L.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}
 /* hitung ulang baris yang berat otomatisnya bergantung pada judul section, material, atau tebal; yang manual tidak disentuh */
 function edHitungUlang(){let k=0;for(const s of ED.sections){k+=edSesuaikanBaris(s);for(const l of s.lines){if(l.sb)continue;if(!l.d||!(l.wsrc==='kalkulator'||(!l.w&&!l.wsrc)))continue;const wi=weightInfo(l.d,s.h);if(wi&&wi.ok){const w=Math.round(wi.beratSPK*1000)/1000;if(w!==l.w||l.wsrc!=='kalkulator'){l.w=w;l.wsrc='kalkulator';k++}}}}
@@ -4659,7 +4659,7 @@ function edKolomItem(s,si,li,l,cap,hb){
  const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span>'+edVendorHtml(s,si,li,l)+'</td>';
  const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
  if(spkDimBaru()&&cap){const dc=edDimCols(cap),lub=cap.shapes.some(x=>x.fullHole);const galat='<div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div>';
-  return '<td class="c-d">'+pilih+nama+galat+'</td>'+spek+dc.map(c=>{const d=sh&&sh.dim.find(x=>x.k===c.k);return d?'<td class="c-dm"><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+c.k+'" id="ed-dm-'+si+'-'+li+'-'+c.k+'" value="'+esc((l.dim||{})[c.k]==null?'':(l.dim||{})[c.k])+'" aria-label="'+esc(c.label)+'"></td>':'<td class="c-dm muted">–</td>'}).join('')+(lub?(sh&&sh.fullHole?'<td class="c-lub"><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></td>':'<td class="c-lub muted">–</td>'):'');}
+  return '<td class="c-d">'+pilih+nama+galat+'</td>'+dc.map(c=>{const d=sh&&sh.dim.find(x=>x.k===c.k);return d?'<td class="c-dm"><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+c.k+'" id="ed-dm-'+si+'-'+li+'-'+c.k+'" value="'+esc((l.dim||{})[c.k]==null?'':(l.dim||{})[c.k])+'" aria-label="'+esc(c.label)+'"></td>':'<td class="c-dm muted">–</td>'}).join('')+(lub?(sh&&sh.fullHole?'<td class="c-lub"><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></td>':'<td class="c-lub muted">–</td>'):'');}
   return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
 }
 /* Sel "Dari stok": pilih produk gudang barang jadi dan jumlah yang diambil dari stok (sisanya diproduksi). */
@@ -4687,7 +4687,7 @@ function edStokStatus(si,li,l,res,s){const rs=res||fgResMap(ED&&ED.id);const tsd
   else if(kosong)inner='Isi ukuran untuk mencocokkan stok'
   else inner='Tidak ada stok cocok · produksi semua'}
  return '<div class="ed-stk-s'+(ada?' ada':'')+'" id="ed-ss-'+si+'-'+li+'">'+inner+'</div>'}
-function edStokRefresh(si,li){const el=$('#ed-ss-'+si+'-'+li);if(!el||!ED)return;const s=ED.sections[si],l=s.lines[li];if(!s||!l)return;const w=document.createElement('div');w.innerHTML=edStokStatus(si,li,l,null,s);if(el.outerHTML!==w.firstChild.outerHTML)el.replaceWith(w.firstChild)}
+function edStokRefresh(si,li){if(spkDimBaru()&&ED&&ED.sections[si]&&edCap(ED.sections[si])){const td=$('#ed-sk-'+si+'-'+li);if(!td||td.contains(document.activeElement))return;const s=ED.sections[si],l=s.lines[li];if(!l)return;const w=document.createElement('table');w.innerHTML='<tr>'+edStokR(si,li,l,null,s)+'</tr>';const nw=w.querySelector('td');if(nw&&td.innerHTML!==nw.innerHTML)td.innerHTML=nw.innerHTML;return}const el=$('#ed-ss-'+si+'-'+li);if(!el||!ED)return;const s=ED.sections[si],l=s.lines[li];if(!s||!l)return;const w=document.createElement('div');w.innerHTML=edStokStatus(si,li,l,null,s);if(el.outerHTML!==w.firstChild.outerHTML)el.replaceWith(w.firstChild)}
 function edStokHtml(si,li,l,res,s){
  if(ED&&ED.stokReq)return '<td class="c-stk"></td>';
  const fgs=S.fg.filter(r=>r.aktif!==false||r._id===l.fg),cocok=s?fgCocokUrut(s,l,res):[];
@@ -4696,7 +4696,92 @@ function edStokHtml(si,li,l,res,s){
  return '<td class="c-stk"><select class="sel" data-f="fg" id="ed-fg-'+si+'-'+li+'" aria-label="Produk di gudang barang jadi"><option value="">Produksi semua</option>'+(cocok.length?'<optgroup label="Cocok dengan item ini">'+cocok.map(op).join('')+'</optgroup>':'')+(fgs.length-cocok.length?'<optgroup label="Semua produk">'+fgs.filter(r=>!cocok.includes(r)).map(op).join('')+'</optgroup>':'')+'</select>'
   +status+'<input class="inp num" data-f="ambil" type="number" min="0" step="any" inputmode="decimal" placeholder="Ambil dari stok" id="ed-am-'+si+'-'+li+'" value="'+esc(l.ambil==null?'':l.ambil)+'" '+(l.fg?'':'disabled')+'><div class="note ed-stk-h" id="ed-sh-'+si+'-'+li+'">'+esc(edStokHint(l,res))+'</div></td>';
 }
-function edSecHtml(s,si,startNo){
+/* ----- tampilan ringkas editor SPK (T-226): satu baris = bentuk, ukuran, qty; berat estimasi dan real langsung tampil; yang jarang dipakai ada di menu ⋯ ----- */
+const kgF=x=>n(Math.round((+x||0)*100)/100);
+const edKatalogSiap=()=>{const B=window.MNIBerat;return !!(B&&B.siap&&B.siap())};
+/* kg satu baris: pasangan dari katalog (estimasi = plate yang diambil, real = barang jadi); tanpa katalog atau teks bebas memakai berat manual yang sama untuk keduanya */
+function edKgBaris(s,l,cap){if(!String(l.d||'').trim())return null;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));const r=cap?edKgPair(s,l,cap):null;
+ if(r)return {pcsE:r.kgPcsEst,pcsR:r.kgPcsReal,ke:r.kgPcsEst*(q-am),kr:r.kgPcsReal*q,q,am,manual:false,kosong:false};
+ const w=+l.w||0;if(!(w>0))return {q,am,ke:0,kr:0,manual:false,kosong:true};
+ return {pcsE:w,pcsR:w,ke:w*(q-am),kr:w*q,q,am,manual:true,kosong:false}}
+function edSecSumHtml(s){const cap=edCap(s);let c=0,q=0,ke=0,kr=0;s.lines.forEach(l=>{const k=edKgBaris(s,l,cap);if(!k)return;c++;q+=k.q;if(!k.kosong){ke+=k.ke;kr+=k.kr}});return c?c+' item · '+n(q)+' pcs · est <b>'+kgF(ke)+'</b> · real <b>'+kgF(kr)+'</b> Kg':''}
+function edSecSum(si){const el=$('#ed-sum-'+si);if(el&&ED&&ED.sections[si])el.innerHTML=edSecSumHtml(ED.sections[si])}
+function edKgCells(tr,si,li){if(!ED||!spkDimBaru())return;const s=ED.sections[si],L=s.lines[li],cap=edCap(s);if(!cap)return;const k=edKgBaris(s,L,cap);const ke=tr.querySelector('[data-ke]'),b=tr.querySelector('[data-bi]');
+ const ok=k&&k.q>0&&!k.kosong;if(ke){ke.textContent=ok?kgF(k.ke):'–';ke.classList.toggle('manual',!!(k&&k.manual))}if(b)b.textContent=ok?kgF(k.kr):'–';edSecSum(si)}
+function edVendorBadge(s){apHook();const P=PXL();if(!P||!P.vendorUntuk)return '';const fin=P.vendorUntuk(s.h,'');return fin?'→ vendor '+esc(fin):(P.perluFinishing(s.h)?'finishing belum jelas':'tanpa vendor')}
+/* Dari stok: angka yang diambil; tombol Pakai stok bila ada produk cocok. Produk lain dipilih di menu ⋯. */
+function edStokR(si,li,l,res,s){
+ if(ED&&ED.stokReq)return '<td class="c-stk" id="ed-sk-'+si+'-'+li+'"></td>';
+ res=res||fgResMap(ED&&ED.id);const tsd=r=>(calc().stock.fg[r._id]||0)-(res[r._id]||0);let inner;
+ if(l.fg){const r=byId('fg',l.fg);inner='<input class="inp num" data-f="ambil" type="number" min="0" step="any" inputmode="decimal" placeholder="0" id="ed-am-'+si+'-'+li+'" value="'+esc(l.ambil==null?'':l.ambil)+'" aria-label="Jumlah diambil dari stok"><div class="ed-stk-h" id="ed-sh-'+si+'-'+li+'" title="'+esc(r?fgLabel(r):'')+'">'+esc(edStokHint(l,res))+'</div>'}
+ else{const c=s?fgCocokUrut(s,l,res)[0]:null,t=c?tsd(c):0;
+  inner=c&&t>0?'<button type="button" class="btn sm" data-act="ed-stok-pakai" data-s="'+si+'" data-l="'+li+'" title="'+esc(fgLabel(c))+'">Pakai stok '+n(t)+'</button>':(c?'<span class="muted" title="'+esc(fgLabel(c))+'">stok habis</span>':'<span class="muted">–</span>')}
+ return '<td class="c-stk" id="ed-sk-'+si+'-'+li+'">'+inner+'</td>'}
+function edRowR(s,si,li,l,no,cap,hb,RES){
+ const k=edKgBaris(s,l,cap),ok=k&&k.q>0&&!k.kosong;
+ const vw=edVendorHtml(s,si,li,l);const buka=!!(l.det||l.ket||l.catatan||l.vv||/ed-galat/.test(vw));
+ const fgs=S.fg.filter(r=>r.aktif!==false||r._id===l.fg),cocok=fgCocokUrut(s,l,RES);
+ const op=r=>'<option value="'+r._id+'" '+(r._id===l.fg?'selected':'')+'>'+esc(fgLabel(r))+' · tersedia '+n((calc().stock.fg[r._id]||0)-(RES[r._id]||0))+'</option>';
+ const selFg=ED&&ED.stokReq?'':'<label>Produk stok<select class="sel" data-f="fg" id="ed-fg-'+si+'-'+li+'" aria-label="Produk di gudang barang jadi"><option value="">Produksi semua</option>'+(cocok.length?'<optgroup label="Cocok dengan item ini">'+cocok.map(op).join('')+'</optgroup>':'')+(fgs.length-cocok.length?'<optgroup label="Semua produk">'+fgs.filter(r=>!cocok.includes(r)).map(op).join('')+'</optgroup>':'')+'</select></label>';
+ const det='<div class="ed-det" id="ed-det-'+si+'-'+li+'" '+(buka?'':'hidden')+'><label>Catatan merah<input class="inp red" data-f="ket" value="'+esc(l.ket)+'" placeholder="opsional" id="ed-k-'+si+'-'+li+'"></label><label>Keterangan<input class="inp" data-f="catatan" value="'+esc(l.catatan)+'" id="ed-c-'+si+'-'+li+'"></label>'+vw+selFg+'</div>';
+ let kol=edKolomItem(s,si,li,l,cap,hb);const i=kol.indexOf('</td>');kol=kol.slice(0,i)+det+kol.slice(i);
+ const ro=l.sb&&edKatalogSiap()?' readonly tabindex="-1"':'';
+ const bi=(+l.q||0)*(+l.w||0);
+ return `<tr data-s="${si}" data-l="${li}"><td class="c-no">${no}</td>${kol}
+  <td class="c-q"><input class="inp num" data-f="q" type="number" min="0" step="any" value="${esc(l.q)}" id="ed-q-${si}-${li}" inputmode="decimal"></td>
+  <td class="c-u"><input class="inp" data-f="u" value="${esc(l.u)}" list="dl-sat" id="ed-u-${si}-${li}"></td>
+  ${edStokR(si,li,l,RES,s)}
+  <td class="c-w"><input class="inp num" data-f="w" type="number" min="0" step="any" value="${esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal"${ro}>${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat dan tidak diketik. Untuk berat manual, pilih Teks bebas di kolom bentuk.':'Diisi manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}<span id="ed-kg-${si}-${li}">${edKgSub(s,l,cap)}</span></td>
+  <td class="c-ke num${k&&k.manual?' manual':''}" data-ke>${ok?kgF(k.ke):'–'}</td>
+  <td class="c-bi num" data-bi>${ok?kgF(k.kr):(bi?n(bi):'–')}</td>
+  <td class="c-act"><button type="button" class="ibtn" data-act="ed-det" data-s="${si}" data-l="${li}" aria-label="Catatan, vendor, dan produk stok" aria-expanded="${buka}">⋯</button><button type="button" class="ibtn" data-act="ed-delline" data-s="${si}" data-l="${li}" aria-label="Hapus baris">×</button></td></tr>`}
+function edSecHtmlR(s,si,startNo){
+ const hb=parseH(s.h),cap=edCap(s),RES=fgResMap(ED&&ED.id);let no=startNo;const dc=edDimCols(cap),lub=cap.shapes.some(x=>x.fullHole);
+ const rows=s.lines.map((l,li)=>{no++;return edRowR(s,si,li,l,no,cap,hb,RES)}).join('');
+ return `<div class="esec"><div class="esec-h"><span class="esec-tag">Section ${si+1}</span>
+  <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p,hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
+  <span class="esec-vend" id="ed-sv-${si}" title="Vendor finishing ditentukan otomatis dari finishing section">${edVendorBadge(s)}</span><span class="esec-sum" id="ed-sum-${si}">${edSecSumHtml(s)}</span>
+  <span class="esec-acts"><button type="button" class="ibtn" data-act="ed-up" data-s="${si}" aria-label="Naikkan" ${si?'':'disabled'}>↑</button><button type="button" class="ibtn" data-act="ed-down" data-s="${si}" aria-label="Turunkan" ${si<ED.sections.length-1?'':'disabled'}>↓</button><button type="button" class="ibtn" data-act="ed-delsec" data-s="${si}" aria-label="Hapus section" ${ED.sections.length>1?'':'disabled'}>×</button></span>
+  <input class="inp esec-title" data-sf="h" data-s="${si}" value="${esc(s.h)}" list="dl-grup" placeholder="JUDUL SECTION, mis. CABLE TRAY TYPE STU 1.5 ELECTRO GALVANIZED" id="ed-h-${si}"></div>
+  <div class="tbl-wrap"><table class="edt edr"><thead><tr><th>No</th><th>Bentuk dan nama item</th>${dc.map(c=>'<th class="num dmh">'+esc(c.label)+' (mm)</th>').join('')}${lub?'<th>Lubang</th>':''}<th class="num">Qty</th><th>Satuan</th><th>${ED&&ED.stokReq?'':'Dari stok'}</th><th class="num">Kg/pcs</th><th class="num th-ke" title="Kg estimasi: plate yang diambil dari Gudang Bahan Baku. Barang dari stok tidak dihitung.">Kg est</th><th class="num th-kr" title="Kg real: barang jadi yang dikirim ke vendor finishing dan customer.">Kg real</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+  <button type="button" class="btn sm ghost" data-act="ed-addline" data-s="${si}">${ic('plus')}Baris</button> <button type="button" class="btn sm ghost" data-act="ed-tempel" data-s="${si}">${ic('plus')}Tempel daftar</button></div>`
+}
+/* ----- teks ke baris terstruktur (T-226): deskripsi yang diketik atau ditempel dikenali jadi bentuk dan ukuran, lalu berat langsung dihitung ----- */
+function edKenali(s,cap,teks){const B=window.MNIBerat;if(!B||!B.kenaliDeskripsi||!cap)return null;const k=B.kenaliDeskripsi(teks);if(!k)return null;
+ const sh=cap.shapes.find(x=>x.kunci===k.kunci);if(!sh)return {salah:'Bentuk '+k.kunci+' tidak diizinkan di section '+cap.prod};
+ const ks=sh.dim.map(d=>d.k),polos=k.dim||{},dim={};
+ const utama=String(teks).split(/\bc\s*\/\s*w\b/i)[0],tk=utama.split(/[\sx×*,;]+/i).filter(Boolean);
+ const idx=tk.map(x=>x.match(/^w([1-4])(\d+(?:[.,]\d+)?)(?:mm)?$/i)).filter(Boolean);
+ if(ks.includes('w1')&&idx.length>=2)idx.forEach(m=>{dim['w'+m[1]]=parseFloat(m[2].replace(',','.'))});
+ else if(ks.includes('w1')&&polos.w!=null)['w1','w2','w3','w4'].forEach(x=>{if(ks.includes(x))dim[x]=polos.w});
+ for(const x of ks)if(dim[x]==null&&polos[x]!=null)dim[x]=polos[x];
+ return {sh,dim,tebal:k.tebal}}
+function edKonversiTeks(si,li){const s=ED.sections[si],L=s.lines[li],cap=edCap(s);const r=cap&&String(L.d||'').trim()?edKenali(s,cap,L.d):null;
+ if(!r||!r.sh||!Object.keys(r.dim).length)return false;
+ L.sb=r.sh.id;L.dim=r.dim;L.lubang=lubangBawaan(cap);L.lubangManual=false;if(L.wsrc==='kalkulator')L.wsrc='';edHitungBaris(s,L);EDDIRTY=true;
+ if(li===s.lines.length-1)s.lines.push(lineBaru(s.h));
+ rerenderSecs();toast('Terbaca sebagai '+r.sh.nama+' · '+Object.entries(r.dim).map(([k,v])=>k.toUpperCase()+v).join(' ')+(L.galat?' · '+L.galat:' · berat dihitung'));return true}
+function edParseDaftar(teks){return String(teks||'').split(/\r?\n/).map(r=>r.trim()).filter(Boolean).map(r=>{
+ let d='',q='',u='';const cols=r.split('\t').map(x=>x.trim()).filter(x=>x!=='');
+ if(cols.length>=2){if(/^\d+$/.test(cols[0])&&cols.length>=3)cols.shift();d=cols[0];const rest=cols.slice(1),qi=rest.findIndex(x=>/^\d+([.,]\d+)?$/.test(x));
+  if(qi>=0){q=parseFloat(rest[qi].replace(',','.'));const ui=rest.findIndex((x,i)=>i>qi&&/^[A-Za-z]{1,6}$/.test(x));if(ui>=0)u=rest[ui]}}
+ else{const m=r.match(/^(?:\d+[\s.)]+)?(.*?)\s+(\d+(?:[.,]\d+)?)\s*(Btg|Pcs|Set|Lbr|Unit|Mtr|Roll)\s*$/i);if(m){d=m[1];q=parseFloat(m[2].replace(',','.'));u=m[3]}else d=r}
+ return {d:d.replace(/\s+/g,' ').trim(),q,u}})}
+function edTempelForm(si){
+ openModal('Tempel daftar item ke Section '+(si+1),fld('Daftar item','<textarea class="inp" name="teks" id="ed-tempel-teks" rows="10" placeholder="Cable Tray W100xH50xL3000 mm &#9; 50 &#9; Btg&#10;Elbow 90 W300xH100xR300 &#9; 20 &#9; Btg"></textarea>',true)+'<div class="note full">Satu item per baris. Dari Excel: kolom No, Description, Qty, Satuan (berat tidak perlu). Bentuk dan ukuran dikenali otomatis dan berat langsung dihitung; yang tidak dikenali masuk sebagai Teks bebas.</div>',
+ async d=>{const rows=edParseDaftar(d.teks);if(!rows.length)throw new Error('Tempel minimal satu baris.');
+  const sec=ED.sections[si],cap=edCap(sec);let ok=0,bebas=0;
+  sec.lines=sec.lines.filter(l=>String(l.d||'').trim()||(+l.q>0)||(l.dim&&Object.values(l.dim).some(v=>v!==''&&v!=null)));
+  for(const r of rows){const L=lineBaru(sec.h);L.q=r.q;if(r.u)L.u=r.u;const k=cap?edKenali(sec,cap,r.d):null;
+   if(k&&k.sh&&Object.keys(k.dim).length){L.sb=k.sh.id;L.dim=k.dim;L.lubang=lubangBawaan(cap);edHitungBaris(sec,L);ok++}else{L.sb='';delete L.dim;delete L.lubang;L.d=r.d;bebas++}
+   sec.lines.push(L)}
+  sec.lines.push(lineBaru(sec.h));EDDIRTY=true;rerenderSecs();toast(rows.length+' baris dimasukkan: '+ok+' terbaca otomatis'+(bebas?', '+bebas+' teks bebas':''))},{submit:'Masukkan',done:' '})}
+function renderTotals(){if(!spkDimBaru())return renderTotalsLama();const el=$('#ed-tot');if(!el||!ED)return;
+ let c=0,q=0,ke=0,kr=0,am=0,kos=0,man=0;
+ ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const k=edKgBaris(s,l,cap);if(!k)return;c++;q+=k.q;am+=k.am;if(k.kosong){if(k.q>0)kos++;return}ke+=k.ke;kr+=k.kr;if(k.manual)man++});edSecSum(si)});
+ const t=(x,cls,lab,tip)=>'<span class="eds '+cls+'"'+(tip?' title="'+tip+'"':'')+'><span>'+lab+'</span><b>'+x+'</b></span>';
+ el.innerHTML='<span class="edsum">'+t(c,'','Item')+t(n(q),'','Qty (Btg/Pcs)')+t(kgF(ke)+' Kg','e','Kg estimasi · plate (est)','Dipakai untuk permintaan plate ke Gudang Bahan Baku. Barang yang diambil dari stok tidak dihitung.')+t(kgF(kr)+' Kg','r','Kg real · barang jadi (real)','Berat barang jadi yang dikirim ke vendor finishing dan customer.')+(am?t(n(am),'','Dari stok'):'')+(man?t(man+' baris','w','Berat manual','Berat diisi manual: dipakai sama untuk estimasi dan real.'):'')+(kos?t(kos+' baris','w','Belum terhitung','Ukuran belum lengkap atau katalog berat belum terpasang.'):'')+'</span>'}
+function edSecHtml(s,si,startNo){if(spkDimBaru()&&edCap(s))return edSecHtmlR(s,si,startNo);
  const hb=parseH(s.h);let no=startNo;const cap=edCap(s);const RES=fgResMap(ED&&ED.id);
  const rows=s.lines.map((l,li)=>{no++;const bi=(+l.q||0)*(+l.w||0);return `<tr data-s="${si}" data-l="${li}"><td class="c-no">${no}</td>
   ${cap?edKolomItem(s,si,li,l,cap,hb):`<td class="c-d"><input class="inp" data-f="d" value="${esc(l.d)}" list="dl-desc" placeholder="Cable Tray W100xH50xL3000 mm" id="ed-d-${si}-${li}" autocomplete="off"></td>`}
@@ -4716,7 +4801,7 @@ function edSecHtml(s,si,startNo){
   <button type="button" class="btn sm ghost" data-act="ed-addline" data-s="${si}">${ic('plus')}Baris</button></div>`;
 }
 function edTotals(){let q=0,w=0,c=0;ED.sections.forEach(s=>s.lines.forEach(l=>{if(String(l.d).trim()){c++;q+= +l.q||0;w+=(+l.q||0)*(+l.w||0)}}));return {q,w,c}}
-function renderTotals(){const t=edTotals();const el=$('#ed-tot');if(!el)return;let ke=0,kr=0,ada=false;if(spkDimBaru()){ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const r=edKgPair(s,l,cap);if(r&&String(l.d).trim()){ada=true;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));ke+=r.kgPcsEst*(q-am);kr+=r.kgPcsReal*q}})})}
+function renderTotalsLama(){const t=edTotals();const el=$('#ed-tot');if(!el)return;let ke=0,kr=0,ada=false;if(spkDimBaru()){ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const r=edKgPair(s,l,cap);if(r&&String(l.d).trim()){ada=true;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));ke+=r.kgPcsEst*(q-am);kr+=r.kgPcsReal*q}})})}
  el.innerHTML=`<b>${t.c}</b> item · Total <b>${n(t.q)}</b> Btg/Pcs · <b>${n(Math.round(t.w*100)/100)}</b> Kg${t.w>=1000?` <span class="muted">(${ton(t.w)} ton)</span>`:t.w>0?` <span class="muted">(${n(Math.round(t.w/100)/10)} ton)</span>`:''}${ada?` · plate (est) <b>${n(Math.round(ke*100)/100)}</b> Kg · barang jadi (real) <b>${n(Math.round(kr*100)/100)}</b> Kg`:''}`}
 function renderEditor(){
  const e=ED,k=KAT();const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
@@ -4739,7 +4824,7 @@ function renderEditor(){
    <label class="fld"><span>Tebal</span><input class="inp" data-h="tebal" id="ed-tebal" value="${esc(e.tebal)}"></label>
    <label class="fld"><span>Type</span><input class="inp" data-h="type" id="ed-type" value="${esc(e.type)}"></label>
   </div><p class="note">Estimasi kirim dihitung dari tanggal + lead time hari kerja (Senin–Jumat). Ubah manual bila perlu.</p></section>
-  <section class="ecard"><div class="ecard-h"><h4>Item pekerjaan</h4><span class="note">Tips: copy baris dari Excel SPK lama (kolom No/Description/Qty/Satuan/Berat) lalu paste di kolom Description. Judul section kuning ikut terbaca. Pilihan Description, satuan, dan berat diambil dari <button type="button" class="linkbtn" data-act="katgo">Master Data › Item SPK</button>.</span></div>
+  <section class="ecard"><div class="ecard-h"><h4>Item pekerjaan</h4><span class="note">Tips: copy baris dari Excel SPK lama (kolom No/Description/Qty/Satuan/Berat) lalu paste di kolom Description. Judul section kuning ikut terbaca. Pilihan Description, satuan, dan berat diambil dari <button type="button" class="linkbtn" data-act="katgo">Master Data › Item SPK</button>.</span></div>${spkDimBaru()&&!edKatalogSiap()?'<div class="ro" style="margin:8px 14px">Katalog berat belum terpasang, jadi berat belum terhitung otomatis. Pasang di <a href="#master-data">Master Data › Katalog berat</a>. Sampai itu berat diisi manual.</div>':''}
    <div id="ed-secs" class="esecs">${secs}</div>
    <div class="ed-add"><button type="button" class="btn sm" data-act="ed-addsec">${ic('plus')}Section</button><button type="button" class="btn sm" data-act="ed-addacc">${ic('plus')}Section ACCS</button><button type="button" class="btn sm" data-act="ed-addcov">${ic('plus')}Section COVER</button></div></section>
   <section class="ecard"><h4>Catatan &amp; distribusi</h4><div class="egrid">
@@ -4797,10 +4882,11 @@ function edInput(e){
  if(f==='q'&&L.fg){const h=$('#ed-sh-'+si+'-'+li);if(h)h.textContent=edStokHint(L)}
  if(f==='w'){L.wsrc=t.value===''?'':'manual';wTag(tr,L)}
  if(f==='d')edStokRefresh(si,li);
+ if(f==='d'&&e.type==='change'&&spkDimBaru()&&!L.sb&&edKonversiTeks(si,li))return;
  if(f==='d'&&e.type==='change'){const k=KAT();
   if(!L.w||L.wsrc==='kalkulator'){const wi=weightInfo(L.d,ED.sections[si].h);if(wi&&wi.ok){L.w=Math.round(wi.beratSPK*1000)/1000;L.wsrc='kalkulator';tr.querySelector('[data-f=w]').value=L.w;wTag(tr,L);if(wi.catatan&&wi.catatan.length)toast('Berat dari kalkulator · '+wi.catatan.join('; '))}else if(L.wsrc==='kalkulator'){L.w='';L.wsrc='';tr.querySelector('[data-f=w]').value='';wTag(tr,L)}}
   if(!L.w){const w=beratOf(L.d,ED.sections[si].h);if(w){L.w=w;tr.querySelector('[data-f=w]').value=w}}if(k.satuan&&k.satuan[L.d]){L.u=k.satuan[L.d];tr.querySelector('[data-f=u]').value=L.u}/* fallback: fill satuan & berat from SPK history if not in master katalog */if(!L.u||!L.w){const hi=katIndex().arr.find(x=>x.d===L.d);if(hi){if(!L.u&&hi.u){L.u=hi.u;const uf=tr.querySelector('[data-f=u]');if(uf)uf.value=hi.u}if(!L.w&&hi.w&&hi.w['–']){L.w=hi.w['–'];const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=hi.w['–']}}}/* final fallback: hitung dari formula Excel weightCalc */if(!L.w){const wc=weightCalc(L.d,ED.sections[si].h);if(wc){L.w=wc;const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=wc}}}
- const bi=(+L.q||0)*(+L.w||0);tr.querySelector('[data-bi]').textContent=bi?n(bi):'–';renderTotals();
+ const bi=(+L.q||0)*(+L.w||0);tr.querySelector('[data-bi]').textContent=bi?n(bi):'–';edKgCells(tr,si,li);renderTotals();
  if(li===ED.sections[si].lines.length-1&&f==='d'&&t.value&&e.type==='input'&&!tr.nextElementSibling){ED.sections[si].lines.push(lineBaru(ED.sections[si].h));const id=t.id;const pos=t.selectionStart;rerenderSecs();const x=$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
 }
 /* baris terstruktur berubah (ukuran, lubang, qty): hitung nama dan berat, perbarui sel tanpa menggambar ulang agar fokus tetap */
@@ -4809,7 +4895,7 @@ function edBarisBerubah(tr,si,li,fokusDim){
  const nm=$('#ed-nm-'+si+'-'+li);if(nm)nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>';
  const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';edStokRefresh(si,li);
  const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=L.w===''?'':L.w;wTag(tr,L);
- const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';const kgEl=$('#ed-kg-'+si+'-'+li);if(kgEl)kgEl.innerHTML=edKgSub(s,L,edCap(s));renderTotals();
+ const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';const kgEl=$('#ed-kg-'+si+'-'+li);if(kgEl)kgEl.innerHTML=edKgSub(s,L,edCap(s));edKgCells(tr,si,li);renderTotals();
  /* baris terakhir mulai diisi: sediakan baris berikutnya */
  if(fokusDim&&li===s.lines.length-1&&!tr.nextElementSibling){s.lines.push(lineBaru(s.h));const id=document.activeElement&&document.activeElement.id;const pos=document.activeElement&&document.activeElement.selectionStart;rerenderSecs();const x=id&&$('#'+id);if(x){x.focus();try{x.setSelectionRange(pos,pos)}catch(_){}}}
 }
@@ -6017,6 +6103,8 @@ document.addEventListener('click',async e=>{
   case 'ed-close':if(EDDIRTY&&!el.dataset.sure){el.dataset.sure='1';el.textContent='Klik lagi: buang perubahan';return}closeEditor();break;
   case 'ed-save':saveEditor(ds.mode);break;
   case 'ed-addline':ED.sections[+ds.s].lines.push(lineBaru(ED.sections[+ds.s].h));rerenderSecs();{const x=$(`#ed-d-${ds.s}-${ED.sections[+ds.s].lines.length-1}`);x&&x.focus()}break;
+  case 'ed-tempel':edTempelForm(+ds.s);break;
+  case 'ed-det':{const L=ED.sections[+ds.s].lines[+ds.l];L.det=!L.det;const d=$('#ed-det-'+ds.s+'-'+ds.l);if(d)d.hidden=!L.det;const b=el;if(b&&b.setAttribute)b.setAttribute('aria-expanded',String(!!L.det));break}
   case 'ed-delline':{const L=ED.sections[+ds.s].lines;L.splice(+ds.l,1);if(!L.length)L.push(lineBaru(ED.sections[+ds.s].h));EDDIRTY=true;rerenderSecs();break}
   case 'ed-addsec':ED.sections.push({h:ED.sections[ED.sections.length-1].h,lines:[lineBaru(ED.sections[ED.sections.length-1].h),lineBaru(ED.sections[ED.sections.length-1].h)]});EDDIRTY=true;rerenderSecs();break;
   case 'ed-stok-pakai':{const sc=ED.sections[+ds.s],L=sc.lines[+ds.l],c=fgCocokUrut(sc,L)[0];if(c){const ts=(calc().stock.fg[c._id]||0)-(fgResMap(ED.id)[c._id]||0),q=+L.q||0;if(ts<=0){toast('Stok tersedia 0 (habis atau dicadangkan SPK lain); tidak bisa dipakai.');break}L.fg=c._id;L.ambil=Math.max(0,Math.min(q>0?q:ts,ts))||'';EDDIRTY=true;rerenderSecs()}break}

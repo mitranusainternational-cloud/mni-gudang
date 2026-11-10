@@ -9,7 +9,7 @@ status: active
 progress: 0
 tasks_total: 7
 tasks_done: 0
-updated: 2026-11-09
+updated: 2026-11-10
 ---
 
 # E-10 Kualitas data dan kontrol stok
