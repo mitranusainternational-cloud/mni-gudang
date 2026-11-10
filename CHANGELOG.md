@@ -6,6 +6,12 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Diubah (produksi hulu ke hilir, 2026-11-10)
+- Work Centre bawaan selaras dengan rute (Shearing, Punching, Bending, CNC Laser, Welding); banner WC hilang punya tombol Tambahkan otomatis.
+- Produksi Hari Ini menampilkan Akan datang ke WC sejak SPK terbit; tab Progres WC di Kinerja & Analisa (tabel per WC, matriks SPK x WC, CSV).
+- Kg/pcs terkunci di editor SPK tampil berkoma 2 desimal.
+- Cek Data memperingatkan item SPK tanpa rute produksi atau rute dengan Work Centre yang tidak ada; panduan cara kerja rute per item.
+
 ### Diubah (editor SPK ringkas, 2026-11-10)
 - Baris SPK lebih ringkas: bentuk, ukuran, qty; Kg estimasi (plate) dan Kg real (barang jadi) langsung tampil per baris, section, dan ringkasan. Catatan, vendor, dan produk stok ada di menu ⋯; stok sebagai angka dengan tombol Pakai stok.
 - Berat hasil kalkulator tidak bisa diketik; deskripsi teks dikenali otomatis dan ada Tempel daftar dari Excel.

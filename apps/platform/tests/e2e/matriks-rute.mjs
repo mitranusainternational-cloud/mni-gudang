@@ -28,14 +28,15 @@ export async function runMatriksRute(page, base) {
     await page.evaluate((c) => { window.MNIBerat.setKatalog(c); }, kat);
 
     // MR-01 banner: rute standar memakai Work Centre yang belum ada di master mock
+    // master mock kini lengkap; ganti nama tiga WC supaya rute tidak menemukannya
+    await page.evaluate(async () => { for (const w of S.mwc.filter((x) => ['Shearing', 'Punching', 'CNC Laser'].includes(x.nama))) await updDoc('mwc', w._id, { nama: 'Lama-' + w.nama }); });
+    await wait(1200);
     await bukaMatriks();
     const t1 = await page.evaluate(() => (document.querySelector('#body') || document.body).innerText.replace(/\s+/g, ' '));
-    ok('MR-01 Work Centre master belum memuat Shearing, Punching, CNC Laser: banner menyebutnya', /Rute memakai Work Centre yang belum ada di Master Data/.test(t1) && /Shearing/.test(t1) && /CNC Laser/.test(t1), t1.slice(0, 200));
+    ok('MR-01 Work Centre master tanpa Shearing, Punching, CNC Laser: banner menyebutnya', /Rute memakai Work Centre yang belum ada di Master Data/.test(t1) && /Shearing/.test(t1) && /CNC Laser/.test(t1), t1.slice(0, 200));
 
     // tambah Work Centre yang kurang
-    await page.evaluate(async () => {
-      for (const [i, nm] of ['Shearing', 'Punching', 'CNC Laser'].entries()) await addDoc('mwc', { kode: 'WC-MR' + i, nama: nm, tipe: 'Internal', urutan: i + 1, aktif: true, ket: '', mesin: [] });
-    });
+    await page.evaluate(async () => { for (const w of S.mwc.filter((x) => /^Lama-/.test(x.nama))) await updDoc('mwc', w._id, { nama: w.nama.replace(/^Lama-/, '') }); });
     await wait(1200);
     await bukaMatriks();
 

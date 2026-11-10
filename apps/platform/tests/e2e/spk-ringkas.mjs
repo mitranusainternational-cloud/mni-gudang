@@ -54,6 +54,10 @@ export async function runSpkRingkas(page, base) {
     const fmt = (x) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Math.round(x * 100) / 100);
     ok('RK-03 isi W H L dan qty: Kg est dan Kg real muncul langsung (sama dengan katalog), berat/pcs tidak bisa diketik, subtotal section dan ringkasan ikut', !!pcs && r3.ke === fmt(pcs.e * 50) && r3.kr === fmt(pcs.r * 50) && r3.ro === true && r3.sec.includes(fmt(pcs.e * 50)) && r3.tot.includes(fmt(pcs.e * 50)) && r3.tot.includes(fmt(pcs.r * 50)), JSON.stringify({ r3, pcs }));
 
+    // RK-03b Kg/pcs terkunci tampil 2 desimal berkoma (bukan 13.513 yang terbaca ribuan)
+    const w3 = await page.evaluate(() => { const i = document.querySelector('tr[data-l="0"] [data-f=w]'); return { v: i.value, type: i.type, ro: i.readOnly }; });
+    ok('RK-03b Kg/pcs terkunci tampil berkoma 2 desimal, bukan titik ribuan', !!pcs && w3.type === 'text' && w3.ro === true && w3.v === fmt(pcs.r) && !/.d{3}$/.test(w3.v), JSON.stringify(w3));
+
     // RK-04 badge vendor di header section
     const b4 = await sel('#ed-sv-0');
     ok('RK-04 header section menampilkan vendor otomatis dari finishing (→ vendor ELG)', /vendor ELG/.test(b4), b4);

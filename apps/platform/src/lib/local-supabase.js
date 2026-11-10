@@ -37,7 +37,7 @@ function seed() {
     ['viewer@mni.local', 'Viewer Lokal', 'viewer'],
     ['sales@mni.local', 'Sales Lokal', 'sales'],
   ].map(([email, nama, role]) => base({ email, nama, role, aktif: true }));
-  db.mwc = [['CNC', 'CNC Cutting', 'Internal', 1], ['BENDING', 'Bending', 'Internal', 2], ['WELDING', 'Welding', 'Internal', 3],
+  db.mwc = [['SHEARING', 'Shearing', 'Internal', 1], ['PUNCHING', 'Punching', 'Internal', 2], ['BENDING', 'Bending', 'Internal', 3], ['CNC', 'CNC Laser', 'Internal', 4], ['WELDING', 'Welding', 'Internal', 5],
     ['COATING', 'Coating / Painting', 'Internal', 5], ['QC', 'Quality Control', 'Internal', 6], ['PACKING', 'Packing', 'Internal', 7]]
     .map(([kode, nama, tipe, urutan]) => base({ kode, nama, tipe, urutan, aktif: true }));
   db.mcustomer = [['CUS-A', 'Customer Contoh A'], ['CUS-B', 'Customer Contoh B']].map(([kode, nama]) => base({ kode, nama, aktif: true }));

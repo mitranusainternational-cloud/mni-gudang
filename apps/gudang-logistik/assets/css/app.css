@@ -346,6 +346,7 @@ table.pp .ws{vertical-align:top}
 .cd-area.info{border-color:var(--info);background:var(--info-soft)}
 .cd-area.ok{border-color:var(--ok);background:var(--ok-soft)}
 .cd-area-lbl{font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.cd-area.crit .cd-area-lbl,.cd-area.warn .cd-area-lbl,.cd-area.info .cd-area-lbl{color:var(--fg)}
 .cd-area-cnt{font-size:22px;font-weight:700;font-family:var(--f-mono);line-height:1}
 .cd-area.ok .cd-area-cnt{color:var(--ok)}
 .cd-area.crit .cd-area-cnt{color:var(--crit)}

@@ -1263,8 +1263,8 @@ async function lapAnalisaCsv(){
  try{await DLS.save({filename:`Laporan-produksi-${by}-${per.sampai}.csv`,data:new Blob([csv],{type:'text/csv'})})}catch(e){if(e.code!=='declined')toast('Gagal mengunduh: '+(e.message||e.code))}
 }
 
-const tabKinerja=()=>segBtns('produksi','tab',[['wc','Work Center'],['laporan','Laporan Produksi'],['produk','Produk'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]);
-T['produksi']=()=>{const f=F['produksi'];if(f.tab==='rincian')return tabKinerja()+'<span class="grow"></span>'+T['laporan-produksi']();if(f.tab==='laporan')return tabKinerja()+'<span class="grow"></span><button class="btn ghost" data-act="lapacsv">'+ic('dl')+' Unduh CSV</button>';const per=['wc','produk','kirim'].includes(f.tab)?segBtns('produksi','hari',[['7','7 hari'],['14','14 hari'],['30','30 hari'],['90','90 hari']]):'';return tabKinerja()+per+'<span class="grow"></span>'+(f.tab==='wc'?'<button class="btn ghost" data-act="csv" data-what="prodlog">'+ic('dl')+' CSV Log</button>':'')};
+const tabKinerja=()=>segBtns('produksi','tab',[['wc','Work Center'],['laporan','Laporan Produksi'],['progres','Progres WC'],['produk','Produk'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]);
+T['produksi']=()=>{const f=F['produksi'];if(f.tab==='progres'){const ws=wcInternal();if(!f.pwc||!ws.some(w=>w.nama===f.pwc))f.pwc=(ws[0]||{}).nama||'';return tabKinerja()+'<div class="tb-group"><div class="tb-lbl">Work Centre</div><select class="sel" id="f-pwc" data-act="filtsel" data-view="produksi" data-key="pwc">'+ws.map(w=>'<option'+(f.pwc===w.nama?' selected':'')+'>'+esc(w.nama)+'</option>').join('')+'</select></div><span class="grow"></span><button class="btn ghost" data-act="progcsv">'+ic('dl')+' Unduh CSV</button>'}if(f.tab==='rincian')return tabKinerja()+'<span class="grow"></span>'+T['laporan-produksi']();if(f.tab==='laporan')return tabKinerja()+'<span class="grow"></span><button class="btn ghost" data-act="lapacsv">'+ic('dl')+' Unduh CSV</button>';const per=['wc','produk','kirim'].includes(f.tab)?segBtns('produksi','hari',[['7','7 hari'],['14','14 hari'],['30','30 hari'],['90','90 hari']]):'';return tabKinerja()+per+'<span class="grow"></span>'+(f.tab==='wc'?'<button class="btn ghost" data-act="csv" data-what="prodlog">'+ic('dl')+' CSV Log</button>':'')};
 const _tProdLama=()=>{
  const f=F['produksi']||(F['produksi']={wc:'',p:'aktif'});
  const wcOpts=[['','Semua WC'],...S.mwc.filter(x=>x.aktif!==false).sort((a,b)=>a.urutan-b.urutan).map(w=>[w.kode,w.nama])];
@@ -1281,6 +1281,7 @@ B['produksi']=()=>{
  const f0=F['produksi']||(F['produksi']={wc:'',p:'aktif',tab:'wc'});
  if(f0.tab==='rincian')return B['laporan-produksi']();
  if(f0.tab==='laporan')return laporanAnalisa();
+ if(f0.tab==='progres')return progresWcHtml();
  if(!PXL())return empty('Belum siap','Muat ulang halaman.');
  if(f0.tab==='vendor')return analisaVendor();
  if(f0.tab==='produk')return analisaProduk();
@@ -2462,7 +2463,7 @@ function ruteMatriksTab(){const P=PXL(),wcs=wcInternal(),ok=canManage(),q=String
   rows+=baris(p,p,'rute standar produk (semua komponen yang tidak diatur khusus)',{rute:peta[p]||[],sumber:peta[p]?'produk':'belum'},false);
   rb.forEach(b=>{const rk=p+'|'+b.kunci,e=ruteEfektif(p,b.kunci,b.nama);rows+=baris(rk,'\u00a0\u00a0\u00a0\u21b3 '+b.nama,'',e,!!(peta[rk]&&peta[rk].length))})});
  const hilang=ruteWcHilang();
- const banner=hilang.length?`<div class="ro" style="margin-bottom:10px"><b>Rute memakai Work Centre yang belum ada di Master Data:</b> ${hilang.map(esc).join(', ')}. Antrian untuk langkah itu tidak muncul di Produksi Hari Ini. Tambahkan atau samakan namanya di tab Work Centre.</div>`:'';
+ const banner=hilang.length?`<div class="ro" style="margin-bottom:10px"><b>Rute memakai Work Centre yang belum ada di Master Data:</b> ${hilang.map(esc).join(', ')}. Antrian untuk langkah itu tidak muncul di Produksi Hari Ini. <button type="button" class="btn sm" data-act="wcfix">Tambahkan otomatis</button> atau samakan namanya di tab Work Centre.</div>`:'';
  const tanpaKat=!ruteBentukDaftar(produk[0]||'').length?'<div class="note" style="margin:6px 0">Daftar komponen muncul setelah katalog berat terpasang (Master Data › Katalog berat).</div>':'';
  return `<section class="panel"><div class="pbody note">Centang Work Centre yang dilewati. Baris komponen (↳) ikut rute produk atau aturan khusus; mengubah centangnya membuat rute kustom untuk komponen itu, dan tombol Pulihkan mengembalikannya. Langkah vendor finishing otomatis dari finishing dan material, tidak diatur di sini. Urutan langkah mengikuti urutan Work Centre.</div>${banner}${tanpaKat}
  <div class="tbl-wrap"><table id="rute-tabel"><thead><tr><th>Produk / komponen</th>${wcs.map(w=>`<th style="text-align:center">${esc(w.nama)}</th>`).join('')}<th>Sumber</th><th>Rute</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="99" class="muted">Tidak ada yang cocok dengan pencarian.</td></tr>'}</tbody></table></div></section>`}
@@ -2538,6 +2539,14 @@ async function seedWc(){
  if(S.mwc.length>0)return;
  for(const w of WC_SEED)await addDoc('mwc',{...w,aktif:true,ket:'',mesin:mesinSeedDari(w.nama)});
  toast('10 Work Centre default berhasil ditambahkan, lengkap dengan mesinnya');
+}
+/* Tambahkan Work Centre yang dipakai rute tetapi belum ada di Master Data (nama harus sama dengan nama langkah rute) */
+async function seedWcHilang(){
+ const h=ruteWcHilang();if(!h.length){toast('Semua Work Centre rute sudah ada');return}
+ let u=Math.max(0,...S.mwc.map(w=>+w.urutan||0));
+ for(const nama of h){u++;const ada=WC_SEED.find(x=>x.nama.toLowerCase()===nama.toLowerCase());
+  await addDoc('mwc',{kode:ada?ada.kode:'WC-'+nama.toUpperCase().replace(/[^A-Z0-9]+/g,'-').slice(0,10),nama,tipe:'Internal',urutan:ada?ada.urutan:u,aktif:true,ket:'',mesin:mesinSeedDari(nama)})}
+ toast(h.length+' Work Centre ditambahkan: '+h.join(', ')+'. Lengkapi mesin dan kapasitas lewat Ubah.');
 }
 async function seedMesin(){
  let k=0;for(const w of S.mwc){if(Array.isArray(w.mesin)&&w.mesin.length)continue;const m=mesinSeedDari(w.nama);if(!m.length)continue;await updDoc('mwc',w._id,{mesin:m});k++}
@@ -2633,6 +2642,32 @@ function wcAktifItems(){
  return out;
 }
 const evTgl=e=>e.tgl||String(e.at||'').slice(0,10);
+/* Progres per Work Centre: tiap item aktif yang rutenya melewati WC itu, dengan target, sudah sampai, selesai, siap, belum sampai, dan tanggal terakhir dicatat */
+function progresWcRows(wc){
+ const P=PXL();if(!P)return [];const ev=evIdx();
+ return wcAktifItems().map(it=>{const i=P.indeksLangkah(it.rute,it.alt,wc);if(i<0)return null;
+  const a=P.antrianPerLangkah(it.rute,it.kum,it.qty)[i];const terakhir=(ev[it.spkId+'|'+it.idx]||[]).filter(e=>P.indeksLangkah(it.rute,it.alt,e.wc)===i).map(evTgl).sort().pop()||'';
+  const status=a.selesai>=it.qty?'Selesai':a.antri>0?'Siap':'Menunggu';
+  return {spk:it.spk,customer:it.customer,item:it.item,satuan:it.satuan,due:it.due,total:it.qty,masuk:a.masuk,selesai:a.selesai,antri:a.antri,belum:Math.max(0,it.qty-a.masuk),pct:it.qty>0?Math.min(100,Math.round(a.selesai/it.qty*100)):0,status,terakhir,langkah:it.rute.filter(w=>!P.langkahVendor(w)).join(' › ')}}).filter(Boolean)
+  .sort((x,y)=>(x.due||'9999').localeCompare(y.due||'9999')||String(x.spk).localeCompare(String(y.spk)));
+}
+const progStCls={Selesai:'ok',Siap:'warn',Menunggu:'plain'};
+function progresWcHtml(){
+ const P=PXL();if(!P)return empty('Belum siap','Muat ulang halaman.');
+ const f=F['produksi'];const wc=f.pwc;const ws=wcInternal();if(!ws.length)return empty('Belum ada Work Centre internal','Isi Work Centre di Master Data.');
+ const rows=progresWcRows(wc);const sum=k=>rows.reduce((a,r)=>a+r[k],0);
+ const kt=[['Item di WC ini',n(rows.length),rows.filter(r=>r.status==='Selesai').length+' selesai'],['Siap dikerjakan',n(sum('antri')),rows.filter(r=>r.status==='Siap').length+' item'],['Akan datang',n(sum('belum')),rows.filter(r=>r.belum>0).length+' item belum sampai'],['Sudah selesai',n(sum('selesai')),'dari '+n(sum('total'))+' target']];
+ const kpi='<div class="kpi-row">'+kt.map(([l,v,s],i)=>'<div class="kpi'+(i===1?' warn':i===3?' ok':' info')+'"><span class="lb">'+l+'</span><span class="v">'+v+'</span><span class="s">'+esc(s)+'</span></div>').join('')+'</div>';
+ const tbl=rows.length?'<table id="prog-tabel"><thead><tr><th>SPK</th><th>Item</th><th>Rute</th><th class="num">Target</th><th class="num">Sudah sampai</th><th class="num">Selesai di '+esc(wc)+'</th><th class="num">Siap</th><th class="num">Belum sampai</th><th>Progres</th><th>Terakhir</th><th>Due</th><th>Status</th></tr></thead><tbody>'+rows.map(r=>'<tr data-spk="'+esc(String(r.spk))+'"><td><b>'+esc(String(r.spk))+'</b><div class="note">'+esc(r.customer||'')+'</div></td><td>'+esc(r.item)+'</td><td class="note">'+esc(r.langkah)+'</td><td class="num">'+n(r.total)+'</td><td class="num">'+n(r.masuk)+'</td><td class="num"><b>'+n(r.selesai)+'</b></td><td class="num">'+n(r.antri)+'</td><td class="num">'+n(r.belum)+'</td><td><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;min-width:60px;height:8px;background:var(--surface-2);border-radius:4px"><div style="width:'+r.pct+'%;height:8px;background:var(--ok);border-radius:4px"></div></div><span>'+r.pct+'%</span></div></td><td>'+(r.terakhir?fd(r.terakhir):'–')+'</td><td>'+(r.due?fd(r.due):'–')+'</td><td>'+chip(r.status,progStCls[r.status]||'')+'</td></tr>').join('')+'</tbody></table>':'<div class="muted" style="padding:20px;text-align:center">Belum ada item aktif yang rutenya melewati '+esc(wc)+'.</div>';
+ const items=wcAktifItems();const cols=ws.map(w=>w.nama);
+ const mt=items.length?'<table id="prog-matriks"><thead><tr><th>SPK</th><th>Item</th>'+cols.map(c=>'<th class="num">'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+items.map(it=>'<tr><td><b>'+esc(String(it.spk))+'</b><div class="note">'+esc(it.customer||'')+'</div></td><td>'+esc(it.item)+'</td>'+cols.map(c=>{const i=P.indeksLangkah(it.rute,it.alt,c);if(i<0)return '<td class="num muted">–</td>';const a=P.antrianPerLangkah(it.rute,it.kum,it.qty)[i];const cls=a.selesai>=it.qty?'ok':a.antri>0?'warn':'muted';return '<td class="num '+cls+'">'+n(a.selesai)+'/'+n(it.qty)+'</td>'}).join('')+'</tr>').join('')+'</tbody></table>':'<div class="muted" style="padding:16px;text-align:center">Belum ada SPK aktif dengan rute produksi.</div>';
+ return kpi+'<section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:0 0 6px 0">Progres item di '+esc(wc)+'</div><div class="tbl-wrap">'+tbl+'</div></div></section><section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:0 0 6px 0">Matriks progres semua SPK per Work Centre (selesai / target)</div><div class="tbl-wrap">'+mt+'</div><div class="note" style="margin-top:6px">Hijau: selesai di langkah itu. Kuning: ada yang siap dikerjakan. Tanda – : item tidak melewati WC itu.</div></div></section>';
+}
+async function progCsv(){
+ const wc=(F['produksi']||{}).pwc;const rows=progresWcRows(wc);const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const csv=['SPK,Customer,Item,Rute,Target,Sudah sampai,Selesai,Siap,Belum sampai,Progres %,Terakhir,Due,Status',...rows.map(r=>[r.spk,r.customer,r.item,r.langkah,r.total,r.masuk,r.selesai,r.antri,r.belum,r.pct,r.terakhir,r.due,r.status].map(q).join(','))].join('\n');
+ try{await DLS.save({filename:'Progres-'+fnSafe(wc)+'-'+today()+'.csv',data:new Blob([csv],{type:'text/csv'})})}catch(e){if(e.code!=='declined')toast('Gagal mengunduh: '+(e.message||e.code))}
+}
 function lamaFromEvents(){
  const arr=[];S.spk.forEach(s=>(s.items||[]).forEach((it,idx)=>{const ev=evIdx()[s._id+'|'+idx];if(!ev||!ev.length)return;const r=itemRute(it);if(r.length){const al=itemRuteInfo(it).alt;arr.push({qty:+it.q||0,rute:r,tglSpk:s.tgl,kejadian:ev.map(e=>({wc:r[PXL().indeksLangkah(r,al,e.wc)]||e.wc,qty:+e.qty||0,at:e.at}))})}}));
  return PXL().lamaProsesWC(arr);
@@ -2731,6 +2766,19 @@ function antrianMesin(wc){
  const P=PXL();
  return wcAktifItems().map(it=>{const i=P.indeksLangkah(it.rute,it.alt,wc);if(i<0)return null;const a=P.antrianPerLangkah(it.rute,it.kum,it.qty)[i];return a&&a.antri>0?{it,a,langkah:it.rute[i],alt:it.rute[i]!==wc}:null}).filter(Boolean)
   .sort((x,y)=>(x.it.due||'9999').localeCompare(y.it.due||'9999')||String(x.it.spk).localeCompare(String(y.it.spk)));
+}
+/* Item yang rutenya melewati work center ini tetapi belum (seluruhnya) sampai: langsung terlihat sejak SPK terbit, lengkap dengan posisinya sekarang */
+function akanDatangMesin(wc){
+ const P=PXL();if(!P)return [];
+ return wcAktifItems().map(it=>{const i=P.indeksLangkah(it.rute,it.alt,wc);if(i<0)return null;
+  const masuk=i===0?it.qty:it.kum[it.rute[i-1]];const belum=Math.max(0,it.qty-masuk);if(belum<=0)return null;
+  const prev=it.rute[i-1];const posisi=P.antrianPerLangkah(it.rute,it.kum,it.qty).filter((s,k)=>k<i&&s.antri>0&&!P.langkahVendor(s.wc));
+  return {it,belum,masuk,total:it.qty,prev,posisi:posisi.map(s=>s.wc+' '+s.antri).join(', ')}}).filter(Boolean)
+  .sort((x,y)=>(x.it.due||'9999').localeCompare(y.it.due||'9999')||String(x.it.spk).localeCompare(String(y.it.spk)));
+}
+function akanDatangHtml(wc){
+ const r=akanDatangMesin(wc);if(!r.length)return '';
+ return `<section class="panel po-akan"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:0 0 6px 0">Akan datang ke ${esc(wc)} (${r.length} item, belum sampai)</div><div class="tbl-wrap"><table id="mesin-akan"><thead><tr><th>SPK</th><th>Item</th><th class="num">Total</th><th class="num">Sudah sampai</th><th class="num">Belum sampai</th><th>Posisi sekarang</th><th>Due</th></tr></thead><tbody>${r.map(x=>`<tr data-spk="${esc(String(x.it.spk))}"><td><b>${esc(String(x.it.spk))}</b><div class="note">${esc(x.it.customer||'')}</div></td><td>${esc(x.it.item)}</td><td class="num">${n(x.total)}</td><td class="num">${n(x.masuk)}</td><td class="num"><b>${n(x.belum)}</b></td><td>${x.posisi?esc(x.posisi):'<span class="muted">menunggu '+esc(x.prev||'mulai')+'</span>'}</td><td>${x.it.due?fd(x.it.due):'–'}</td></tr>`).join('')}</tbody></table></div><div class="note" style="margin-top:6px">Item masuk ke antrian di atas begitu langkah sebelumnya mencatat hasil.</div></div></section>`;
 }
 const mesinKey=it=>it.spkId+'|'+it.idx;
 function mesinCtx(k){const [sid,ix]=String(k).split('|');const s=byId('spk',sid);const it=s&&(s.items||[])[+ix];if(!it)return null;const st=itemState(s,it,+ix);return st?{s,it,ix:+ix,st}:null}
@@ -2836,7 +2884,7 @@ B.mesin=()=>{
  const riwayat=terakhir.length?`<section class="panel po-riw"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:0 0 6px 0">Catatan terakhir di ${esc(p.mesin)} hari ini</div><div class="tbl-wrap"><table id="mesin-riwayat"><thead><tr><th>Jam</th><th>SPK dan customer</th><th>Item</th><th class="num">Selesai</th><th class="num">Reject</th><th>Operator</th><th></th></tr></thead><tbody>${terakhir.map(e=>`<tr><td class="mono">${esc(e.selesai?P.jamLokal(e.selesai):'')}</td><td><b>${esc(String(e.spk_no||''))}</b><div class="note">${esc(e.customer||'')}</div></td><td>${esc(e.item_desc||'')}</td><td class="num rq">${n(+e.qty||0)}</td><td class="num">${+e.reject?n(+e.reject):''}</td><td>${esc(e.operator||'')}</td><td class="act"><button class="btn sm ghost danger" data-act="mesinvoid" data-id="${esc(idEv(e))}">Batalkan</button></td></tr>`).join('')}</tbody></table></div><div class="note" style="margin-top:6px">Salah input? Batalkan catatan lalu catat ulang. Catatan yang dibatalkan tetap tersimpan sebagai riwayat dan tidak dihitung.</div></div></section>`:'';
  const kiri=sesAll.length?`<div class="po-run">${sesiHtml}</div>`:'';
  const idle=sesAll.length?'':`<div class="po-idle"><b>${esc(p.mesin)}</b> sedang kosong. Pilih item di bawah lalu tekan <b>Mulai</b>. Kalau pekerjaannya sudah selesai, tekan <b>Catat</b>.</div>`;
- return `<div class="po">${strip}${idle}<div class="po-main${sesAll.length?' has-run':''}">${kiri}<div class="po-q"><div class="po-qh"><h3>Antrian di ${esc(p.wc)}</h3><span class="muted">${rows.length} item · ${n(antri)} siap dikerjakan</span></div>${antrian}</div></div>${riwayat}<details class="panel mq-help"><summary>Cara pakai</summary><div class="pbody note">Tekan <b>Mulai</b> saat mengerjakan item. Isi jumlah yang selesai dengan tombol + dan −, lalu <b>Selesai</b>; tombol Selesai menyebut jumlah yang akan disimpan, dan kalau jumlah dikosongkan yang disimpan adalah semua yang siap. Tanggal dan jam terisi otomatis. Kalau baru sebagian yang jadi, pakai <b>Simpan sebagian, lanjut</b>. Lupa menekan Mulai: pakai <b>Catat</b> (waktu bisa diatur bila perlu). Satu mesin boleh mengerjakan beberapa item, dan satu item boleh dikerjakan beberapa mesin; batang yang sedang dikerjakan mesin lain tidak ditawarkan lagi. Reject tidak lanjut ke mesin berikutnya dan muncul lagi di antrian awal. Urut menurut due date terdekat.</div></details></div>`;
+ return `<div class="po">${strip}${idle}<div class="po-main${sesAll.length?' has-run':''}">${kiri}<div class="po-q"><div class="po-qh"><h3>Antrian di ${esc(p.wc)}</h3><span class="muted">${rows.length} item · ${n(antri)} siap dikerjakan</span></div>${antrian}</div></div>${akanDatangHtml(p.wc)}${riwayat}<details class="panel mq-help"><summary>Cara pakai</summary><div class="pbody note">Tekan <b>Mulai</b> saat mengerjakan item. Isi jumlah yang selesai dengan tombol + dan −, lalu <b>Selesai</b>; tombol Selesai menyebut jumlah yang akan disimpan, dan kalau jumlah dikosongkan yang disimpan adalah semua yang siap. Tanggal dan jam terisi otomatis. Kalau baru sebagian yang jadi, pakai <b>Simpan sebagian, lanjut</b>. Lupa menekan Mulai: pakai <b>Catat</b> (waktu bisa diatur bila perlu). Satu mesin boleh mengerjakan beberapa item, dan satu item boleh dikerjakan beberapa mesin; batang yang sedang dikerjakan mesin lain tidak ditawarkan lagi. Reject tidak lanjut ke mesin berikutnya dan muncul lagi di antrian awal. Urut menurut due date terdekat.</div></details></div>`;
 };
 
 const klasProduk=c=>{const k=PXL().klasifikasi(c.it.g,c.it.d,c.s.material);return {kelompok:k.kelompok,tipe:k.tipe,material:k.material,finishing:k.finishing}};
@@ -3176,6 +3224,15 @@ function dataIssues(){
  /* ── PR / PURCHASING ── */
  if(S.pr)S.pr.filter(p=>p.status==='Open'&&p.tgl&&days(p.tgl,t)>7).forEach(p=>
   add(2,'PR',`PR ${esc(p.no||p._id)} sudah ${days(p.tgl,t)} hari belum diproses`,`${esc(p.item||'')} · ${n(p.qty||0)} ${esc(p.sat||'')} · dibuat ${fd(p.tgl)}`,`data-act="go" data-href="bahan-baku">Lihat PR`,'Kebutuhan bahan baku mungkin tertunda'));
+
+ /* ── PRODUKSI: item yang tidak akan muncul di antrian Work Centre manapun ── */
+ {const P=PXL();if(P){const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const c=calc();
+  S.spk.forEach(s=>{const x=c.spk[s._id];if(!x||x.st==='Selesai'||x.st==='Draft'||s.status==='Batal')return;
+   const tanpa=[],asing=new Set();
+   (s.items||[]).forEach((it,i)=>{const r=itemRuteInfo(it).rute;if(!r.length){tanpa.push(it.d||('baris '+(i+1)));return}
+    r.forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))asing.add(w)})});
+   if(tanpa.length)add(3,'Produksi',`SPK ${esc(String(s.no))}: ${tanpa.length} item tanpa rute produksi`,`Tidak muncul di antrian Work Centre manapun: ${tanpa.slice(0,3).map(esc).join('; ')}${tanpa.length>3?' dan lainnya':''}. Pastikan judul section memuat produk (mis. CABLE TRAY TYPE STU) atau atur rute di Master Data › Rute produksi.`,`data-act="go" data-href="master-data">Buka Master Data`,'Item ini tidak bisa dicatat operator dan progresnya tidak terhitung');
+   if(asing.size)add(3,'Produksi',`SPK ${esc(String(s.no))}: rute memakai Work Centre yang tidak ada di Master Data`,[...asing].map(esc).join(', ')+'. Antrian untuk langkah itu tidak muncul.',`data-act="wcfix">Tambahkan otomatis`,'Operator di Work Centre itu tidak melihat item ini')})}}
 
  /* ── KATALOG ── */
  {const X=katIndex();
@@ -4537,7 +4594,7 @@ function beratOf(d,h){const k=KAT().berat||{};const t=thkOf(h);if(k[d+'|'+t])ret
    lebih baik kosong (diisi manual) daripada angka perkiraan yang salah. */
 function weightInfo(desc,sectionHeader){bjHook();const B=window.MNIBerat;if(!B||!B.siap())return null;return B.hitungItem({judulSection:sectionHeader,deskripsi:desc,material:ED?ED.material:'',tebal:ED?(parseFloat(ED.tebal)||null):null})}
 function weightCalc(desc,sectionHeader){const r=weightInfo(desc,sectionHeader);return r&&r.ok?Math.round(r.beratSPK*1000)/1000:0}
-function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;if(tr.closest('.edr')){const wi=td.querySelector('[data-f=w]');if(wi){const ro=!!(L.sb&&edKatalogSiap());wi.readOnly=ro;wi.tabIndex=ro?-1:0}}let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
+function wTag(tr,L){const td=tr.querySelector('.c-w');if(!td)return;if(tr.closest('.edr')){const wi=td.querySelector('[data-f=w]');if(wi){const ro=!!(L.sb&&edKatalogSiap());wi.readOnly=ro;wi.tabIndex=ro?-1:0;/* terkunci: tampil 2 desimal berkoma (13,51), bukan 13.513 */if(ro){wi.type='text';wi.value=(+L.w)?kgF(L.w):''}else{if(wi.type!=='number'){wi.type='number';wi.value=L.w===''||L.w==null?'':L.w}}}}let s=td.querySelector('.wtag');if(!L.wsrc){if(s)s.remove();return}
  if(!s){s=document.createElement('span');td.appendChild(s)}s.className='wtag '+L.wsrc;s.textContent=L.wsrc==='kalkulator'?'auto':'manual';s.title=L.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat. Ubah angkanya untuk menimpa.':'Diisi atau diubah manual.'}
 /* hitung ulang baris yang berat otomatisnya bergantung pada judul section, material, atau tebal; yang manual tidak disentuh */
 function edHitungUlang(){let k=0;for(const s of ED.sections){k+=edSesuaikanBaris(s);for(const l of s.lines){if(l.sb)continue;if(!l.d||!(l.wsrc==='kalkulator'||(!l.w&&!l.wsrc)))continue;const wi=weightInfo(l.d,s.h);if(wi&&wi.ok){const w=Math.round(wi.beratSPK*1000)/1000;if(w!==l.w||l.wsrc!=='kalkulator'){l.w=w;l.wsrc='kalkulator';k++}}}}
@@ -4569,7 +4626,7 @@ function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==u
 /* Langkah rute (rute standar dan rute khusus) yang namanya tidak ada di Work Centre master: antrian langkah itu tidak akan muncul di Produksi Hari Ini. */
 function ruteWcHilang(){const P=PXL();if(!P)return [];const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const miss=new Set();Object.values(ruteStd()).forEach(r=>(r||[]).forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))miss.add(w)}));return [...miss]}
 const _bMesinAsli=B.mesin;
-B.mesin=()=>{const h=ruteWcHilang();const bn=h.length?`<div class="ro" style="margin-bottom:10px"><b>Rute produksi memakai Work Centre yang belum ada di Master Data:</b> ${h.map(esc).join(', ')}. Antrian untuk langkah ini tidak akan muncul. Tambahkan atau samakan namanya di <a href="#master-data">Master Data › Work Centre</a>.</div>`:'';return bn+_bMesinAsli()};
+B.mesin=()=>{const h=ruteWcHilang();const bn=h.length?`<div class="ro" style="margin-bottom:10px"><b>Rute produksi memakai Work Centre yang belum ada di Master Data:</b> ${h.map(esc).join(', ')}. Antrian untuk langkah ini tidak akan muncul. <button type="button" class="btn sm" data-act="wcfix">Tambahkan otomatis</button> atau samakan namanya di <a href="#master-data">Master Data › Work Centre</a>.</div>`:'';return bn+_bMesinAsli()};
 const SHAPE_LURUS_FB={id:'STRAIGHT',kunci:'STRAIGHT',nama:'Straight',dim:[{k:'w',label:'W'},{k:'h',label:'H'},{k:'l',label:'L'}],fullHole:false};
 const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER']);
 /* tanpa katalog berat: batang lurus tetap bisa diisi W, H, L; kg dihitung setelah katalog dipasang */
@@ -4731,7 +4788,7 @@ function edRowR(s,si,li,l,no,cap,hb,RES){
   <td class="c-q"><input class="inp num" data-f="q" type="number" min="0" step="any" value="${esc(l.q)}" id="ed-q-${si}-${li}" inputmode="decimal"></td>
   <td class="c-u"><input class="inp" data-f="u" value="${esc(l.u)}" list="dl-sat" id="ed-u-${si}-${li}"></td>
   ${edStokR(si,li,l,RES,s)}
-  <td class="c-w"><input class="inp num" data-f="w" type="number" min="0" step="any" value="${esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal"${ro}>${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat dan tidak diketik. Untuk berat manual, pilih Teks bebas di kolom bentuk.':'Diisi manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}<span id="ed-kg-${si}-${li}">${edKgSub(s,l,cap)}</span></td>
+  <td class="c-w"><input class="inp num" data-f="w" type="${ro?'text':'number'}" min="0" step="any" value="${ro?((+l.w)?kgF(l.w):''):esc(l.w)}" id="ed-w-${si}-${li}" inputmode="decimal"${ro}>${l.wsrc?`<span class="wtag ${l.wsrc}" title="${l.wsrc==='kalkulator'?'Dihitung otomatis dari kalkulator berat dan tidak diketik. Untuk berat manual, pilih Teks bebas di kolom bentuk.':'Diisi manual.'}">${l.wsrc==='kalkulator'?'auto':'manual'}</span>`:''}<span id="ed-kg-${si}-${li}">${edKgSub(s,l,cap)}</span></td>
   <td class="c-ke num${k&&k.manual?' manual':''}" data-ke>${ok?kgF(k.ke):'–'}</td>
   <td class="c-bi num" data-bi>${ok?kgF(k.kr):(bi?n(bi):'–')}</td>
   <td class="c-act"><button type="button" class="ibtn" data-act="ed-det" data-s="${si}" data-l="${li}" aria-label="Catatan, vendor, dan produk stok" aria-expanded="${buka}">⋯</button><button type="button" class="ibtn" data-act="ed-delline" data-s="${si}" data-l="${li}" aria-label="Hapus baris">×</button></td></tr>`}
@@ -6191,6 +6248,7 @@ document.addEventListener('click',async e=>{
   
   case 'rutedel':await ruteHapus(ds.rk);break;
   case 'wcmesinseed':await seedMesin();break;
+  case 'wcfix':await seedWcHilang();break;
   case 'mshowInactive':F['master-data'].showInactive=el.checked;renderBody();break;
   case 'cekcsv':cekDataCsv();break;
   case 'cekgrp':F['cek-data'].grp=!F['cek-data'].grp;renderBody();break;
@@ -6211,6 +6269,7 @@ document.addEventListener('click',async e=>{
   case 'mrstep':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){const mx=q.max===''?Infinity:+q.max;const v=Math.max(0,Math.min(mx,(+q.value||0)+(+ds.d)));q.value=String(Math.round(v*1000)/1000);mrLabel(q.closest('.mesin-run'))}break}
   case 'mesinsemua':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){q.value=ds.max;mrLabel(q.closest('.mesin-run'))}break}
   case 'lapcsv':await lapCsv();break;
+  case 'progcsv':await progCsv();break;
   case 'lapacsv':await lapAnalisaCsv();break;
   case 'lapprint':lapPrint();break;
   case 'katberat':katalogBeratForm();break;

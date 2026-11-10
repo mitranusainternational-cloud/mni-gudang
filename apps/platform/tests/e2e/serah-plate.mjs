@@ -71,7 +71,11 @@ export async function runSerahPlate(page, base) {
     const t6 = await body();
     ok('SP-06 setelah diserahkan: status Lengkap, dua mutasi keluar bertanda SPK, SPK hilang dari tab dan peringatan hilang', p6.st === 'Lengkap' && p6.sisa <= 0.0005 && p6.mut === 2 && !/PT Uji Plate/.test(t6) && (await page.evaluate((id) => platChip(id), sid)) === '', JSON.stringify(p6));
     // SP-07 Produksi Hari Ini membuka Work Centre yang punya antrian (bukan yang pertama dan kosong)
+    await page.evaluate(async () => { await addDoc('mwc', { kode: 'WC-AWAL', nama: 'Awal Kosong', tipe: 'Internal', urutan: 0, aktif: true, ket: '', mesin: [] }); });
+    await page.waitForTimeout(1000);
     const w7 = await page.evaluate(() => { localStorage.removeItem('mni-wc'); F.mesin.wc = ''; return { wc: mesinPilih().wc, pertama: wcInternal()[0].nama }; });
+    await page.evaluate(async () => { const w = S.mwc.find((x) => x.nama === 'Awal Kosong'); if (w) await delDoc('mwc', w._id); });
+    await page.waitForTimeout(800);
     ok('SP-07 tanpa pilihan tersimpan: Work Centre bawaan = yang punya antrian (Shearing), bukan yang pertama', w7.wc === 'Shearing' && w7.pertama !== 'Shearing', JSON.stringify(w7));
 
   } catch (e) {

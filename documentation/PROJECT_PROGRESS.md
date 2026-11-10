@@ -899,6 +899,12 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
 
+### 2026-11-10 · T-227: produksi hulu ke hilir, WC selaras rute dan Progres WC
+
+- **Penyebab temuan:** data awal memakai WC "CNC Cutting" dan tanpa Punching/Shearing, sedangkan rute memakai nama lain; antrian langkah itu tidak muncul. Diperbaiki di data awal, ditambah tombol Tambahkan otomatis, bagian Akan datang di Produksi Hari Ini, dan tab Progres WC.
+- **Bukti:** `verified in browser` (mock): suite produksihh PH-01..PH-14, uji lama disesuaikan (DM-12, SP-07, MR-01); regresi penuh dan lint dicatat di akhir tugas. Rincian: [[tasks/T-227-produksi-hulu-hilir-wc-selaras-progres-per-wc|T-227]].
+- **Langkah berikut:** cek nama WC di Supabase production sebelum rilis; laporan susut per WC.
+
 ### 2026-11-10 · T-226: input SPK ringkas, berat estimasi dan real langsung tampil
 - Hasil: editor SPK (layout dimensi) dirombak sesuai keputusan A sampai D. Baris tanpa kolom Spesifikasi; catatan, vendor, dan produk stok di menu ⋯; stok sebagai angka dengan tombol Pakai stok; dua kolom berat tebal (Kg est untuk plate, Kg real untuk barang jadi), subtotal per section, dan ringkasan di bawah layar. Berat hasil kalkulator tidak bisa diketik. Deskripsi teks dikenali jadi baris terstruktur dan ada Tempel daftar dari Excel.
 - Bukti: verified in browser (mock). Suite spkringkas RK-01..RK-13 (14 PASS), unit kenali KN-01..KN-06, spkdimensi 13 PASS; lint 0 error. Regresi penuh 32 suite, 0 FAIL (produksi dijalankan ulang: uji Timeline M-166b dibuat sadar jendela hari karena bergantung hari dalam minggu).

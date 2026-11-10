@@ -100,9 +100,13 @@ export async function runSpkDimensi(page, base) {
     ok('DM-11 SPK lama tanpa wEst: ada=false, total real 13,5 dan estimasi sama (tidak ada baris dua total)', d11.ada === false && Math.abs(d11.tr - 13.5) < 1e-9 && Math.abs(d11.te - 13.5) < 1e-9, JSON.stringify(d11));
 
     // DM-12 rute memakai Work Centre yang tidak ada di master: Produksi Hari Ini memberi peringatan
+    await page.evaluate(async () => { for (const w of S.mwc.filter((x) => ['Shearing', 'Punching'].includes(x.nama))) await updDoc('mwc', w._id, { nama: 'Lama-' + w.nama }); });
+    await wait(1200);
     await go('#mesin'); await wait(1200);
     const d12 = await page.evaluate(() => ({ hilang: ruteWcHilang(), teks: (document.querySelector('#body') || document.body).innerText.replace(/\s+/g, ' ') }));
-    ok('DM-12 WC master tidak memuat Shearing dan Punching: banner peringatan muncul dan menyebut keduanya', d12.hilang.includes('Shearing') && d12.hilang.includes('Punching') && /Rute produksi memakai Work Centre yang belum ada di Master Data/.test(d12.teks), JSON.stringify(d12.hilang) + " | " + d12.teks.slice(0, 160));
+    ok('DM-12 WC master (nama diganti) tidak memuat Shearing dan Punching: banner peringatan muncul dan menyebut keduanya', d12.hilang.includes('Shearing') && d12.hilang.includes('Punching') && /Rute produksi memakai Work Centre yang belum ada di Master Data/.test(d12.teks), JSON.stringify(d12.hilang) + " | " + d12.teks.slice(0, 160));
+    await page.evaluate(async () => { for (const w of S.mwc.filter((x) => /^Lama-/.test(x.nama))) await updDoc('mwc', w._id, { nama: w.nama.replace(/^Lama-/, '') }); });
+    await wait(900);
 
     // DM-06 tidak ada pageerror
     await page.evaluate(() => { const b = document.querySelector('#editor [data-act="ed-close"]'); if (b) { b.click(); b.click(); } });

@@ -382,7 +382,7 @@ export async function runProduksi(page, base) {
   const lj = ak.jenis.find((x) => /Loading/.test(x) && /Barang Jadi/.test(x));
   ok('M-110 tab Pengiriman: loading dan unloading per jenis muatan dengan rata-rata tunggu dan proses; per pihak', ak.jenis.length === 4 && !!lj && /mnt/.test(lj) && ak.pihak >= 5, JSON.stringify(ak.jenis));
   await tabK('rincian');
-  ok('M-111 enam tab di Kinerja & Analisa: Work Center, Laporan Produksi, Produk, Vendor, Pengiriman, Rincian harian', (await page.$$eval('#tools [data-view="produksi"][data-key="tab"]', (a) => a.map((x) => x.textContent))).join('|') === 'Work Center|Laporan Produksi|Produk|Vendor|Pengiriman|Rincian harian');
+  ok('M-111 tujuh tab di Kinerja & Analisa: Work Center, Laporan Produksi, Progres WC, Produk, Vendor, Pengiriman, Rincian harian', (await page.$$eval('#tools [data-view="produksi"][data-key="tab"]', (a) => a.map((x) => x.textContent))).join('|') === 'Work Center|Laporan Produksi|Progres WC|Produk|Vendor|Pengiriman|Rincian harian');
   // Laporan Produksi baru: periode, qty atau tonase atau kecepatan, kelompok produk bertingkat, tren, akumulasi operator dan mesin
   const sbtn = async (key, val) => { await page.click('#body [data-view="produksi"][data-key="' + key + '"][data-val="' + val + '"]'); await page.waitForTimeout(450); };
   const kpiNum = (idx) => page.evaluate((k) => Number(document.querySelectorAll('.kpi')[k].querySelector('.v').textContent.replace(/[^0-9]/g, '')), idx);
