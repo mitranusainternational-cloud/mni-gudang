@@ -899,6 +899,11 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
 
+### 2026-11-10 · Keputusan: kode lokal disamakan dengan versi live; pengembangan lanjut di lokal
+
+- Pemilik meminta rilis dihentikan dan kode lokal dikembalikan ke versi yang sudah live di Vercel (`main` `191eec9`); perbaikan selanjutnya dikerjakan di lokal tanpa menyentuh live. Perubahan T-228 (input SPK, Dashboard Produksi, tab Berjalan, akses Penawaran) dibatalkan lewat revert (riwayat tetap di Git, commit `6738ea4`).
+- Production tidak diubah sejak merge PR 16.
+
 ### 2026-11-10 · Rilis bertahap, Tahap 2 dan 3: PR 16 digabung ke main dan deploy production
 
 - PR #16 (81 commit) lulus CI; merge dengan `--admin` atas persetujuan pemilik; Vercel production Ready; bundel baru tersaji; jumlah baris production tidak berubah (`verified in database`); login page `verified in browser`.
