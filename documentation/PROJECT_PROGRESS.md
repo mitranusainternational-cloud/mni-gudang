@@ -899,6 +899,12 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
 
+### 2026-11-10 · Rilis bertahap, Tahap 1: migration 14 dan 18 diterapkan ke production
+
+- Persetujuan pemilik: "Setuju Tahap 1". Backup baru lebih dulu; diterapkan `produksi_log` dan `sparepart` (hanya menambah tabel dan melonggarkan kebijakan mutasi dan pr untuk sparepart).
+- **Bukti** (`verified in database`): jumlah baris tabel lama sama dengan snapshot; tabel baru kosong dengan RLS; advisor tanpa temuan baru. Rincian: [[documentation/RENCANA_RILIS_BERTAHAP_2026-11-10|rencana rilis]].
+- **Langkah berikut:** Tahap 2 (push cabang, PR, CI, Preview) menunggu persetujuan.
+
 ### 2026-11-10 · T-227: produksi hulu ke hilir, WC selaras rute dan Progres WC
 
 - **Penyebab temuan:** data awal memakai WC "CNC Cutting" dan tanpa Punching/Shearing, sedangkan rute memakai nama lain; antrian langkah itu tidak muncul. Diperbaiki di data awal, ditambah tombol Tambahkan otomatis, bagian Akan datang di Produksi Hari Ini, dan tab Progres WC.

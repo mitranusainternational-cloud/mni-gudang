@@ -1,5 +1,5 @@
 -- ============================================================
--- DRAFT, BELUM DITERAPKAN DI DATABASE MANA PUN (rencana T-174, lihat documentation/RUTE_PRODUKSI.md)
+-- DITERAPKAN di production 2026-11-10 (versi 20261110074604, persetujuan pemilik; rencana T-174, lihat documentation/RUTE_PRODUKSI.md)
 -- MNI Gudang - Kejadian produksi per work center (append-only)
 -- ============================================================
 -- Disimpan di folder `draft`, bukan `migrations`, agar tidak ikut terpasang tanpa persetujuan pemilik.

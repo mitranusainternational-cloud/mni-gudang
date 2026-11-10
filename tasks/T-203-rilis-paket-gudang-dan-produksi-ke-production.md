@@ -27,7 +27,7 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 - [x] Branch `fitur/produksi-multi-wc` digabung dengan `main` terbaru (surat jalan) dan regresi penuh 0 FAIL (2026-11-06, 35bf7f7)
 - [x] Pra-cek production hanya baca: baseline jumlah baris (rm 24, fg 92, mutasi 19, spk 8, pr 0, kirim 7, vendor 5, user 10) dan kebijakan serta pemicu cocok dengan draf
 - [ ] Persetujuan eksplisit pemilik untuk jadwal rilis (dijeda 2026-11-06: fokus pemolesan lokal dahulu)
-- [ ] Migration 14 (`produksi_log`) lalu 18 (`sp`) diterapkan berurutan; jumlah baris sama dengan baseline; advisor Supabase dicek
+- [x] Migration 14 (`produksi_log`) lalu 18 (`sp`) diterapkan berurutan 2026-11-10; jumlah baris sama dengan snapshot sebelum tahap; advisor Supabase dicek (tanpa temuan baru)
 - [ ] Migration 17 (anti stok negatif) TIDAK ikut rilis ini: belum pernah diuji di database dan dapat menahan transaksi sah bila data lama memuat stok negatif
 - [ ] PR ke `main` (CI dua pemeriksaan hijau), merge, deploy Vercel Ready
 - [ ] Verifikasi production: login, tiap modul terbuka, jumlah baris tidak berubah, rollback Vercel disiapkan

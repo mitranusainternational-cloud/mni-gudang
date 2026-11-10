@@ -1,6 +1,6 @@
 ---
 type: rencana
-status: menunggu-persetujuan-tahap-1
+status: tahap-1-selesai-menunggu-tahap-2
 updated: 2026-11-10
 ---
 
@@ -54,6 +54,13 @@ ALTER POLICY pr_upd_v2 ON public.pr USING (public.can_mod('bahan-baku')) WITH CH
 DELETE FROM public.role_modules WHERE role = 'gbb' AND module = 'sparepart';
 -- table_stamps kembali ke versi migration 12 (tanpa produksi_log dan sp)
 ```
+
+### Hasil Tahap 1 (2026-11-10, selesai)
+
+- Backup baru sebelum tahap: `data/private-sources/backup-prod-2026-11-10-pra-tahap1/` (snapshot semua tabel, ber-ignore Git; pengambilan 07:45 UTC).
+- Diterapkan: migration `produksi_log` (versi 20261110074604) dan `sparepart` (versi 20261110074626).
+- Verifikasi `verified in database`: jumlah baris sama dengan snapshot (rm 24, fg 92, mutasi 21, spk 15, pr 0, kirim 8, vendor 9, bongkar 30, muser 10, log 207, audit_log 420); `produksi_log` dan `sp` ada, kosong, RLS aktif, kebijakan terpasang; kebijakan mutasi dan pr diperluas; peran gbb punya modul sparepart; `table_stamps()` memuat 20 tabel.
+- Advisor keamanan: hanya peringatan lama (fungsi can_*, proteksi kata sandi bocor); tidak ada temuan baru.
 
 ## Tahap 2: kode ke GitHub dan CI
 

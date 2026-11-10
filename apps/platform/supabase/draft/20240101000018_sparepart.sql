@@ -1,5 +1,5 @@
 -- ============================================================
--- DRAFT, BELUM DITERAPKAN DI DATABASE MANA PUN (2026-11-06, menunggu persetujuan pemilik)
+-- DITERAPKAN di production 2026-11-10 (versi 20261110074626, persetujuan pemilik)
 -- MNI Gudang - Gudang Sparepart (modul baru)
 -- ============================================================
 -- Disimpan di folder `draft`, bukan `migrations`, agar tidak ikut terpasang tanpa persetujuan pemilik.
