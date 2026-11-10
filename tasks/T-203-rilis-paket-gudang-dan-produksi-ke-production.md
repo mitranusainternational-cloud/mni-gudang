@@ -39,6 +39,8 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 
 ## Catatan
 
+- Rencana rilis bertahap terbaru (2026-11-10): [[documentation/RENCANA_RILIS_BERTAHAP_2026-11-10|RENCANA_RILIS_BERTAHAP_2026-11-10]].
+
 - Urutan aman: database dahulu (tambahan saja, adapter memperlakukan `produksi_log` dan `sp` sebagai opsional), lalu kode. Rollback kode: Vercel promote deploy sebelumnya; rollback database: `DROP TABLE` kosong plus kembalikan kebijakan (lihat bagian rollback di berkas draf). Dampak perilaku bagi tim: penjaga kirim ke customer dan terima SPK stok (T-199).
 
 > [!note] Audit 2026-11-06
