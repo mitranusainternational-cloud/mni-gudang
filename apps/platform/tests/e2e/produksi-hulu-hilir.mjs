@@ -86,7 +86,6 @@ export async function runProduksiHuluHilir(page, base) {
     ok('PH-11 Tambahkan otomatis: Punching dibuat, banner hilang', c10.hilang.length === 0 && c10.ada, JSON.stringify(c10));
 
     langkah = 'PH-12';
-    await page.evaluate(() => { window.__KINERJA_BARU = true; });
     await go('produksi');
     await page.click('[data-view="produksi"][data-key="tab"][data-val="progres"]'); await wait(900);
     await page.selectOption('#f-pwc', 'Punching'); await wait(900);
@@ -98,14 +97,6 @@ export async function runProduksiHuluHilir(page, base) {
     ok('PH-13 Progres WC Welding: item Accs tampil dengan status Menunggu; item Cable Tray (tanpa Welding) tidak tampil', !!p13 && /Menunggu/.test(p13) && p13b === null, p13 + ' | ' + p13b);
     const m14 = await page.evaluate(() => { const r = [...document.querySelectorAll('#prog-matriks tbody tr')].find((x) => x.innerText.includes('Customer HH Tray')); return r ? r.innerText.replace(/\s+/g, ' ') : null; });
     ok('PH-14 matriks semua SPK x Work Centre: Cable Tray Shearing 20/20 dan Punching 0/20', !!m14 && /20\/20/.test(m14) && /0\/20/.test(m14), m14);
-    await page.reload(); await wait(3500); // muat ulang tanpa bendera uji = perilaku bawaan aplikasi
-
-    langkah = 'PH-19';
-    await go('produksi');
-    const k19 = await page.evaluate(() => ({ nav: (document.querySelector('#nav a[href="#produksi"]') || {}).textContent || '', tabProgres: !!document.querySelector('[data-view="produksi"][data-val="progres"]'), judul: (document.querySelector('#view-title, h1, .page-title') || {}).textContent || '' }));
-    await go('spk');
-    const s19 = await page.evaluate(() => ({ berjalan: !!document.querySelector('#tools [data-view="spk"][data-val="berjalan"]'), jadwal: !!document.querySelector('#tools [data-view="spk"][data-val="jadwal"]') }));
-    ok('PH-19 bawaan: menu Dashboard Produksi (lama, tanpa tab Progres WC); SPK Berjalan tanpa tab Berjalan, tab Jadwal tetap', /Dashboard Produksi/.test(k19.nav) && !k19.tabProgres && s19.berjalan === false && s19.jadwal === true, JSON.stringify({ k19, s19 }));
 
     langkah = 'PH-15';
     await pilihWc('Punching');
@@ -123,17 +114,6 @@ export async function runProduksiHuluHilir(page, base) {
     await buatSpk('Customer HH Aneh', 'LAIN-LAIN PRODUK X', 'Barang Aneh Sekali', 5);
     const c17 = await page.evaluate(() => dataIssues().filter((i) => i.cat === 'Produksi').map((i) => i.title));
     ok('PH-17 item tanpa rute dikenali: Cek Data memperingatkan SPK tanpa rute produksi', c17.some((x) => /tanpa rute produksi/.test(x)), JSON.stringify(c17));
-
-    langkah = 'PH-18';
-    await go('spk');
-    await page.click('#tools [data-act="newspk"]'); await wait(900);
-    const e18 = await page.evaluate(() => ({ baru: spkDimBaru(), ringkas: !!document.querySelector('#ed-secs .edt.edr'), th: [...document.querySelectorAll('#ed-secs thead th')].map((x) => x.textContent.trim()), stok: !!document.querySelector('#ed-secs [data-f="fg"], #ed-secs .c-stk, #ed-secs [data-act="ed-ambil"]') }));
-    ok('PH-18 bawaan aplikasi: editor SPK versi sebelumnya (bukan layout per dimensi), kolom Dari stok tetap ada', e18.baru === false && !e18.ringkas && e18.th.some((x) => /stok/i.test(x)), JSON.stringify(e18));
-    await closeAll();
-
-    langkah = 'PH-20';
-    const r20 = await page.evaluate(() => ({ grid: /Penawaran/.test(modulGrid({})), sales: /Sales/.test(roleOpts('')), mods: MODS.map((m) => m[0]), peranTabel: /Penawaran/.test((document.body || {}).innerText || '') }));
-    ok('PH-20 akses per modul tanpa Penawaran dan peran Sales (modul penjualan disembunyikan); modul lain lengkap', !r20.grid && !r20.sales && !r20.mods.includes('penawaran') && ['bahan-baku', 'barang-jadi', 'vendor', 'pengiriman', 'spk', 'bongkar-muat', 'sparepart', 'master-data'].every((m) => r20.mods.includes(m)), JSON.stringify(r20));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

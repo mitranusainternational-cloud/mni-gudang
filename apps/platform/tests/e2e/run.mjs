@@ -53,8 +53,7 @@ for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['aks
     continue;
   }
   const page = await browser.newPage({ acceptDownloads: true });
-  if (name !== 'produksihh') await page.addInitScript(() => { window.__KINERJA_BARU = true; window.__TAB_BERJALAN = true; }); // suite lama menguji fitur penuh; bawaan aplikasi disembunyikan, diuji di produksihh
-    if (name === 'spkdimensi' || name === 'spkringkas') await page.addInitScript(() => { window.__SPK_DIM_NEW = true; }); // layout per dimensi hanya di suite yang mengujinya; bawaan aplikasi = layout sebelumnya
+  if (name !== 'spkdimensi' && name !== 'spkringkas') await page.addInitScript(() => { window.__SPK_DIM_LEGACY = true; }); // layout lama sebagai bawaan di suite uji lama
   try {
     const { pass, fail, detail } = await run(page, base);
     console.log(`== ${name} ==\n${detail.join('\n')}\n${pass} PASS, ${fail} FAIL\n`);
