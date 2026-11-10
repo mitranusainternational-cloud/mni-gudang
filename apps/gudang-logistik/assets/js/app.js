@@ -4622,7 +4622,8 @@ const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)
 /* Massa jenis dari Master Data (Bahan baku > Jenis material): kalkulator berat SPK memakai angka yang sama dengan stok bahan baku. */
 function bjMaster(mat){const s=String(mat||'').trim();if(!s)return 0;const g=GRADES().find(x=>x.toLowerCase()===s.toLowerCase())||grade({item:s});return g&&g!=='Lainnya'?densG(g):0}
 function bjHook(){const B=window.MNIBerat;if(B&&B.setMassaJenisMaster&&!B._bjHooked){B.setMassaJenisMaster(bjMaster);B._bjHooked=true}}
-function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==undefined)return !!v;return !window.__SPK_DIM_LEGACY}
+/* Layout input SPK per dimensi: NONAKTIF bawaan (editor SPK versi sebelumnya dipakai). Aktif hanya bila pemilik menyalakannya di Master Data › Opsi SPK, atau oleh uji (window.__SPK_DIM_NEW). */
+function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==undefined)return !!v;return !!window.__SPK_DIM_NEW}
 /* Langkah rute (rute standar dan rute khusus) yang namanya tidak ada di Work Centre master: antrian langkah itu tidak akan muncul di Produksi Hari Ini. */
 function ruteWcHilang(){const P=PXL();if(!P)return [];const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const miss=new Set();Object.values(ruteStd()).forEach(r=>(r||[]).forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))miss.add(w)}));return [...miss]}
 const _bMesinAsli=B.mesin;

@@ -114,6 +114,13 @@ export async function runProduksiHuluHilir(page, base) {
     await buatSpk('Customer HH Aneh', 'LAIN-LAIN PRODUK X', 'Barang Aneh Sekali', 5);
     const c17 = await page.evaluate(() => dataIssues().filter((i) => i.cat === 'Produksi').map((i) => i.title));
     ok('PH-17 item tanpa rute dikenali: Cek Data memperingatkan SPK tanpa rute produksi', c17.some((x) => /tanpa rute produksi/.test(x)), JSON.stringify(c17));
+
+    langkah = 'PH-18';
+    await go('spk');
+    await page.click('#tools [data-act="newspk"]'); await wait(900);
+    const e18 = await page.evaluate(() => ({ baru: spkDimBaru(), ringkas: !!document.querySelector('#ed-secs .edt.edr'), th: [...document.querySelectorAll('#ed-secs thead th')].map((x) => x.textContent.trim()), stok: !!document.querySelector('#ed-secs [data-f="fg"], #ed-secs .c-stk, #ed-secs [data-act="ed-ambil"]') }));
+    ok('PH-18 bawaan aplikasi: editor SPK versi sebelumnya (bukan layout per dimensi), kolom Dari stok tetap ada', e18.baru === false && !e18.ringkas && e18.th.some((x) => /stok/i.test(x)), JSON.stringify(e18));
+    await closeAll();
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

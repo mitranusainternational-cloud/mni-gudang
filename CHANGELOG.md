@@ -6,6 +6,9 @@ Format mengikuti [Keep a Changelog](https://keepachangelog.com/id-ID/1.1.0/); ve
 
 ## [Belum dirilis]
 
+### Dikembalikan (lokal, 2026-11-10)
+- Metode input SPK bawaan kembali ke versi sebelumnya (Description, Qty, Satuan, Berat; Dari stok tetap). Layout per dimensi hanya lewat setting spkDimBaru. Belum dirilis ke live.
+
 ### Diubah (produksi hulu ke hilir, 2026-11-10)
 - Work Centre bawaan selaras dengan rute (Shearing, Punching, Bending, CNC Laser, Welding); banner WC hilang punya tombol Tambahkan otomatis.
 - Produksi Hari Ini menampilkan Akan datang ke WC sejak SPK terbit; tab Progres WC di Kinerja & Analisa (tabel per WC, matriks SPK x WC, CSV).
