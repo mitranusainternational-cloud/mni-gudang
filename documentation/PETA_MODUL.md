@@ -12,6 +12,8 @@ Satu halaman untuk menjawab "modul apa saja, dari mana datanya, ke mana mengalir
 
 ## Alur utama
 
+Versi ringkas per tahap, dua jalur SPK, dan batas modul: [[ALUR_SISTEM_FRAMEWORK]].
+
 ```text
 HULU                                                                                    HILIR
 Penawaran ─► Sales Order ─► SPK (Draft ─► Terbit) ─► Produksi (work center) ─► Vendor finishing ─┬─► Kirim ke Customer (SJ)
