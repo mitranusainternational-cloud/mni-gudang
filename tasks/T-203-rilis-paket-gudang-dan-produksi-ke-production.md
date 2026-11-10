@@ -29,7 +29,7 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 - [ ] Persetujuan eksplisit pemilik untuk jadwal rilis (dijeda 2026-11-06: fokus pemolesan lokal dahulu)
 - [x] Migration 14 (`produksi_log`) lalu 18 (`sp`) diterapkan berurutan 2026-11-10; jumlah baris sama dengan snapshot sebelum tahap; advisor Supabase dicek (tanpa temuan baru)
 - [ ] Migration 17 (anti stok negatif) TIDAK ikut rilis ini: belum pernah diuji di database dan dapat menahan transaksi sah bila data lama memuat stok negatif
-- [ ] PR ke `main` (CI dua pemeriksaan hijau), merge, deploy Vercel Ready
+- [x] PR #16 ke `main` (CI hijau), merge 2026-11-10 (`191eec9`), deploy Vercel Ready
 - [ ] Verifikasi production: login, tiap modul terbuka, jumlah baris tidak berubah, rollback Vercel disiapkan
 
 ## Bukti

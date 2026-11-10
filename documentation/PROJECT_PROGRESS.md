@@ -899,6 +899,11 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
 
+### 2026-11-10 · Rilis bertahap, Tahap 2 dan 3: PR 16 digabung ke main dan deploy production
+
+- PR #16 (81 commit) lulus CI; merge dengan `--admin` atas persetujuan pemilik; Vercel production Ready; bundel baru tersaji; jumlah baris production tidak berubah (`verified in database`); login page `verified in browser`.
+- **Belum:** verifikasi setelah login oleh pemilik atau tim; periksa nama Work Centre di Master Data production (banner Tambahkan otomatis).
+
 ### 2026-11-10 · Rilis bertahap, Tahap 1: migration 14 dan 18 diterapkan ke production
 
 - Persetujuan pemilik: "Setuju Tahap 1". Backup baru lebih dulu; diterapkan `produksi_log` dan `sparepart` (hanya menambah tabel dan melonggarkan kebijakan mutasi dan pr untuk sparepart).
