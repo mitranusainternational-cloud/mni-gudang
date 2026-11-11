@@ -4,7 +4,7 @@
 //   - kebutuhan netto = jumlah kg item (qty x berat per pcs); bruto = netto x faktor sisa potong (awal 1,1 mengikuti Waste EST workbook);
 //   - bahan baku dipetakan per (bahan, tebal): bahan dari judul section (SPHC, SS304, SS316, Aluminium), tebal dari judul;
 //   - reservasi = kebutuhan bruto SPK Terbit yang belum Selesai/Batal dikurangi material yang sudah dikeluarkan gudang untuk SPK itu;
-//   - tersedia = stok fisik dikurangi reservasi SPK lain. Pratinjau (Sales Order, SPK Draft) tidak mengubah stok maupun reservasi;
+//   - tersedia = stok fisik dikurangi reservasi SPK lain. Pratinjau (SPK Draft) tidak mengubah stok maupun reservasi;
 //   - kekurangan diusulkan sebagai PR dalam lembar dari item bahan baku utama (stok kg terbesar) pada kelompok itu.
 export const FAKTOR_SISA_DEFAULT = 1.1;
 

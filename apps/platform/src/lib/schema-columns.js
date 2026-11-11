@@ -3,9 +3,7 @@
 // STRICT_COLS: kolom bertipe DATE/TIMESTAMPTZ/NUMERIC/INTEGER/UUID yang menolak string kosong ("") di Postgres.
 // Dipakai bersama oleh adapter Supabase dan klien mock agar keduanya berperilaku sama.
 export const TABLE_COLS = {
-  "salesorder": ["id", "no", "tgl", "customer", "po", "status", "rev", "total", "due", "created_at", "updated_at", "created_by", "updated_by", "data"],
   "sp": ["id", "kode", "item", "satuan", "lokasi", "min", "buffer", "stok_awal", "tgl_stok_awal", "aktif", "ket", "created_at", "updated_at", "created_by", "updated_by", "data"],
-  "penawaran": ["id", "no", "rev", "tgl", "berlaku", "customer", "sales", "status", "total", "created_at", "updated_at", "created_by", "updated_by", "data"],
   "produksi_log": ["id", "at", "tgl", "spk_id", "item_idx", "item_desc", "wc", "jenis", "target", "ref", "kelompok", "tipe", "material", "finishing", "mesin", "operator", "mulai", "selesai", "menit", "berat", "tonase", "spk_no", "customer", "tebal", "qty", "reject", "oleh", "ket", "data"],
   "mwc": [
     "id",
@@ -323,9 +321,7 @@ export const TABLE_COLS = {
 };
 
 export const STRICT_COLS = {
-  "salesorder": { "id": "UUID", "no": "INTEGER", "tgl": "DATE", "rev": "INTEGER", "total": "NUMERIC", "due": "DATE", "created_at": "TIMESTAMPTZ", "updated_at": "TIMESTAMPTZ" },
   "sp": { "id": "UUID", "min": "NUMERIC", "buffer": "NUMERIC", "stok_awal": "NUMERIC", "tgl_stok_awal": "DATE", "created_at": "TIMESTAMPTZ", "updated_at": "TIMESTAMPTZ" },
-  "penawaran": { "id": "UUID", "no": "INTEGER", "rev": "INTEGER", "tgl": "DATE", "berlaku": "DATE", "total": "NUMERIC", "created_at": "TIMESTAMPTZ", "updated_at": "TIMESTAMPTZ" },
   "produksi_log": { "tgl": "DATE", "spk_id": "UUID", "item_idx": "INTEGER", "qty": "NUMERIC", "reject": "NUMERIC", "mulai": "TIMESTAMPTZ", "selesai": "TIMESTAMPTZ", "menit": "NUMERIC", "berat": "NUMERIC", "tonase": "NUMERIC", "target": "NUMERIC" },
   "mwc": {
     "id": "UUID",

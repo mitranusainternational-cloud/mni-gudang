@@ -12,14 +12,14 @@ updated: 2026-11-11
 
 - Tidak ada
 
-## Wikilink ambigu (tulis dengan path) (0)
+## Wikilink ambigu (tulis dengan path) (1)
 
-- Tidak ada
+- documentation/RENCANA_PERBAIKAN_LOKAL.md: [[DECISIONS]] cocok dengan apps/gudang-logistik/docs/DECISIONS.md, documentation/DECISIONS.md
 
 ## Properti wajib hilang (0)
 
 - Tidak ada
 
-## Catatan yatim (tidak ditautkan dari mana pun) (1)
+## Catatan yatim (tidak ditautkan dari mana pun) (0)
 
-- documentation/RENCANA_PERBAIKAN_LOKAL.md
+- Tidak ada

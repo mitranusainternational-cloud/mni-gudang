@@ -167,3 +167,11 @@ updated: 2026-11-02
 - **Alasan:** konektor Supabase sudah beralih ke akun baru (`nurilhamj@gmail.com`) dan project production tidak lagi terlihat dari sana; Vercel tim MNI juga belum bisa diakses dari konektor baru.
 - **Konsekuensi:** tidak ada migration, deploy, atau perubahan di production. Tugas T-203 (rilis) tetap menunggu persetujuan. Saat migrasi nanti: ekspor data dari akun lama, buat project baru, migrasi 1 sampai 13 lalu draf 14 sampai 18 satu per satu, dan undang ulang pengguna karena akun login tidak bisa disalin lewat SQL.
 - **Rujukan:** [[HANDOFF]], [[SERTIJOB]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]].
+
+## 2026-11-11: Penawaran dan Sales Order dihapus, lingkup WMS penuh
+
+- **Keputusan pemilik:** fokus ke WMS. Semua yang berkaitan dengan Penawaran, Sales Order, harga, dan sejenisnya dihilangkan dan dibersihkan dari sistem.
+- **Dilakukan (lokal):** layar, menu, hak akses, pendengar, dan gaya Penawaran/Sales Order dari `app.js` dan `app.css`; mesin harga (`erp/harga.js`, `penawaran.js`, `salesorder.js`, katalog dan skenario harga), tabel `penawaran` dan `salesorder` di adapter, mock, dan skema; uji `penawaran`, `alur-penawaran`, dan unit terkait; skrip `build-quote-catalog.mjs`; draf migration 15 dan 16; skill `erp-quotation-engine` serta agen `pricing-engineer` dan `erp-integrator`.
+- **Dipertahankan:** `erp/material.js` (kebutuhan plat dan reservasi, bagian WMS), kolom `po` dan `sales` pada SPK (nomor PO customer dan nama sales sebagai data SPK), peran `sales` hanya untuk membaca pengguna lama (tidak bisa dipilih).
+- **Production tidak tersentuh:** tabel `penawaran` dan `salesorder` memang tidak pernah dibuat di production (migration 15 dan 16 tidak pernah diterapkan). Galat 404 di konsol live akan hilang setelah kode ini dirilis (butuh persetujuan terpisah).
+- **Catatan riwayat:** catatan tugas lama (`tasks/`, `roadmap/`) yang menyebut Penawaran tidak diubah; itu riwayat.

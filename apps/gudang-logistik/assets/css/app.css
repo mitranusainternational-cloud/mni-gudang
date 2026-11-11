@@ -1120,34 +1120,6 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .tl-lg.late{background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--crit) 65%,transparent),color-mix(in srgb,var(--crit) 65%,transparent) 3px,color-mix(in srgb,var(--crit) 30%,transparent) 3px,color-mix(in srgb,var(--crit) 30%,transparent) 6px)}
 @media(max-width:700px){.tlboard{--tl-nm:150px}.tl-in{min-width:640px}.tl-nm{padding:10px 12px}.tl-cu{font-size:14px}}
 
-/* ---------- Penawaran: daftar dan lembar ---------- */
-.pq-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
-.pq-tt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:17px}.pq-tt b{font-family:var(--f-display)}
-.pq-dirty{font-size:11.5px;color:var(--warn);font-weight:700}
-.pq-info{padding:10px 14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);margin:0 0 12px;font-size:13px}
-.pq-info.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}.pq-info[hidden]{display:none}
-.pq-warn .pbody{padding:14px 16px}
-.pq-head{margin-bottom:12px}
-.pq-head .egrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.pq-head .span2{grid-column:span 2}
-.pq-head .fld{display:flex;flex-direction:column;gap:5px}.pq-head .fld span{font-size:12px;font-weight:600;color:var(--muted)}
-.pq-vs{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
-.pq-vt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 16px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);cursor:pointer;font:inherit;color:var(--fg)}
-.pq-vt.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 2px var(--accent-soft)}.pq-vt small{color:var(--muted);font-variant-numeric:tabular-nums}
-.pq-vset{display:grid;grid-template-columns:2fr 2fr 1fr 1fr auto;gap:12px;align-items:end;margin:0 0 12px}
-.pq-vset .fld{display:flex;flex-direction:column;gap:5px}.pq-vset .fld span{font-size:12px;font-weight:600;color:var(--muted)}
-.pq-main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
-.pq-side{position:sticky;top:14px}.pq-side h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.pq-tr,.pq-in{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
-.pq-tr.tot{font-size:17px;font-weight:700;border-top:2px solid var(--fg)}.pq-in{color:var(--muted);font-size:12.5px}.pq-in.bad{color:var(--crit)}
-.pq-t td{vertical-align:middle}.pq-us{display:flex;gap:8px;flex-wrap:wrap}.pq-u{display:flex;flex-direction:column;gap:2px}.pq-u span{font-size:10.5px;font-weight:700;color:var(--muted)}.pq-u .inp{width:82px;padding:6px 8px}
-.pq-q{width:78px}.pq-err{color:var(--muted);font-size:12px;font-style:italic}.pq-ak{white-space:nowrap}
-.pq-rw summary{padding:12px 16px;cursor:pointer;font-weight:700;font-size:13.5px}
-@media(max-width:900px){.pq-main{grid-template-columns:1fr}.pq-side{position:static}.pq-vset{grid-template-columns:1fr 1fr}.pq-head .span2{grid-column:span 1}}
-.pq-main>*{min-width:0}.pq-head .egrid>*,.pq-vset>*{min-width:0}
-@media(max-width:900px){.pq-main{grid-template-columns:minmax(0,1fr)}.pq-bar{gap:8px}.pq-vs{overflow-x:auto;flex-wrap:nowrap}.pq-vt{flex:none}.pq-head .egrid{grid-template-columns:minmax(0,1fr)}.pq-vset{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
-.pq-sn-h{margin:16px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted,#667)}
-.sh-pnw{display:inline-block;padding:1px 8px;border-radius:999px;background:rgba(80,120,200,.12);font-size:11px}
-.pq-tf{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pq-tf .sel{min-width:0;flex:1 1 90px;font-size:12px}
 
 /* ---- Pemakaian di HP (2026-11-06): tabel stok jadi kartu, baris item di form bertumpuk, tombol lebih besar ---- */
 @media (max-width:700px){

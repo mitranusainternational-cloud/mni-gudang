@@ -43,7 +43,7 @@ description: Aturan untuk mengubah jembatan data app (apps/platform/src/lib/clau
 
 ## Koleksi baru dan field tambahan (2026-11-06)
 
-- **Tabel opsional:** `OPSIONAL` di `claude-adapter.js` memuat `produksi_log`, `penawaran`, `salesorder`, `sp`; tabel yang belum ada di production dibaca kosong, sehingga kode boleh dirilis sebelum atau sesudah migration. Menulis ke tabel yang belum ada tetap gagal: pastikan migration terpasang sebelum fitur dipakai.
+- **Tabel opsional:** `OPSIONAL` di `claude-adapter.js` memuat `produksi_log`, `sp`; tabel yang belum ada di production dibaca kosong, sehingga kode boleh dirilis sebelum atau sesudah migration. Menulis ke tabel yang belum ada tetap gagal: pastikan migration terpasang sebelum fitur dipakai.
 - **Tanpa migration bila memungkinkan:** field di luar kolom masuk jsonb `data` (`rm.data.aktif`, `fg.data.buffer`, `pr.data.gudang`, `spk.data.stokReq`). Tabel baru hanya bila wajar (contoh `sp`, draf 18).
 - **Mock:** `local-supabase.js` menyimpan di `localStorage` kunci `mni-local-mock-db`; naikkan `VERSION` (sekarang 8) bila seed atau pemetaan modul berubah. Tambahan koleksi harus ikut di daftar tabel, `MOD_OF`, `ROLE_MODS`, `modFor`, dan `schema-columns.js`.
 - **Hitungan turunan:** `calc()` di `app.js` di-cache; stok, kemajuan SPK, dan penjaga kirim (`sisaLine`, `fgSiapMap`) dihitung dari mutasi dan SPK, tidak disimpan. Jangan menambah kolom stok.
