@@ -121,6 +121,12 @@ export async function runProduksiHuluHilir(page, base) {
     const e18 = await page.evaluate(() => ({ baru: spkDimBaru(), ringkas: !!document.querySelector('#ed-secs .edt.edr'), th: [...document.querySelectorAll('#ed-secs thead th')].map((x) => x.textContent.trim()), stok: !!document.querySelector('#ed-secs [data-f="fg"], #ed-secs .c-stk, #ed-secs [data-act="ed-ambil"]') }));
     ok('PH-18 bawaan aplikasi: editor SPK versi sebelumnya (bukan layout per dimensi), kolom Dari stok tetap ada', e18.baru === false && !e18.ringkas && e18.th.some((x) => /stok/i.test(x)), JSON.stringify(e18));
     await closeAll();
+
+    langkah = 'PH-21';
+    await page.evaluate(() => { if (!(S.sp || []).length) { S.sp = S.sp || []; S.sp.push({ _id: 'ph21-item', id: 'ph21-item', item: 'Oli Uji PH21', kode: 'PH21', satuan: 'Pcs', aktif: true }); } const sp = S.sp[0]; S.mutasi.push({ _id: 'ph21-sp', id: 'ph21-sp', gudang: 'sp', item: sp._id, jenis: 'keluar', delta: -1, at: new Date().toISOString(), tgl: new Date().toISOString().slice(0, 10), by: 'admin@mni.local' }); });
+    await go('dashboard');
+    const r21 = await page.evaluate(() => ({ undef: /undefined/.test(document.body.innerText), tampil: /Gudang sparepart/.test(document.body.innerText) }));
+    ok('PH-21 Dashboard: mutasi sparepart tampil dengan nama item, tanpa kata undefined', !r21.undef && r21.tampil, JSON.stringify(r21));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

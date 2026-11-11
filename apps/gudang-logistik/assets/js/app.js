@@ -338,7 +338,7 @@ B.dashboard=()=>{
 
  // === Activity feed ===
  const fe=[];
- S.mutasi.forEach(m=>{const it=byId(m.gudang,m.item);const lbl=m.gudang==='rm'?rmLabel(it):fgLabel(it);fe.push({at:m.at,ic:m.jenis==='masuk'?'inb':m.jenis==='keluar'?'outb':'chk',cls:m.jenis==='masuk'?'ok':m.jenis==='keluar'?'':'warn',t:`${MVL[m.jenis]||m.jenis} ${m.delta>0?'+':''}${n(m.delta)} · ${esc(lbl)}`,m:`${m.gudang==='rm'?'Gudang bahan baku':'Gudang barang jadi'}${m.ref?' · '+esc(m.ref):''} · ${who(m.by)}`})});
+ S.mutasi.forEach(m=>{const it=byId(m.gudang,m.item);const lbl=m.gudang==='rm'?rmLabel(it):m.gudang==='sp'?spLabel(it):fgLabel(it);fe.push({at:m.at,ic:m.jenis==='masuk'?'inb':m.jenis==='keluar'?'outb':'chk',cls:m.jenis==='masuk'?'ok':m.jenis==='keluar'?'':'warn',t:`${MVL[m.jenis]||m.jenis} ${m.delta>0?'+':''}${n(m.delta)} · ${esc(lbl)}`,m:`${m.gudang==='rm'?'Gudang bahan baku':m.gudang==='sp'?'Gudang sparepart':'Gudang barang jadi'}${m.ref?' · '+esc(m.ref):''} · ${who(m.by)}`})});
  S.vendor.forEach(v=>fe.push({at:v.updAt||v.at,ic:'vendor',cls:'warn',t:`${v.updAt?'Terima kembali dari':'Kirim ke'} ${esc(v.vendor)} · ${esc(spkName(v.spk))}`,m:`${esc(v.noSJ||'')} · ${esc(v.proses||'')} · ${who(v.updAt?v.updBy:v.by)}`,tgl:v.tgl}));
  S.kirim.forEach(k=>fe.push({at:k.updAt||k.at,ic:'truck',cls:k.status==='Diterima'?'ok':'',t:`${esc(k.status)} · ${esc(k.customer)}`,m:`${esc(k.noSJ||'')} · ${esc(spkName(k.spk))} · ${who(k.updAt?k.updBy:k.by)}`,tgl:k.tgl}));
  S.spk.forEach(s=>{const ev=s.updAt&&s.rev?{at:s.updAt,t:`SPK ${s.no} direvisi (Rev.${s.rev}) · ${esc(s.customer)}`,by:s.updBy}:s.terbitAt?{at:s.terbitAt,t:`SPK ${s.no} terbit · ${esc(s.customer)}`,by:s.terbitBy}:(s.status==='Draft'&&s.at)?{at:s.at,t:`Draft SPK ${s.no} · ${esc(s.customer)}`,by:s.by}:null;if(ev)fe.push({at:ev.at,ic:'spk',cls:'',t:ev.t,m:`${esc(s.lead||'')}${s.due?' · estimasi kirim '+fd(s.due):''} · ${who(ev.by)}`})});
@@ -5222,7 +5222,7 @@ function refOf(c,d){
  if(c==='spk')return d.no?'SPK '+d.no+(d.customer?' · '+d.customer:''):'';
  if(c==='vendor')return [d.noSJ,d.vendor,d.spk?spkName(d.spk):''].filter(Boolean).join(' · ');
  if(c==='kirim')return [d.noSJ,d.customer].filter(Boolean).join(' · ');
- if(c==='mutasi'){const it=byId(d.gudang,d.item);return `${d.delta>0?'+':''}${n(d.delta)} · ${d.gudang==='rm'?rmLabel(it):fgLabel(it)}${d.ref?' · '+d.ref:''}`}
+ if(c==='mutasi'){const it=byId(d.gudang,d.item);return `${d.delta>0?'+':''}${n(d.delta)} · ${d.gudang==='rm'?rmLabel(it):d.gudang==='sp'?spLabel(it):fgLabel(it)}${d.ref?' · '+d.ref:''}`}
  if(c==='bongkar')return [d.jenis,d.nopol,d.pihak].filter(Boolean).join(' · ');
  if(c==='pr')return d.noPR||'';
  if(c==='rm')return rmLabel(d);if(c==='fg')return fgLabel(d);
