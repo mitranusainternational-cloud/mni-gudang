@@ -55,3 +55,38 @@ Cabang lokal `fitur/produksi-multi-wc` unggul puluhan commit dari `main` (live).
 - Tonase dan susut bergantung berat per item; item tanpa berat ditandai di Cek Data, bukan dihitung nol diam-diam.
 - Laporan per Work Centre dimatikan sementara; production masih punya Work Centre SHEARING dan CNC LASER saja, tidak berpengaruh pada mode admin.
 - Peran `sales` lama di data pengguna tetap terbaca tetapi tidak bisa dipilih lagi.
+
+## 7. Status persiapan (2026-11-12) — belum rilis
+
+Pemilik menyetujui **persiapan** rilis, bukan rilisnya. Tidak ada push, PR, merge, migration, atau perubahan Supabase dan Vercel.
+
+| Syarat | Status |
+|---|---|
+| Cabang bersih terhadap `main` | **Ya.** `main` tetap 191eec9, lokal unggul 30 commit, `git merge-tree` tanpa konflik |
+| Baseline data production (baca saja) | **Selesai.** Jumlah baris dan md5 22 tabel di `data/private-sources/backup-prod-2026-11-12/` (di luar Git). `produksi_log` = 0 baris, jadi mode admin tidak mengganggu data laporan mesin |
+| Salinan data lengkap | **Belum.** Cara mudah: admin menekan **Unduh cadangan** di aplikasi live (tombol di Dashboard). Rilis tidak mengubah database, jadi baseline checksum cukup untuk membuktikan data utuh; salinan penuh tetap disarankan |
+| Regresi penuh pada commit akhir | **Berjalan** di salinan beku (commit hitung ulang berat); sebelumnya 717 PASS, 0 FAIL |
+| Uji hak akses realtime di Supabase dev | **Belum.** Perlu login nyata (OTP email) oleh pemilik; bisa dilakukan di Vercel preview setelah PR dibuka |
+| Skenario uji pemilik ([[SKENARIO_UJI_PEMILIK]]) | **Belum dijalankan** |
+| Persetujuan eksplisit per tahap (push, PR, merge) | **Belum** |
+
+Perhatian khusus rilis ini: **Hitung ulang berat** (Cek Data) mengubah data SPK production yang belum selesai. Tombol itu baru ada setelah rilis; menekannya adalah tindakan data terpisah yang butuh persetujuan lagi, dengan baseline checksum baru sebelumnya. Dari salinan backup: 12 SPK, 46 item berubah, tonase 5.253 kg menjadi 7.658 kg.
+
+## 8. Draf deskripsi PR (belum dikirim)
+
+**Judul:** WMS penuh: hapus Penawaran dan Sales Order, laporan produksi satu admin, bahan baku dan PR otomatis, susut, laporan satu pintu
+
+**Ringkasan:** lingkup proyek menjadi WMS. Tanpa migration database baru.
+
+- Dihapus: Penawaran, Sales Order, peran Sales (tidak bisa dipilih), mesin harga, galat 404 `penawaran` dan `salesorder` di konsol.
+- SPK: editor versi sebelumnya, kebutuhan plat tampil di editor sebelum Terbit, tebal di surat jalan dan dokumen terkait, status Terkirim memisahkan deskripsi item kembar.
+- Produksi: laporan hasil oleh satu admin (qty dan tonase per tebal, tipe, material), Kinerja & Analisa tanpa tab per Work Centre, mode per mesin tetap ada (`produksiAdmin=false`).
+- Bahan baku: PR otomatis berstatus **Draf** (diajukan oleh user), waste tidak dihitung ganda (berat estimasi Excel sudah memuat waste), Serahkan semua, tab Susut, Hitung ulang berat SPK yang belum selesai.
+- Barang jadi, vendor, sparepart: Terima semua, Siap dikirim ke vendor dengan batas jumlah, PR sparepart otomatis (Draf), lonjakan pemakaian.
+- Pengguna dan tim: hak akses berlaku seketika, hasil produksi per orang di Kinerja Tim, menu Laporan, Tindakan hari ini.
+
+**Bukti:** lint 0 error, uji unit 203 PASS, regresi penuh 32 suite 717 PASS 0 FAIL (commit sebelum hitung ulang berat); validasi data nyata pada salinan backup di mock.
+
+**Risiko:** PR otomatis (matikan dengan `prOtomatis=false`); hak akses realtime baru terbukti di mock; hitung ulang berat mengubah data (aksi terpisah).
+
+**Rollback:** promosikan deployment Vercel sebelumnya (191eec9) atau revert merge; tanpa perubahan skema.
