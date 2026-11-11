@@ -204,7 +204,7 @@ function route(){
   'kinerja':'Siapa mencatat apa, seberapa aktif, dan seberapa tepat waktu input data tiap anggota tim',
   'penawaran':'Penawaran harga dan estimasi cable tray dan ladder; penawaran yang disetujui dijadikan Sales Order',
   'salesorder':'Sales Order: PO customer yang dikunci dari penawaran; saat dikonfirmasi SPK Draft dibuat otomatis tanpa mengetik ulang',
-  'mesin':'Satu-satunya tempat input produksi: pilih mesin, tekan Mulai, isi jumlah, tekan Selesai',
+  get 'mesin'(){return produksiAdmin()?'Laporan produksi diisi satu admin: isi jumlah item yang sudah selesai dan siap dikirim':'Satu-satunya tempat input produksi: pilih mesin, tekan Mulai, isi jumlah, tekan Selesai'},
   'papan':'Posisi semua item per work center: yang sedang berjalan dan yang antri',
   'laporan-produksi':'Laporan harian per mesin, rekap, dan waktu proses nyata (pengganti form Excel)',
   'pengguna':'Akun tim, peran, dan hak akses per modul'}[VIEW];
@@ -1583,7 +1583,7 @@ function vendorDrawer(id){openDrawer(()=>{const v=byId('vendor',id);if(!v)return
  <div style="display:flex;gap:8px;flex-wrap:wrap">${act?`<button class="btn primary sm" data-act="terima" data-id="${id}">Terima kembali</button>`:''}${UNKNOWN_V(v.vendor)&&v.status!=='Batal'?`<button class="btn sm" data-act="setvendor" data-id="${id}">Isi nama vendor</button>`:''}${v.status!=='Batal'&&x.back+x.rej===0?`<button class="btn sm danger" data-act="void" data-c="vendor" data-id="${id}">Batalkan SJ</button>`:''}</div>`}})}
 function sjvPreview(v,s){
  const mv=mList('vendor').find(x=>x.nama===v.vendor)||{};
- const items=v.items||[];
+ const items=(v.items||[]).map(i=>sjNama(v.spk,i));
  const totalQty=sumBy(items,i=>+i.q||0);
  const metaRows=[
   ['Kepada',v.vendor||'-'],
@@ -1619,7 +1619,7 @@ function sjvPreview(v,s){
 }
 function sjPreview(k,s){
  const cu=mList('customer').find(x=>x.nama===k.customer)||{};
- const items=k.items||[];
+ const items=(k.items||[]).map(i=>sjNama(k.spk,i));
  const totalQty=sumBy(items,i=>+i.q||0);
  const metaRows=[
   ['Kepada',k.customer||'-'],
@@ -1934,6 +1934,9 @@ function sjAlamatForm(id){const k=byId('kirim',id);if(!k)return;const cu=mList('
    Satu pengiriman = beberapa dokumen vendor/kirim (satu per SPK, agar progres, sisa, dan stok tiap SPK tetap benar) yang memakai
    NO SURAT JALAN YANG SAMA. Kelompok = dokumen aktif dengan no surat jalan itu. Cetak, ceklis Bongkar Muat, dan lampiran foto
    bekerja pada kelompok. Urutan kelompok = urutan pembuatan dokumen (menentukan nomor butir ceklis). */
+/* Surat jalan dan dokumen terkait memakai nama barang seperti di SPK, ditambah tebal dari judul section SPK ("· t 1.2 mm") bila deskripsi belum memuatnya. */
+function sjNama(spkId,i){if(!i||i.hdr||!i.d)return i;const s=byId('spk',spkId);if(!s)return i;const it=(s.items||[]).find(x=>x.d===i.d);const tb=String((it&&thkOf(it.g))||thkOf(s.h)||'');if(!tb)return i;
+ const kata=i.d.toLowerCase().split(/[\s·,x×()]+/);if(kata.some(w=>w===tb||w==='t'+tb||w===tb+'mm'||w==='t'+tb+'mm')||i.d.toLowerCase().includes(tb+' mm'))return i;return {...i,d:i.d+' · t '+tb+' mm'}}
 const spkRingkas=id=>{const s=byId('spk',id);return s?`SPK ${s.no} · ${s.customer}${s.po?' · PO '+s.po:''}`:'SPK ?'};
 function sjGrup(c,doc){
  if(!doc)return [];if(!doc.noSJ)return [doc];
@@ -5935,7 +5938,7 @@ function docModel0(kind,ref){
  if(kind==='sjv'){const v=byId('vendor',ref);if(!v)return null;const s=byId('spk',v.spk)||{};const tgt=v.target||addWorkdays(v.tgl,T[vKey(v.proses)]);
   const bm=bmFor('vendor',v),ck=bm?bmCekMap(bm):null;
   const G=sjGrup('vendor',v),gab=G.length>1,spkG=[...new Set(G.map(x=>byId('spk',x.spk)).filter(Boolean))];let nk=0;const brs=[],hdr=[];
-  G.forEach(d=>{if(gab){hdr.push(brs.length);brs.push(['',spkRingkas(d.spk),'','','',...(ck?['']:[])])}(d.items||[]).forEach(i=>{brs.push([brs.length-hdr.length+1,i.d,+i.q||0,i.u||'',d.rework?'Rework':'',...(ck?[ck[nk]&&ck[nk].ok?'✓':'']:[])]);nk++})});
+  G.forEach(d=>{if(gab){hdr.push(brs.length);brs.push(['',spkRingkas(d.spk),'','','',...(ck?['']:[])])}(d.items||[]).forEach(i=>{brs.push([brs.length-hdr.length+1,sjNama(d.spk,i).d,+i.q||0,i.u||'',d.rework?'Rework':'',...(ck?[ck[nk]&&ck[nk].ok?'✓':'']:[])]);nk++})});
   return {foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(v.noSJ||''),file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
    meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'-'))],['Customer akhir',gab?[...new Set(spkG.map(x=>x.customer))].join(', '):(s.customer||'-')],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l'],...(ck?[['Cek',8,'c']]:[])],rows:brs,hdr,foot:['','TOTAL',sumBy(G.flatMap(d=>d.items||[]),i=>i.q),'','',...(ck?['']:[])]}],
@@ -5945,13 +5948,13 @@ function docModel0(kind,ref){
   return {file:`BTB ${v.noSJ||''}-${idx||'lama'} - ${v.vendor||''}`,title:'BUKTI TERIMA BARANG DARI VENDOR',no:`BTB/${v.noSJ||''}/${idx||'-'}`,date:r.tgl,
    meta:[['Dari vendor',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal terima',r.tgl?tglLong(r.tgl)+(r.est?' (estimasi)':''):'Tidak tercatat'],['Ref SJ vendor',v.noSJ||'-'],['Tanggal kirim',tglLong(v.tgl)],['Lama di vendor',r.tgl?wd(v.tgl,r.tgl)+' hari kerja':'-'],['Ref SPK',s.nomor||(s.no?String(s.no):'-')],['Customer akhir',s.customer||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',62,'l'],['Dikirim',12,'r'],['Diterima OK',14,'r'],['Reject',12,'r'],['Sisa di vendor',14,'r'],['Satuan',10,'c']],
-    rows:(v.items||[]).filter(i=>(r.items||{})[i.d]||(r.rej||{})[i.d]).map((i,n2)=>[n2+1,i.d,+i.q||0,(r.items||{})[i.d]||0,(r.rej||{})[i.d]||0,Math.max(0,(+i.q||0)-(+i.kembali||0)-(+i.reject||0)),i.u||'']),
+    rows:(v.items||[]).filter(i=>(r.items||{})[i.d]||(r.rej||{})[i.d]).map((i,n2)=>[n2+1,sjNama(v.spk,i).d,+i.q||0,(r.items||{})[i.d]||0,(r.rej||{})[i.d]||0,Math.max(0,(+i.q||0)-(+i.kembali||0)-(+i.reject||0)),i.u||'']),
     foot:['','TOTAL','',sumBy(Object.values(r.items||{}),q=>q),sumBy(Object.values(r.rej||{}),q=>q),'','']}],
    note:[r.ket,r.est?'Data penerimaan lama: tanggal diestimasi dari surat jalan customer pertama setelahnya.':''].filter(Boolean).join(' · '),signs:['Diserahkan,\n'+(v.vendor||'Vendor'),'Diterima,\nGudang MNI','Diperiksa,\nQC']}}
  if(kind==='sjc'){const k=byId('kirim',ref);if(!k)return null;const s=byId('spk',k.spk)||{};const cu=mList('customer').find(x=>x.nama===k.customer)||{};
   const bm=bmFor('kirim',k),ck=bm?bmCekMap(bm):null;
   const G=sjGrup('kirim',k),gab=G.length>1,spkG=[...new Set(G.map(x=>byId('spk',x.spk)).filter(Boolean))];const itemsG=[];
-  G.forEach(d=>{if(gab)itemsG.push({hdr:spkRingkas(d.spk)});(d.items||[]).forEach(i=>itemsG.push(i))});
+  G.forEach(d=>{if(gab)itemsG.push({hdr:spkRingkas(d.spk)});(d.items||[]).forEach(i=>itemsG.push(sjNama(d.spk,i)))});
   const cekG=ck?itemsG.filter(i=>!i.hdr).map((_,i)=>!!(ck[i]&&ck[i].ok)):null;
   return {file:`Surat Jalan ${k.noSJ||''} - ${k.customer||''}`,title:'SURAT JALAN',no:k.noSJ||'',date:k.tgl,
    sj:{noSJ:k.noSJ||'',tgl:k.tgl,customer:k.customer||'',alamat:k.alamat||cu.alamat||'',po:gab?[...new Set(spkG.map(x=>x.po).filter(Boolean))].join(', '):(s.po||''),spk:gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'')),kendaraan:k.kendaraan||'',nopol:k.nopol||'',driver:k.driver||'',items:gab?itemsG:(k.items||[]),ket:k.ket||'',batal:k.batal||null,partial:gab?null:sjPartial(k),cek:cekG,foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(k.noSJ||'')},
@@ -6058,7 +6061,7 @@ function sjPartial(k){
   const o=(s.items||[]).find(x=>key(x)===key(it));const order=o?(+o.q||0):0;if(!(order>0))return;
   const seq=upto.map(x=>sumBy((x.items||[]).filter(y=>key(y)===key(it)),y=>+y.q||0)).filter(v=>v>0);
   const total=sumBy(seq,v=>v);if(!(total<order||seq.length>1))return;
-  rows.push({d:it.d,u:it.u||(o&&o.u)||'',order,seq,total,sisa:Math.max(0,order-total)});
+  rows.push({d:sjNama(k.spk,it).d,u:it.u||(o&&o.u)||'',order,seq,total,sisa:Math.max(0,order-total)});
  });
  if(!rows.length)return null;
  const maxLen=Math.max(...rows.map(r=>r.seq.length)),CAP=4;

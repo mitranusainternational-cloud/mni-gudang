@@ -9,7 +9,7 @@ status: active
 progress: 9
 tasks_total: 21
 tasks_done: 4
-updated: 2026-11-10
+updated: 2026-11-11
 ---
 
 # E-16 ERP hulu: Penawaran, estimasi, dan monitoring operasional

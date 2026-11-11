@@ -71,3 +71,21 @@ Keputusan pemilik: operator lapangan belum siap, jadi sementara **satu admin** m
 - Mode admin menyembunyikan semua tampilan per Work Centre: Jejak produksi di drawer SPK (Produksi selesai › Vendor bila ada › Terkirim), rantai Work Centre dan "Posisi" di form Isi hasil, tab Work Center, Progres WC, dan Produk di Kinerja & Analisa, kelompok Work Centre, Mesin, Operator di Laporan Produksi, serta aturan Cek Data rute dan Work Centre (PH-25).
 - Bukti: regresi penuh sampai Paket K = 33 suite, 742 PASS, 0 FAIL; setelah perubahan ini suite regresi, produksi, matriksrute, dan produksihh (25) lulus 0 FAIL; tampilan dicek di pratinjau lokal. Regresi penuh belum diulang setelah perubahan terakhir.
 - Tab yang tetap per Work Centre (Antrian Mesin, Papan, Work Center, Progres WC) hanya muncul bila `produksiAdmin=false`, siap dipakai saat operator lapangan siap.
+
+## Keputusan pemilik 2026-11-11: menuju aplikasi siap pakai penuh
+
+Jawaban pemilik: (1) **tutup celah alur dulu**; (2) semua modul harus lancar harian: SPK dan Produksi (laporan admin), Gudang (Bahan Baku, Barang Jadi, Sparepart), Logistik (Kirim Vendor, Kirim Customer, Bongkar Muat), Master Data, Pengguna & Akses; (3) syarat tambahan: **laporan harus valid dan dapat dipertanggungjawabkan**; (4) pengujian: saya menyiapkan skenario, pemilik mencoba di lokal; (5) rilis: **rencana saja, tunggu persetujuan**, tidak ada yang dirilis sendiri.
+
+Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tiap tahap):
+
+| Tahap | Isi | Selesai bila |
+|---|---|---|
+| 0 | Tutup antrean: regresi penuh, tebal di surat jalan dan dokumen terkait, subjudul Produksi Hari Ini, rincian partial surat jalan | regresi 0 FAIL, commit lokal |
+| 1 (D, F-11) | Antrian Siap dikirim ke vendor dan serah terima WIP dari laporan admin | jumlah kirim vendor tidak bisa melebihi yang selesai; uji lulus |
+| 2 (E, F-12) | Aturan SPK Terkirim (customer: semua item sampai customer; SPK stok: masuk gudang) | status otomatis benar pada satu armada banyak SPK |
+| 3 (J) | Galat 404 `penawaran` dan `salesorder` di konsol: aplikasi tidak memanggil tabel yang belum ada selama modul penjualan disembunyikan | konsol bersih saat membuka semua menu |
+| 4 | **Validitas laporan:** cek silang angka antar tempat (SPK Berjalan, Produksi Hari Ini, Kinerja & Analisa, Gudang Barang Jadi, surat jalan) dan aturan Cek Data bila tidak cocok | angka sama di semua layar untuk data uji; selisih terdeteksi |
+| 5 | Skenario uji untuk pemilik (SPK sampai kirim customer; SPK stok; vendor; stok; Master Data dan akses) dengan hasil yang diharapkan | dokumen skenario + tiap skenario lolos di lokal |
+| 6 | Rencana rilis (backup baru, database dulu, lalu kode, verifikasi tiap tahap, rollback) | dokumen rencana; **tidak dijalankan sebelum disetujui** |
+
+**Tahap 0 selesai (2026-11-11, lokal):** regresi penuh 33 suite, 744 PASS, 0 FAIL (kode sampai subjudul Produksi Hari Ini). Setelahnya: nama barang di Surat Jalan Vendor, Surat Jalan Customer, Bukti Terima Barang, dan rincian partial = deskripsi SPK + tebal ("· t 1.2 mm", tidak dobel bila tebal sudah tertulis) lewat `sjNama`; uji PH-26; suite kopdokumen, gabungan, ambilstok, regresi, produksihh lulus 0 FAIL; pratinjau SJ vendor dicek di browser. Regresi penuh belum diulang setelah perubahan surat jalan.

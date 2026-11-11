@@ -168,6 +168,18 @@ export async function runProduksiHuluHilir(page, base) {
     const f25 = await page.evaluate(async () => { const s = S.spk.find((z) => String(z.no) === '1004'); prodForm(s._id); await new Promise((r) => setTimeout(r, 400)); const m = document.querySelector('#mform'); const r = { rchip: m ? m.querySelectorAll('.rchip').length : -1, posisi: m ? /Posisi:/.test(m.innerText) : null, input: m ? !!m.querySelector('input[name="p_0"]') : false }; closeSheet(); closeEditor(); return r; });
     const teks = j25.html.replace(/<[^>]+>/g, ' ');
     ok('PH-25 mode admin: Kinerja tanpa tab per Work Centre; Jejak produksi = Produksi selesai > (Vendor) > Terkirim, tanpa nama Work Centre', f25.rchip === 0 && f25.posisi === false && f25.input && !k25.tab.some((x) => /Work Center|Progres WC|Produk$/.test(x)) && k25.tab.includes('Laporan Produksi') && /Produksi selesai/.test(teks) && !/CNC Laser|Shearing|Punching|Bending|Welding/.test(teks) && /Terkirim ke customer/.test(teks), JSON.stringify({ k25, f25, teks: teks.replace(/\s+/g, ' ').slice(0, 220) }));
+
+    langkah = 'PH-26';
+    const r26 = await page.evaluate(() => {
+      const s = S.spk.find((z) => String(z.no) === '1003'); const it = s.items[0];
+      const tb = thkOf(it.g) || thkOf(s.h);
+      const asli = it.d; const dasar = asli.endsWith(' ' + tb) ? asli.slice(0, asli.length - tb.length - 1) : asli;
+      it.d = dasar; const a = sjNama(s._id, { d: dasar, q: 1, u: 'Btg' });
+      it.d = dasar + ' ' + tb; const dobel = sjNama(s._id, { d: it.d, q: 1, u: 'Btg' }); it.d = asli;
+      const hdr = sjNama(s._id, { hdr: 'SPK 1003' });
+      return { tb, a: a.d, dobel: dobel.d, hdrAman: hdr.hdr === 'SPK 1003', asli: dasar };
+    });
+    ok('PH-26 surat jalan: nama barang = deskripsi SPK + tebal (t X mm), tidak ditambah dobel bila tebal sudah tertulis, baris judul tak berubah', !!r26.tb && r26.a === r26.asli + ' · t ' + r26.tb + ' mm' && r26.dobel === r26.asli + ' ' + r26.tb && r26.hdrAman, JSON.stringify(r26));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

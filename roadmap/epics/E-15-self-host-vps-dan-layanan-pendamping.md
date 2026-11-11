@@ -9,7 +9,7 @@ status: planned
 progress: 0
 tasks_total: 2
 tasks_done: 0
-updated: 2026-11-10
+updated: 2026-11-11
 ---
 
 # E-15 Self-host VPS dan layanan pendamping
