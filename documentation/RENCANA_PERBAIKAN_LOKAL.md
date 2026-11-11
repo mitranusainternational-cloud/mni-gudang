@@ -65,3 +65,9 @@ Keputusan pemilik: operator lapangan belum siap, jadi sementara **satu admin** m
 - **Bendera:** bawaan aktif. Mati lewat setting `produksiAdmin=false` (Master Data › setting) untuk kembali ke Antrian Mesin per Work Centre; Antrian Mesin dan kode operator **tidak dihapus**, siap dipakai saat operator lapangan siap. Uji lama memakai `window.__PRODUKSI_MESIN`.
 - **Catatan:** item yang sudah punya catatan mesin: isian admin dihitung **tambahan** di luar catatan mesin (angka dijumlah, dibatasi target). Tonase memakai berat per pcs item; item tanpa berat dihitung 0 dan diberi catatan.
 - **Bukti:** PH-23a/b lulus (produksihh 23 PASS), terlihat di pratinjau lokal. Laporan Kinerja & Analisa dan Laporan Produksi lama tetap bersumber dari catatan mesin, jadi belum memuat angka admin; ini keputusan terbuka.
+
+**Lanjutan Paket K (tanpa Work Centre di mode admin):**
+- Laporan Produksi (Kinerja & Analisa) memuat input admin: kejadian "hasil" dibentuk dari selisih `prodLog` hanya saat membaca laporan (`evAdmin`), tidak disimpan (PH-24).
+- Mode admin menyembunyikan semua tampilan per Work Centre: Jejak produksi di drawer SPK (Produksi selesai › Vendor bila ada › Terkirim), rantai Work Centre dan "Posisi" di form Isi hasil, tab Work Center, Progres WC, dan Produk di Kinerja & Analisa, kelompok Work Centre, Mesin, Operator di Laporan Produksi, serta aturan Cek Data rute dan Work Centre (PH-25).
+- Bukti: regresi penuh sampai Paket K = 33 suite, 742 PASS, 0 FAIL; setelah perubahan ini suite regresi, produksi, matriksrute, dan produksihh (25) lulus 0 FAIL; tampilan dicek di pratinjau lokal. Regresi penuh belum diulang setelah perubahan terakhir.
+- Tab yang tetap per Work Centre (Antrian Mesin, Papan, Work Center, Progres WC) hanya muncul bila `produksiAdmin=false`, siap dipakai saat operator lapangan siap.

@@ -150,6 +150,24 @@ export async function runProduksiHuluHilir(page, base) {
       return { tombolMesin, prodAwal, prod: +s2.items[0].prod, eff, evDelta: (S.produksi_log || []).length - evAwal, wcKosong: ((s2.prodLog || []).slice(-1)[0] || { items: [{}] }).items[0].wc === '', kg: /selesai kg/i.test(document.body.innerText) };
     });
     ok('PH-23b admin isi total selesai per item: progres naik, tanpa catatan mesin dan tanpa Work Centre, tonase tampil', !r23b.err && !r23b.tombolMesin && r23b.eff >= 1 && r23b.prod === r23b.eff && r23b.evDelta === 0 && r23b.wcKosong && r23b.kg, JSON.stringify(r23b));
+
+    langkah = 'PH-24';
+    await page.evaluate(() => { window.__KINERJA_BARU = true; });
+    await go('produksi');
+    await page.click('[data-view="produksi"][data-key="tab"][data-val="laporan"]');
+    await page.waitForTimeout(500);
+    const r24 = await page.evaluate(() => { const ev = evAdmin().filter((e) => String(e.spk_no) === '1004'); const tot = ev.reduce((a, e) => a + e.qty, 0); return { n: ev.length, tot, prodItem: +(byId('spk', ev[0] && ev[0].spk_id) || { items: [{}] }).items[0].prod, tabel: !!document.querySelector('#lp-tabel'), kosong: /Belum ada hasil produksi/.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }; });
+    ok('PH-24 Laporan Produksi (Kinerja & Analisa) memuat hasil input admin: kejadian turunan = total item, tabel tampil, tanpa undefined', r24.n >= 1 && r24.tot === r24.prodItem && r24.tabel && !r24.kosong && !r24.undef, JSON.stringify(r24));
+
+    langkah = 'PH-25';
+    await page.evaluate(() => { window.__KINERJA_BARU = false; window.__PRODUKSI_MESIN = false; });
+    await go('produksi');
+    const k25 = await page.evaluate(() => ({ tab: [...document.querySelectorAll('[data-view="produksi"][data-key="tab"]')].map((b) => b.textContent.trim()), aktif: F.produksi.tab }));
+    await go('spk');
+    const j25 = await page.evaluate(() => { const s = S.spk.find((z) => String(z.no) === '1004'); return { html: jejakHtml(s._id) }; });
+    const f25 = await page.evaluate(async () => { const s = S.spk.find((z) => String(z.no) === '1004'); prodForm(s._id); await new Promise((r) => setTimeout(r, 400)); const m = document.querySelector('#mform'); const r = { rchip: m ? m.querySelectorAll('.rchip').length : -1, posisi: m ? /Posisi:/.test(m.innerText) : null, input: m ? !!m.querySelector('input[name="p_0"]') : false }; closeSheet(); closeEditor(); return r; });
+    const teks = j25.html.replace(/<[^>]+>/g, ' ');
+    ok('PH-25 mode admin: Kinerja tanpa tab per Work Centre; Jejak produksi = Produksi selesai > (Vendor) > Terkirim, tanpa nama Work Centre', f25.rchip === 0 && f25.posisi === false && f25.input && !k25.tab.some((x) => /Work Center|Progres WC|Produk$/.test(x)) && k25.tab.includes('Laporan Produksi') && /Produksi selesai/.test(teks) && !/CNC Laser|Shearing|Punching|Bending|Welding/.test(teks) && /Terkirim ke customer/.test(teks), JSON.stringify({ k25, f25, teks: teks.replace(/\s+/g, ' ').slice(0, 220) }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
