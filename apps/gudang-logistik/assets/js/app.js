@@ -457,7 +457,7 @@ function matKeluarKg(spkId,rs){const idx={};rs.forEach(r=>idx[r.id]=r);const per
  S.mutasi.forEach(m=>{if(m.gudang!=='rm'||m.spk!==spkId||!(m.jenis==='keluar'||m.jenis==='koreksi'))return;const r=idx[m.item];if(!r||!r.kgPerLbr)return;if(m.jenis==='koreksi'){const o=S.mutasi.find(x=>x._id===m.koreksiDari);if(!o||o.jenis!=='keluar')return}const k=MT().kunciMaterial(r.bahan,r.tebal);per[k]=(per[k]||0)+(-(+m.delta||0))*r.kgPerLbr});return per}
 function matReservasi(rs,kecuali){const c=calc(),f=matFaktor();
  return MT().reservasiAktif(S.spk.filter(s=>s._id!==kecuali).map(s=>{const sx=c.spk[s._id];const aktif=(s.status||'Terbit')==='Terbit'&&!!sx&&sx.st!=='Selesai'&&sx.st!=='Batal';
-  return {id:s._id,aktif,kelompok:aktif?MT().kelompokKebutuhan((s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w)})),{faktor:f,tebalSpk:s.tebal}):[],keluar:aktif?matKeluarKg(s._id,rs):{}}}))}
+  return {id:s._id,aktif,kelompok:aktif?MT().kelompokKebutuhan(matSpkItems(s),{faktor:f,tebalSpk:s.tebal}):[],keluar:aktif?matKeluarKg(s._id,rs):{}}}))}
 function matDipesan(rs){const idx={};rs.forEach(r=>idx[r.id]=r);const per={};
  S.pr.filter(p=>p.status==='Draf'||p.status==='Diajukan'||p.status==='Dipesan').forEach(p=>(p.items||[]).forEach(i=>{const r=idx[i.item];if(!r||!r.kgPerLbr)return;const k=MT().kunciMaterial(r.bahan,r.tebal);per[k]=(per[k]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))*r.kgPerLbr}));return per}
 function matRencana(items,opt={}){const rs=matRmSiap();const kel=MT().kelompokKebutuhan(items,{faktor:matFaktor(),tebalSpk:opt.tebal});
@@ -505,6 +505,27 @@ function platTab(){const ok=matBisaPr(),q=platAntrian();
  return `${platSerahSemuaBar()}<div class="pbody note">SPK terbit yang plate-nya belum lengkap diserahkan ke produksi. Tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, jumlah lembar yang masih kurang); sesuaikan bila perlu lalu simpan, dan dokumen pengeluaran (PK) tercatat. Status ini peringatan saja: produksi tetap bisa mulai.</div>${q.length?`<div class="tbl-wrap"><table><thead><tr><th>SPK</th><th>Due</th><th>Plate yang masih perlu diserahkan</th><th class="num">Diserahkan / kebutuhan</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:empty('Semua plate sudah diserahkan','SPK terbit yang butuh plate muncul di sini sampai plate-nya diserahkan ke produksi.')}`}
 /* Serahkan semua: satu dokumen PK ber-SPK per SPK yang plate-nya belum lengkap, memakai kebutuhan plat tersisa (bruto dikurangi yang sudah keluar).
    SPK dilayani berurutan menurut due date sampai stok plat utama habis; yang kekurangan stok diserahkan sebagian dan ditandai. */
+/* Hitung ulang berat SPK dari kalkulator berat (rumus Excel). Hanya SPK yang belum selesai. Item diubah bila beratnya kosong atau selisih > 2% dari kalkulator,
+   atau berat estimasi (plate) belum ada. Berat lama disimpan di wLama. Perlu katalog berat terpasang. */
+function spkBeratPerbaikan(s){
+ const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return null;
+ const items=(s.items||[]).map(i=>({...i}));const ubah=[];const tb=parseFloat(s.tebal)||null;
+ items.forEach((it,ix)=>{let r=null;try{r=B.hitungItem({judulSection:it.g,deskripsi:it.d,material:s.material||'',tebal:tb})}catch(e){r=null}
+  if(!r||!r.ok)return;const baru=Math.round(r.beratSPK*1000)/1000;if(!(baru>0))return;
+  const est=r.berat?(r.berat.estimasiLubang!=null?r.berat.estimasiLubang:r.berat.estimasi):null;const estB=est>0?Math.round(est*1000)/1000:null;
+  const lama=+it.w||0;const beda=!lama||Math.abs(lama-baru)/baru>0.02;const estBeda=estB!=null&&Math.abs((+it.wEst||0)-estB)>0.001;
+  if(!beda&&!estBeda)return;
+  ubah.push({ix,d:it.d,lama,baru,est:estB});it.wLama=lama;it.w=baru;if(estB!=null)it.wEst=estB;it.ws='k'});
+ return ubah.length?{ubah,items}:null}
+function spkBeratDaftar(){const c=calc();return S.spk.filter(s=>(s.status==='Draft'||s.status==='Terbit')&&((c.spk[s._id]||{}).st!=='Selesai')).map(s=>({s,pb:spkBeratPerbaikan(s)})).filter(x=>x.pb)}
+function spkBeratForm(ids){
+ const L=spkBeratDaftar().filter(x=>!ids||ids.includes(x.s._id));if(!L.length){toast('Berat semua SPK ini sudah sesuai kalkulator, atau katalog berat belum terpasang.');return}
+ try{need('spk',{items:[]},L[0].s._id,'upd')}catch(e){toast('Anda tidak berhak mengubah SPK.');return}
+ const nItem=L.reduce((a,x)=>a+x.pb.ubah.length,0);
+ openModal('Hitung ulang berat dari kalkulator',`<div class="full tbl-wrap"><table class="lines"><thead><tr><th>SPK</th><th>Item</th><th class="num">Berat lama</th><th class="num">Berat baru</th><th class="num">Estimasi plate</th></tr></thead><tbody>${L.map(x=>x.pb.ubah.map((u,i)=>'<tr><td>'+(i===0?'<b>'+esc(String(x.s.no))+'</b>':'')+'</td><td>'+esc(u.d)+'</td><td class="num">'+(u.lama?n(u.lama):'-')+'</td><td class="num"><b>'+n(u.baru)+'</b></td><td class="num">'+(u.est!=null?n(u.est):'-')+'</td></tr>').join('')).join('')}</tbody></table></div><div class="note full">${L.length} SPK, ${nItem} item. Hanya SPK yang belum selesai. Berat lama disimpan (wLama) dan tonase serta kebutuhan plat SPK ikut dihitung ulang. SPK yang sudah selesai tidak diubah.</div>`,
+  async()=>{let k=0;for(const x of L){await updDoc('spk',x.s._id,{items:x.pb.items,beratDihitungUlang:new Date().toISOString()});k++}
+   toast(k+' SPK dihitung ulang beratnya');renderBody()},{submit:'Hitung ulang',done:' '});
+}
 function platSerahRencana(){const sisa={};const out=[];
  platAntrian().forEach(({s,p})=>{const baris=[];let kurang=false;
   p.rc.filter(r=>r.utama&&r.butuhLbr>0).forEach(r=>{const id=r.utama.id;if(sisa[id]==null)sisa[id]=Math.max(0,Math.floor((calc().stock.rm[id]||0)+1e-9));
@@ -3016,13 +3037,14 @@ function dataIssues(){
    /* berat salinan: tiga item atau lebih yang deskripsinya berbeda tetapi beratnya persis sama (mis. 8,481 untuk semua item section), biasanya berat section yang disalin, bukan berat item */
    {const bw={};(s.items||[]).forEach(i=>{const w=Math.round((+i.w||0)*1000)/1000;if(w>0)(bw[w]=bw[w]||new Set()).add(String(i.d||''))});
     const salin=Object.entries(bw).filter(([,set])=>set.size>=3);
-    if(salin.length)add(2,'SPK',`SPK ${esc(String(s.no))}: ${salin.reduce((a,[,set])=>a+set.size,0)} item berbeda memakai berat yang sama`,`Berat ${salin.map(([w])=>n(+w)).join(', ')} kg/pcs dipakai banyak item berlainan ukuran dan jenis; kemungkinan berat section yang disalin, sehingga tonase dan kebutuhan plat SPK tidak valid. Hitung ulang dari kalkulator berat.`,'data-act="go" data-href="spk">Buka SPK','Berat per item yang sama untuk Cable Tray, Cover, dan Jointing tidak mungkin benar.')}
+    if(salin.length)add(2,'SPK',`SPK ${esc(String(s.no))}: ${salin.reduce((a,[,set])=>a+set.size,0)} item berbeda memakai berat yang sama`,`Berat ${salin.map(([w])=>n(+w)).join(', ')} kg/pcs dipakai banyak item berlainan ukuran dan jenis; kemungkinan berat section yang disalin, sehingga tonase dan kebutuhan plat SPK tidak valid. Hitung ulang dari kalkulator berat.`,`data-act="spkberat" data-id="${s._id}">Hitung ulang berat`,'Berat per item yang sama untuk Cable Tray, Cover, dan Jointing tidak mungkin benar.')}
    const p=platSpk(s);
    if(p&&p.bruto>0&&p.sudah>p.bruto*1.05+0.5)add(1,'Stok',`SPK ${esc(String(s.no))}: plat keluar ${n(Math.round(p.sudah))} kg melebihi kebutuhan ${n(Math.round(p.bruto))} kg`,`${esc(s.customer||'')} · selisih ${n(Math.round(p.sudah-p.bruto))} kg (${Math.round((p.sudah/p.bruto-1)*100)}%). Bila memang lebih, catat alasannya; bila sisa utuh, kembalikan ke gudang.`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku','Plat keluar di atas kebutuhan SPK berarti susut berlebih atau salah catat.');
    if(s.stokReq)(x.lines||[]).forEach(l=>{if((l.kirim||0)>(l.prodEff||0)+0.0005)add(2,'Barang jadi',`SPK ${esc(String(s.no))}: masuk gudang ${n(l.kirim)} melebihi hasil produksi ${n(l.prodEff||0)}`,`${esc(l.d||'')}. Laporkan hasil produksi yang belum tercatat atau koreksi penerimaan.`,'data-act="go" data-href="barang-jadi">Buka Barang Jadi','Barang jadi masuk tanpa hasil produksi yang cocok.')})
   })}
 
  S.pr.filter(p=>p.status==='Draf'&&p.tgl&&days(p.tgl,calc().t)>=1).forEach(p=>add(1,'PR',`PR draf ${esc(p.noPR||'')} belum diajukan ${days(p.tgl,calc().t)} hari`,`${esc(p.ket||'')}`,`data-act="go" data-href="${p.gudang==='sp'?'sparepart':'bahan-baku'}">Buka PR`,'PR draf otomatis baru berlaku setelah diajukan oleh user (tombol Ajukan).'));
+ {const bd=spkBeratDaftar();if(bd.length)add(1,'SPK',`${bd.length} SPK belum selesai beratnya berbeda dari kalkulator (${bd.reduce((a,x)=>a+x.pb.ubah.length,0)} item)`,'Berat kosong, salinan, atau selisih lebih dari 2% dari rumus Excel. Tonase dan kebutuhan plat SPK tidak akurat sampai dihitung ulang.',`data-act="spkberatsemua">Hitung ulang semua (${bd.length})`,'Hanya SPK yang belum selesai; berat lama disimpan.')}
  susutRows().filter(r=>r.status==='Berlebih'||r.status==='Plat kurang catat').forEach(r=>add(2,'Stok',r.status==='Berlebih'?`SPK ${esc(String(r.s.no))}: susut ${r.bahan} ${n(r.tebal)} mm ${Math.round(r.pct*1000)/10}% (batas ${Math.round(r.batas*1000)/10}%)`:`SPK ${esc(String(r.s.no))}: hasil ${r.bahan} ${n(r.tebal)} mm melebihi plat yang tercatat keluar`,`${esc(r.s.customer||'')} · plat keluar ${n(Math.round(r.keluarKg))} kg, hasil jadi ${n(Math.round(r.hasilKg))} kg`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku',r.status==='Berlebih'?'Plat keluar jauh di atas hasil jadi: susut berlebih, plat tidak terpakai belum dikembalikan, atau salah catat.':'Pengeluaran plat untuk SPK ini belum lengkap dicatat.'));
 
  Object.values(spCalc()).filter(x=>spOn(x.r)).forEach(x=>{const a=movAgg('sp',x.r._id);const dasar=(a.k90-x.k30)/2;
@@ -5081,6 +5103,7 @@ function actLabel(c,op,d){
   return {vendor:'Kirim ke vendor',kirim:'Buat surat jalan',bongkar:d.auto?'Antrian bongkar (otomatis)':'Catat kendaraan masuk',spk:d.status==='Draft'?'Buat draft SPK':'Terbitkan SPK',pr:'Buat PR',opname:'Stock opname',rm:'Item bahan baku baru',fg:'Item barang jadi baru'}[c]||'Tambah '+(CNM[c]||c);
  }
  if(c==='pr'&&d.diajukanAt)return 'Ajukan PR';
+ if(c==='spk'&&d.beratDihitungUlang)return 'Hitung ulang berat SPK';
  if(d.batal)return 'Batalkan '+(CNM[c]||c);
  if(d.riwayat)return 'Terima dari vendor';
  if(d.revisi)return 'Revisi SPK';
@@ -6127,7 +6150,7 @@ document.addEventListener('click',async e=>{
   case 'prnew':prNewForm();break;
   case 'mesinedit':mesinForm(ds.nm);break;
   case 'spmesinlihat':{const fs0=F['sparepart'];fs0.tab='mutasi';fs0.mvmesin=ds.nm;fs0.mvj='keluar';renderTools();renderBody();break}
-  case 'prajukan':await prAjukan(ds.id);break;case 'serahsemua':platSerahSemua();break;case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
+  case 'prajukan':await prAjukan(ds.id);break;case 'spkberat':spkBeratForm([ds.id]);break;case 'spkberatsemua':spkBeratForm(null);break;case 'serahsemua':platSerahSemua();break;case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
   case 'prterima':{const pp=byId('pr',ds.id);mvForm(pp&&pp.gudang==='sp'?'sp':'rm','masuk',null,ds.id);break}
   case 'spprnew':spPrNewForm();break;
   case 'fgspknew':fgSpkNewForm();break;

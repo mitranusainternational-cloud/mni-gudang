@@ -418,6 +418,42 @@ export async function runProduksiHuluHilir(page, base) {
     });
     const ex = (q, kg) => Math.ceil(1.1 * q * 10 / kg);
     ok('PH-41 T-serah: Serahkan semua membuat satu dokumen PK ber-SPK per SPK sebesar kebutuhan plat tersisa (qty x berat x 1,1 / kg per lembar), stok turun sama, dan tidak ada lagi yang menunggu', s41.rencana.length === 2 && h41.n === 2 && h41.a === ex(100, s41.kg) && h41.b === ex(200, s41.kg) && h41.doc && h41.docBeda && h41.stokTurun >= h41.a + h41.b && h41.ulang === 0, JSON.stringify({ s41, h41, harap: [ex(100, s41.kg), ex(200, s41.kg)] }));
+
+    langkah = 'PH-42';
+    const r42 = await page.evaluate(() => {
+      const g = 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG'; const tgl = today();
+      C = null; const rs = matRmSiap(); const dasar = (matReservasi(rs, 'x').total['SPHC|1.2']) || 0;
+      S.spk.push({ _id: 'ph42', no: 9942, status: 'Terbit', customer: 'Uji Reservasi', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: g, items: [{ d: 'Cable Tray Uji Reservasi', q: 1000, u: 'Btg', w: 13.513, wEst: 14.712, g }] });
+      C = null; const est = (matReservasi(rs, 'x').total['SPHC|1.2'] || 0) - dasar;
+      S.spk.find((z) => z._id === 'ph42').items[0] = { d: 'Cable Tray Uji Reservasi', q: 1000, u: 'Btg', w: 13.513, g };
+      C = null; const manual = (matReservasi(rs, 'x').total['SPHC|1.2'] || 0) - dasar;
+      S.spk = S.spk.filter((z) => z._id !== 'ph42'); C = null;
+      return { est: Math.round(est * 10) / 10, manual: Math.round(manual * 10) / 10 };
+    });
+    ok('PH-42 reservasi stok konsisten dengan kebutuhan plat: item berat estimasi dicadangkan 14.712 kg (tanpa waste ganda), item berat manual 13.513 kg x 1,1 = 14.864,3 kg', Math.abs(r42.est - 14712) < 0.2 && Math.abs(r42.manual - 14864.3) < 0.2, JSON.stringify(r42));
+
+    langkah = 'PH-43';
+    const r43 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED'; const tgl = today();
+      const asli = window.MNIBerat; const o = {};
+      window.MNIBerat = { siap: () => true, hitungItem: (q) => (/Cover/.test(q.deskripsi) ? { ok: true, beratSPK: 6.813, berat: { estimasi: 7.35, real: 6.813 } } : { ok: true, beratSPK: 13.513, berat: { estimasi: 14.712, real: 13.513 } }) };
+      const items = [{ d: 'Cable Tray W300xH100xL3000', g, q: 10, u: 'Btg', w: 8.481 }, { d: 'Cover Tray W300xL3000', g, q: 10, u: 'Btg', w: 8.481 }, { d: 'Jointing Tray H100', g, q: 10, u: 'Btg', w: 8.481 }];
+      const sedang = { _id: 'ph43a', no: 9943, status: 'Terbit', customer: 'Uji Berat', due: '2099-01-01', tgl, material: 'SPHC / ELG', tebal: '1.2', terbitAt: new Date().toISOString(), h: g, items: JSON.parse(JSON.stringify(items)) };
+      const selesai = { _id: 'ph43b', no: 9944, status: 'Terbit', customer: 'Uji Selesai', due: '2099-01-01', tgl, material: 'SPHC / ELG', tebal: '1.2', terbitAt: new Date().toISOString(), h: g, items: JSON.parse(JSON.stringify(items)).map((i) => ({ ...i, prod: i.q })) };
+      S.spk.push(sedang, selesai);
+      S.kirim.push({ _id: 'k43', spk: 'ph43b', status: 'Diterima', tgl, noSJ: 'UJI-43', customer: 'Uji Selesai', items: items.map((i) => ({ d: i.d, q: i.q, u: i.u })) });
+      C = null; const bd = spkBeratDaftar().map((x) => String(x.s.no));
+      o.daftar = bd.includes('9943');
+      const pb = spkBeratPerbaikan(sedang);
+      o.ubah = pb ? pb.ubah.map((u) => [u.d.slice(0, 5), u.lama, u.baru, u.est]) : null;
+      o.lamaTersimpan = pb ? pb.items.map((i) => i.wLama) : null;
+      o.wBaru = pb ? pb.items.map((i) => i.w) : null; o.wEstBaru = pb ? pb.items.map((i) => i.wEst) : null;
+      o.stSelesai = (calc().spk.ph43b || {}).st;
+      o.selesaiTidakDiubah = !bd.includes('9944');
+      window.MNIBerat = asli; S.spk = S.spk.filter((z) => z._id !== 'ph43a' && z._id !== 'ph43b'); S.kirim = S.kirim.filter((k) => k._id !== 'k43'); C = null;
+      return o;
+    });
+    ok('PH-43 hitung ulang berat: SPK belum selesai terdeteksi (3 item berat salinan 8,481), berat lama disimpan, berat baru dan berat estimasi dari kalkulator; SPK yang sudah selesai tidak ikut', r43.daftar && r43.selesaiTidakDiubah && r43.ubah && r43.ubah.length === 3 && r43.wBaru.join() === '13.513,6.813,13.513' && r43.lamaTersimpan.every((x) => x === 8.481) && r43.wEstBaru.join() === '14.712,7.35,14.712', JSON.stringify(r43));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
