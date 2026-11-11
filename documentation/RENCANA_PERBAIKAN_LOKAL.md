@@ -127,3 +127,5 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 **T10 selesai (2026-11-11, lokal):** Dashboard menampilkan **Tindakan hari ini**: tombol per pekerjaan dengan jumlah yang menunggu (serah plate, isi hasil produksi, kirim ke vendor, kirim ke customer, terima barang jadi SPK stok, susut berlebih, sparepart di bawah minimum), hanya yang boleh dilihat perannya, langsung membuka layar dan tab yang tepat. PH-37 lulus (produksihh 37 PASS).
 
 **T11 selesai (2026-11-11):** [[SKENARIO_UJI_PEMILIK]] (12 skenario dengan hasil yang diharapkan, untuk dicoba pemilik di lokal) dan [[RENCANA_RILIS_WMS_2026-11-11]] (draf rencana rilis, **tidak dijalankan**, menunggu persetujuan pemilik). Tidak ada migration baru; rilis hanya kode.
+
+**Regresi penuh akhir (2026-11-11):** salinan beku pada commit 9a6e99d (mencakup T4 sampai T11): **32 suite, 714 PASS, 0 FAIL**; lint 0 error; uji unit 186+ PASS. Belum dilakukan: uji hak akses realtime di Supabase dev, uji skenario oleh pemilik. Rilis tidak dijalankan.
