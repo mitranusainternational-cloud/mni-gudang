@@ -195,6 +195,20 @@ export async function runProduksiHuluHilir(page, base) {
     await go('vendor');
     const h27 = await page.evaluate(() => ({ panel: !!document.querySelector('#siap-vendor'), judul: /Siap dikirim ke vendor/.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }));
     ok('PH-27 F-11: mode admin, kirim ke vendor dibatasi jumlah selesai (siap = selesai), melebihi ditolak; antrian Siap dikirim ke vendor tampil', r27.vSiap === 3 && r27.baris === 1 && r27.siap === 3 && r27.lebih && r27.pas === '' && h27.panel && h27.judul && !h27.undef, JSON.stringify({ r27, h27 }));
+
+    langkah = 'PH-28';
+    const r28 = await page.evaluate(() => {
+      const tgl = today(); const hasil = {};
+      const spk = { _id: 'ph28', no: 9928, status: 'Terbit', customer: 'Uji F12', due: '2099-01-01', tgl, h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Uji Item Kembar', q: 10, u: 'Btg', g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }, { d: 'Uji Item Kembar', q: 10, u: 'Btg', g: 'CABLE TRAY TYPE STU 2.0 mm SPHC / ELG' }] };
+      S.spk.push(spk); S.kirim.push({ _id: 'k28a', spk: 'ph28', status: 'Terkirim', tgl, noSJ: 'UJI-1', customer: 'Uji F12', items: [{ d: 'Uji Item Kembar', q: 10, u: 'Btg' }] });
+      C = null; let x = calc().spk.ph28; hasil.satu = { k0: x.lines[0].kirim, k1: x.lines[1].kirim, pK: x.pK, st: x.st };
+      const dup = dataIssues().some((i) => /ph28|9928/.test(i.title) && /muncul lebih dari sekali/.test(i.title));
+      S.kirim.push({ _id: 'k28b', spk: 'ph28', status: 'Terkirim', tgl, noSJ: 'UJI-2', customer: 'Uji F12', items: [{ d: 'Uji Item Kembar', q: 10, u: 'Btg' }] });
+      C = null; x = calc().spk.ph28; hasil.dua = { k0: x.lines[0].kirim, k1: x.lines[1].kirim, pK: x.pK, st: x.st };
+      S.spk = S.spk.filter((z) => z._id !== 'ph28'); S.kirim = S.kirim.filter((z) => z.spk !== 'ph28'); C = null;
+      return { ...hasil, dup };
+    });
+    ok('PH-28 F-12: SPK dengan deskripsi item kembar tidak Selesai bila baru satu baris terkirim; Selesai setelah keduanya; Cek Data memperingatkan', r28.satu.k0 === 10 && r28.satu.k1 === 0 && r28.satu.pK === 0.5 && r28.satu.st !== 'Selesai' && r28.dua.k0 === 10 && r28.dua.k1 === 10 && r28.dua.st === 'Selesai' && r28.dup, JSON.stringify(r28));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

@@ -96,3 +96,9 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 - **Antrian baru:** panel "Siap dikirim ke vendor" di atas halaman Kirim ke Vendor (per SPK: item dengan tebal, proses vendor, selesai, sudah di vendor, siap kirim, due, tombol Kirim ke vendor). Hanya item yang rutenya punya langkah vendor dan kesiapannya diketahui.
 - **Bukti:** PH-27 lulus (produksihh 27 PASS); suite regresi, produksi, kopdokumen, gabungan, ambilstok 0 FAIL; di pratinjau SPK 1006 tampil 50 siap kirim, form terisi 50, kirim 60 ditolak tanpa menyimpan. Regresi penuh belum diulang.
 - **Belum:** serah terima WIP berupa dokumen terpisah tidak dibuat; surat jalan vendor sudah berfungsi sebagai serah terima.
+
+**Tahap 2 selesai (F-12, 2026-11-11, lokal):**
+- **Aturan Terkirim sudah benar dan tidak diubah:** SPK customer Selesai bila semua item sampai customer (jumlah terkirim per item >= order); SPK stok Selesai bila semua item masuk Gudang Barang Jadi; satu armada banyak SPK dihitung per SPK lewat surat jalan masing-masing.
+- **Celah diperbaiki:** pengiriman dan vendor dicocokkan lewat deskripsi item. Dua baris dengan deskripsi sama dalam satu SPK sebelumnya menghitung satu pengiriman untuk kedua baris (SPK bisa Selesai terlalu cepat). Kini jumlah dibagi berurutan antar baris, baris terakhir menampung kelebihan (kirim lebih tetap terlihat). Cek Data memberi info untuk SPK dengan deskripsi kembar.
+- **Bukti:** PH-28 lulus; **regresi penuh 33 suite, 747 PASS, 0 FAIL** (kode sampai Tahap 2). Belum dibuktikan bahwa PH-28 gagal tanpa perbaikan.
+- **Batas yang diketahui:** pemisahan sejati per baris butuh nomor baris (`item_idx`) di dokumen kirim dan vendor; itu perubahan struktur data dan belum dilakukan. Pembagian berurutan adalah pendekatan sementara.
