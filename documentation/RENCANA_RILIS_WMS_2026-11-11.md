@@ -65,7 +65,7 @@ Pemilik menyetujui **persiapan** rilis, bukan rilisnya. Tidak ada push, PR, merg
 | Cabang bersih terhadap `main` | **Ya.** `main` tetap 191eec9, lokal unggul 30 commit, `git merge-tree` tanpa konflik |
 | Baseline data production (baca saja) | **Selesai.** Jumlah baris dan md5 22 tabel di `data/private-sources/backup-prod-2026-11-12/` (di luar Git). `produksi_log` = 0 baris, jadi mode admin tidak mengganggu data laporan mesin |
 | Salinan data lengkap | **Belum.** Cara mudah: admin menekan **Unduh cadangan** di aplikasi live (tombol di Dashboard). Rilis tidak mengubah database, jadi baseline checksum cukup untuk membuktikan data utuh; salinan penuh tetap disarankan |
-| Regresi penuh pada commit akhir | **Berjalan** di salinan beku (commit hitung ulang berat); sebelumnya 717 PASS, 0 FAIL |
+| Regresi penuh pada commit akhir | **Selesai: 32 suite, 720 PASS, 0 FAIL** (salinan beku pada commit hitung ulang berat; sesudahnya hanya dokumen berubah) |
 | Uji hak akses realtime di Supabase dev | **Belum.** Perlu login nyata (OTP email) oleh pemilik; bisa dilakukan di Vercel preview setelah PR dibuka |
 | Skenario uji pemilik ([[SKENARIO_UJI_PEMILIK]]) | **Belum dijalankan** |
 | Persetujuan eksplisit per tahap (push, PR, merge) | **Belum** |
