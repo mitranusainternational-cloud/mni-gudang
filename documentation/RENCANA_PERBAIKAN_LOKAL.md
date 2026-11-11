@@ -89,3 +89,10 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 | 6 | Rencana rilis (backup baru, database dulu, lalu kode, verifikasi tiap tahap, rollback) | dokumen rencana; **tidak dijalankan sebelum disetujui** |
 
 **Tahap 0 selesai (2026-11-11, lokal):** regresi penuh 33 suite, 744 PASS, 0 FAIL (kode sampai subjudul Produksi Hari Ini). Setelahnya: nama barang di Surat Jalan Vendor, Surat Jalan Customer, Bukti Terima Barang, dan rincian partial = deskripsi SPK + tebal ("· t 1.2 mm", tidak dobel bila tebal sudah tertulis) lewat `sjNama`; uji PH-26; suite kopdokumen, gabungan, ambilstok, regresi, produksihh lulus 0 FAIL; pratinjau SJ vendor dicek di browser. Regresi penuh belum diulang setelah perubahan surat jalan.
+
+**Tahap 1 selesai (F-11, 2026-11-11, lokal):**
+- **Temuan:** batas kirim ke vendor memakai `vSiap`, yang kosong untuk item tanpa catatan mesin. Di mode admin vendor bisa dikirimi **melebihi** hasil produksi tanpa peringatan.
+- **Perbaikan:** di mode admin `vSiap` = jumlah selesai item, jadi jumlah kirim vendor tidak bisa melebihi yang dilaporkan selesai (centang kirim ulang/rework tetap ada untuk disengaja).
+- **Antrian baru:** panel "Siap dikirim ke vendor" di atas halaman Kirim ke Vendor (per SPK: item dengan tebal, proses vendor, selesai, sudah di vendor, siap kirim, due, tombol Kirim ke vendor). Hanya item yang rutenya punya langkah vendor dan kesiapannya diketahui.
+- **Bukti:** PH-27 lulus (produksihh 27 PASS); suite regresi, produksi, kopdokumen, gabungan, ambilstok 0 FAIL; di pratinjau SPK 1006 tampil 50 siap kirim, form terisi 50, kirim 60 ditolak tanpa menyimpan. Regresi penuh belum diulang.
+- **Belum:** serah terima WIP berupa dokumen terpisah tidak dibuat; surat jalan vendor sudah berfungsi sebagai serah terima.

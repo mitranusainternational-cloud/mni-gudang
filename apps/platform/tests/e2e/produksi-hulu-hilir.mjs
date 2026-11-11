@@ -180,6 +180,21 @@ export async function runProduksiHuluHilir(page, base) {
       return { tb, a: a.d, dobel: dobel.d, hdrAman: hdr.hdr === 'SPK 1003', asli: dasar };
     });
     ok('PH-26 surat jalan: nama barang = deskripsi SPK + tebal (t X mm), tidak ditambah dobel bila tebal sudah tertulis, baris judul tak berubah', !!r26.tb && r26.a === r26.asli + ' · t ' + r26.tb + ' mm' && r26.dobel === r26.asli + ' ' + r26.tb && r26.hdrAman, JSON.stringify(r26));
+
+    langkah = 'PH-27';
+    await page.evaluate(() => { window.__PRODUKSI_MESIN = false; });
+    const r27 = await page.evaluate(() => {
+      const s = S.spk.find((z) => String(z.no) === '1004'); const it = s.items[0]; const rute0 = it.rute; const prod0 = it.prod;
+      it.rute = ['CNC Laser', 'Vendor ELG']; it.prod = 3;
+      const l = calc().spk[s._id].lines[0]; const rows = siapVendorRows().filter((r) => String(r.s.no) === '1004');
+      let lebih = ''; try { checkCap(s._id, { ln_0: 4 }, 'vendor'); } catch (e) { lebih = e.message; }
+      let pas = ''; try { checkCap(s._id, { ln_0: 3 }, 'vendor'); } catch (e) { pas = e.message; }
+      const res = { vSiap: l.vSiap, prodEff: l.prodEff, baris: rows.length, siap: rows[0] && rows[0].siap, lebih: /melebihi/.test(lebih), pas };
+      it.rute = rute0; it.prod = prod0; return res;
+    });
+    await go('vendor');
+    const h27 = await page.evaluate(() => ({ panel: !!document.querySelector('#siap-vendor'), judul: /Siap dikirim ke vendor/.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }));
+    ok('PH-27 F-11: mode admin, kirim ke vendor dibatasi jumlah selesai (siap = selesai), melebihi ditolak; antrian Siap dikirim ke vendor tampil', r27.vSiap === 3 && r27.baris === 1 && r27.siap === 3 && r27.lebih && r27.pas === '' && h27.panel && h27.judul && !h27.undef, JSON.stringify({ r27, h27 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
