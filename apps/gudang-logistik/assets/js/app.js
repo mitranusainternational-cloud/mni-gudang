@@ -4686,8 +4686,24 @@ function edSecHtml(s,si,startNo){if(spkDimBaru()&&edCap(s))return edSecHtmlR(s,s
   <button type="button" class="btn sm ghost" data-act="ed-addline" data-s="${si}">${ic('plus')}Baris</button></div>`;
 }
 function edTotals(){let q=0,w=0,c=0;ED.sections.forEach(s=>s.lines.forEach(l=>{if(String(l.d).trim()){c++;q+= +l.q||0;w+=(+l.q||0)*(+l.w||0)}}));return {q,w,c}}
+/* Kebutuhan plat langsung di editor SPK (sebelum Terbit): memakai perhitungan yang sama dengan permintaan bahan baku (berat estimasi plat x faktor sisa potong,
+   dikurangi stok tersedia dan PR terbuka), jadi angka di sini sama dengan PR otomatis yang akan dibuat saat SPK terbit. */
+function matPreviewEditor(){
+ try{
+  if(!MT()||!ED||!ED.sections)return '';
+  const items=[];ED.sections.forEach(s=>s.lines.forEach(l=>{const q=+l.q||0;if(!String(l.d).trim()||!(q>0))return;const am=Math.min(q,Math.max(0,+l.ambil||0));const w=+l.wEst>0?+l.wEst:+l.w;items.push({d:l.d,g:s.h,q:Math.max(0,q-am),w})}));
+  if(!items.length)return '';
+  const rc=matRencana(items,{spkId:ED.id||undefined,tebal:ED.tebal||''});
+  const baris=rc.map(r=>{
+   if(r.status==='Tanpa item RM')return '<div>Plat '+esc(r.bahan)+' '+n(r.tebal)+' mm: butuh <b>'+n(Math.round(r.butuhKg))+'</b> kg, <span class="chip warn">belum ada item bahan baku</span></div>';
+   const kurang=(r.kurangKg||0)>0.5;
+   return '<div>Plat '+esc(r.bahan)+' '+n(r.tebal)+' mm: butuh <b>'+n(Math.round(r.butuhKg))+'</b> kg'+(r.butuhLbr!=null?' (± '+n(r.butuhLbr)+' lbr)':'')+' · tersedia '+n(Math.round(r.tersediaKg||0))+' kg · '+(kurang?'<b class="warn-t">kurang '+n(Math.round(r.kurangKg))+' kg'+(r.kurangLbr!=null?' (± '+n(r.kurangLbr)+' lbr)':'')+', PR dibuat otomatis saat terbit</b>':r.status==='Sudah dipesan'?'sudah dipesan lewat PR':'cukup')+'</div>'}).join('');
+  const tw=items.filter(i=>!(+i.w>0)).length;
+  return '<div class="muted" id="ed-mat" style="margin-top:4px">Kebutuhan bahan baku (berat estimasi plat × faktor sisa potong '+String(matFaktor()).replace('.',',')+'):'+baris+(tw?'<div class="warn-t">'+tw+' item belum ada berat, belum masuk perhitungan plat</div>':'')+'</div>'
+ }catch(e){return ''}
+}
 function renderTotalsLama(){const t=edTotals();const el=$('#ed-tot');if(!el)return;let ke=0,kr=0,ada=false;if(spkDimBaru()){ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const r=edKgPair(s,l,cap);if(r&&String(l.d).trim()){ada=true;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));ke+=r.kgPcsEst*(q-am);kr+=r.kgPcsReal*q}})})}
- el.innerHTML=`<b>${t.c}</b> item · Total <b>${n(t.q)}</b> Btg/Pcs · <b>${n(Math.round(t.w*100)/100)}</b> Kg${t.w>=1000?` <span class="muted">(${ton(t.w)} ton)</span>`:t.w>0?` <span class="muted">(${n(Math.round(t.w/100)/10)} ton)</span>`:''}${ada?` · plate (est) <b>${n(Math.round(ke*100)/100)}</b> Kg · barang jadi (real) <b>${n(Math.round(kr*100)/100)}</b> Kg`:''}`}
+ el.innerHTML=`<b>${t.c}</b> item · Total <b>${n(t.q)}</b> Btg/Pcs · <b>${n(Math.round(t.w*100)/100)}</b> Kg${t.w>=1000?` <span class="muted">(${ton(t.w)} ton)</span>`:t.w>0?` <span class="muted">(${n(Math.round(t.w/100)/10)} ton)</span>`:''}${ada?` · plate (est) <b>${n(Math.round(ke*100)/100)}</b> Kg · barang jadi (real) <b>${n(Math.round(kr*100)/100)}</b> Kg`:''}`+matPreviewEditor()}
 function renderEditor(){
  const e=ED,k=KAT();const editTerbit=e.id&&e.orig&&(e.orig.status||'Terbit')==='Terbit';
  let no=0;const secs=e.sections.map((s,i)=>{const h=edSecHtml(s,i,no);no+=s.lines.length;return h}).join('');

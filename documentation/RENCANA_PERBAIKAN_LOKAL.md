@@ -129,3 +129,9 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 **T11 selesai (2026-11-11):** [[SKENARIO_UJI_PEMILIK]] (12 skenario dengan hasil yang diharapkan, untuk dicoba pemilik di lokal) dan [[RENCANA_RILIS_WMS_2026-11-11]] (draf rencana rilis, **tidak dijalankan**, menunggu persetujuan pemilik). Tidak ada migration baru; rilis hanya kode.
 
 **Regresi penuh akhir (2026-11-11):** salinan beku pada commit 9a6e99d (mencakup T4 sampai T11): **32 suite, 714 PASS, 0 FAIL**; lint 0 error; uji unit 186+ PASS. Belum dilakukan: uji hak akses realtime di Supabase dev, uji skenario oleh pemilik. Rilis tidak dijalankan.
+
+**Validasi tonase dan permintaan bahan baku (2026-11-12, lokal, katalog berat terpasang):**
+- **Tonase otomatis di editor SPK:** Cable Tray W300xH100xL3000 STU 1.2 ELG, qty 100 = berat 13,513 kg/pcs, total 1.351,3 kg (1,4 ton) muncul sendiri di footer. Mesin berat mereproduksi **1.522 sel rumus Excel dengan 0 selisih** (berat.test B-01).
+- **Kebutuhan plat diverifikasi manual:** SPK 1000 pcs memakai berat **estimasi** plat 14,712 kg/pcs (bukan berat real 13,513) = 14.712 kg netto x faktor sisa potong 1,1 = 16.183,2 kg. Stok fisik 151 lbr x 33,912 + 120 lbr x 27,9955 = 8.480,17 kg; reservasi SPK lain 1.701,39 kg (= 1.546,72 x 1,1, cocok SPK 1012 + 1003); tersedia 6.778,78 kg; kurang 9.404,4 kg = 277,3 lbr, PR otomatis **278 lbr**: cocok.
+- **Temuan dan perbaikan:** tonase di editor memakai berat real, sedangkan permintaan plat memakai berat estimasi plat x 1,1, jadi angkanya tampak tidak cocok saat membuat SPK. Editor kini menampilkan **kebutuhan plat, stok tersedia, dan kekurangan** sebelum Terbit (PH-38).
+- **Batas yang jujur:** kebutuhan adalah **estimasi** (berat estimasi workbook x faktor 1,1). Kebenaran aktualnya diukur setelah produksi lewat tab Susut (plat keluar vs hasil jadi). Belum dikalibrasi dengan data produksi nyata.

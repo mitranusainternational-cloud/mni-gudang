@@ -352,6 +352,17 @@ export async function runProduksiHuluHilir(page, base) {
     await page.click('#tindakan [data-act="tindak"][data-tab="masuk"]'); await page.waitForTimeout(700);
     const k37 = await page.evaluate(() => { const o = { hash: location.hash, tab: F['barang-jadi'].tab, tabel: !!document.querySelector('#fg-siapmasuk') }; S.spk = S.spk.filter((z) => z._id !== 'ph37'); C = null; F['barang-jadi'].tab = 'stok'; return o; });
     ok('PH-37 T10: Dashboard menampilkan Tindakan hari ini dengan jumlah, dan tombolnya membuka layar dan tab yang tepat', r37.ada && r37.tombol.some((x) => /SPK stok siap masuk gudang/.test(x)) && !r37.undef && k37.hash === '#barang-jadi' && k37.tab === 'masuk' && k37.tabel, JSON.stringify({ r37, k37 }));
+
+    langkah = 'PH-38';
+    const r38 = await page.evaluate(() => {
+      const asli = ED; const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+      ED = { id: null, tebal: '1.2', sections: [{ h: g, lines: [{ d: 'Cable Tray Uji Editor', q: 1000, w: 13.513, wEst: 14.712, ambil: 0 }] }] };
+      const html = matPreviewEditor(); const rc = matRencana([{ d: 'Cable Tray Uji Editor', g, q: 1000, w: 14.712 }], { tebal: '1.2' });
+      ED = asli;
+      const teks = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+      return { teks, butuhKg: Math.round(rc[0].butuhKg), netto: rc[0].netto, bruto: rc[0].bruto, ada: html.length > 0 };
+    });
+    ok('PH-38 editor SPK: kebutuhan plat tampil sebelum Terbit, memakai berat estimasi x faktor sisa potong (14.712 kg x 1,1 = 16.183 kg)', r38.ada && r38.netto === 14712 && Math.abs(r38.bruto - 16183.2) < 0.01 && new RegExp('butuh ' + String(r38.butuhKg).replace(/(\d)(?=(\d{3})+$)/g, '$1.') + ' kg').test(r38.teks), JSON.stringify(r38));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
