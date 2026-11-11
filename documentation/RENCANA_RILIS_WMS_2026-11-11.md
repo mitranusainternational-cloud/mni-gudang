@@ -6,7 +6,7 @@ updated: 2026-11-11
 
 # Rencana rilis WMS (draf, TIDAK dijalankan)
 
-**Tidak ada yang dirilis, di-push, di-merge, atau diubah di Supabase dan Vercel sampai pemilik menyetujui tertulis di percakapan.** Dokumen ini hanya rencana. Mengikuti [[RENCANA_RILIS_BERTAHAP_2026-11-10]] dan [[release-pipeline]].
+**Tidak ada yang dirilis, di-push, di-merge, atau diubah di Supabase dan Vercel sampai pemilik menyetujui tertulis di percakapan.** Dokumen ini hanya rencana. Mengikuti [[RENCANA_RILIS_BERTAHAP_2026-11-10]] dan [[documentation/INTEGRATION_PATH]].
 
 ## 1. Apa yang berubah dibanding live
 

@@ -8,13 +8,13 @@ updated: 2026-11-11
 
 > Dibuat oleh `node scripts/check-vault.mjs --write`. Jangan edit manual. Target: rusak 0, properti 0.
 
-## Wikilink rusak (1)
+## Wikilink rusak (0)
 
-- documentation/RENCANA_RILIS_WMS_2026-11-11.md: [[release-pipeline]]
+- Tidak ada
 
-## Wikilink ambigu (tulis dengan path) (1)
+## Wikilink ambigu (tulis dengan path) (0)
 
-- documentation/RENCANA_PERBAIKAN_LOKAL.md: [[DECISIONS]] cocok dengan apps/gudang-logistik/docs/DECISIONS.md, documentation/DECISIONS.md
+- Tidak ada
 
 ## Properti wajib hilang (0)
 
