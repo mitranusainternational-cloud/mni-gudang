@@ -303,6 +303,33 @@ export async function runProduksiHuluHilir(page, base) {
       return h;
     });
     ok('PH-33 T8: sparepart di bawah minimum meminta satu PR otomatis (diulang tidak dobel); lonjakan pemakaian masuk Cek Data', r33.no1 && r33.auto && !r33.no2 && r33.prBaru === 1 && r33.lonjak, JSON.stringify(r33));
+
+    langkah = 'PH-34';
+    await go('dashboard');
+    const r34 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const h = {};
+      const nav = () => [...document.querySelectorAll('#nav a')].length;
+      h.awal = nav(); h.rolAwal = myRole();
+      const u = S.muser.find((x) => String(x.email || x._id).toLowerCase() === String(ME).toLowerCase());
+      const asli = u.role; await DB.doc('muser/' + u._id).update({ role: 'logistik' }); await w(1500);
+      h.rolBaru = myRole(); h.navBaru = nav(); h.penggunaTampil = !!document.querySelector('#nav a[href="#pengguna"]');
+      await DB.doc('muser/' + u._id).update({ role: asli }); await w(1500);
+      h.rolPulih = myRole(); h.navPulih = nav();
+      return h;
+    });
+    ok('PH-34 T10a: mengganti peran pengguna yang sedang masuk langsung mengubah menu (tanpa muat ulang) dan dapat dipulihkan', r34.rolAwal === 'admin' && r34.rolBaru === 'logistik' && r34.navBaru < r34.awal && !r34.penggunaTampil && r34.rolPulih === 'admin' && r34.navPulih === r34.awal, JSON.stringify(r34));
+
+    langkah = 'PH-35';
+    const r35 = await page.evaluate(() => {
+      const tgl = today(); const hasil = {};
+      S.spk.push({ _id: 'ph35', no: 9935, status: 'Terbit', customer: 'Uji T10b', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Uji Kinerja', q: 10, u: 'Btg', w: 5, prod: 4, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }], prodLog: [{ tgl, at: new Date().toISOString(), by: 'ppic@mni.local', ket: '', items: [{ d: 'Uji Kinerja', q: 4, wc: '' }] }] });
+      C = null; const K = kpiAgg('0'); const o = K.U['ppic@mni.local'] || {};
+      hasil.hq = o.hq; hasil.hkg = o.hkg;
+      S.spk = S.spk.filter((z) => z._id !== 'ph35'); C = null; return hasil;
+    });
+    await go('kinerja');
+    const t35 = await page.evaluate(() => ({ kolom: /hasil produksi/i.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }));
+    ok('PH-35 T10b: Kinerja Tim menghitung hasil produksi per orang dari laporan admin (qty dan tonase) dan menampilkannya', r35.hq === 4 && r35.hkg === 20 && t35.kolom && !t35.undef, JSON.stringify({ r35, t35 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

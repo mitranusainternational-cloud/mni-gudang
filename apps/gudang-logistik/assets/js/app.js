@@ -151,10 +151,18 @@ async function boot(){
  cl.use('downloads').then(d=>{DLS=d}).catch(()=>{});
  for(const c of COLS){
   DB.collection(c).onSnapshot(snap=>{
-    S[c]=snap.docs.map(d=>({...d.data(),_id:d.id}));loaded.add(c);C=null;EVX=null;LAST=new Date();LIVE='on';schedule();
+    S[c]=snap.docs.map(d=>({...d.data(),_id:d.id}));loaded.add(c);C=null;EVX=null;LAST=new Date();LIVE='on';if(c==='muser')refreshMe();schedule();
   },err=>{LIVE='off';renderLive();toast('Koneksi data terputus ('+err.code+'). Muat ulang halaman.')});
  }
 }
+/* T10a: hak akses pengguna yang sedang masuk diperbarui seketika saat data pengguna berubah (peran, hak modul, aktif), tanpa muat ulang. */
+let meBusy=false;
+async function refreshMe(){if(meBusy||!USER)return;meBusy=true;
+ try{const me=await USER.me();const cw=await USER.can('data.write');
+  const kunci=p=>JSON.stringify([p&&p.role,p&&p.modul,p&&p.terdaftar,p&&p.canEdit]);const beda=ME_P&&kunci(ME_P)!==kunci(me);
+  ME_P=me;IS_OWNER=!!me.isOwner;IS_EDITOR=!!me.canEdit;CAN=cw!==false;
+  if(beda){C=null;route();schedule();toast('Hak akses Anda diperbarui')}
+ }catch(e){}finally{meBusy=false}}
 let rq=0,bodyPending=false;const typingInBody=()=>{const a=document.activeElement;return a&&$('#body').contains(a)&&a.matches('input,select,textarea')};
 document.addEventListener('focusout',()=>setTimeout(()=>{if(bodyPending&&!typingInBody()){bodyPending=false;renderBody()}},0));
 function schedule(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;pasangKatalogBerat();renderNav();renderLive();renderMe();renderAccess();if(!$('#tools').contains(document.activeElement))renderTools();if(typingInBody())bodyPending=true;else renderBody();if(DRAWER)DRAWER();if(SHEET)renderSheet()})}
@@ -920,7 +928,7 @@ function evAdmin(){const out=[];
   const prev={};
   log.forEach(en=>(en.items||[]).forEach((li,k)=>{const q=+li.q||0;const d=Math.round((q-(prev[k]||0))*1e6)/1e6;prev[k]=Math.max(prev[k]||0,q);if(d<=0)return;
    const it=(s.items||[])[k]||{};const w=+it.w>0?+it.w:null;const tgl=en.tgl||String(en.at||'').slice(0,10);if(!tgl)return;
-   out.push({_id:'adm-'+s._id+'-'+k+'-'+tgl+'-'+out.length,jenis:'hasil',spk_id:s._id,item_idx:k,item_desc:li.d||it.d||'',spk_no:String(s.no),customer:s.customer||'',tebal:thkOf(it.g)||'',wc:li.wc||'',mesin:li.wc||'',operator:'Admin produksi',qty:d,reject:0,tgl,mulai:null,selesai:tgl+'T17:00:00',menit:null,berat:w,tonase:w?Math.round(d*w*100)/100:null,at:en.at||tgl+'T17:00:00',_admin:true})}))});
+   out.push({_id:'adm-'+s._id+'-'+k+'-'+tgl+'-'+out.length,jenis:'hasil',spk_id:s._id,item_idx:k,item_desc:li.d||it.d||'',spk_no:String(s.no),customer:s.customer||'',tebal:thkOf(it.g)||'',wc:li.wc||'',mesin:li.wc||'',operator:'Admin produksi',by:en.by||null,qty:d,reject:0,tgl,mulai:null,selesai:tgl+'T17:00:00',menit:null,berat:w,tonase:w?Math.round(d*w*100)/100:null,at:en.at||tgl+'T17:00:00',_admin:true})}))});
  return out}
 const lapBy=()=>produksiAdmin()?LAP_BY.filter(x=>['produk','customer'].includes(x[0])):LAP_BY;
 const lapAkm=()=>produksiAdmin()?LAP_AKM.filter(x=>x[0]==='kelompok'):LAP_AKM;
@@ -5088,6 +5096,9 @@ function kpiAgg(p){
  const U={};const get=u=>U[u]||(U[u]={u,total:0,mods:{},days:new Set(),meas:0,late:0,lateDays:0,batal:0,last:'',ev:[]});
  userIds().forEach(u=>{const r=userRole(u);if(r&&r!=='off'||E.some(e=>e.u===u))get(u)});
  E.forEach(e=>{const o=get(e.u);o.total++;o.mods[e.mod]=(o.mods[e.mod]||0)+1;o.days.add(e.day);if(e.tgl){o.meas++;if(e.late>0){o.late++;o.lateDays+=e.late}}if(/^Batalkan|^Hapus/.test(e.k))o.batal++;if(!o.last||e.at>o.last)o.last=e.at;o.ev.push(e)});
+ const hasilOrang=(u,q,kg)=>{const o=get(u);o.hq=(o.hq||0)+q;o.hkg=(o.hkg||0)+kg};
+ evAdmin().forEach(e=>{if(e.by&&e.tgl>=a&&e.tgl<=b)hasilOrang(e.by,e.qty,e.tonase||0)});
+ evData().forEach(e=>{if((e.jenis||'hasil')==='hasil'&&e.oleh&&e.tgl>=a&&e.tgl<=b)hasilOrang(e.oleh,+e.qty||0,+e.tonase||0)});
  const lastAll={};acts().forEach(e=>{if(!lastAll[e.u])lastAll[e.u]=e.at});
  Object.values(U).forEach(o=>{o.lastAll=lastAll[o.u]||'';o.tw=o.meas?(o.meas-o.late)/o.meas:null});
  return {a,b,E,U,wd:workdays(a,b)};
@@ -5108,6 +5119,7 @@ B.kinerja=()=>{
  const kp=(cls,lb,v,unit,s,g)=>`<div class="kpi ${cls}" style="cursor:default"><span class="lb">${lb}</span><span class="v">${v}${unit?`<small>${unit}</small>`:''}</span><span class="s">${s}</span>${g!=null?`<div class="kgauge"><i style="width:${Math.max(0,Math.min(100,Math.round(g*100)))}%"></i></div>`:''}</div>`;
  let h=`<section class="kpis">
   ${kp('info','Total aktivitas',n(E.length),'entri',`${lbl} · ${n(Math.round(E.length/K.wd*10)/10)} per hari kerja`)}
+  ${kp('info','Hasil produksi dilaporkan',n(rows.reduce((s,o)=>s+(o.hq||0),0)),'pcs',tonA(rows.reduce((s,o)=>s+(o.hkg||0),0))+' · '+lbl)}
   ${kp(act?'ok':'warn','Pengguna aktif',act,'/ '+rows.length,`mencatat minimal 1 transaksi ${lbl}`)}
   ${kp(tw==null?'':tw>=.9?'ok':tw>=.75?'warn':'crit','Input tepat waktu',tw==null?'–':Math.round(tw*100)+'%','',tw==null?'belum ada transaksi bertanggal':`${n(late)} dari ${n(meas)} dicatat lewat H+1`)}
   ${kp(E.filter(e=>/^Batalkan|^Hapus/.test(e.k)).length?'warn':'ok','Batal / hapus',E.filter(e=>/^Batalkan|^Hapus/.test(e.k)).length,'entri','koreksi data setelah dicatat')}
@@ -5124,9 +5136,10 @@ B.kinerja=()=>{
  // leaderboard
  const th=(k,l,cls='')=>`<th class="${cls}"><button class="linkbtn" style="text-decoration:none;color:inherit;font-weight:inherit" data-act="filt" data-view="kinerja" data-key="sort" data-val="${k}">${l}${f.sort===k?' ↓':''}</button></th>`;
  const mx=Math.max(1,...rows.map(o=>o.total));
- h+=`<section class="panel"><header><h2>Kinerja per pengguna</h2><span class="hint">klik baris untuk detail aktivitas</span></header>${rows.length?`<div class="tbl-wrap"><table class="kt"><thead><tr><th>#</th><th>Pengguna</th>${th('total','Aktivitas','num')}${MODS.map(([k,l])=>`<th class="num mcol">${l}</th>`).join('')}${th('days','Hari aktif','num')}${th('tw','Tepat waktu','num')}<th class="num">Batal/hapus</th>${th('last','Terakhir aktif')}</tr></thead><tbody>
+ h+=`<section class="panel"><header><h2>Kinerja per pengguna</h2><span class="hint">klik baris untuk detail aktivitas</span></header>${rows.length?`<div class="tbl-wrap"><table class="kt"><thead><tr><th>#</th><th>Pengguna</th>${th('total','Aktivitas','num')}<th class="num">Hasil produksi</th>${MODS.map(([k,l])=>`<th class="num mcol">${l}</th>`).join('')}${th('days','Hari aktif','num')}${th('tw','Tepat waktu','num')}<th class="num">Batal/hapus</th>${th('last','Terakhir aktif')}</tr></thead><tbody>
  ${rows.map((o,i)=>{const r=userRole(o.u);return `<tr class="click" data-act="kpiuser" data-uid="${esc(o.u)}"><td class="muted">${i+1}</td><td><div class="ucell">${av(o.u)}<div><b>${uName(o.u)}</b><div class="note">${esc(roleL(r==='off'?'':r))}${r==='off'?' · nonaktif':''}</div></div></div></td>
   <td class="num"><div class="tbar"><i style="width:${pct(o.total,mx)*100}%"></i></div><b>${n(o.total)}</b></td>
+  <td class="num">${o.hq?`<b>${n(o.hq)}</b> pcs<div class="note">${tonA(o.hkg)}</div>`:'<span class="muted">·</span>'}</td>
   ${MODS.map(([k])=>`<td class="num mcol ${o.mods[k]?'':'muted'}">${o.mods[k]?n(o.mods[k]):'·'}</td>`).join('')}
   <td class="num">${o.days.size}<span class="muted">/${K.wd}</span></td>
   <td class="num">${o.tw==null?'<span class="muted">–</span>':chip(Math.round(o.tw*100)+'%',o.tw>=.9?'ok':o.tw>=.75?'warn':'crit')}</td>

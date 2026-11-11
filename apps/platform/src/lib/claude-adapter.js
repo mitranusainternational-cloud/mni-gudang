@@ -449,15 +449,13 @@ async function makeUserAdapter() {
   const user = session?.user;
   if (!user) return null;
 
-  // Fetch user role from muser table
-  const { data: muser } = await supabase
-    .from('muser')
-    .select('*')
-    .eq('email', user.email)
-    .maybeSingle();
+  // Data pengguna diambil ulang setiap me() dan can(), supaya perubahan peran atau hak modul berlaku seketika (bukan hanya saat aplikasi dibuka).
+  const ambilMuser = async () => (await supabase.from('muser').select('*').eq('email', user.email).maybeSingle()).data;
+  let muser = await ambilMuser();
+  const segarkan = async () => { try { const baru = await ambilMuser(); if (baru !== undefined) muser = baru; } catch { /* pakai data terakhir */ } };
 
   return {
-    me: async () => ({
+    me: async () => { await segarkan(); return {
       id: user.email,
       email: user.email,
       name: muser?.nama || user.email, // dipakai app untuk nama tampilan
@@ -468,8 +466,9 @@ async function makeUserAdapter() {
       terdaftar: !!muser,
       isOwner: muser?.role === 'admin' && muser?.aktif !== false,
       canEdit: bisaMengubah(muser),
-    }),
+    }; },
     can: async (permission) => {
+      await segarkan();
       if (permission === 'data.write') return bisaMengubah(muser);
       return !!muser && muser.aktif !== false;
     },
