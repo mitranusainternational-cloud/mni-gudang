@@ -8,9 +8,9 @@ updated: 2026-11-11
 
 > Dibuat oleh `node scripts/check-vault.mjs --write`. Jangan edit manual. Target: rusak 0, properti 0.
 
-## Wikilink rusak (0)
+## Wikilink rusak (1)
 
-- Tidak ada
+- documentation/RENCANA_RILIS_WMS_2026-11-11.md: [[release-pipeline]]
 
 ## Wikilink ambigu (tulis dengan path) (1)
 
