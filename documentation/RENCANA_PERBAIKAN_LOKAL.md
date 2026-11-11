@@ -123,3 +123,5 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 **Hasil regresi beku T4+T5:** 32 suite, 707 PASS, 0 FAIL (salinan beku pada commit a9dec78).
 
 **T9 selesai (laporan satu pintu, 2026-11-11, lokal):** menu **Laporan** (terbuka untuk semua pengguna terdaftar seperti Dashboard) berisi tujuh bagian dalam satu halaman: Produksi (hasil pcs dan kg, SPK terbit, aktif, terlambat), Pengiriman, Bahan baku (plat masuk, keluar, susut, PR terbuka), Barang jadi, Vendor (termasuk siap dikirim), Sparepart, dan Kesehatan data; periode Hari ini sampai 90 hari; tiap baris bisa diklik ke layar sumbernya; **Unduh CSV** satu klik (`ringkasLaporan`). PH-36: angka Hasil produksi cocok dengan sumbernya; uji akses A-06 disesuaikan (menu Laporan terlihat peran terbatas).
+
+**T10 selesai (2026-11-11, lokal):** Dashboard menampilkan **Tindakan hari ini**: tombol per pekerjaan dengan jumlah yang menunggu (serah plate, isi hasil produksi, kirim ke vendor, kirim ke customer, terima barang jadi SPK stok, susut berlebih, sparepart di bawah minimum), hanya yang boleh dilihat perannya, langsung membuka layar dan tab yang tepat. PH-37 lulus (produksihh 37 PASS).

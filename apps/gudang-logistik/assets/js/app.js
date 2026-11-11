@@ -301,6 +301,7 @@ B.dashboard=()=>{
  const qa0=[['spk','spk','SPK baru'],['bahan-baku','bahan-baku','Terima material'],['pengiriman','pengiriman','Surat jalan'],['bongkar-muat','bongkar-muat','Catat kendaraan']].filter(([m])=>ME_P?myLevel(m)==='ubah':CAN).map(([m,h,l])=>`<a class="btn sm" href="#${h}">${l}</a>`).join('');
  const qa=qa0+qaBk;
  let h=`<section class="brief ${bcls}"><span class="dot"></span><div class="bt"><b>${need.length?need.length+' hal perlu perhatian':'Semua terkendali'}</b><span>${need.length?need.join(' · '):'Stok aman, SPK sesuai jadwal, barang di vendor dalam batas.'}</span></div><div class="qa">${qa}</div><time>${fd(t)}</time></section>
+ ${tindakanHariIni()}
  <div class="sect-t">Operasional hari ini</div>
  <section class="kpis">
   ${vis('bahan-baku')?kpi('bahan-baku',rmLow.length?'crit':'ok','Bahan baku kritis',rmLow.length,'item',S.rm.length?`habis / di bawah buffer · ${rmTon} ton di gudang`:'belum ada item bahan baku'):''}
@@ -5217,6 +5218,19 @@ B['laporan']=()=>{const f=F['laporan'];const [,,lbl]=period(f.p);const R=ringkas
  return '<div class="pbody note">Periode: <b>'+esc(lbl)+'</b>. Angka waktu (produksi, kirim, bahan baku, sparepart) mengikuti periode; angka "saat ini" selalu kondisi sekarang. Semua dihitung dari data yang sama dengan layar lain.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px">'+bags.map(bag=>'<section class="panel" id="lap-'+esc(bag.toLowerCase().replace(/ /g,'-'))+'"><header><h2>'+esc(bag)+'</h2></header><div class="tbl-wrap"><table><tbody>'+R.filter(r=>r.bag===bag).map(r=>'<tr'+(r.href?' class="click" data-act="go" data-href="'+esc(r.href)+'"':'')+'><td>'+esc(r.k)+(r.note?'<div class="note">'+esc(r.note)+'</div>':'')+'</td><td class="num"><b>'+nilai(r)+'</b></td></tr>').join('')+'</tbody></table></div></section>').join('')+'</div>'};
 async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R=ringkasLaporan(f.p);
  await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
+/* T10: Dashboard menampilkan apa yang menunggu tindakan, satu tombol per pekerjaan, langsung ke layar atau tab yang tepat. Hanya yang boleh dilihat peran ini. */
+function tindakanHariIni(){const L=[];const c=calc();
+ const add=(mod,href,tab,jml,label)=>{if(jml>0&&(!ME_P||myLevel(mod)))L.push({href,tab,jml,label})};
+ add('bahan-baku','bahan-baku','plate',platAntrian().length,'SPK menunggu serah plate');
+ add('spk','mesin','',S.spk.filter(s=>s.status==='Terbit'&&c.spk[s._id]&&c.spk[s._id].st!=='Selesai'&&c.spk[s._id].pP<1).length,'SPK menunggu hasil produksi diisi');
+ add('vendor','vendor','',siapVendorRows().length,'item siap dikirim ke vendor');
+ add('pengiriman','barang-jadi','siap',fgSiapKirimList().length,'SPK siap kirim ke customer');
+ add('barang-jadi','barang-jadi','masuk',fgSiapMasukList().length,'SPK stok siap masuk gudang');
+ add('bahan-baku','bahan-baku','susut',susutRows().filter(r=>r.status==='Berlebih').length,'susut bahan baku berlebih');
+ add('sparepart','sparepart','beli',spSug().length,'sparepart di bawah minimum');
+ const kepala='<div class="sect-t">Tindakan hari ini</div>';
+ if(!L.length)return kepala+'<div class="pbody note" id="tindakan">Tidak ada yang menunggu tindakan. Semua alur berjalan.</div>';
+ return kepala+'<div class="pbody" id="tindakan" style="display:flex;gap:8px;flex-wrap:wrap">'+L.map(x=>'<button type="button" class="btn sm" data-act="tindak" data-href="'+x.href+'" data-view="'+x.href+'" data-tab="'+x.tab+'"><b>'+n(x.jml)+'</b> '+esc(x.label)+'</button>').join('')+'</div>'}
 async function kpiCsv(){
  const f=F.kinerja;const K=kpiAgg(f.p);const [a,b]=period(f.p);
  const head=['Pengguna','Peran','Jabatan','Total aktivitas',...MODS.map(m=>m[1]),'Hari aktif','Hari kerja','Transaksi bertanggal','Input telat (>H+1)','Tepat waktu %','Batal/hapus','Terakhir aktif'];
@@ -6137,7 +6151,7 @@ document.addEventListener('click',async e=>{
   case 'setsev':{F['cek-data'].sev=ds.sev||'';renderBody();break}
   case 'prodfix':{const s=byId('spk',ds.id);const x=calc().spk[ds.id];const items=s.items.map((it,i)=>{const l=x.lines[i];return l&&l.kirim>=l.q?{...it,prod:+it.q}:it});await updDoc('spk',ds.id,{items});toast(`Progres produksi SPK ${s.no} diperbarui`);break}
   case 'kpiuser':if(!e.target.closest('button')||el.matches('button'))kpiUser(ds.uid);break;
-  case 'kpicsv':await kpiCsv();break;case 'ringkascsv':await ringkasCsv();break;
+  case 'kpicsv':await kpiCsv();break;case 'tindak':if(ds.tab&&F[ds.view])F[ds.view].tab=ds.tab;location.hash=ds.href;break;case 'ringkascsv':await ringkasCsv();break;
   case 'mepage':case 'meclick':accountModal();break;
   case 'pwself':pwSelf();break;
   case 'mesinmulai':await mesinMulai(ds.k);break;

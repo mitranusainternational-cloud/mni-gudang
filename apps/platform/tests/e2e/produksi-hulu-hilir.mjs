@@ -340,6 +340,18 @@ export async function runProduksiHuluHilir(page, base) {
       return { baris: R.length, bag: [...new Set(R.map((r) => r.bag))], cocok: !!hp && Math.abs(hp.v - sum) < 0.01, panel: document.querySelectorAll('#body section.panel').length, undef: /undefined|NaN/.test(document.body.innerText), menu: !!document.querySelector('#nav a[href="#laporan"]') };
     });
     ok('PH-36 T9: halaman Laporan menampilkan tujuh bagian (produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, kesehatan data), angkanya cocok dengan sumbernya, dan ada di menu', r36.baris >= 20 && r36.bag.length === 7 && r36.cocok && r36.panel === 7 && !r36.undef && r36.menu, JSON.stringify(r36));
+
+    langkah = 'PH-37';
+    await page.evaluate(() => {
+      const fg = (S.fg || [])[0]; const tgl = today();
+      S.spk.push({ _id: 'ph37', no: 9937, status: 'Terbit', stokReq: true, customer: 'STOK MNI', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Uji Tindakan', q: 10, u: 'Btg', prod: 10, fg: fg._id, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] });
+      C = null; location.hash = '#dashboard';
+    });
+    await go('dashboard');
+    const r37 = await page.evaluate(() => ({ ada: !!document.querySelector('#tindakan'), tombol: [...document.querySelectorAll('#tindakan [data-act="tindak"]')].map((b) => b.textContent.trim().replace(/\s+/g, ' ')), undef: /undefined|NaN/.test(document.body.innerText) }));
+    await page.click('#tindakan [data-act="tindak"][data-tab="masuk"]'); await page.waitForTimeout(700);
+    const k37 = await page.evaluate(() => { const o = { hash: location.hash, tab: F['barang-jadi'].tab, tabel: !!document.querySelector('#fg-siapmasuk') }; S.spk = S.spk.filter((z) => z._id !== 'ph37'); C = null; F['barang-jadi'].tab = 'stok'; return o; });
+    ok('PH-37 T10: Dashboard menampilkan Tindakan hari ini dengan jumlah, dan tombolnya membuka layar dan tab yang tepat', r37.ada && r37.tombol.some((x) => /SPK stok siap masuk gudang/.test(x)) && !r37.undef && k37.hash === '#barang-jadi' && k37.tab === 'masuk' && k37.tabel, JSON.stringify({ r37, k37 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
