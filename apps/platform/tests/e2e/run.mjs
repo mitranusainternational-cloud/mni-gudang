@@ -53,6 +53,7 @@ for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['aks
     continue;
   }
   const page = await browser.newPage({ acceptDownloads: true });
+  await page.addInitScript(() => { window.__PRODUKSI_MESIN = true; }); // suite menguji Antrian Mesin per Work Centre; mode laporan produksi admin (bawaan aplikasi) dinyalakan di uji PH-23
   if (name === 'spkdimensi' || name === 'spkringkas') await page.addInitScript(() => { window.__SPK_DIM_NEW = true; }); // layout per dimensi hanya di suite yang mengujinya; bawaan aplikasi = layout sebelumnya
   try {
     const { pass, fail, detail } = await run(page, base);

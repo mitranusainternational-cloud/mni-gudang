@@ -132,6 +132,24 @@ export async function runProduksiHuluHilir(page, base) {
     await go('cekdata');
     const r22 = await page.evaluate(() => { const I = dataIssues().filter((i) => i.cat === 'Produksi'); return { n: I.length, judul: I.map((i) => i.title.replace(/<[^>]+>/g, '')).slice(0, 8), plate: I.filter((i) => /plate belum lengkap/.test(i.title)).length, vendor: I.filter((i) => /belum dikirim ke vendor/.test(i.title)).length, undef: /undefined/.test(JSON.stringify(I)) }; });
     ok('PH-22 Cek Data Produksi: aturan plate dan WIP berjalan tanpa galat dan tanpa undefined (pemicu plate dibuktikan di pratinjau berkatalog, karena butuh katalog berat)', !r22.undef && r22.n >= 1, JSON.stringify(r22));
+
+    langkah = 'PH-23';
+    await page.evaluate(() => { window.__PRODUKSI_MESIN = false; });
+    await go('mesin');
+    const r23 = await page.evaluate(() => ({ adm: produksiAdmin(), lap: !!document.querySelector('#prod-lap'), mesinBtn: /Catat hasil di|Mulai/.test(document.body.innerText) && !!document.querySelector('[data-act="mulai"],[data-act="prodcatat"]'), opsi: [...document.querySelectorAll('#f-prod-grp option')].map((o) => o.value), undef: /undefined/.test(document.body.innerText) }));
+    ok('PH-23a mode admin: Produksi Hari Ini = laporan per tebal/tipe/material/finishing/customer + daftar item, tanpa antrian mesin', r23.adm && r23.lap && !r23.mesinBtn && ['tebal', 'tipe', 'material', 'finishing', 'customer'].every((v) => r23.opsi.includes(v)) && !r23.undef, JSON.stringify(r23));
+    const r23b = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms));
+      const s = S.spk.find((z) => String(z.no) === '1004'); if (!s) return { err: 'SPK 1004 tidak ada' };
+      const evAwal = (S.produksi_log || []).length; const prodAwal = +s.items[0].prod || 0;
+      document.querySelector('button[data-act="prod"][data-id="' + s._id + '"]').click(); await w(400);
+      const inp = document.querySelector('#mform input[name="p_0"]'); const tombolMesin = /Catat hasil di/.test(document.querySelector('#mform').innerText);
+      const q = +inp.max; inp.value = String(Math.min(3, q)); inp.dispatchEvent(new Event('input', { bubbles: true }));
+      [...document.querySelectorAll('.modal button')].find((b) => /Simpan/.test(b.textContent)).click(); await w(900);
+      const s2 = S.spk.find((z) => String(z.no) === '1004'); const eff = (calc().spk[s2._id].lines[0] || {}).prodEff;
+      return { tombolMesin, prodAwal, prod: +s2.items[0].prod, eff, evDelta: (S.produksi_log || []).length - evAwal, wcKosong: ((s2.prodLog || []).slice(-1)[0] || { items: [{}] }).items[0].wc === '', kg: /selesai kg/i.test(document.body.innerText) };
+    });
+    ok('PH-23b admin isi total selesai per item: progres naik, tanpa catatan mesin dan tanpa Work Centre, tonase tampil', !r23b.err && !r23b.tombolMesin && r23b.eff >= 1 && r23b.prod === r23b.eff && r23b.evDelta === 0 && r23b.wcKosong && r23b.kg, JSON.stringify(r23b));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

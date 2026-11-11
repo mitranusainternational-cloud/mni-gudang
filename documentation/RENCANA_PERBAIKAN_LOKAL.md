@@ -55,3 +55,13 @@ Setelah tiap gelombang: ringkasan hasil, bukti (`source-level` atau `verified in
 - **B selesai di lokal:** seed Work Centre sudah sama dengan langkah rute (PH-01 lulus). **Production belum disentuh.** Dari backup lokal (10 Nov) Work Centre production hanya `SHEARING` dan `CNC LASER`. Pencocokan nama tidak membedakan huruf besar kecil, jadi yang kurang untuk rute standar: **Punching, Bending, Welding** (dan Coating/QC/Packing bila dipakai). Menambahkannya ke production adalah perubahan data live, menunggu persetujuan terpisah; di aplikasi sudah ada tombol "Tambahkan otomatis" di Cek Data.
 - **C selesai di lokal:** Cek Data kategori Produksi punya dua aturan baru: (1) produksi sudah jalan tetapi plate belum lengkap diserahkan (perhatian), (2) hasil produksi selesai tetapi belum dikirim ke vendor (info). Aturan (1) terbukti menyala di pratinjau berkatalog (SPK 1005). Aturan (2) **belum terbukti memicu** karena data contoh tidak punya SPK di tahap "Siap ke vendor". Uji PH-22 hanya memastikan tidak galat dan tanpa `undefined`.
 - Regresi penuh gelombang 1 belum dijalankan.
+
+## Paket K: laporan produksi terpusat admin (2026-11-11, lokal)
+
+Keputusan pemilik: operator lapangan belum siap, jadi sementara **satu admin** mengisi laporan produksi seperti versi pertama. Admin hanya mengisi **jumlah item yang sudah selesai (siap kirim ke vendor atau customer)**, tidak ada laporan per Work Centre dan tidak ada pilihan mesin.
+
+- **Input:** tombol *Isi hasil* di Produksi Hari Ini membuka form SPK; satu isian total selesai per item. Disimpan sebagai total manual item (`prod`) dan `prodLog` tanpa WC. Tidak ada catatan `produksi_log` baru (PH-23b).
+- **Laporan:** Produksi Hari Ini kini memuat laporan **qty dan tonase (kg)** per Tebal, Tipe produk, Material, Finishing, atau Customer (cakupan SPK aktif atau semua SPK terbit), serta daftar progres per item SPK. Sumbernya angka selesai per item yang sama dengan SPK Berjalan, jadi cocok untuk input admin maupun catatan mesin.
+- **Bendera:** bawaan aktif. Mati lewat setting `produksiAdmin=false` (Master Data › setting) untuk kembali ke Antrian Mesin per Work Centre; Antrian Mesin dan kode operator **tidak dihapus**, siap dipakai saat operator lapangan siap. Uji lama memakai `window.__PRODUKSI_MESIN`.
+- **Catatan:** item yang sudah punya catatan mesin: isian admin dihitung **tambahan** di luar catatan mesin (angka dijumlah, dibatasi target). Tonase memakai berat per pcs item; item tanpa berat dihitung 0 dan diberi catatan.
+- **Bukti:** PH-23a/b lulus (produksihh 23 PASS), terlihat di pratinjau lokal. Laporan Kinerja & Analisa dan Laporan Produksi lama tetap bersumber dari catatan mesin, jadi belum memuat angka admin; ini keputusan terbuka.

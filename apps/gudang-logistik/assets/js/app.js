@@ -1333,6 +1333,10 @@ function logProduksi(s){
   return {tgl:e.tgl||P.tanggalLokal(e.at),at:e.at||'',by:e.operator||e.oleh||'',ket:`${e.wc}${e.mesin&&e.mesin!==e.wc?' · '+e.mesin:''}: ${n(+e.qty||0)}${+e.reject?' (reject '+n(+e.reject)+')':''}`,items:[{d:e.item_desc,q,qw:+e.qty||0,wc:e.wc}],sumber:'mesin'}}):[];
  return [...lama,...baru].sort((a,b)=>(String(a.tgl)+String(a.at)).localeCompare(String(b.tgl)+String(b.at)));
 }
+/* Laporan produksi terpusat (sementara, operator lapangan belum siap): satu admin mengisi total item yang SUDAH SELESAI dan siap ke vendor/customer.
+   Tidak ada laporan per Work Centre dan tidak ada catatan mesin palsu; angka disimpan sebagai total manual item (prod) dan prodLog tanpa WC, seperti versi pertama.
+   Bawaan AKTIF; matikan lewat setting produksiAdmin=false (master/setting) untuk kembali ke Antrian Mesin per Work Centre. Uji lama memakai window.__PRODUKSI_MESIN. */
+function produksiAdmin(){const v=(byId('master','setting')||{}).produksiAdmin;if(v!==undefined)return !!v;return !window.__PRODUKSI_MESIN}
 function prodForm(id){
  const s=byId('spk',id);
  const c=calc();const x=c.spk[id]||{};
@@ -1392,8 +1396,8 @@ function prodForm(id){
    const tx={wc:p=>`${esc(p.tempat)} ${n(p.qty)}`,'vendor-siap-kirim':p=>`siap kirim ke ${esc(p.tempat)} ${n(p.qty)}`,'di-vendor':p=>`di ${esc(p.tempat)} ${n(p.qty)}`,selesai:p=>`selesai produksi ${n(p.qty)}`};
    const pos=P.posisiItem(st.rute,st.kum,q,st.vendorKirim);
    posisi=(pos.length?`<div class="note">Posisi: ${pos.map(p=>(tx[p.jenis]||tx.wc)(p)).join(' · ')}</div>`:'')+(rsv?`<div class="note">Sedang dikerjakan: ${rsv}</div>`:'');
-   aksi=aq.map((a,ii)=>({w:st.rute[ii],antri:a.antri})).filter(z=>z.antri>0&&!P.langkahVendor(z.w)).map((z,j)=>`<button type="button" class="btn sm ${j===0?'primary':'ghost'}" data-act="prodcatat" data-k="${esc(s._id+'|'+k)}" data-wc="${esc(z.w)}">Catat hasil di ${esc(z.w)} (${n(z.antri)} siap)</button>`).join(' ');
-   manual=adaEv?'':`<details class="prod-manual"${prod>0?' open':''}><summary>SPK lama: isi total manual</summary><div style="margin-top:6px">${inpManual}</div></details>`;
+   aksi=produksiAdmin()?'':aq.map((a,ii)=>({w:st.rute[ii],antri:a.antri})).filter(z=>z.antri>0&&!P.langkahVendor(z.w)).map((z,j)=>`<button type="button" class="btn sm ${j===0?'primary':'ghost'}" data-act="prodcatat" data-k="${esc(s._id+'|'+k)}" data-wc="${esc(z.w)}">Catat hasil di ${esc(z.w)} (${n(z.antri)} siap)</button>`).join(' ');
+   manual=produksiAdmin()?`<div style="margin-top:8px"><div class="note" style="margin-bottom:4px">${adaEv?'Selesai tambahan di luar catatan mesin':'Total selesai (siap ke vendor / customer)'}</div>${inpManual} <span class="note">dari ${n(q)} ${esc(i.u||'')}</span></div>`:adaEv?'':`<details class="prod-manual"${prod>0?' open':''}><summary>SPK lama: isi total manual</summary><div style="margin-top:6px">${inpManual}</div></details>`;
   }else manual=`<div class="note" style="margin-bottom:4px">Rute produk belum dikenali (judul section tanpa nama produk). Isi total manual.</div>${inpManual}`;
   return `<div style="border:1px solid var(--${done?'ok':'line'});border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface)">
    <div style="font-weight:700;font-size:13px">${esc(i.d)}${done?' <span class="chip ok">selesai</span>':''}</div>
@@ -1404,8 +1408,8 @@ function prodForm(id){
  const adaManual=s.items.some((i,k)=>{const st=P?itemState(s,i,k):null;return !st||!st.ev.length});
  openModal(`Update produksi · SPK ${s.no}`,
   summaryBar+
-  `<div class="note full" style="margin-bottom:10px">Hasil produksi dicatat <b>per mesin</b>: operator memakai Mulai dan Selesai di <a href="#mesin" data-act="closemodal">Antrian Mesin</a>. Di sini Anda melihat posisi tiap item, dan bisa mencatat hasil langsung lewat tombol <b>Catat hasil</b> di bawah item.</div>`+
-  (adaManual?`<div class="full" style="display:flex;gap:8px;margin-bottom:10px"><button type="button" class="btn sm ghost" data-act="prodall" style="flex:1">Set semua isian manual selesai</button></div>`:'')+
+  `<div class="note full" style="margin-bottom:10px">${produksiAdmin()?'Isi <b>jumlah yang sudah selesai</b> tiap item lalu simpan. Cukup total per item; tidak ada laporan per Work Centre dan tidak perlu memilih mesin.':'Hasil produksi dicatat <b>per mesin</b>: operator memakai Mulai dan Selesai di <a href="#mesin" data-act="closemodal">Antrian Mesin</a>. Di sini Anda melihat posisi tiap item, dan bisa mencatat hasil langsung lewat tombol <b>Catat hasil</b> di bawah item.'}</div>`+
+  ((adaManual||produksiAdmin())?`<div class="full" style="display:flex;gap:8px;margin-bottom:10px"><button type="button" class="btn sm ghost" data-act="prodall" style="flex:1">Set semua item selesai</button></div>`:'')+
   `<div class="full">${itemRows}</div>`+
   `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`+
   fld('Tanggal',inp('tgl',todayS,'date','required'))+
@@ -4637,6 +4641,31 @@ function spkDimBaru(){const v=(byId('master','setting')||{}).spkDimBaru;if(v!==u
 function ruteWcHilang(){const P=PXL();if(!P)return [];const ada=new Set(S.mwc.filter(w=>w.aktif!==false&&w.tipe!=='Subcont').map(w=>String(w.nama).trim().toLowerCase()));const miss=new Set();Object.values(ruteStd()).forEach(r=>(r||[]).forEach(w=>{if(!P.langkahVendor(w)&&!ada.has(String(w).trim().toLowerCase()))miss.add(w)}));return [...miss]}
 const _bMesinAsli=B.mesin;
 B.mesin=()=>{const h=ruteWcHilang();const bn=h.length?`<div class="ro" style="margin-bottom:10px"><b>Rute produksi memakai Work Centre yang belum ada di Master Data:</b> ${h.map(esc).join(', ')}. Antrian untuk langkah ini tidak akan muncul. <button type="button" class="btn sm" data-act="wcfix">Tambahkan otomatis</button> atau samakan namanya di <a href="#master-data">Master Data › Work Centre</a>.</div>`:'';return bn+_bMesinAsli()};
+/* Produksi Hari Ini versi admin: progres per item + laporan per tebal / tipe produk / material / finishing / customer (qty dan tonase).
+   Sumber angka: selesai per item dari calc() (catatan mesin dan total manual admin), jadi sama untuk kedua cara input. Tonase = selesai x berat per pcs item (kg). */
+function bProduksiAdmin(){
+ const P=PXL();const f=F.mesin;const c=calc();const grp=f.grp||'tebal',cak=f.cak||'aktif';
+ const kl=(it,s)=>P?P.klasifikasi(it.g,it.d,s.material):{kelompok:'',tipe:'',material:'',finishing:''};
+ const GR={tebal:['Tebal',(it)=>{const x=thkOf(it.g);return x?x+' mm':'(tanpa tebal)'}],tipe:['Tipe produk',(it,s)=>{const k=kl(it,s);return [k.kelompok,k.tipe].filter(Boolean).join(' ')||'(lainnya)'}],material:['Material',(it,s)=>kl(it,s).material||'(tanpa material)'],finishing:['Finishing',(it,s)=>kl(it,s).finishing||'(tanpa finishing)'],customer:['Customer',(it,s)=>s.customer||'(tanpa customer)']};
+ if(!GR[grp])f.grp='tebal';
+ const spks=S.spk.filter(s=>s.status==='Terbit'&&(cak==='semua'||((c.spk[s._id]||{}).st!=='Selesai'))).sort((x,y)=>String(x.due||'9999').localeCompare(String(y.due||'9999'))||(+x.no||0)-(+y.no||0));
+ const rows=[],agg={};let tanpaBerat=0;
+ spks.forEach(s=>{const x=c.spk[s._id]||{};
+  (s.items||[]).forEach((it,k)=>{const q=+it.q||0;if(!(q>0))return;const eff=Math.min(q,((x.lines||[])[k]||{}).prodEff||0);const w=+it.w||0;if(!w)tanpaBerat++;const pct=Math.round(eff/q*100);
+   const key=GR[f.grp||'tebal'][1](it,s);const a=agg[key]||(agg[key]={n:0,q:0,e:0,tq:0,te:0});a.n++;a.q+=q;a.e+=eff;a.tq+=q*w;a.te+=eff*w;
+   rows.push(`<tr><td class="mono"><b>${esc(String(s.no))}</b></td><td>${esc(s.customer||'')}</td><td>${esc(it.d||'')}</td><td class="num">${n(q)} ${esc(it.u||'')}</td><td class="num"><b>${n(eff)}</b></td><td class="num">${n(Math.max(0,q-eff))}</td><td class="num">${w?n(Math.round(eff*w*10)/10):'–'}</td><td>${pct>=100?chip('Selesai','ok'):pct>0?chip(pct+'%','info'):chip('Belum mulai','warn')}</td><td>${fd(s.due)}</td><td class="act"><button class="btn sm primary" data-act="prod" data-id="${esc(s._id)}">Isi hasil</button></td></tr>`)})});
+ if(!rows.length)return empty('Tidak ada item untuk diproduksi','SPK yang sudah terbit dan belum selesai akan muncul di sini.');
+ const opt=(o,v)=>Object.entries(o).map(([k,l])=>`<option value="${k}"${v===k?' selected':''}>${esc(Array.isArray(l)?l[0]:l)}</option>`).join('');
+ const keys=Object.keys(agg).sort((p,q2)=>p.localeCompare(q2,undefined,{numeric:true}));
+ const T0=keys.reduce((o,k)=>({n:o.n+agg[k].n,q:o.q+agg[k].q,e:o.e+agg[k].e,tq:o.tq+agg[k].tq,te:o.te+agg[k].te}),{n:0,q:0,e:0,tq:0,te:0});
+ const bar=(a)=>{const p=a.q?Math.round(a.e/a.q*100):0;return `<span class="bar" style="display:inline-block;width:70px;height:7px;background:var(--line);border-radius:4px;overflow:hidden;vertical-align:middle"><i style="display:block;height:100%;width:${p}%;background:var(--accent)"></i></span> ${p}%`};
+ const lap=keys.map(k=>{const a=agg[k];return `<tr><td><b>${esc(k)}</b></td><td class="num">${a.n}</td><td class="num">${n(a.q)}</td><td class="num"><b>${n(a.e)}</b></td><td class="num">${n(Math.max(0,a.q-a.e))}</td><td class="num">${n(Math.round(a.tq))}</td><td class="num"><b>${n(Math.round(a.te))}</b></td><td>${bar(a)}</td></tr>`}).join('');
+ return `<div class="pbody note">Laporan produksi sementara diisi satu admin: klik <b>Isi hasil</b> pada SPK, isi jumlah yang sudah selesai per item, lalu simpan. Item selesai siap dikirim ke vendor atau customer. Tidak ada laporan per Work Centre.</div>
+ <section class="panel"><header><h2>Laporan produksi</h2><span class="hint">qty dan tonase (kg)</span></header><div class="pbody" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><label class="note">Kelompokkan menurut <select class="sel" id="f-prod-grp" data-act="filtsel" data-view="mesin" data-key="grp">${opt(GR,f.grp||'tebal')}</select></label><label class="note">Cakupan <select class="sel" id="f-prod-cak" data-act="filtsel" data-view="mesin" data-key="cak">${opt({aktif:'SPK aktif',semua:'Semua SPK terbit'},cak)}</select></label></div>
+ <div class="tablewrap"><table id="prod-lap"><thead><tr><th>${esc(GR[f.grp||'tebal'][0])}</th><th class="num">Item</th><th class="num">Target qty</th><th class="num">Selesai qty</th><th class="num">Sisa qty</th><th class="num">Target kg</th><th class="num">Selesai kg</th><th>Progres</th></tr></thead><tbody>${lap}<tr><td><b>Total</b></td><td class="num">${T0.n}</td><td class="num">${n(T0.q)}</td><td class="num"><b>${n(T0.e)}</b></td><td class="num">${n(Math.max(0,T0.q-T0.e))}</td><td class="num">${n(Math.round(T0.tq))}</td><td class="num"><b>${n(Math.round(T0.te))}</b></td><td>${bar(T0)}</td></tr></tbody></table></div>${tanpaBerat?`<div class="pbody note">${tanpaBerat} item belum punya berat per pcs, tonasenya dihitung 0.</div>`:''}</section>
+ <section class="panel"><header><h2>Progres per item SPK</h2><span class="hint">${rows.length} item</span></header><div class="tablewrap"><table><thead><tr><th>SPK</th><th>Customer</th><th>Item</th><th class="num">Target</th><th class="num">Selesai</th><th class="num">Sisa</th><th class="num">Selesai kg</th><th>Status</th><th>Due</th><th></th></tr></thead><tbody>${rows.join('')}</tbody></table></div></section>`}
+const _bMesinAdm=B.mesin;B.mesin=()=>produksiAdmin()?bProduksiAdmin():_bMesinAdm();
+const _tMesinAdm=T.mesin;T.mesin=()=>produksiAdmin()?'<span class="grow"></span><span class="note">Laporan produksi terpusat (admin)</span>':_tMesinAdm();
 const SHAPE_LURUS_FB={id:'STRAIGHT',kunci:'STRAIGHT',nama:'Straight',dim:[{k:'w',label:'W'},{k:'h',label:'H'},{k:'l',label:'L'}],fullHole:false};
 const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER']);
 /* tanpa katalog berat: batang lurus tetap bisa diisi W, H, L; kg dihitung setelah katalog dipasang */
