@@ -59,11 +59,13 @@ const F={ /* per-view filters, kept for the session */
  'vendor':{st:'aktif',vendor:'',q:''},
  'pengiriman':{st:'',q:''},
  'spk':{st:'aktif',q:'',tab:'list',fl:'jalan'},
- 'produksi':{wc:'',p:'aktif',tab:'wc',hari:'30',lper:'bulan',lmet:'qty',lby:'produk',lakm:'operator'}
+ 'produksi':{wc:'',p:'aktif',tab:'wc',hari:'30',lper:'bulan',lmet:'qty',lby:'produk',lakm:'operator'},
+ 'laporan':{p:'bln'}
 };
 const ROLE_ON=false; /* login & peran per user: ditunda, aktifkan nanti */
 const VIEWS=[
  {id:'dashboard',t:'Dashboard',ic:'dash',sec:'Pantauan'},
+ {id:'laporan',t:'Laporan',ic:'file'},
  {id:'bahan-baku',t:'Gudang Bahan Baku',ic:'rm',sec:'Gudang'},
  {id:'barang-jadi',t:'Gudang Barang Jadi',ic:'fg'},
  {id:'sparepart',t:'Gudang Sparepart',ic:'tool'},
@@ -199,6 +201,7 @@ function route(){
  const v=VIEWS.find(x=>x.id===VIEW);$('#ttl').textContent=v.t;
  $('#sub').textContent={dashboard:'Ringkasan realtime gudang, logistik, dan SPK',
   'bahan-baku':'Stok plat & material — penerimaan, pemakaian, stock opname',
+  'laporan':'Ringkasan satu halaman: produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, dan kesehatan data; unduh CSV',
   'sparepart':'Stok sparepart & consumable mesin — penerimaan, pengeluaran, stok minimum, stock opname',
   'barang-jadi':'Stok cable tray, ladder, cover & aksesoris siap kirim',
   'bongkar-muat':'Antrian kendaraan loading & unloading di dock',
@@ -5163,6 +5166,57 @@ function kpiUser(uid){openDrawer(()=>{
   ${o.late?`<div class="ro" style="margin-bottom:12px">${o.late} transaksi diinput lewat H+1 (rata-rata telat ${Math.round(o.lateDays/o.late*10)/10} hari).</div>`:''}
   <h4 class="dh">Aktivitas terbaru</h4>
   ${all.length?`<div class="feed">${all.slice(0,60).map(e=>`<div class="fi"><span class="ic ${/^Batalkan|^Hapus/.test(e.k)?'crit':e.late?'warn':''}">${ic(VIEWS.find(v=>v.id===e.mod)?.ic||'db')}</span><div><div class="t">${esc(e.k)}${e.late?` <span class="chip warn">input telat ${e.late} hari</span>`:''}</div><div class="m">${esc(e.ref||MODL[e.mod]||'')}${e.tgl?' · tgl '+fd(e.tgl):''}</div></div><time>${ago(e.at)}</time></div>`).join('')}</div>${all.length>60?`<div class="note" style="padding:8px 0">+${all.length-60} aktivitas lebih lama</div>`:''}`:empty('Belum ada aktivitas','Aktivitas pengguna ini akan muncul begitu mereka mencatat transaksi.')}`}});}
+/* T9: Laporan satu pintu. Semua angka dihitung dari data yang sama dengan layar lain (calc, mutasi, SPK, surat jalan), jadi selalu cocok. */
+function ringkasLaporan(p){
+ const [a,b]=period(p);const c=calc();const inR=d=>{d=String(d||'').slice(0,10);return d>=a&&d<=b};const R=[];
+ const add=(bag,k,v,u,note,href)=>R.push({bag,k,v:Math.round(v*100)/100,u:u||'',note:note||'',href:href||''});
+ // Produksi
+ const ev=lapEv().filter(e=>(e.jenis||'hasil')==='hasil'&&inR(e.tgl));
+ add('Produksi','Hasil produksi',ev.reduce((s,e)=>s+(+e.qty||0),0),'pcs','dilaporkan admin atau mesin','mesin');
+ add('Produksi','Tonase hasil produksi',ev.reduce((s,e)=>s+(+e.tonase||0),0),'kg','berat estimasi per item','mesin');
+ add('Produksi','SPK terbit',S.spk.filter(s=>s.terbitAt&&s.status!=='Batal'&&inR(s.terbitAt)).length,'SPK','','spk');
+ const aktif=S.spk.filter(s=>s.status==='Terbit'&&c.spk[s._id]&&c.spk[s._id].st!=='Selesai');
+ add('Produksi','SPK aktif (belum selesai)',aktif.length,'SPK','saat ini','spk');
+ add('Produksi','SPK terlambat',aktif.filter(s=>c.spk[s._id].st==='Terlambat').length,'SPK','lewat due date, belum terkirim','spk');
+ // Pengiriman
+ const kk=S.kirim.filter(k=>k.status!=='Batal'&&inR(k.tgl));
+ add('Pengiriman','Surat jalan customer',kk.length,'SJ','','pengiriman');
+ add('Pengiriman','Barang terkirim',kk.reduce((s,k)=>s+(k.items||[]).reduce((x,i)=>x+(+i.q||0),0),0),'pcs','','pengiriman');
+ add('Pengiriman','Tonase terkirim',kk.reduce((s,k)=>s+(k.items||[]).reduce((x,i)=>x+(+i.q||0)*wRealDok(k,i),0),0),'kg','','pengiriman');
+ add('Pengiriman','Siap kirim customer (menunggu)',fgSiapKirimList().length,'SPK','saat ini','barang-jadi');
+ // Bahan baku
+ const kgl={};matRmSiap().forEach(r=>{kgl[r.id]=+r.kgPerLbr||0});let masuk=0,keluar=0;
+ S.mutasi.forEach(m=>{if(m.gudang!=='rm'||!inR(m.tgl))return;const kg=Math.abs(+m.delta||0)*(kgl[m.item]||0);if(m.jenis==='masuk')masuk+=kg;else if(m.jenis==='keluar')keluar+=kg});
+ add('Bahan baku','Plat masuk',masuk,'kg','penerimaan material','bahan-baku');
+ add('Bahan baku','Plat keluar ke produksi',keluar,'kg','','bahan-baku');
+ const SR=susutRows().filter(r=>r.status==='Wajar'||r.status==='Berlebih');const tk=SR.reduce((s,r)=>s+r.keluarKg,0),th=SR.reduce((s,r)=>s+r.hasilKg,0);
+ add('Bahan baku','Susut (SPK selesai produksi)',tk-th,'kg',tk>0?(Math.round((tk-th)/tk*1000)/10)+'% dari plat keluar':'belum ada data','bahan-baku');
+ add('Bahan baku','Susut berlebih',susutRows().filter(r=>r.status==='Berlebih').length,'kelompok','di atas batas wajar','bahan-baku');
+ add('Bahan baku','PR terbuka',S.pr.filter(x=>x.gudang!=='sp'&&(x.status==='Diajukan'||x.status==='Dipesan')).length,'PR','menunggu barang','bahan-baku');
+ // Barang jadi
+ add('Barang jadi','Stok barang jadi',Object.values(c.stock.fg||{}).reduce((s,v)=>s+Math.max(0,v),0),'unit','saat ini','barang-jadi');
+ add('Barang jadi','Siap masuk stok (SPK stok)',fgSiapMasukList().length,'SPK','saat ini','barang-jadi');
+ // Vendor
+ const open=c.vend.filter(x=>x.st==='Di Vendor'||x.st==='Kembali Sebagian');
+ add('Vendor','SJ masih di vendor',open.length,'SJ','saat ini','vendor');
+ add('Vendor','Barang belum kembali',open.reduce((s,x)=>s+x.sisa,0),'pcs','','vendor');
+ add('Vendor','Lewat 14 hari',open.filter(x=>x.age>14).length,'SJ','','vendor');
+ add('Vendor','Siap dikirim ke vendor',siapVendorRows().length,'item','selesai produksi, belum dikirim','vendor');
+ // Sparepart
+ add('Sparepart','Pemakaian sparepart',S.mutasi.filter(m=>m.gudang==='sp'&&m.jenis==='keluar'&&inR(m.tgl)).reduce((s,m)=>s+Math.abs(+m.delta||0),0),'unit','','sparepart');
+ add('Sparepart','Di bawah minimum',spSug().length,'jenis','perlu dibeli','sparepart');
+ // Kesehatan data
+ const I=issues();
+ add('Kesehatan data','Temuan kritis',I.filter(i=>i.sev>=3).length,'temuan','','cek-data');
+ add('Kesehatan data','Perlu perhatian',I.filter(i=>i.sev===2).length,'temuan','','cek-data');
+ add('Kesehatan data','Informasi',I.filter(i=>i.sev<2).length,'temuan','','cek-data');
+ return R}
+T['laporan']=()=>segBtns('laporan','p',[['0','Hari ini'],['7','7 hari'],['30','30 hari'],['bln','Bulan ini'],['90','90 hari']])+'<span class="grow"></span><button class="btn ghost" data-act="ringkascsv">'+ic('dl')+' Unduh CSV</button>';
+B['laporan']=()=>{const f=F['laporan'];const [,,lbl]=period(f.p);const R=ringkasLaporan(f.p);const bags=[...new Set(R.map(r=>r.bag))];
+ const nilai=r=>r.u==='kg'&&r.v>=1000?n(Math.round(r.v/10)/100)+' ton':n(r.v)+' '+esc(r.u);
+ return '<div class="pbody note">Periode: <b>'+esc(lbl)+'</b>. Angka waktu (produksi, kirim, bahan baku, sparepart) mengikuti periode; angka "saat ini" selalu kondisi sekarang. Semua dihitung dari data yang sama dengan layar lain.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px">'+bags.map(bag=>'<section class="panel" id="lap-'+esc(bag.toLowerCase().replace(/ /g,'-'))+'"><header><h2>'+esc(bag)+'</h2></header><div class="tbl-wrap"><table><tbody>'+R.filter(r=>r.bag===bag).map(r=>'<tr'+(r.href?' class="click" data-act="go" data-href="'+esc(r.href)+'"':'')+'><td>'+esc(r.k)+(r.note?'<div class="note">'+esc(r.note)+'</div>':'')+'</td><td class="num"><b>'+nilai(r)+'</b></td></tr>').join('')+'</tbody></table></div></section>').join('')+'</div>'};
+async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R=ringkasLaporan(f.p);
+ await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
 async function kpiCsv(){
  const f=F.kinerja;const K=kpiAgg(f.p);const [a,b]=period(f.p);
  const head=['Pengguna','Peran','Jabatan','Total aktivitas',...MODS.map(m=>m[1]),'Hari aktif','Hari kerja','Transaksi bertanggal','Input telat (>H+1)','Tepat waktu %','Batal/hapus','Terakhir aktif'];
@@ -6083,7 +6137,7 @@ document.addEventListener('click',async e=>{
   case 'setsev':{F['cek-data'].sev=ds.sev||'';renderBody();break}
   case 'prodfix':{const s=byId('spk',ds.id);const x=calc().spk[ds.id];const items=s.items.map((it,i)=>{const l=x.lines[i];return l&&l.kirim>=l.q?{...it,prod:+it.q}:it});await updDoc('spk',ds.id,{items});toast(`Progres produksi SPK ${s.no} diperbarui`);break}
   case 'kpiuser':if(!e.target.closest('button')||el.matches('button'))kpiUser(ds.uid);break;
-  case 'kpicsv':await kpiCsv();break;
+  case 'kpicsv':await kpiCsv();break;case 'ringkascsv':await ringkasCsv();break;
   case 'mepage':case 'meclick':accountModal();break;
   case 'pwself':pwSelf();break;
   case 'mesinmulai':await mesinMulai(ds.k);break;

@@ -330,6 +330,16 @@ export async function runProduksiHuluHilir(page, base) {
     await go('kinerja');
     const t35 = await page.evaluate(() => ({ kolom: /hasil produksi/i.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }));
     ok('PH-35 T10b: Kinerja Tim menghitung hasil produksi per orang dari laporan admin (qty dan tonase) dan menampilkannya', r35.hq === 4 && r35.hkg === 20 && t35.kolom && !t35.undef, JSON.stringify({ r35, t35 }));
+
+    langkah = 'PH-36';
+    await go('laporan');
+    const r36 = await page.evaluate(() => {
+      const R = ringkasLaporan('bln'); const [a, b] = period('bln');
+      const sum = lapEv().filter((e) => (e.jenis || 'hasil') === 'hasil' && String(e.tgl || '').slice(0, 10) >= a && String(e.tgl || '').slice(0, 10) <= b).reduce((s, e) => s + (+e.qty || 0), 0);
+      const hp = R.find((r) => r.k === 'Hasil produksi');
+      return { baris: R.length, bag: [...new Set(R.map((r) => r.bag))], cocok: !!hp && Math.abs(hp.v - sum) < 0.01, panel: document.querySelectorAll('#body section.panel').length, undef: /undefined|NaN/.test(document.body.innerText), menu: !!document.querySelector('#nav a[href="#laporan"]') };
+    });
+    ok('PH-36 T9: halaman Laporan menampilkan tujuh bagian (produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, kesehatan data), angkanya cocok dengan sumbernya, dan ada di menu', r36.baris >= 20 && r36.bag.length === 7 && r36.cocok && r36.panel === 7 && !r36.undef && r36.menu, JSON.stringify(r36));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
