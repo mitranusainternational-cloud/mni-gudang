@@ -234,7 +234,7 @@ const who=id=>id?uName(id):'Import Excel';
 /* ---------- small UI pieces ---------- */
 const chip=(t,c='')=>`<span class="chip ${c}">${esc(t)}</span>`;
 const prog=(p,cls='')=>`<div class="prog"><div class="bar ${cls}"><i style="width:${(p*100).toFixed(1)}%"></i></div><span>${Math.round(p*100)}%</span></div>`;
-const stChip=s=>chip(s,{Batal:'plain',Masuk:'ok',Keluar:'info',Opname:'warn',Koreksi:'crit',Draft:'warn',Terbit:'ok',Selesai:'ok',Diterima:'ok',Terlambat:'crit','Jatuh Tempo':'warn',Proses:'info','Di Vendor':'warn','Kembali Sebagian':'info','Dalam Perjalanan':'info',Disiapkan:'plain',Antri:'warn'}[s]||'');
+const stChip=s=>chip(s,{Batal:'plain',Draf:'warn',Masuk:'ok',Keluar:'info',Opname:'warn',Koreksi:'crit',Draft:'warn',Terbit:'ok',Selesai:'ok',Diterima:'ok',Terlambat:'crit','Jatuh Tempo':'warn',Proses:'info','Di Vendor':'warn','Kembali Sebagian':'info','Dalam Perjalanan':'info',Disiapkan:'plain',Antri:'warn'}[s]||'');
 const empty=(t,s,btn)=>`<div class="empty"><b>${t}</b><span>${s}</span>${btn||''}</div>`;
 const segBtns=(view,key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-act="filt" data-view="${view}" data-key="${key}" data-val="${v}" class="${F[view][key]===v?'on':''}">${l}</button>`).join('')}</div>`;
 function stockState(r,s){if(s<=0)return['Habis','crit'];if(r.buffer>0&&s<r.buffer)return['Di bawah buffer','warn'];return['Aman','ok']}
@@ -459,7 +459,7 @@ function matReservasi(rs,kecuali){const c=calc(),f=matFaktor();
  return MT().reservasiAktif(S.spk.filter(s=>s._id!==kecuali).map(s=>{const sx=c.spk[s._id];const aktif=(s.status||'Terbit')==='Terbit'&&!!sx&&sx.st!=='Selesai'&&sx.st!=='Batal';
   return {id:s._id,aktif,kelompok:aktif?MT().kelompokKebutuhan((s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w)})),{faktor:f,tebalSpk:s.tebal}):[],keluar:aktif?matKeluarKg(s._id,rs):{}}}))}
 function matDipesan(rs){const idx={};rs.forEach(r=>idx[r.id]=r);const per={};
- S.pr.filter(p=>p.status==='Diajukan'||p.status==='Dipesan').forEach(p=>(p.items||[]).forEach(i=>{const r=idx[i.item];if(!r||!r.kgPerLbr)return;const k=MT().kunciMaterial(r.bahan,r.tebal);per[k]=(per[k]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))*r.kgPerLbr}));return per}
+ S.pr.filter(p=>p.status==='Draf'||p.status==='Diajukan'||p.status==='Dipesan').forEach(p=>(p.items||[]).forEach(i=>{const r=idx[i.item];if(!r||!r.kgPerLbr)return;const k=MT().kunciMaterial(r.bahan,r.tebal);per[k]=(per[k]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))*r.kgPerLbr}));return per}
 function matRencana(items,opt={}){const rs=matRmSiap();const kel=MT().kelompokKebutuhan(items,{faktor:matFaktor(),tebalSpk:opt.tebal});
  return MT().rencanaMaterial(kel,rs,{reservasiLain:matReservasi(rs,opt.spkId).total,keluar:opt.spkId?matKeluarKg(opt.spkId,rs):{},dipesan:matDipesan(rs)})}
 const MAT_CLS={Cukup:'ok',Kurang:'crit','Tanpa item RM':'warn','Sudah dikeluarkan':'info','Sudah dipesan':'info'};
@@ -495,7 +495,7 @@ function susutTab(){const R=susutRows();
  R.sort((a,b)=>(urut[a.status]-urut[b.status])||(+b.s.no||0)-(+a.s.no||0));
  const sel=R.filter(r=>r.status==='Wajar'||r.status==='Berlebih');const tk=sel.reduce((a,r)=>a+r.keluarKg,0),th=sel.reduce((a,r)=>a+r.hasilKg,0),ts=tk-th;
  const lebih=R.filter(r=>r.status==='Berlebih').length,kurang=R.filter(r=>r.status==='Plat kurang catat').length;
- const kp='<div class="kpi-row">'+kpiA('info','Plat keluar (SPK selesai produksi)',n(Math.round(tk))+' kg','dari '+sel.length+' kelompok bahan')+kpiA('ok','Hasil jadi',n(Math.round(th))+' kg','berat estimasi')+kpiA(lebih?'warn':'ok','Susut',n(Math.round(ts))+' kg',tk>0?(Math.round(ts/tk*1000)/10)+'% dari plat keluar':'-')+kpiA(lebih||kurang?'crit':'ok','Perlu dicek',lebih+kurang,lebih+' berlebih · '+kurang+' plat kurang catat')+'</div>';
+ const kp='<div class="kpi-row">'+kpiA('info','Plat keluar (SPK selesai produksi)',n(Math.round(tk))+' kg','dari '+sel.length+' kelompok bahan')+kpiA('ok','Hasil jadi',n(Math.round(th))+' kg','berat estimasi')+kpiA(lebih?'warn':'ok','Susut',n(Math.round(ts))+' kg',tk>0?(Math.round(ts/tk*1000)/10)+'% dari plat keluar':'-')+kpiA(lebih||kurang?'crit':'ok','Perlu dicek',lebih+kurang,lebih+' berlebih · '+kurang+' plat kurang catat')+kpiA('info','Rasio plat keluar ÷ hasil',th>0?(Math.round(tk/th*1000)/1000).toString().replace('.',','):'-','kalibrasi: 1,000 = plat keluar sama dengan berat estimasi hasil jadi')+'</div>';
  const chipS=st=>chip(st,st==='Wajar'?'ok':st==='Berlebih'?'crit':st==='Berjalan'?'info':'warn');
  const baris=R.map(r=>'<tr><td class="mono"><b>'+esc(String(r.s.no))+'</b><div class="note">'+esc(r.s.customer||'')+'</div></td><td>'+esc(r.bahan)+'</td><td class="num">'+n(r.tebal)+' mm</td><td class="num">'+n(Math.round(r.keluarKg))+'</td><td class="num">'+n(Math.round(r.hasilKg))+'</td><td class="num">'+(r.status==='Berjalan'?'-':n(Math.round(r.susutKg)))+'</td><td class="num">'+(r.pct==null||r.status==='Berjalan'?'-':(Math.round(r.pct*1000)/10)+'%')+'</td><td class="num">'+(Math.round(r.batas*1000)/10)+'%</td><td>'+chipS(r.status)+'</td></tr>').join('');
  return '<div class="pbody note">Susut = plat yang keluar dikurangi hasil jadi (kg), per SPK, bahan, dan tebal. Dinilai setelah produksi item selesai; batas wajar = faktor sisa potong ditambah toleransi 5%. Sisa plat utuh dikembalikan lewat Terima material (alasan: Sisa SPK).</div>'+kp+'<div class="tbl-wrap"><table id="susut-tabel"><thead><tr><th>SPK</th><th>Bahan</th><th class="num">Tebal</th><th class="num">Plat keluar (kg)</th><th class="num">Hasil jadi (kg)</th><th class="num">Susut (kg)</th><th class="num">Susut</th><th class="num">Batas</th><th>Status</th></tr></thead><tbody>'+baris+'</tbody></table></div>'}
@@ -512,10 +512,15 @@ const matBisaPr=()=>myRole()==='admin'||myLevel('bahan-baku')==='ubah';
 function wRealDok(doc,it){const w=+it.w;if(w>0)return w;const s=doc&&doc.spk?byId('spk',doc.spk):null;const si=s&&(s.items||[]).find(x=>x.d===it.d);return +(si&&si.w)||0}
 /* Dua total SPK: kg estimasi (plate yang diambil, tanpa qty dari stok) dan kg real (barang jadi). ada=false bila belum ada item berkg estimasi. */
 function spkKgDua(s){let te=0,tr=0,ada=false;(s.items||[]).forEach(it=>{const q=+it.q||0,w=+it.w||0;tr+=q*w;te+=Math.max(0,q-ambilItem(s,it))*(+it.wEst>0?+it.wEst:w);if(+it.wEst>0)ada=true});return {te,tr,ada}}
-const matSpkItems=s=>(s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w)}));
+const matSpkItems=s=>(s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w),sudahWaste:+i.wEst>0}));
 /* T5: SPK terbit => kekurangan bahan baku diminta otomatis sebagai PR (status Diajukan, bertanda otomatis).
    Aman diulang: kekurangan dihitung setelah dikurangi PR yang masih terbuka (matDipesan), jadi tidak dobel. Dilewati bila penerbit tak berhak atas bahan baku
    atau setting master/setting.prOtomatis=false; temuan tetap terlihat di Cek Data dan tombol Buat PR manual. */
+/* PR draf diajukan oleh USER: statusnya menjadi Diajukan dan pengaju (diajukanBy, diajukanAt) tercatat atas nama user yang menekan Ajukan. */
+async function prAjukan(id){const p=byId('pr',id);if(!p)return;
+ if(p.status!=='Draf'){toast('PR ini bukan draf.');return}
+ try{need('pr',{status:'Diajukan'},id,'upd')}catch(e){toast('Anda tidak berhak mengajukan PR ini.');return}
+ try{await updDoc('pr',id,{status:'Diajukan',diajukanBy:ME||null,diajukanAt:new Date().toISOString()});toast((p.noPR||'PR')+' diajukan')}catch(e){toast(e.message||'Gagal mengajukan PR')}}
 async function prOtomatisSpk(id,tries){
  tries=tries||0;
  try{
@@ -528,8 +533,8 @@ async function prOtomatisSpk(id,tries){
   if(tanpaRm.length)toast(`SPK ${s.no}: ${tanpaRm.length} bahan belum punya item di Gudang Bahan Baku, buat itemnya dulu`);
   if(!pr.length)return null;
   const t=today();const noPR=await nextDocNo('PR',t);
-  const r=await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:pr.map(i=>({item:i.item,q:i.q,qTerima:0})),status:'Diajukan',ket:'Otomatis dari SPK '+s.no,spk:s._id,auto:true});
-  toast(`${noPR} dibuat otomatis untuk kekurangan bahan baku SPK ${s.no}`);
+  const r=await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:pr.map(i=>({item:i.item,q:i.q,qTerima:0})),status:'Draf',ket:'Draf otomatis dari SPK '+s.no+' (menunggu diajukan)',spk:s._id,auto:true});
+  toast(`${noPR} dibuat sebagai draf untuk kekurangan bahan baku SPK ${s.no}; buka Gudang Bahan Baku untuk mengajukan`);
   return noPR;
  }catch(e){return null}
 }
@@ -2987,11 +2992,16 @@ function dataIssues(){
   [['rm',rmLabel,'bahan-baku','Bahan baku'],['fg',fgLabel,'barang-jadi','Barang jadi'],['sp',spLabel,'sparepart','Sparepart']].forEach(([g,lb,mod,nm])=>(S[g]||[]).forEach(it=>{const v=(c3.stock[g]||{})[it._id];
    if(v!=null&&v<-0.0005)add(3,'Stok',`${nm}: stok ${esc(lb(it))} negatif (${n(v)})`,'Pengeluaran melebihi stok yang tercatat. Cek mutasi terakhir atau lakukan koreksi atau opname.',`data-act="go" data-href="${mod}">Buka ${nm}`,'Stok negatif membuat laporan stok dan kebutuhan material tidak valid.')}));
   S.spk.forEach(s=>{const x=c3.spk[s._id];if(!x||s.status!=='Terbit'||x.st==='Batal')return;
+   /* berat salinan: tiga item atau lebih yang deskripsinya berbeda tetapi beratnya persis sama (mis. 8,481 untuk semua item section), biasanya berat section yang disalin, bukan berat item */
+   {const bw={};(s.items||[]).forEach(i=>{const w=Math.round((+i.w||0)*1000)/1000;if(w>0)(bw[w]=bw[w]||new Set()).add(String(i.d||''))});
+    const salin=Object.entries(bw).filter(([,set])=>set.size>=3);
+    if(salin.length)add(2,'SPK',`SPK ${esc(String(s.no))}: ${salin.reduce((a,[,set])=>a+set.size,0)} item berbeda memakai berat yang sama`,`Berat ${salin.map(([w])=>n(+w)).join(', ')} kg/pcs dipakai banyak item berlainan ukuran dan jenis; kemungkinan berat section yang disalin, sehingga tonase dan kebutuhan plat SPK tidak valid. Hitung ulang dari kalkulator berat.`,'data-act="go" data-href="spk">Buka SPK','Berat per item yang sama untuk Cable Tray, Cover, dan Jointing tidak mungkin benar.')}
    const p=platSpk(s);
    if(p&&p.bruto>0&&p.sudah>p.bruto*1.05+0.5)add(1,'Stok',`SPK ${esc(String(s.no))}: plat keluar ${n(Math.round(p.sudah))} kg melebihi kebutuhan ${n(Math.round(p.bruto))} kg`,`${esc(s.customer||'')} · selisih ${n(Math.round(p.sudah-p.bruto))} kg (${Math.round((p.sudah/p.bruto-1)*100)}%). Bila memang lebih, catat alasannya; bila sisa utuh, kembalikan ke gudang.`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku','Plat keluar di atas kebutuhan SPK berarti susut berlebih atau salah catat.');
    if(s.stokReq)(x.lines||[]).forEach(l=>{if((l.kirim||0)>(l.prodEff||0)+0.0005)add(2,'Barang jadi',`SPK ${esc(String(s.no))}: masuk gudang ${n(l.kirim)} melebihi hasil produksi ${n(l.prodEff||0)}`,`${esc(l.d||'')}. Laporkan hasil produksi yang belum tercatat atau koreksi penerimaan.`,'data-act="go" data-href="barang-jadi">Buka Barang Jadi','Barang jadi masuk tanpa hasil produksi yang cocok.')})
   })}
 
+ S.pr.filter(p=>p.status==='Draf'&&p.tgl&&days(p.tgl,calc().t)>=1).forEach(p=>add(1,'PR',`PR draf ${esc(p.noPR||'')} belum diajukan ${days(p.tgl,calc().t)} hari`,`${esc(p.ket||'')}`,`data-act="go" data-href="${p.gudang==='sp'?'sparepart':'bahan-baku'}">Buka PR`,'PR draf otomatis baru berlaku setelah diajukan oleh user (tombol Ajukan).'));
  susutRows().filter(r=>r.status==='Berlebih'||r.status==='Plat kurang catat').forEach(r=>add(2,'Stok',r.status==='Berlebih'?`SPK ${esc(String(r.s.no))}: susut ${r.bahan} ${n(r.tebal)} mm ${Math.round(r.pct*1000)/10}% (batas ${Math.round(r.batas*1000)/10}%)`:`SPK ${esc(String(r.s.no))}: hasil ${r.bahan} ${n(r.tebal)} mm melebihi plat yang tercatat keluar`,`${esc(r.s.customer||'')} · plat keluar ${n(Math.round(r.keluarKg))} kg, hasil jadi ${n(Math.round(r.hasilKg))} kg`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku',r.status==='Berlebih'?'Plat keluar jauh di atas hasil jadi: susut berlebih, plat tidak terpakai belum dikembalikan, atau salah catat.':'Pengeluaran plat untuk SPK ini belum lengkap dicatat.'));
 
  Object.values(spCalc()).filter(x=>spOn(x.r)).forEach(x=>{const a=movAgg('sp',x.r._id);const dasar=(a.k90-x.k30)/2;
@@ -3165,7 +3175,7 @@ F['bahan-baku']={q:'',grade:'',st:'',tab:'stok',sort:'grade',mvj:'',mvspk:'',mvp
 function rmCalc(){
  const c=calc();if(c._rm)return c._rm;
  const t=c.t,st=SET(),hist=[...S.rmhist].sort((a,b)=>a.tgl.localeCompare(b.tgl));
- const prOpen={};S.pr.filter(p=>p.status==='Diajukan'||p.status==='Dipesan').forEach(p=>(p.items||[]).forEach(i=>{prOpen[i.item]=(prOpen[i.item]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))}));
+ const prOpen={};S.pr.filter(p=>p.status==='Draf'||p.status==='Diajukan'||p.status==='Dipesan').forEach(p=>(p.items||[]).forEach(i=>{prOpen[i.item]=(prOpen[i.item]||0)+Math.max(0,(+i.q||0)-(+i.qTerima||0))}));
  const byMv={};S.mutasi.filter(m=>m.gudang==='rm').forEach(m=>(byMv[m.item]=byMv[m.item]||[]).push(m));
  const info={},monthly={};const from90=addDays(t,-90),from30=addDays(t,-30);
  const nextM=m=>{const [y,mo]=m.split('-').map(Number);return mo===12?`${y+1}-01`:`${y}-${pad(mo+1)}`};
@@ -3332,7 +3342,7 @@ function rmBeli(){
  const tot=sug.reduce((a,x)=>{const v=val(x.r._id);return v.on?{q:a.q+(+v.q||0),kg:a.kg+(+v.q||0)*x.kg1,rp:a.rp+(+v.q||0)*x.kg1*(+x.r.harga||0)}:a},{q:0,kg:0,rp:0});
  const prs=S.pr.filter(p=>p.gudang!=='sp').sort((a,b)=>(b.tgl+(b.at||'')).localeCompare(a.tgl+(a.at||'')));
  const prRows=prs.map(p=>{const q=(p.items||[]).reduce((a,i)=>a+(+i.q||0),0),qt=(p.items||[]).reduce((a,i)=>a+Math.min(+i.q||0,+i.qTerima||0),0);const kg=(p.items||[]).reduce((a,i)=>a+(+i.q||0)*kgLbr(byId('rm',i.item)||{}),0);const open=p.status==='Diajukan'||p.status==='Dipesan';
-  return `<tr class="${p.status==='Batal'?'void':''}"><td class="mono"><b>${esc(p.noPR)}</b></td><td>${fd(p.tgl)}</td><td>${esc(p.supplier||'–')}</td><td class="pri-l">${(p.items||[]).map(i=>`<div><span>${esc(rmLabel(byId('rm',i.item)).replace('Plat ',''))}</span><b>${n(i.q)}</b></div>`).join('')}</td><td class="num">${n(q)} lbr<div class="note">${ton(kg)} ton</div></td><td>${prog(q?qt/q:0,qt>=q?'ok':'')}</td><td>${fd(p.butuh)}</td><td>${stChip(p.status)}</td><td class="acts-r">${p.status==='Diajukan'?`<button class="btn sm" data-act="prstep" data-id="${p._id}">Tandai dipesan</button>`:''}${open?`<button class="btn sm primary" data-act="prterima" data-id="${p._id}">Terima</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Batalkan</button>`:''}<button class="btn sm ghost" data-act="prxlsx" data-id="${p._id}">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="prpdf" data-id="${p._id}">${ic('file')}PDF</button></td></tr>`}).join('');
+  return `<tr class="${p.status==='Batal'?'void':''}"><td class="mono"><b>${esc(p.noPR)}</b></td><td>${fd(p.tgl)}</td><td>${esc(p.supplier||'–')}</td><td class="pri-l">${(p.items||[]).map(i=>`<div><span>${esc(rmLabel(byId('rm',i.item)).replace('Plat ',''))}</span><b>${n(i.q)}</b></div>`).join('')}</td><td class="num">${n(q)} lbr<div class="note">${ton(kg)} ton</div></td><td>${prog(q?qt/q:0,qt>=q?'ok':'')}</td><td>${fd(p.butuh)}</td><td>${stChip(p.status)}</td><td class="acts-r">${p.status==='Draf'?`<button class="btn sm primary" data-act="prajukan" data-id="${p._id}">Ajukan</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Hapus draf</button>`:''}${p.status==='Diajukan'?`<button class="btn sm" data-act="prstep" data-id="${p._id}">Tandai dipesan</button>`:''}${open?`<button class="btn sm primary" data-act="prterima" data-id="${p._id}">Terima</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Batalkan</button>`:''}<button class="btn sm ghost" data-act="prxlsx" data-id="${p._id}">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="prpdf" data-id="${p._id}">${ic('file')}PDF</button></td></tr>`}).join('');
  return `<div class="pbody"><p class="note" style="margin:0">Usulan muncul bila stok di bawah <b>buffer</b> atau di bawah <b>titik pesan ulang</b> (minimum + pemakaian historis × lead time ${st.leadBeli} hari). Qty usulan mengisi stok sampai buffer atau target, dikurangi yang sedang dipesan. Sesuaikan dengan SPK aktif di tab Analisa. <button type="button" class="linkbtn" data-act="rmset">Ubah pengaturan</button></p></div>
  ${sug.length?`<div class="tbl-wrap"><table class="beli"><thead><tr><th></th><th>Material</th><th class="num">Stok</th><th class="num">Min / buffer</th><th class="num">Pakai/bln</th><th class="num">Dipesan</th><th>Alasan</th><th class="num">Qty usulan (lbr)</th><th class="num">Kg</th></tr></thead><tbody>${sug.map(x=>{const v=val(x.r._id);return `<tr><td><input type="checkbox" data-beli="on" data-id="${x.r._id}" id="b-on-${x.r._id}" ${v.on?'checked':''} aria-label="Pilih"></td><td><b>${esc(x.r.item)}</b> <span class="mono note">${esc(x.r.ukuran)}</span><div>${chip(x.st,x.cls)}</div></td><td class="num big">${n(x.stok)}</td><td class="num">${n(x.min)} / ${n(x.buf)}</td><td class="num">${x.perBln?n(Math.round(x.perBln)):'–'}</td><td class="num">${x.onOrder?n(x.onOrder):'–'}</td><td class="note">${esc(x.why)}</td><td class="num"><input class="inp" type="number" min="0" step="1" data-beli="q" data-id="${x.r._id}" id="b-q-${x.r._id}" value="${esc(v.q)}"></td><td class="num" data-bkg="${x.r._id}">${n(Math.round((+v.q||0)*x.kg1))}</td></tr>`}).join('')}</tbody></table></div>
   <div class="pbody beli-foot"><span id="beli-tot"><b>${n(tot.q)}</b> lembar · <b>${ton(tot.kg)}</b> ton${tot.rp?` · ± Rp ${n(Math.round(tot.rp))}`:''}</span><span class="grow"></span><button class="btn primary" data-act="prnew">${ic('plus')}Buat permintaan pembelian (PR)</button></div>`
@@ -3814,7 +3824,7 @@ B['barang-jadi']=()=>{
  return `<section class="panel">${tabH}${body()}</section>`;
 };
 /* ---- Sparepart: rencana pembelian dan PR ---- */
-function spOnOrder(id){let q=0;S.pr.forEach(p=>{if(p.gudang!=='sp'||(p.status!=='Diajukan'&&p.status!=='Dipesan'))return;(p.items||[]).forEach(i=>{if(i.item===id)q+=Math.max(0,(+i.q||0)-(+i.qTerima||0))})});return q}
+function spOnOrder(id){let q=0;S.pr.forEach(p=>{if(p.gudang!=='sp'||(p.status!=='Draf'&&p.status!=='Diajukan'&&p.status!=='Dipesan'))return;(p.items||[]).forEach(i=>{if(i.item===id)q+=Math.max(0,(+i.q||0)-(+i.qTerima||0))})});return q}
 function spSug(){
  return Object.values(spCalc()).filter(x=>spOn(x.r)&&['Habis','Stok minimum','Di bawah buffer'].includes(x.st)).map(x=>{
   const oo=spOnOrder(x.r._id),target=x.buf>0?x.buf:(x.min>0?x.min*2:0),sug=Math.max(0,Math.ceil(target-x.stok-oo)),a=movAgg('sp',x.r._id);
@@ -3827,7 +3837,7 @@ function spBeli(){
  const sug=spSug(),st=SET();
  const prs=S.pr.filter(p=>p.gudang==='sp').sort((a,b)=>(b.tgl+(b.at||'')).localeCompare(a.tgl+(a.at||'')));
  const prRows=prs.map(p=>{const q=(p.items||[]).reduce((a,i)=>a+(+i.q||0),0),qt=(p.items||[]).reduce((a,i)=>a+Math.min(+i.q||0,+i.qTerima||0),0),open=p.status==='Diajukan'||p.status==='Dipesan';
-  return `<tr class="${p.status==='Batal'?'void':''}"><td class="mono"><b>${esc(p.noPR)}</b></td><td>${fd(p.tgl)}</td><td>${esc(p.supplier||'–')}</td><td class="pri-l">${(p.items||[]).map(i=>{const it=byId('sp',i.item);return `<div><span>${esc(it?it.item:'(item terhapus)')}</span><b>${n(i.q)} ${esc(it?it.satuan||'':'')}</b></div>`}).join('')}</td><td class="num">${n(q)}</td><td>${prog(q?qt/q:0,qt>=q?'ok':'')}</td><td>${fd(p.butuh)}</td><td>${stChip(p.status)}</td><td class="acts-r">${p.status==='Diajukan'?`<button class="btn sm" data-act="prstep" data-id="${p._id}">Tandai dipesan</button>`:''}${open?`<button class="btn sm primary" data-act="prterima" data-id="${p._id}">Terima</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Batalkan</button>`:''}<button class="btn sm ghost" data-act="prxlsx" data-id="${p._id}">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="prpdf" data-id="${p._id}">${ic('file')}PDF</button></td></tr>`}).join('');
+  return `<tr class="${p.status==='Batal'?'void':''}"><td class="mono"><b>${esc(p.noPR)}</b></td><td>${fd(p.tgl)}</td><td>${esc(p.supplier||'–')}</td><td class="pri-l">${(p.items||[]).map(i=>{const it=byId('sp',i.item);return `<div><span>${esc(it?it.item:'(item terhapus)')}</span><b>${n(i.q)} ${esc(it?it.satuan||'':'')}</b></div>`}).join('')}</td><td class="num">${n(q)}</td><td>${prog(q?qt/q:0,qt>=q?'ok':'')}</td><td>${fd(p.butuh)}</td><td>${stChip(p.status)}</td><td class="acts-r">${p.status==='Draf'?`<button class="btn sm primary" data-act="prajukan" data-id="${p._id}">Ajukan</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Hapus draf</button>`:''}${p.status==='Diajukan'?`<button class="btn sm" data-act="prstep" data-id="${p._id}">Tandai dipesan</button>`:''}${open?`<button class="btn sm primary" data-act="prterima" data-id="${p._id}">Terima</button><button class="btn sm ghost" data-act="void" data-c="pr" data-id="${p._id}">Batalkan</button>`:''}<button class="btn sm ghost" data-act="prxlsx" data-id="${p._id}">${ic('dl')}Excel</button><button class="btn sm ghost" data-act="prpdf" data-id="${p._id}">${ic('file')}PDF</button></td></tr>`}).join('');
  let tj=0,tq=0;sug.forEach(x=>{const v=spBeliVal(x);if(v.on&&(+v.q||0)>0){tj++;tq+=+v.q}});
  return `<div class="pbody"><p class="note" style="margin:0">Usulan muncul bila stok <b>habis</b>, <b>sama atau di bawah minimum</b>, atau <b>di bawah buffer</b>. Qty usulan mengisi stok sampai <b>buffer</b> (bila buffer belum diisi, sampai 2× minimum), dikurangi yang sudah dipesan lewat PR yang masih terbuka. Penerimaan PR langsung menambah stok.</p></div>
  ${sug.length?`<div class="tbl-wrap"><table class="beli"><thead><tr><th></th><th>Barang</th><th class="num">Stok</th><th class="num">Min / buffer</th><th class="num">Pakai/bln</th><th class="num">Sudah dipesan</th><th>Alasan</th><th class="num">Qty usulan</th></tr></thead><tbody>${sug.map(x=>{const v=spBeliVal(x);return `<tr><td><input type="checkbox" data-spbeli="on" data-id="${x.r._id}" ${v.on?'checked':''} aria-label="Pilih"></td><td><b>${esc(x.r.item)}</b> <span class="note">${esc(x.r.kode?'No '+x.r.kode:'')}</span><div>${chip(x.st,x.cls)}</div></td><td class="num big">${n(x.stok)} <span class="note">${esc(x.r.satuan||'')}</span></td><td class="num">${n(x.min)} / ${n(x.buf)}</td><td class="num">${x.perBln?n(Math.round(x.perBln*10)/10):'–'}</td><td class="num">${x.oo?n(x.oo):'–'}</td><td class="note">${esc(x.why)}</td><td class="num"><input class="inp" type="number" min="0" step="any" data-spbeli="q" data-id="${x.r._id}" value="${esc(v.q)}"></td></tr>`}).join('')}</tbody></table></div>
@@ -3844,8 +3854,8 @@ async function prOtomatisSparepart(){
   try{need('sparepart')}catch(e){return null}
   const sug=spSug().filter(x=>x.sug>0);if(!sug.length)return null;
   const t=today();const noPR=await nextDocNo('PR',t);
-  await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:sug.map(x=>({item:x.r._id,q:x.sug,qTerima:0})),status:'Diajukan',ket:'Otomatis: stok sparepart di bawah minimum',gudang:'sp',auto:true});
-  toast(`${noPR} dibuat otomatis untuk ${sug.length} sparepart di bawah minimum`);return noPR;
+  await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:sug.map(x=>({item:x.r._id,q:x.sug,qTerima:0})),status:'Draf',ket:'Draf otomatis: stok sparepart di bawah minimum (menunggu diajukan)',gudang:'sp',auto:true});
+  toast(`${noPR} dibuat sebagai draf untuk ${sug.length} sparepart di bawah minimum; buka Gudang Sparepart untuk mengajukan`);return noPR;
  }catch(e){return null}
 }
 function spPrNewForm(){
@@ -4691,7 +4701,7 @@ function edTotals(){let q=0,w=0,c=0;ED.sections.forEach(s=>s.lines.forEach(l=>{i
 function matPreviewEditor(){
  try{
   if(!MT()||!ED||!ED.sections)return '';
-  const items=[];ED.sections.forEach(s=>s.lines.forEach(l=>{const q=+l.q||0;if(!String(l.d).trim()||!(q>0))return;const am=Math.min(q,Math.max(0,+l.ambil||0));const w=+l.wEst>0?+l.wEst:+l.w;items.push({d:l.d,g:s.h,q:Math.max(0,q-am),w})}));
+  const items=[];ED.sections.forEach(s=>s.lines.forEach(l=>{const q=+l.q||0;if(!String(l.d).trim()||!(q>0))return;const am=Math.min(q,Math.max(0,+l.ambil||0));const w=+l.wEst>0?+l.wEst:+l.w;items.push({d:l.d,g:s.h,q:Math.max(0,q-am),w,sudahWaste:+l.wEst>0})}));
   if(!items.length)return '';
   const rc=matRencana(items,{spkId:ED.id||undefined,tebal:ED.tebal||''});
   const baris=rc.map(r=>{
@@ -4699,7 +4709,7 @@ function matPreviewEditor(){
    const kurang=(r.kurangKg||0)>0.5;
    return '<div>Plat '+esc(r.bahan)+' '+n(r.tebal)+' mm: butuh <b>'+n(Math.round(r.butuhKg))+'</b> kg'+(r.butuhLbr!=null?' (± '+n(r.butuhLbr)+' lbr)':'')+' · tersedia '+n(Math.round(r.tersediaKg||0))+' kg · '+(kurang?'<b class="warn-t">kurang '+n(Math.round(r.kurangKg))+' kg'+(r.kurangLbr!=null?' (± '+n(r.kurangLbr)+' lbr)':'')+', PR dibuat otomatis saat terbit</b>':r.status==='Sudah dipesan'?'sudah dipesan lewat PR':'cukup')+'</div>'}).join('');
   const tw=items.filter(i=>!(+i.w>0)).length;
-  return '<div class="muted" id="ed-mat" style="margin-top:4px">Kebutuhan bahan baku (berat estimasi plat × faktor sisa potong '+String(matFaktor()).replace('.',',')+'):'+baris+(tw?'<div class="warn-t">'+tw+' item belum ada berat, belum masuk perhitungan plat</div>':'')+'</div>'
+  return '<div class="muted" id="ed-mat" style="margin-top:4px">Kebutuhan bahan baku (berat estimasi plat sudah memuat waste; item berat manual × faktor sisa potong '+String(matFaktor()).replace('.',',')+'):'+baris+(tw?'<div class="warn-t">'+tw+' item belum ada berat, belum masuk perhitungan plat</div>':'')+'</div>'
  }catch(e){return ''}
 }
 function renderTotalsLama(){const t=edTotals();const el=$('#ed-tot');if(!el)return;let ke=0,kr=0,ada=false;if(spkDimBaru()){ED.sections.forEach((s,si)=>{const cap=edCap(s);s.lines.forEach(l=>{const r=edKgPair(s,l,cap);if(r&&String(l.d).trim()){ada=true;const q=+l.q||0,am=Math.min(q,Math.max(0,+l.ambil||0));ke+=r.kgPcsEst*(q-am);kr+=r.kgPcsReal*q}})})}
@@ -5049,6 +5059,7 @@ function actLabel(c,op,d){
   if(c==='mutasi'){const j=d.jenis;return (j==='masuk'?(d.gudang==='rm'?'Terima material':'Barang masuk'):j==='keluar'?(d.gudang==='rm'?'Pakai produksi':'Barang keluar'):j==='opname'?'Stock opname':MVL[j]||'Mutasi')}
   return {vendor:'Kirim ke vendor',kirim:'Buat surat jalan',bongkar:d.auto?'Antrian bongkar (otomatis)':'Catat kendaraan masuk',spk:d.status==='Draft'?'Buat draft SPK':'Terbitkan SPK',pr:'Buat PR',opname:'Stock opname',rm:'Item bahan baku baru',fg:'Item barang jadi baru'}[c]||'Tambah '+(CNM[c]||c);
  }
+ if(c==='pr'&&d.diajukanAt)return 'Ajukan PR';
  if(d.batal)return 'Batalkan '+(CNM[c]||c);
  if(d.riwayat)return 'Terima dari vendor';
  if(d.revisi)return 'Revisi SPK';
@@ -5210,6 +5221,7 @@ function ringkasLaporan(p){
  add('Bahan baku','Susut (SPK selesai produksi)',tk-th,'kg',tk>0?(Math.round((tk-th)/tk*1000)/10)+'% dari plat keluar':'belum ada data','bahan-baku');
  add('Bahan baku','Susut berlebih',susutRows().filter(r=>r.status==='Berlebih').length,'kelompok','di atas batas wajar','bahan-baku');
  add('Bahan baku','PR terbuka',S.pr.filter(x=>x.gudang!=='sp'&&(x.status==='Diajukan'||x.status==='Dipesan')).length,'PR','menunggu barang','bahan-baku');
+ add('Bahan baku','PR draf menunggu diajukan',S.pr.filter(x=>x.gudang!=='sp'&&x.status==='Draf').length,'PR','dibuat otomatis, diajukan oleh user','bahan-baku');
  // Barang jadi
  add('Barang jadi','Stok barang jadi',Object.values(c.stock.fg||{}).reduce((s,v)=>s+Math.max(0,v),0),'unit','saat ini','barang-jadi');
  add('Barang jadi','Siap masuk stok (SPK stok)',fgSiapMasukList().length,'SPK','saat ini','barang-jadi');
@@ -5243,6 +5255,8 @@ function tindakanHariIni(){const L=[];const c=calc();
  add('pengiriman','barang-jadi','siap',fgSiapKirimList().length,'SPK siap kirim ke customer');
  add('barang-jadi','barang-jadi','masuk',fgSiapMasukList().length,'SPK stok siap masuk gudang');
  add('bahan-baku','bahan-baku','susut',susutRows().filter(r=>r.status==='Berlebih').length,'susut bahan baku berlebih');
+ add('bahan-baku','bahan-baku','beli',S.pr.filter(p=>p.gudang!=='sp'&&p.status==='Draf').length,'PR bahan baku draf menunggu diajukan');
+ add('sparepart','sparepart','beli',S.pr.filter(p=>p.gudang==='sp'&&p.status==='Draf').length,'PR sparepart draf menunggu diajukan');
  add('sparepart','sparepart','beli',spSug().length,'sparepart di bawah minimum');
  const kepala='<div class="sect-t">Tindakan hari ini</div>';
  if(!L.length)return kepala+'<div class="pbody note" id="tindakan">Tidak ada yang menunggu tindakan. Semua alur berjalan.</div>';
@@ -6092,7 +6106,7 @@ document.addEventListener('click',async e=>{
   case 'prnew':prNewForm();break;
   case 'mesinedit':mesinForm(ds.nm);break;
   case 'spmesinlihat':{const fs0=F['sparepart'];fs0.tab='mutasi';fs0.mvmesin=ds.nm;fs0.mvj='keluar';renderTools();renderBody();break}
-  case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
+  case 'prajukan':await prAjukan(ds.id);break;case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
   case 'prterima':{const pp=byId('pr',ds.id);mvForm(pp&&pp.gudang==='sp'?'sp':'rm','masuk',null,ds.id);break}
   case 'spprnew':spPrNewForm();break;
   case 'fgspknew':fgSpkNewForm();break;

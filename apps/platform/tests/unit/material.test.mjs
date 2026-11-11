@@ -58,6 +58,17 @@ ok('K-13 jenis material bawaan dan kustom dipetakan ke bahan SPK: A5052 (massa j
   ok('K-S4 batas mengikuti faktor sisa potong: faktor 1,2 menaikkan batas', susutMaterial(rencana, hasilSelesai, { 'SPHC|1.2': 1085 }, { faktor: 1.2 })[0].batas > s1[0].batas);
 }
 
+// ---- waste tidak dihitung dua kali (berat estimasi sudah memuat waste) ----
+{
+  const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+  const campur = kelompokKebutuhan([{ d: 'A', g, q: 10, w: 10, sudahWaste: true }, { d: 'B', g, q: 10, w: 10 }], { faktor: 1.1 });
+  ok('K-W1 item berat estimasi (sudahWaste) tidak dikali faktor; item berat biasa tetap dikali 1,1', campur.length === 1 && campur[0].netto === 200 && Math.abs(campur[0].bruto - 210) < 1e-9 && Math.abs(campur[0].faktorEfektif - 1.05) < 1e-9, JSON.stringify(campur[0]));
+  const semuaEst = kelompokKebutuhan([{ d: 'A', g, q: 1000, w: 14.712, sudahWaste: true }], { faktor: 1.1 });
+  ok('K-W2 1000 pcs berat estimasi 14,712 kg: bruto = 14.712 kg (bukan 16.183 kg)', semuaEst[0].netto === 14712 && semuaEst[0].bruto === 14712 && semuaEst[0].faktorEfektif === 1);
+  const sm = susutMaterial(semuaEst, [{ kunci: semuaEst[0].kunci, netto: 14712 }], { [semuaEst[0].kunci]: 15000 }, { faktor: 1.1 });
+  ok('K-W3 batas susut grup berat estimasi hanya toleransi 5%: keluar 15.000 kg vs hasil 14.712 kg = 1,9% Wajar; keluar 16.000 kg = 8,05% Berlebih', sm[0].status === 'Wajar' && Math.abs(sm[0].batas - 0.05) < 1e-9 && susutMaterial(semuaEst, [{ kunci: semuaEst[0].kunci, netto: 14712 }], { [semuaEst[0].kunci]: 16000 }, { faktor: 1.1 })[0].status === 'Berlebih');
+}
+
 const gagal = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n')); console.log(`${R.length - gagal} PASS, ${gagal} FAIL`);
 process.exit(gagal ? 1 : 0);

@@ -241,13 +241,13 @@ export async function runProduksiHuluHilir(page, base) {
       hasil.rcBaris = rc.length; hasil.usulan = MT().usulanPr(rc).length;
       const no1 = await prOtomatisSpk('ph30'); await w(900);
       hasil.no1 = no1; hasil.prBaru = (S.pr || []).length - prAwal;
-      const pr1 = (S.pr || []).find((p) => p.noPR === no1) || {}; hasil.auto = pr1.auto === true && /Otomatis dari SPK 9930/.test(pr1.ket || '') && pr1.status === 'Diajukan';
+      const pr1 = (S.pr || []).find((p) => p.noPR === no1) || {}; hasil.auto = pr1.auto === true && /dari SPK 9930/.test(pr1.ket || '') && pr1.status === 'Draf' && !pr1.diajukanBy;
       const no2 = await prOtomatisSpk('ph30'); await w(900);
       hasil.no2 = no2; hasil.prSetelahUlang = (S.pr || []).length - prAwal;
-      S.spk = S.spk.filter((z) => z._id !== 'ph30'); C = null;
+      S.spk = S.spk.filter((z) => z._id !== 'ph30'); { const pp = (S.pr || []).find((x) => x.noPR === no1); if (pp) { await DB.doc('pr/' + pp._id).delete(); await w(500); } } C = null;
       return hasil;
     });
-    ok('PH-30 T5: SPK terbit dengan kebutuhan plat melebihi stok membuat satu PR otomatis; diulang tidak membuat PR dobel', r30.matAda && r30.usulan >= 1 && !!r30.no1 && r30.prBaru === 1 && r30.auto && !r30.no2 && r30.prSetelahUlang === 1, JSON.stringify(r30));
+    ok('PH-30 T5: SPK terbit dengan kebutuhan plat melebihi stok membuat satu PR DRAF otomatis (belum diajukan); diulang tidak membuat PR dobel', r30.matAda && r30.usulan >= 1 && !!r30.no1 && r30.prBaru === 1 && r30.auto && !r30.no2 && r30.prSetelahUlang === 1, JSON.stringify(r30));
 
     langkah = 'PH-31';
     const r31 = await page.evaluate(async () => {
@@ -299,7 +299,7 @@ export async function runProduksiHuluHilir(page, base) {
       // lonjakan: 6 unit pada 45 dan 60 hari lalu (dasar 3 per bulan), 10 unit dalam 30 hari terakhir
       [[-45, 3], [-60, 3], [-5, 10]].forEach(([d, q], i) => S.mutasi.push({ _id: 'ph33m' + i, gudang: 'sp', item: 'ph33sp', jenis: 'keluar', delta: -q, tgl: addDays(tgl, d), at: ts(d), by: 'admin@mni.local', pihak: 'Umum' }));
       C = null; h.lonjak = dataIssues().some((i) => /Uji Sparepart T8/.test(i.title) && /pemakaian 30 hari/.test(i.title));
-      S.sp = S.sp.filter((z) => z._id !== 'ph33sp'); S.mutasi = S.mutasi.filter((m) => !/^ph33m/.test(m._id)); S.pr = (S.pr || []).filter((p) => p.noPR !== no1); C = null;
+      S.sp = S.sp.filter((z) => z._id !== 'ph33sp'); S.mutasi = S.mutasi.filter((m) => !/^ph33m/.test(m._id)); { const pp = (S.pr || []).find((x) => x.noPR === no1); if (pp) { await DB.doc('pr/' + pp._id).delete(); await w(500); } } C = null;
       return h;
     });
     ok('PH-33 T8: sparepart di bawah minimum meminta satu PR otomatis (diulang tidak dobel); lonjakan pemakaian masuk Cek Data', r33.no1 && r33.auto && !r33.no2 && r33.prBaru === 1 && r33.lonjak, JSON.stringify(r33));
@@ -357,12 +357,41 @@ export async function runProduksiHuluHilir(page, base) {
     const r38 = await page.evaluate(() => {
       const asli = ED; const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
       ED = { id: null, tebal: '1.2', sections: [{ h: g, lines: [{ d: 'Cable Tray Uji Editor', q: 1000, w: 13.513, wEst: 14.712, ambil: 0 }] }] };
-      const html = matPreviewEditor(); const rc = matRencana([{ d: 'Cable Tray Uji Editor', g, q: 1000, w: 14.712 }], { tebal: '1.2' });
+      const html = matPreviewEditor(); const rc = matRencana([{ d: 'Cable Tray Uji Editor', g, q: 1000, w: 14.712, sudahWaste: true }], { tebal: '1.2' });
       ED = asli;
       const teks = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
       return { teks, butuhKg: Math.round(rc[0].butuhKg), netto: rc[0].netto, bruto: rc[0].bruto, ada: html.length > 0 };
     });
-    ok('PH-38 editor SPK: kebutuhan plat tampil sebelum Terbit, memakai berat estimasi x faktor sisa potong (14.712 kg x 1,1 = 16.183 kg)', r38.ada && r38.netto === 14712 && Math.abs(r38.bruto - 16183.2) < 0.01 && new RegExp('butuh ' + String(r38.butuhKg).replace(/(\d)(?=(\d{3})+$)/g, '$1.') + ' kg').test(r38.teks), JSON.stringify(r38));
+    ok('PH-38 editor SPK: kebutuhan plat tampil sebelum Terbit, memakai berat estimasi yang sudah memuat waste (14.712 kg, tidak dikali 1,1 lagi)', r38.ada && r38.netto === 14712 && Math.abs(r38.bruto - 14712) < 0.01 && new RegExp('butuh ' + String(r38.butuhKg).replace(/(\d)(?=(\d{3})+$)/g, '$1.') + ' kg').test(r38.teks), JSON.stringify(r38));
+
+    langkah = 'PH-39';
+    const d39 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const h = {};
+      const tgl = today();
+      S.spk.push({ _id: 'ph39', no: 9939, status: 'Terbit', customer: 'Uji Ajukan', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Cable Tray Uji Ajukan', q: 5000, u: 'Btg', w: 10, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] });
+      C = null; const no = await prOtomatisSpk('ph39'); await w(900);
+      const p = (S.pr || []).find((x) => x.noPR === no) || {};
+      h.no = no; h.id = p._id; h.status = p.status; h.pengaju = p.diajukanBy || null;
+      h.dedupe = !(await prOtomatisSpk('ph39'));
+      F['bahan-baku'].tab = 'beli';
+      return h;
+    });
+    await go('bahan-baku');
+    const sblm = await page.evaluate((id) => ({ ajukanTombol: !!document.querySelector('[data-act="prajukan"][data-id="' + id + '"]'), terimaTombol: !!document.querySelector('[data-act="prterima"][data-id="' + id + '"]') }), d39.id);
+    await page.click('[data-act="prajukan"][data-id="' + d39.id + '"]'); await page.waitForTimeout(900);
+    const ssdh = await page.evaluate(async (id) => { const p = byId('pr', id) || {}; const o = { status: p.status, pengaju: p.diajukanBy, ada: !!p.diajukanAt, auto: p.auto === true, terima: !!document.querySelector('[data-act="prterima"][data-id="' + id + '"]'), ajukanHilang: !document.querySelector('[data-act="prajukan"][data-id="' + id + '"]'), me: ME, log: (S.log || []).some((l) => l.k === 'Ajukan PR') }; await DB.doc('pr/' + id).delete(); await new Promise((r) => setTimeout(r, 500)); S.spk = S.spk.filter((z) => z._id !== 'ph39'); C = null; F['bahan-baku'].tab = 'stok'; return o; }, d39.id);
+    ok('PH-39 PR draf otomatis baru berlaku setelah user menekan Ajukan: pengaju = user yang menekan, status Diajukan, tombol Terima baru muncul sesudahnya', d39.status === 'Draf' && !d39.pengaju && d39.dedupe && sblm.ajukanTombol && !sblm.terimaTombol && ssdh.status === 'Diajukan' && ssdh.pengaju === ssdh.me && ssdh.ada && ssdh.auto && ssdh.terima && ssdh.ajukanHilang, JSON.stringify({ d39, sblm, ssdh }));
+
+    langkah = 'PH-40';
+    const r40 = await page.evaluate(() => {
+      const tgl = today(); const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+      S.spk.push({ _id: 'ph40a', no: 9940, status: 'Terbit', customer: 'Uji Salin', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: g, items: [{ d: 'Cable Tray W200xH100xL3000', g, q: 10, u: 'Btg', w: 8.481 }, { d: 'Cover Tray W200xL3000', g, q: 10, u: 'Btg', w: 8.481 }, { d: 'Jointing Tray H100', g, q: 10, u: 'Btg', w: 8.481 }] });
+      S.spk.push({ _id: 'ph40b', no: 9941, status: 'Terbit', customer: 'Uji Beda', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: g, items: [{ d: 'Cable Tray W200xH100xL3000', g, q: 10, u: 'Btg', w: 10.894 }, { d: 'Cover Tray W200xL3000', g, q: 10, u: 'Btg', w: 6.813 }, { d: 'Jointing Tray H100', g, q: 10, u: 'Btg', w: 0.198 }] });
+      C = null; const I = dataIssues().filter((i) => /memakai berat yang sama/.test(i.title));
+      const o = { salin: I.some((i) => /9940/.test(i.title)), beda: I.some((i) => /9941/.test(i.title)) };
+      S.spk = S.spk.filter((z) => z._id !== 'ph40a' && z._id !== 'ph40b'); C = null; return o;
+    });
+    ok('PH-40 Cek Data: berat salinan (3 item berbeda berat sama persis) terdeteksi; berat berbeda-beda tidak ditandai', r40.salin === true && r40.beda === false, JSON.stringify(r40));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
