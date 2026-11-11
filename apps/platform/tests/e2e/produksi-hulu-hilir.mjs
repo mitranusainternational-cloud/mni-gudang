@@ -284,6 +284,25 @@ export async function runProduksiHuluHilir(page, base) {
     await page.click('#mform button[type="submit"], .modal button[type="submit"]'); await page.waitForTimeout(1200);
     const h32 = await page.evaluate((fgId) => { const m = S.mutasi.filter((z) => z.spk === 'ph32'); const o = { n: m.length, delta: m.reduce((a, z) => a + z.delta, 0), doc: !!m[0] && String(m[0].noDok || '').startsWith(DOCFMT.BJM + '/'), sisaDaftar: fgSiapMasukList().filter((x) => String(x.s.no) === '9932').length, undef: /undefined/.test(document.body.innerText) }; S.mutasi = S.mutasi.filter((z) => z.spk !== 'ph32'); S.spk = S.spk.filter((z) => z._id !== 'ph32'); C = null; F['barang-jadi'].tab = 'stok'; return o; }, s32.fg);
     ok('PH-32 T7: Terima semua mencatat barang masuk (BJM) sebesar yang siap untuk SPK stok, dan daftar siap masuk menjadi kosong', !s32.err && s32.daftar === 1 && h32.n === 1 && h32.delta === 10 && h32.doc && h32.sisaDaftar === 0 && !h32.undef, JSON.stringify({ s32, h32 }));
+
+    langkah = 'PH-33';
+    const r33 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const h = {};
+      const tgl = today(); const ts = (d) => addDays(tgl, d) + 'T08:00:00.000Z';
+      S.sp.push({ _id: 'ph33sp', id: 'ph33sp', item: 'Uji Sparepart T8', kode: 'T8', satuan: 'Pcs', min: 50, buffer: 80, aktif: true, stokAwal: 20 });
+      C = null;
+      const prAwal = (S.pr || []).length;
+      const no1 = await prOtomatisSparepart(); await w(900);
+      const pr1 = (S.pr || []).find((p) => p.noPR === no1) || {};
+      h.no1 = !!no1; h.auto = pr1.auto === true && pr1.gudang === 'sp' && (pr1.items || []).some((i) => i.item === 'ph33sp' && i.q === 60);
+      const no2 = await prOtomatisSparepart(); h.no2 = no2; h.prBaru = (S.pr || []).length - prAwal;
+      // lonjakan: 6 unit pada 45 dan 60 hari lalu (dasar 3 per bulan), 10 unit dalam 30 hari terakhir
+      [[-45, 3], [-60, 3], [-5, 10]].forEach(([d, q], i) => S.mutasi.push({ _id: 'ph33m' + i, gudang: 'sp', item: 'ph33sp', jenis: 'keluar', delta: -q, tgl: addDays(tgl, d), at: ts(d), by: 'admin@mni.local', pihak: 'Umum' }));
+      C = null; h.lonjak = dataIssues().some((i) => /Uji Sparepart T8/.test(i.title) && /pemakaian 30 hari/.test(i.title));
+      S.sp = S.sp.filter((z) => z._id !== 'ph33sp'); S.mutasi = S.mutasi.filter((m) => !/^ph33m/.test(m._id)); S.pr = (S.pr || []).filter((p) => p.noPR !== no1); C = null;
+      return h;
+    });
+    ok('PH-33 T8: sparepart di bawah minimum meminta satu PR otomatis (diulang tidak dobel); lonjakan pemakaian masuk Cek Data', r33.no1 && r33.auto && !r33.no2 && r33.prBaru === 1 && r33.lonjak, JSON.stringify(r33));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

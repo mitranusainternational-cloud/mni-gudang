@@ -1537,7 +1537,7 @@ function mvForm(g,j,item,prId,pre){
    for(const l of lines)await addDoc('mutasi',{gudang:g,item:l.item,jenis:j,delta:j==='masuk'?l.q:-l.q,tgl:t,noDok,ref:[s?'SPK '+s.no:'',d.ref||''].filter(Boolean).join(' · '),spk:g==='sp'?'':(d.spk||''),pihak,ket:d.ket||'',pr:PRX?PRX._id:'',...(g==='sp'?spExtra(d,j):{})});
    if(PRX){const got={};lines.forEach(l=>got[l.item]=(got[l.item]||0)+l.q);const items=PRX.items.map(i=>({...i,qTerima:(+i.qTerima||0)+(got[i.item]||0)}));const done=items.every(i=>i.qTerima>=i.q);await updDoc('pr',PRX._id,{items,status:done?'Selesai':PRX.status==='Diajukan'?'Dipesan':PRX.status,supplier:PRX.supplier||pihak})}
    if(d.dock){const nopolM=getNopol(d);await queueDock({jenis:'Unloading',muatan:'Bahan Baku',pihak,ref:[noDok,d.ref].filter(Boolean).join(' · '),nopol:nopolM,kendaraan:d.kendaraan,driver:d.driver,tgl:t,link:{c:'mutasi',noDok}});rememberArmada(nopolM,d.kendaraan,d.driver)}
-   toast(`${noDok} tersimpan · ${lines.length} item`);
+   toast(`${noDok} tersimpan · ${lines.length} item`);if(g==='sp'&&j==='keluar')setTimeout(()=>prOtomatisSparepart(),700);
   },{submit:PRD?`Terima ${PRD.noPR}`:jl,done:' ',mount:f=>{if(PRD){if(f.pihak&&PRD.supplier)f.pihak.value=PRD.supplier;if(f.ref)f.ref.value=PRD.noPR}if(g==='sp')spBindForm(f,j);if(pre){if(f.pihak&&pre.pihak)f.pihak.value=pre.pihak;if(f.ket&&pre.ket)f.ket.value=pre.ket}const upd=()=>{f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value;tr.querySelector('[data-stk]').textContent=v?n(calc().stock[g][v]):''});if(g==='rm'){let tq=0,tk=0;f.querySelectorAll('#m-mvl tr').forEach(tr=>{const v=tr.querySelector('select').value,q=num0((tr.querySelector('input')||{}).value);if(v&&q>0){tq+=q;tk+=q*kgLbr(byId('rm',v)||{})}});const el=f.querySelector('#m-kg');if(el)el.innerHTML=tq?`Total <b>${n(tq)}</b> lembar · <b>${n(Math.round(tk))}</b> kg (${n(Math.round(tk/100)/10)} ton)`:''}};f.addEventListener('input',e=>{if(e.target.closest('#m-mvl'))upd()});f.addEventListener('change',e=>{if(e.target.matches('#m-mvl select'))upd()});if(g==='fg'&&f.spk&&f.pihak)f.spk.addEventListener('change',()=>{const sk=byId('spk',f.spk.value);if(!sk)return;if(sk.stokReq&&j==='masuk'){fgIsiDariSpk(f,sk)}else if(!String(f.pihak.value||'').trim())f.pihak.value=sk.customer||''});upd();bindArmada(f)}});
 }
 function linesTable(spkId,mode,pfx=''){
@@ -2982,6 +2982,9 @@ function dataIssues(){
 
  susutRows().filter(r=>r.status==='Berlebih'||r.status==='Plat kurang catat').forEach(r=>add(2,'Stok',r.status==='Berlebih'?`SPK ${esc(String(r.s.no))}: susut ${r.bahan} ${n(r.tebal)} mm ${Math.round(r.pct*1000)/10}% (batas ${Math.round(r.batas*1000)/10}%)`:`SPK ${esc(String(r.s.no))}: hasil ${r.bahan} ${n(r.tebal)} mm melebihi plat yang tercatat keluar`,`${esc(r.s.customer||'')} · plat keluar ${n(Math.round(r.keluarKg))} kg, hasil jadi ${n(Math.round(r.hasilKg))} kg`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku',r.status==='Berlebih'?'Plat keluar jauh di atas hasil jadi: susut berlebih, plat tidak terpakai belum dikembalikan, atau salah catat.':'Pengeluaran plat untuk SPK ini belum lengkap dicatat.'));
 
+ Object.values(spCalc()).filter(x=>spOn(x.r)).forEach(x=>{const a=movAgg('sp',x.r._id);const dasar=(a.k90-x.k30)/2;
+  if(dasar>0&&x.k30>=2*dasar&&x.k30-dasar>=3)add(1,'Stok',`Sparepart ${esc(x.r.item)}: pemakaian 30 hari ${n(x.k30)} ${esc(x.r.satuan||'')} (biasanya sekitar ${n(Math.round(dasar*10)/10)} per bulan)`,'Pemakaian melonjak dibanding dua bulan sebelumnya. Cek mesin tujuan dan apakah ada kerusakan atau salah catat.','data-act="go" data-href="sparepart">Buka Sparepart','Lonjakan pemakaian sparepart biasanya tanda kerusakan mesin atau pencatatan yang salah.')});
+
  /* ── KATALOG ── */
  {const X=katIndex();
   const sim=X.arr.filter(x=>x.sim.length).length;
@@ -3821,6 +3824,18 @@ function spBeli(){
  ${prs.length?`<div class="tbl-wrap"><table><thead><tr><th>No PR</th><th>Tanggal</th><th>Supplier</th><th>Barang</th><th class="num">Qty</th><th>Diterima</th><th>Dibutuhkan</th><th>Status</th><th></th></tr></thead><tbody>${prRows}</tbody></table></div>`:`<div class="pbody note">Belum ada PR sparepart. PR yang dibuat dari usulan di atas tercatat di sini, dan penerimaannya langsung menambah stok.</div>`}`;
 }
 function spPrItems(){return spSug().map(x=>({item:x.r._id,...spBeliVal(x)})).filter(i=>i.on&&(+i.q||0)>0).map(i=>({item:i.item,q:+i.q}))}
+/* T8: pengeluaran sparepart yang membuat stok sama atau di bawah minimum atau buffer meminta pembelian otomatis (PR sparepart, status Diajukan, bertanda otomatis).
+   Aman diulang: usulan dikurangi PR sparepart yang masih terbuka (spOnOrder). Dilewati bila pengguna tak berhak atas modul sparepart atau setting master/setting.prOtomatis=false. */
+async function prOtomatisSparepart(){
+ try{
+  if(((byId('master','setting')||{}).prOtomatis)===false)return null;
+  try{need('sparepart')}catch(e){return null}
+  const sug=spSug().filter(x=>x.sug>0);if(!sug.length)return null;
+  const t=today();const noPR=await nextDocNo('PR',t);
+  await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:sug.map(x=>({item:x.r._id,q:x.sug,qTerima:0})),status:'Diajukan',ket:'Otomatis: stok sparepart di bawah minimum',gudang:'sp',auto:true});
+  toast(`${noPR} dibuat otomatis untuk ${sug.length} sparepart di bawah minimum`);return noPR;
+ }catch(e){return null}
+}
 function spPrNewForm(){
  const items=spPrItems();if(!items.length){toast('Pilih minimal satu barang dengan qty > 0.');return}
  openModal('Buat permintaan pembelian sparepart (PR)',`<div class="full tbl-wrap"><table class="lines"><thead><tr><th>Barang</th><th class="num">Qty</th><th>Satuan</th></tr></thead><tbody>${items.map(i=>{const r=byId('sp',i.item);return `<tr><td>${esc(r?r.item:'')}</td><td class="num">${n(i.q)}</td><td>${esc(r?r.satuan||'':'')}</td></tr>`}).join('')}</tbody></table></div>`+
