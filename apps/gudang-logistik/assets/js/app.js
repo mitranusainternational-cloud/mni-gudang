@@ -3631,6 +3631,18 @@ function fgIsiDariSpk(f,sk,paksa){/* isian pengguna yang sudah ada (produk dan j
  const lines=fgBarisTerima(sk);if(!lines.length){toast(fgAlasanKosong(sk));return}
  const box=$('#m-mvl');if(!box)return;box.innerHTML=lines.map((l,k)=>mvLine('fg',k,l.item,l.sisa)).join('');
  f.pihak.value='Produksi / finishing · SPK '+sk.no;const sel=f.querySelector('#m-mvl select');if(sel)sel.dispatchEvent(new Event('change',{bubbles:true}))}
+/* T7: Terima semua = catat barang masuk (BJM) untuk setiap SPK stok yang hasilnya sudah selesai, sebesar yang siap diterima. Satu dokumen per SPK. */
+function fgTerimaSemua(){
+ const L=fgSiapMasukList();if(!L.length){toast('Tidak ada barang jadi yang siap diterima.');return}
+ try{need('barang-jadi')}catch(e){toast('Anda tidak berhak mencatat barang masuk gudang barang jadi.');return}
+ const tot=L.reduce((a,x)=>a+x.baris.reduce((b,r)=>b+r.sisa,0),0);
+ openModal('Terima semua barang jadi yang siap',`<div class="full tbl-wrap"><table class="lines"><thead><tr><th>SPK</th><th>Produk</th><th class="num">Diterima</th></tr></thead><tbody>${L.map(x=>x.baris.map((b,i)=>'<tr><td>'+(i===0?'<b>'+esc(String(x.s.no))+'</b>':'')+'</td><td>'+esc(fgLabel(byId('fg',b.item)))+'</td><td class="num">'+n(b.sisa)+'</td></tr>').join('')).join('')}</tbody></table></div><div class="note full">${L.length} SPK, total ${n(tot)} unit masuk Gudang Barang Jadi. Satu dokumen BJM per SPK.</div>`+fld('Tanggal',inp('tgl',today(),'date')),
+  async d=>{const t=d.tgl||today();let doc=0;
+   for(const x of L){const noDok=await nextDocNo('BJM',t);
+    for(const b of x.baris)await addDoc('mutasi',{gudang:'fg',item:b.item,jenis:'masuk',delta:b.sisa,tgl:t,noDok,ref:'SPK '+x.s.no,spk:x.s._id,pihak:'',ket:'Terima semua dari SPK stok',pr:''});
+    doc++}
+   toast(doc+' dokumen barang masuk tersimpan');renderBody()},{submit:'Terima semua',done:' '});
+}
 function fgTerimaSpk(id){
  const s=byId('spk',id);if(!s)return;
  if(s.status==='Draft'){toast('SPK stok ini masih Draft. Terbitkan SPK dan produksi dulu sebelum barang diterima di gudang.');return}
@@ -3752,7 +3764,7 @@ function fgSjBuat(){const f=F['barang-jadi'],sel=f.skSel||{};const ids=fgSiapKir
  setTimeout(()=>{const form=$('#mform');if(!form)return;ids.slice(1).forEach(id=>{const b=form.querySelector('[data-act="addgx"]');if(b)b.click();const ss=[...form.querySelectorAll('[data-gx-sel]')],s=ss[ss.length-1];if(s){s.value=id;s.dispatchEvent(new Event('change',{bubbles:true}))}})},150)}
 document.addEventListener('change',e=>{const el=e.target;if(!el||!el.dataset||el.dataset.fgsk===undefined)return;const f=F['barang-jadi'];f.skSel=f.skSel||{};if(el.dataset.fgsk==='all')fgSiapKirimList().forEach(x=>{f.skSel[x.s._id]=el.checked});else f.skSel[el.dataset.fgsk]=el.checked;renderBody()});
 function fgSiapMasukTab(){const L=fgSiapMasukList();
- return `<div class="pbody"><p class="note" style="margin:0">Hasil produksi <b>SPK stok</b> yang sudah selesai tetapi belum dicatat masuk gudang. Tombol Terima mengisi formulir Barang masuk dengan SPK dan jumlahnya; cukup diperiksa lalu disimpan.</p></div>
+ return `<div class="pbody"><p class="note" style="margin:0">Hasil produksi <b>SPK stok</b> yang sudah selesai tetapi belum dicatat masuk gudang. Tombol Terima mengisi formulir Barang masuk dengan SPK dan jumlahnya; cukup diperiksa lalu disimpan.</p>${L.length?`<div style="margin-top:8px"><button class="btn primary" data-act="fgterimasemua">${ic('inb')}Terima semua (${L.length} SPK)</button></div>`:''}</div>
  ${L.length?`<div class="tbl-wrap"><table id="fg-siapmasuk"><thead><tr><th>No SPK</th><th>Produk</th><th class="num">Siap diterima</th><th></th></tr></thead><tbody>${L.map(x=>`<tr data-spk="${x.s._id}"><td class="mono"><b>${esc(x.s.no)}</b></td><td class="pri-l">${x.baris.map(b=>`<div><span>${esc(fgLabel(byId('fg',b.item)))}</span><b>${n(b.sisa)}</b></div>`).join('')}</td><td class="num big">${n(x.baris.reduce((a,b)=>a+b.sisa,0))}</td><td><button class="btn sm ok" data-act="fgterima" data-spk="${x.s._id}">${ic('inb')}Terima di gudang</button></td></tr>`).join('')}</tbody></table></div>`:empty('Tidak ada hasil SPK stok yang menunggu diterima','Muncul di sini setelah SPK stok selesai diproduksi.')}`}
 function fgBeliTot(){const el=document.querySelector('#fgbeli-tot');if(!el)return;const t=fgSug().reduce((a,x)=>{const v=fgBeliVal(x);return v.on?a+(+v.q||0):a},0);el.innerHTML=`<b>${n(t)}</b> unit diminta`}
 const fgSpkDesc=r=>{const m=String(r.ukuran||'').match(/(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)/i);return m?`${r.kategori}${r.type?' '+r.type:''} W${m[1]}xH${m[2]}xL${r.panjang}`:`${r.kategori}${r.type?' '+r.type:''} ${r.ukuran||''} L${r.panjang}`.replace(/\s+/g,' ').trim()};
@@ -5976,7 +5988,7 @@ document.addEventListener('click',async e=>{
   case 'fgpick':{const f=F['barang-jadi'];f.pick=f.pick||{};f.pick[ds.id]=el.checked;fgPickBar();break}
   case 'fgpickclear':F['barang-jadi'].pick={};renderBody();break;
   case 'fgpicklow':{const f=F['barang-jadi'];f.pick={};fgSug().forEach(x=>{f.pick[x.r._id]=true});renderBody();break}
-  case 'fgterima':fgTerimaSpk(ds.spk);break;case 'fgsjbuat':fgSjBuat();break;
+  case 'fgterima':fgTerimaSpk(ds.spk);break;case 'fgterimasemua':fgTerimaSemua();break;case 'fgsjbuat':fgSjBuat();break;
   case 'prxlsx':exportPrXlsx(ds.id);break;case 'prpdf':exportPrDoc(ds.id,'pdf');break;case 'kspdf':exportKartuDoc(ds.id,'pdf');break;
   case 'opnsheetpdf':printMvDoc('','','',opnameSheetDoc());break;
   case 'opnsheetxlsx':exportMvXlsx('','','',opnameSheetDoc());break;

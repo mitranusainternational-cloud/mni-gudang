@@ -269,6 +269,21 @@ export async function runProduksiHuluHilir(page, base) {
     const tab31 = await page.evaluate(async () => { await new Promise((r) => setTimeout(r, 400)); const o = { tab: !!document.querySelector('#susut-tabel'), undef: /undefined/.test(document.body.innerText) }; S.mutasi = S.mutasi.filter((m) => m._id !== 'ph31m'); S.spk = S.spk.filter((z) => z._id !== 'ph31'); C = null; F['bahan-baku'].tab = 'stok'; return o; });
     r31.tab = tab31.tab; r31.undef = tab31.undef;
     ok('PH-31 T6: susut plat per SPK dinilai Wajar, Berlebih (masuk Cek Data), dan Plat kurang catat; tab Susut tampil', !r31.err && r31.wajar === 'Wajar' && r31.lebih === 'Berlebih' && r31.issue && r31.kurang === 'Plat kurang catat' && r31.tab && !r31.undef, JSON.stringify(r31));
+
+    langkah = 'PH-32';
+    const s32 = await page.evaluate(() => {
+      const fg = (S.fg || [])[0]; if (!fg) return { err: 'tidak ada item barang jadi' };
+      const tgl = today();
+      S.spk.push({ _id: 'ph32', no: 9932, status: 'Terbit', stokReq: true, customer: 'STOK MNI', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Uji Terima Semua', q: 10, u: 'Btg', prod: 10, fg: fg._id, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] });
+      C = null; F['barang-jadi'].tab = 'masuk';
+      return { fg: fg._id, awal: calc().stock.fg[fg._id], daftar: fgSiapMasukList().filter((x) => String(x.s.no) === '9932').length };
+    });
+    await go('barang-jadi');
+    await page.waitForSelector('[data-act="fgterimasemua"]', { timeout: 5000 });
+    await page.click('[data-act="fgterimasemua"]'); await page.waitForTimeout(400);
+    await page.click('#mform button[type="submit"], .modal button[type="submit"]'); await page.waitForTimeout(1200);
+    const h32 = await page.evaluate((fgId) => { const m = S.mutasi.filter((z) => z.spk === 'ph32'); const o = { n: m.length, delta: m.reduce((a, z) => a + z.delta, 0), doc: !!m[0] && String(m[0].noDok || '').startsWith(DOCFMT.BJM + '/'), sisaDaftar: fgSiapMasukList().filter((x) => String(x.s.no) === '9932').length, undef: /undefined/.test(document.body.innerText) }; S.mutasi = S.mutasi.filter((z) => z.spk !== 'ph32'); S.spk = S.spk.filter((z) => z._id !== 'ph32'); C = null; F['barang-jadi'].tab = 'stok'; return o; }, s32.fg);
+    ok('PH-32 T7: Terima semua mencatat barang masuk (BJM) sebesar yang siap untuk SPK stok, dan daftar siap masuk menjadi kosong', !s32.err && s32.daftar === 1 && h32.n === 1 && h32.delta === 10 && h32.doc && h32.sisaDaftar === 0 && !h32.undef, JSON.stringify({ s32, h32 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
