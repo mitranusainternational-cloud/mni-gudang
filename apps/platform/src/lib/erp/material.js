@@ -103,3 +103,23 @@ export function rencanaMaterial(kelompok, rmSiap, { reservasiLain = {}, keluar =
 export function usulanPr(rencana) {
   return (rencana || []).filter((r) => r.status === 'Kurang' && r.utama && r.kurangLbr > 0).map((r) => ({ item: r.utama.id, label: r.utama.label, q: r.kurangLbr, kg: r3(r.kurangLbr * r.utama.kgPerLbr), kunci: r.kunci }));
 }
+
+/** Susut bahan baku per SPK: membandingkan plat yang KELUAR (kg) dengan hasil jadi (kg) per (bahan, tebal).
+ *  kelompokRencana = kelompokKebutuhan(seluruh item), kelompokHasil = kelompokKebutuhan(item dengan qty = yang sudah selesai),
+ *  keluar = { kunci: kg }. Batas wajar = (faktor-1)/faktor + toleransi (faktor sisa potong 1,1 => 9,1% + 5%).
+ *  Status: 'Belum keluar', 'Berjalan' (produksi belum selesai, susut sementara tidak dinilai), 'Wajar', 'Berlebih', 'Plat kurang catat' (hasil melebihi plat yang tercatat keluar). */
+export function susutMaterial(kelompokRencana, kelompokHasil, keluar = {}, { faktor = FAKTOR_SISA_DEFAULT, toleransi = 0.05 } = {}) {
+  const f = faktorSisa(faktor); const batas = (f - 1) / f + toleransi;
+  const hasil = new Map((kelompokHasil || []).map((k) => [k.kunci, k.netto]));
+  return (kelompokRencana || []).map((k) => {
+    const keluarKg = r3(angka(keluar[k.kunci])); const hasilKg = r3(hasil.get(k.kunci) || 0);
+    const selesai = k.netto > 0 && hasilKg >= k.netto - 0.0005;
+    const susutKg = r3(keluarKg - hasilKg); const pct = keluarKg > 0 ? susutKg / keluarKg : null;
+    let status;
+    if (keluarKg <= 0) status = hasilKg > 0 ? 'Plat kurang catat' : 'Belum keluar';
+    else if (keluarKg + 0.5 < hasilKg) status = 'Plat kurang catat';
+    else if (!selesai) status = 'Berjalan';
+    else status = pct <= batas ? 'Wajar' : 'Berlebih';
+    return { kunci: k.kunci, bahan: k.bahan, tebal: k.tebal, rencanaKg: k.netto, keluarKg, hasilKg, susutKg, pct, batas, status };
+  });
+}

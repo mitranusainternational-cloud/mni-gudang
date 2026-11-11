@@ -1,5 +1,5 @@
 // Uji kebutuhan material dan reservasi.  node tests/unit/material.test.mjs
-import { bahanDariJenis, FAKTOR_SISA_DEFAULT, faktorSisa, bahanTebal, kunciMaterial, kelompokKebutuhan, reservasiAktif, rencanaMaterial, usulanPr } from '../../src/lib/erp/material.js';
+import { bahanDariJenis, FAKTOR_SISA_DEFAULT, faktorSisa, bahanTebal, kunciMaterial, kelompokKebutuhan, reservasiAktif, rencanaMaterial, usulanPr, susutMaterial } from '../../src/lib/erp/material.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 
@@ -44,6 +44,19 @@ const rc6 = rencanaMaterial(kel, rm, { reservasiLain: { 'SPHC|1.2': 100 }, dipes
 ok('K-12 PR terbuka menutup kekurangan (status Sudah dipesan, tidak masuk usulan PR); PR sebagian hanya mengurangi kekurangan', rc5[0].status === 'Sudah dipesan' && rc5[0].kurangKg === 0 && usulanPr(rc5).length === 0 && rc6[0].status === 'Kurang' && rc6[0].kurangKg === 14 && usulanPr(rc6)[0].q === 1);
 
 ok('K-13 jenis material bawaan dan kustom dipetakan ke bahan SPK: A5052 (massa jenis 2,68) dan AL6061 ke Aluminium, SUS304L dan 316L ke stainless, SPCC dan Lainnya ke SPHC', bahanDariJenis('A5052', 2.68) === 'Aluminium' && bahanDariJenis('AL6061', 0) === 'Aluminium' && bahanDariJenis('A1100', 0) === 'Aluminium' && bahanDariJenis('SUS304L', 7.93) === 'SS304' && bahanDariJenis('SS316L', 7.98) === 'SS316' && bahanDariJenis('SPCC') === 'SPHC' && bahanDariJenis('Lainnya') === 'SPHC' && bahanDariJenis('Aluminium') === 'Aluminium' && bahanDariJenis('Baja Karbon', 7.85) === 'SPHC' && bahanDariJenis('', 0) === 'SPHC');
+
+// ---- susut bahan baku (T6) ----
+{
+  const rencana = [{ kunci: 'SPHC|1.2', bahan: 'SPHC', tebal: 1.2, netto: 1000 }, { kunci: 'SPHC|2|', bahan: 'SPHC', tebal: 2, netto: 500 }];
+  const hasilSelesai = [{ kunci: 'SPHC|1.2', netto: 1000 }, { kunci: 'SPHC|2|', netto: 100 }];
+  const s1 = susutMaterial(rencana, hasilSelesai, { 'SPHC|1.2': 1085, 'SPHC|2|': 150 }, { faktor: 1.1 });
+  ok('K-S1 susut wajar: keluar 1085 kg, hasil 1000 kg = 7,8% (batas 14,1%); produksi belum selesai = Berjalan', s1[0].status === 'Wajar' && Math.abs(s1[0].susutKg - 85) < 0.01 && s1[0].pct < s1[0].batas && s1[1].status === 'Berjalan');
+  const s2 = susutMaterial(rencana, hasilSelesai, { 'SPHC|1.2': 1400 }, { faktor: 1.1 });
+  ok('K-S2 susut berlebih: keluar 1400 kg, hasil 1000 kg = 28,6% di atas batas', s2[0].status === 'Berlebih' && s2[0].pct > s2[0].batas);
+  const s3 = susutMaterial(rencana, hasilSelesai, { 'SPHC|1.2': 900 }, { faktor: 1.1 });
+  ok('K-S3 hasil melebihi plat yang tercatat keluar = Plat kurang catat; tanpa keluar dan tanpa hasil = Belum keluar', s3[0].status === 'Plat kurang catat' && susutMaterial(rencana, [], {}, {})[0].status === 'Belum keluar');
+  ok('K-S4 batas mengikuti faktor sisa potong: faktor 1,2 menaikkan batas', susutMaterial(rencana, hasilSelesai, { 'SPHC|1.2': 1085 }, { faktor: 1.2 })[0].batas > s1[0].batas);
+}
 
 const gagal = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n')); console.log(`${R.length - gagal} PASS, ${gagal} FAIL`);

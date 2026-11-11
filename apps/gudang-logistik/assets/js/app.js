@@ -469,6 +469,24 @@ function platSpk(s){if(!MT()||!s)return null;const rc=matRencana(matSpkItems(s),
  return {st:sisa<=0.0005?'Lengkap':sudah>0.0005?'Sebagian':'Menunggu',bruto,sudah,sisa,rc}}
 function platAntrian(){return S.spk.filter(s=>{const st=(calc().spk[s._id]||{}).st;return s.status==='Terbit'&&st!=='Selesai'&&st!=='Batal'}).map(s=>({s,p:platSpk(s)})).filter(x=>x.p&&x.p.st!=='Lengkap').sort((a,b)=>String(a.s.due||'9999').localeCompare(String(b.s.due||'9999'))||(+a.s.no||0)-(+b.s.no||0))}
 function platChip(sid){const s=byId('spk',sid);if(!s||s.status!=='Terbit')return '';const p=platSpk(s);if(!p||p.st==='Lengkap')return '';return ' '+chip(p.st==='Menunggu'?'Plate belum diserahkan':'Plate sebagian','warn')}
+/* T6: susut bahan baku per SPK. Plat keluar (mutasi bahan baku ber-SPK) dibanding hasil jadi (qty selesai x berat estimasi per item), per bahan dan tebal. */
+function susutRows(){const c=calc();const out=[];if(!MT()||!MT().susutMaterial)return out;const rs=matRmSiap();const f=matFaktor();
+ S.spk.forEach(s=>{if(s.status==='Draft'||s.status==='Batal')return;const x=c.spk[s._id];if(!x)return;
+  const its=matSpkItems(s);const kel=MT().kelompokKebutuhan(its,{faktor:f,tebalSpk:s.tebal});if(!kel.length)return;
+  const keluar=matKeluarKg(s._id,rs);if(!Object.values(keluar).some(v=>v>0))return;
+  const ih=its.map((it,k)=>{const l=(x.lines||[])[k]||{};const am=ambilItem(s,s.items[k]);return {...it,q:Math.max(0,Math.min(+it.q||0,(+l.prodEff||0)-am))}});
+  MT().susutMaterial(kel,MT().kelompokKebutuhan(ih,{faktor:f,tebalSpk:s.tebal}),keluar,{faktor:f}).forEach(r=>{if(r.keluarKg>0||r.hasilKg>0)out.push({s,...r})})});
+ return out}
+function susutTab(){const R=susutRows();
+ if(!R.length)return '<div class="pbody note">Belum ada plat yang keluar untuk SPK. Susut dihitung setelah gudang mencatat pengeluaran plat dengan nomor SPK dan produksi dilaporkan.</div>';
+ const urut={'Berlebih':0,'Plat kurang catat':1,'Berjalan':2,'Wajar':3,'Belum keluar':4};
+ R.sort((a,b)=>(urut[a.status]-urut[b.status])||(+b.s.no||0)-(+a.s.no||0));
+ const sel=R.filter(r=>r.status==='Wajar'||r.status==='Berlebih');const tk=sel.reduce((a,r)=>a+r.keluarKg,0),th=sel.reduce((a,r)=>a+r.hasilKg,0),ts=tk-th;
+ const lebih=R.filter(r=>r.status==='Berlebih').length,kurang=R.filter(r=>r.status==='Plat kurang catat').length;
+ const kp='<div class="kpi-row">'+kpiA('info','Plat keluar (SPK selesai produksi)',n(Math.round(tk))+' kg','dari '+sel.length+' kelompok bahan')+kpiA('ok','Hasil jadi',n(Math.round(th))+' kg','berat estimasi')+kpiA(lebih?'warn':'ok','Susut',n(Math.round(ts))+' kg',tk>0?(Math.round(ts/tk*1000)/10)+'% dari plat keluar':'-')+kpiA(lebih||kurang?'crit':'ok','Perlu dicek',lebih+kurang,lebih+' berlebih · '+kurang+' plat kurang catat')+'</div>';
+ const chipS=st=>chip(st,st==='Wajar'?'ok':st==='Berlebih'?'crit':st==='Berjalan'?'info':'warn');
+ const baris=R.map(r=>'<tr><td class="mono"><b>'+esc(String(r.s.no))+'</b><div class="note">'+esc(r.s.customer||'')+'</div></td><td>'+esc(r.bahan)+'</td><td class="num">'+n(r.tebal)+' mm</td><td class="num">'+n(Math.round(r.keluarKg))+'</td><td class="num">'+n(Math.round(r.hasilKg))+'</td><td class="num">'+(r.status==='Berjalan'?'-':n(Math.round(r.susutKg)))+'</td><td class="num">'+(r.pct==null||r.status==='Berjalan'?'-':(Math.round(r.pct*1000)/10)+'%')+'</td><td class="num">'+(Math.round(r.batas*1000)/10)+'%</td><td>'+chipS(r.status)+'</td></tr>').join('');
+ return '<div class="pbody note">Susut = plat yang keluar dikurangi hasil jadi (kg), per SPK, bahan, dan tebal. Dinilai setelah produksi item selesai; batas wajar = faktor sisa potong ditambah toleransi 5%. Sisa plat utuh dikembalikan lewat Terima material (alasan: Sisa SPK).</div>'+kp+'<div class="tbl-wrap"><table id="susut-tabel"><thead><tr><th>SPK</th><th>Bahan</th><th class="num">Tebal</th><th class="num">Plat keluar (kg)</th><th class="num">Hasil jadi (kg)</th><th class="num">Susut (kg)</th><th class="num">Susut</th><th class="num">Batas</th><th>Status</th></tr></thead><tbody>'+baris+'</tbody></table></div>'}
 function platTab(){const ok=matBisaPr(),q=platAntrian();
  const rows=q.map(({s,p})=>{const kel=p.rc.map(r=>esc(r.bahan)+' '+esc(String(r.tebal))+' mm · sisa '+(r.butuhLbr==null?'–':n(r.butuhLbr)+' lbr')+' ('+n(Math.round(r.butuhKg))+' kg)'+(r.status==='Tanpa item RM'?' <span class="chip warn">tanpa item RM</span>':r.status==='Kurang'?' <span class="chip crit">stok kurang</span>':'')).join('<br>');
   return `<tr><td class="mono"><b>${esc(String(s.no))}</b><div class="note">${esc(s.customer||'')}</div></td><td>${fd(s.due)}</td><td>${kel}</td><td class="num">${n(Math.round(p.sudah))} / ${n(Math.round(p.bruto))} kg</td><td>${chip(p.st==='Menunggu'?'Menunggu plate':'Sebagian',p.st==='Menunggu'?'warn':'info')}</td><td class="acts-r">${ok?`<button class="btn sm primary" data-act="platserah" data-id="${s._id}">Serahkan ke produksi</button> `:''}<button class="btn sm ghost" data-act="spksheet" data-id="${s._id}">SPK</button></td></tr>`}).join('');
@@ -2962,6 +2980,8 @@ function dataIssues(){
    if(s.stokReq)(x.lines||[]).forEach(l=>{if((l.kirim||0)>(l.prodEff||0)+0.0005)add(2,'Barang jadi',`SPK ${esc(String(s.no))}: masuk gudang ${n(l.kirim)} melebihi hasil produksi ${n(l.prodEff||0)}`,`${esc(l.d||'')}. Laporkan hasil produksi yang belum tercatat atau koreksi penerimaan.`,'data-act="go" data-href="barang-jadi">Buka Barang Jadi','Barang jadi masuk tanpa hasil produksi yang cocok.')})
   })}
 
+ susutRows().filter(r=>r.status==='Berlebih'||r.status==='Plat kurang catat').forEach(r=>add(2,'Stok',r.status==='Berlebih'?`SPK ${esc(String(r.s.no))}: susut ${r.bahan} ${n(r.tebal)} mm ${Math.round(r.pct*1000)/10}% (batas ${Math.round(r.batas*1000)/10}%)`:`SPK ${esc(String(r.s.no))}: hasil ${r.bahan} ${n(r.tebal)} mm melebihi plat yang tercatat keluar`,`${esc(r.s.customer||'')} · plat keluar ${n(Math.round(r.keluarKg))} kg, hasil jadi ${n(Math.round(r.hasilKg))} kg`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku',r.status==='Berlebih'?'Plat keluar jauh di atas hasil jadi: susut berlebih, plat tidak terpakai belum dikembalikan, atau salah catat.':'Pengeluaran plat untuk SPK ini belum lengkap dicatat.'));
+
  /* ── KATALOG ── */
  {const X=katIndex();
   const sim=X.arr.filter(x=>x.sim.length).length;
@@ -3242,9 +3262,9 @@ B['bahan-baku']=()=>{
   ${kpi(spkAktif?'info':'ok','SPK aktif butuh material',ton(spkDemTot),'ton',spkAktif?`dari ${spkAktif} SPK yang sedang berjalan`:'tidak ada SPK aktif','analisa')}
   ${kpi(dead.length?'warn':'ok','Stok tidak bergerak',ton(dead.reduce((a,x)=>a+x.kg,0)),'ton',`${dead.length} item tanpa pemakaian 90 hari`,'analisa')}
  </section>`;
- const tabs=[['stok','Posisi stok'],['analisa','Analisa'],['kartu','Kartu Stok'],['beli','Rencana pembelian'+(need.length?` (${need.length})`:'')],['plate','Serah terima plate'+(platAntrian().length?' ('+platAntrian().length+')':'')],['opname','Stock opname'],['mutasi','Riwayat mutasi']];
+ const tabs=[['stok','Posisi stok'],['analisa','Analisa'],['kartu','Kartu Stok'],['beli','Rencana pembelian'+(need.length?` (${need.length})`:'')],['plate','Serah terima plate'+(platAntrian().length?' ('+platAntrian().length+')':'')],['susut','Susut'+(susutRows().filter(r=>r.status==='Berlebih').length?' ('+susutRows().filter(r=>r.status==='Berlebih').length+')':'')],['opname','Stock opname'],['mutasi','Riwayat mutasi']];
  const tabH=`<div class="tabs">${tabs.map(([v,l])=>`<button data-act="filt" data-view="bahan-baku" data-key="tab" data-val="${v}" class="${f.tab===v?'on':''}">${l}</button>`).join('')}</div>`;
- const body={stok:rmStok,analisa:rmAnalisa,kartu:rmKartuStok,beli:rmBeli,plate:platTab,opname:rmOpname,mutasi:rmMutasi}[f.tab]||rmStok;
+ const body={stok:rmStok,analisa:rmAnalisa,kartu:rmKartuStok,beli:rmBeli,plate:platTab,susut:susutTab,opname:rmOpname,mutasi:rmMutasi}[f.tab]||rmStok;
  return head+`<section class="panel">${tabH}${body()}</section>`;
 };
 function rmStok(){

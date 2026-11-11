@@ -248,6 +248,27 @@ export async function runProduksiHuluHilir(page, base) {
       return hasil;
     });
     ok('PH-30 T5: SPK terbit dengan kebutuhan plat melebihi stok membuat satu PR otomatis; diulang tidak membuat PR dobel', r30.matAda && r30.usulan >= 1 && !!r30.no1 && r30.prBaru === 1 && r30.auto && !r30.no2 && r30.prSetelahUlang === 1, JSON.stringify(r30));
+
+    langkah = 'PH-31';
+    const r31 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const hasil = {};
+      const rs = matRmSiap(); const rr = rs.find((r) => r.bahan === 'SPHC' && Math.abs(r.tebal - 1.2) < 0.001 && r.kgPerLbr > 0);
+      if (!rr) return { err: 'tidak ada plat SPHC 1.2' };
+      const tgl = today();
+      const spk = { _id: 'ph31', no: 9931, status: 'Terbit', customer: 'Uji T6', due: '2099-01-01', tgl, terbitAt: new Date().toISOString(), h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', items: [{ d: 'Cable Tray Uji Susut', q: 100, u: 'Btg', w: 10, prod: 100, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] };
+      S.spk.push(spk);
+      const keluarKe = (lbr) => { S.mutasi = S.mutasi.filter((m) => m._id !== 'ph31m'); S.mutasi.push({ _id: 'ph31m', gudang: 'rm', item: rr.id, spk: 'ph31', jenis: 'keluar', delta: -lbr, tgl, at: new Date().toISOString(), by: 'admin@mni.local' }); C = null; return susutRows().filter((x) => String(x.s.no) === '9931')[0]; };
+      const wajar = keluarKe(Math.ceil(1085 / rr.kgPerLbr)); hasil.wajar = wajar && wajar.status;
+      const lebih = keluarKe(Math.ceil(1500 / rr.kgPerLbr)); hasil.lebih = lebih && lebih.status;
+      const issue = dataIssues().some((i) => /9931/.test(i.title) && /susut/i.test(i.title)); hasil.issue = issue;
+      const kurang = keluarKe(Math.floor(800 / rr.kgPerLbr)); hasil.kurang = kurang && kurang.status;
+      keluarKe(Math.ceil(1085 / rr.kgPerLbr)); F['bahan-baku'].tab = 'susut';
+      return hasil;
+    });
+    await go('bahan-baku');
+    const tab31 = await page.evaluate(async () => { await new Promise((r) => setTimeout(r, 400)); const o = { tab: !!document.querySelector('#susut-tabel'), undef: /undefined/.test(document.body.innerText) }; S.mutasi = S.mutasi.filter((m) => m._id !== 'ph31m'); S.spk = S.spk.filter((z) => z._id !== 'ph31'); C = null; F['bahan-baku'].tab = 'stok'; return o; });
+    r31.tab = tab31.tab; r31.undef = tab31.undef;
+    ok('PH-31 T6: susut plat per SPK dinilai Wajar, Berlebih (masuk Cek Data), dan Plat kurang catat; tab Susut tampil', !r31.err && r31.wajar === 'Wajar' && r31.lebih === 'Berlebih' && r31.issue && r31.kurang === 'Plat kurang catat' && r31.tab && !r31.undef, JSON.stringify(r31));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
