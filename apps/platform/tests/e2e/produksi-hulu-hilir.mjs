@@ -228,6 +228,26 @@ export async function runProduksiHuluHilir(page, base) {
     await go('mesin');
     const tot29 = await page.evaluate(() => { const r = [...document.querySelectorAll('#prod-lap tbody tr')].pop(); if (!r) return null; const td = r.querySelectorAll('td'); return +String(td[3].innerText).replace(/\./g, '').replace(',', '.'); });
     ok('PH-29 Kesehatan data: stok negatif terdeteksi dan hilang setelah dikoreksi; total selesai di laporan Produksi Hari Ini = jumlah selesai per item di SPK', !r29.err && r29.neg === r29.dasar + 1 && /negatif/.test(r29.negJudul) && r29.setelah === r29.dasar && tot29 === r29.sumCalc, JSON.stringify({ r29, tot29 }));
+
+    langkah = 'PH-30';
+    const r30 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const hasil = {};
+      const tgl = today();
+      const prAwal = (S.pr || []).length;
+      const spk = { _id: 'ph30', no: 9930, status: 'Terbit', customer: 'Uji T5', due: '2099-01-01', tgl, h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', terbitAt: new Date().toISOString(), items: [{ d: 'Cable Tray W300xH100xL3000', q: 5000, u: 'Btg', w: 10, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] };
+      S.spk.push(spk); C = null;
+      hasil.matAda = !!MT();
+      const rc = matRencana(matSpkItems(spk), { spkId: spk._id, tebal: spk.tebal });
+      hasil.rcBaris = rc.length; hasil.usulan = MT().usulanPr(rc).length;
+      const no1 = await prOtomatisSpk('ph30'); await w(900);
+      hasil.no1 = no1; hasil.prBaru = (S.pr || []).length - prAwal;
+      const pr1 = (S.pr || []).find((p) => p.noPR === no1) || {}; hasil.auto = pr1.auto === true && /Otomatis dari SPK 9930/.test(pr1.ket || '') && pr1.status === 'Diajukan';
+      const no2 = await prOtomatisSpk('ph30'); await w(900);
+      hasil.no2 = no2; hasil.prSetelahUlang = (S.pr || []).length - prAwal;
+      S.spk = S.spk.filter((z) => z._id !== 'ph30'); C = null;
+      return hasil;
+    });
+    ok('PH-30 T5: SPK terbit dengan kebutuhan plat melebihi stok membuat satu PR otomatis; diulang tidak membuat PR dobel', r30.matAda && r30.usulan >= 1 && !!r30.no1 && r30.prBaru === 1 && r30.auto && !r30.no2 && r30.prSetelahUlang === 1, JSON.stringify(r30));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

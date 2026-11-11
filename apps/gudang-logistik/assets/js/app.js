@@ -483,6 +483,26 @@ function wRealDok(doc,it){const w=+it.w;if(w>0)return w;const s=doc&&doc.spk?byI
 /* Dua total SPK: kg estimasi (plate yang diambil, tanpa qty dari stok) dan kg real (barang jadi). ada=false bila belum ada item berkg estimasi. */
 function spkKgDua(s){let te=0,tr=0,ada=false;(s.items||[]).forEach(it=>{const q=+it.q||0,w=+it.w||0;tr+=q*w;te+=Math.max(0,q-ambilItem(s,it))*(+it.wEst>0?+it.wEst:w);if(+it.wEst>0)ada=true});return {te,tr,ada}}
 const matSpkItems=s=>(s.items||[]).map(i=>({d:i.d,g:i.g,q:Math.max(0,(+i.q||0)-ambilItem(s,i)),w:(+i.wEst>0?+i.wEst:i.w)}));
+/* T5: SPK terbit => kekurangan bahan baku diminta otomatis sebagai PR (status Diajukan, bertanda otomatis).
+   Aman diulang: kekurangan dihitung setelah dikurangi PR yang masih terbuka (matDipesan), jadi tidak dobel. Dilewati bila penerbit tak berhak atas bahan baku
+   atau setting master/setting.prOtomatis=false; temuan tetap terlihat di Cek Data dan tombol Buat PR manual. */
+async function prOtomatisSpk(id,tries){
+ tries=tries||0;
+ try{
+  if(((byId('master','setting')||{}).prOtomatis)===false)return null;
+  const s=byId('spk',id);if(!s||s.status!=='Terbit'){if(tries<5)setTimeout(()=>prOtomatisSpk(id,tries+1),500);return null}
+  if(!MT()||!matBisaPr())return null;
+  const rc=matRencana(matSpkItems(s),{spkId:s._id,tebal:s.tebal});
+  const tanpaRm=rc.filter(r=>r.status==='Tanpa item RM');
+  const pr=MT().usulanPr(rc);
+  if(tanpaRm.length)toast(`SPK ${s.no}: ${tanpaRm.length} bahan belum punya item di Gudang Bahan Baku, buat itemnya dulu`);
+  if(!pr.length)return null;
+  const t=today();const noPR=await nextDocNo('PR',t);
+  const r=await addDoc('pr',{noPR,tgl:t,butuh:addDays(t,SET().leadBeli),supplier:'',items:pr.map(i=>({item:i.item,q:i.q,qTerima:0})),status:'Diajukan',ket:'Otomatis dari SPK '+s.no,spk:s._id,auto:true});
+  toast(`${noPR} dibuat otomatis untuk kekurangan bahan baku SPK ${s.no}`);
+  return noPR;
+ }catch(e){return null}
+}
 function matBuatPr(){
  const pr=MT().usulanPr(matRencana(MAT.items,MAT.opt));if(!pr.length){toast('Tidak ada kekurangan.');return}
  try{need('bahan-baku')}catch(e){toast('Anda tidak berhak membuat PR bahan baku.');return}
@@ -4761,7 +4781,7 @@ async function saveEditor(mode){
    }
   }finally{btns.forEach(b=>b.disabled=false)}
   learnKatalog(items,e);if(!inMaster('customer',data.customer))addDoc('mcustomer',{nama:data.customer,pic:'',telp:'',alamat:'',aktif:true}).catch(()=>{});
-  const id=e.id;closeEditor();toast(status==='Terbit'?(editTerbit?`SPK ${no} Rev.${(e.orig.rev||0)+1} tersimpan · tim langsung melihat`:`SPK ${no} terbit · tim langsung melihat`):`Draft SPK ${no} tersimpan`);
+  const id=e.id;if(status==='Terbit')setTimeout(()=>prOtomatisSpk(id),700);closeEditor();toast(status==='Terbit'?(editTerbit?`SPK ${no} Rev.${(e.orig.rev||0)+1} tersimpan · tim langsung melihat`:`SPK ${no} terbit · tim langsung melihat`):`Draft SPK ${no} tersimpan`);
   setTimeout(()=>openSheet(id),60);
  }catch(x){err.textContent=x.message||('Gagal menyimpan ('+(x.code||'error')+')')}
 }
@@ -4884,7 +4904,7 @@ async function exportSpkXlsx(id){
  catch(e){if(e.code!=='declined')toast('Gagal membuat Excel: '+(e.message||e.code))}
 }
 async function publishDraft(id){const s=byId('spk',id);if(!s)return;const items=(s.items||[]);if(!items.length){toast('SPK belum punya item.');return}
- const now=new Date().toISOString();await updDoc('spk',id,{status:'Terbit',terbitAt:now,terbitBy:ME||null,items:snapItems(items,null,null)});toast(`SPK ${s.no} terbit · tim langsung melihat`)}
+ const now=new Date().toISOString();await updDoc('spk',id,{status:'Terbit',terbitAt:now,terbitBy:ME||null,items:snapItems(items,null,null)});toast(`SPK ${s.no} terbit · tim langsung melihat`);setTimeout(()=>prOtomatisSpk(id),700)}
 
 /* ---------- events ---------- */
 let delArm=null;
