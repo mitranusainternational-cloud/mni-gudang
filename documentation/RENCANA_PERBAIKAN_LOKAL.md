@@ -48,3 +48,10 @@ Gelombang 3 tidak dikerjakan sebelum dijawab.
 
 A → B → C → regresi penuh gelombang 1 → laporan ke pemilik → D → E → F → regresi penuh gelombang 2.
 Setelah tiap gelombang: ringkasan hasil, bukti (`source-level` atau `verified in browser`), dan **tanya** apakah lanjut. Rilis ke live adalah keputusan terpisah dan bukan bagian rencana ini.
+
+## Hasil gelombang 1 (2026-11-11)
+
+- **A selesai** (b1c50ef): mutasi sparepart tampil benar di Dashboard dan riwayat; uji PH-21.
+- **B selesai di lokal:** seed Work Centre sudah sama dengan langkah rute (PH-01 lulus). **Production belum disentuh.** Dari backup lokal (10 Nov) Work Centre production hanya `SHEARING` dan `CNC LASER`. Pencocokan nama tidak membedakan huruf besar kecil, jadi yang kurang untuk rute standar: **Punching, Bending, Welding** (dan Coating/QC/Packing bila dipakai). Menambahkannya ke production adalah perubahan data live, menunggu persetujuan terpisah; di aplikasi sudah ada tombol "Tambahkan otomatis" di Cek Data.
+- **C selesai di lokal:** Cek Data kategori Produksi punya dua aturan baru: (1) produksi sudah jalan tetapi plate belum lengkap diserahkan (perhatian), (2) hasil produksi selesai tetapi belum dikirim ke vendor (info). Aturan (1) terbukti menyala di pratinjau berkatalog (SPK 1005). Aturan (2) **belum terbukti memicu** karena data contoh tidak punya SPK di tahap "Siap ke vendor". Uji PH-22 hanya memastikan tidak galat dan tanpa `undefined`.
+- Regresi penuh gelombang 1 belum dijalankan.

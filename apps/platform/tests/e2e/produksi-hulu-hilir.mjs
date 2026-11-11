@@ -127,6 +127,11 @@ export async function runProduksiHuluHilir(page, base) {
     await go('dashboard');
     const r21 = await page.evaluate(() => ({ undef: /undefined/.test(document.body.innerText), tampil: /Gudang sparepart/.test(document.body.innerText) }));
     ok('PH-21 Dashboard: mutasi sparepart tampil dengan nama item, tanpa kata undefined', !r21.undef && r21.tampil, JSON.stringify(r21));
+
+    langkah = 'PH-22';
+    await go('cekdata');
+    const r22 = await page.evaluate(() => { const I = dataIssues().filter((i) => i.cat === 'Produksi'); return { n: I.length, judul: I.map((i) => i.title.replace(/<[^>]+>/g, '')).slice(0, 8), plate: I.filter((i) => /plate belum lengkap/.test(i.title)).length, vendor: I.filter((i) => /belum dikirim ke vendor/.test(i.title)).length, undef: /undefined/.test(JSON.stringify(I)) }; });
+    ok('PH-22 Cek Data Produksi: aturan plate dan WIP berjalan tanpa galat dan tanpa undefined (pemicu plate dibuktikan di pratinjau berkatalog, karena butuh katalog berat)', !r22.undef && r22.n >= 1, JSON.stringify(r22));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

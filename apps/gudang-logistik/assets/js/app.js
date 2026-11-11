@@ -3234,6 +3234,15 @@ function dataIssues(){
    if(tanpa.length)add(3,'Produksi',`SPK ${esc(String(s.no))}: ${tanpa.length} item tanpa rute produksi`,`Tidak muncul di antrian Work Centre manapun: ${tanpa.slice(0,3).map(esc).join('; ')}${tanpa.length>3?' dan lainnya':''}. Pastikan judul section memuat produk (mis. CABLE TRAY TYPE STU) atau atur rute di Master Data › Rute produksi.`,`data-act="go" data-href="master-data">Buka Master Data`,'Item ini tidak bisa dicatat operator dan progresnya tidak terhitung');
    if(asing.size)add(3,'Produksi',`SPK ${esc(String(s.no))}: rute memakai Work Centre yang tidak ada di Master Data`,[...asing].map(esc).join(', ')+'. Antrian untuk langkah itu tidak muncul.',`data-act="wcfix">Tambahkan otomatis`,'Operator di Work Centre itu tidak melihat item ini')})}}
 
+ /* ── PRODUKSI: plate belum lengkap padahal produksi jalan; WIP siap ke vendor belum dikirim ── */
+ {const c2=calc();
+  S.spk.forEach(s=>{const x=c2.spk[s._id];if(!x||s.status!=='Terbit'||x.st==='Selesai'||x.st==='Batal')return;
+   const p=platSpk(s);
+   if(p&&p.st!=='Lengkap'&&x.pP>0)add(2,'Produksi',`SPK ${esc(String(s.no))}: produksi sudah jalan tetapi plate belum lengkap diserahkan`,`${esc(s.customer||'')} · plate ${n(Math.round(p.sudah))} / ${n(Math.round(p.bruto))} kg · produksi ${Math.round(x.pP*100)}%`,`data-act="go" data-href="bahan-baku">Serahkan plate`,'Catat pengeluaran plate (PK) agar stok bahan baku dan kebutuhan material benar.');
+   const fl=flow(s._id);
+   if(fl&&fl.stage==='Siap ke vendor')add(1,'Produksi',`SPK ${esc(String(s.no))}: hasil produksi selesai, belum dikirim ke vendor`,`${esc(s.customer||'')} · produksi 100% · belum ada surat jalan vendor`,`data-act="go" data-href="vendor">Buka Kirim ke Vendor`,'WIP siap dikirim ke vendor untuk finishing.');
+  })}
+
  /* ── KATALOG ── */
  {const X=katIndex();
   const sim=X.arr.filter(x=>x.sim.length).length;
