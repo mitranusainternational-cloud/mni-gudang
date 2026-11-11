@@ -392,6 +392,32 @@ export async function runProduksiHuluHilir(page, base) {
       S.spk = S.spk.filter((z) => z._id !== 'ph40a' && z._id !== 'ph40b'); C = null; return o;
     });
     ok('PH-40 Cek Data: berat salinan (3 item berbeda berat sama persis) terdeteksi; berat berbeda-beda tidak ditandai', r40.salin === true && r40.beda === false, JSON.stringify(r40));
+
+    langkah = 'PH-41';
+    const s41 = await page.evaluate(async () => {
+      const tgl = today(); const g = 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG';
+      const rr = matRmSiap().filter((r) => r.bahan === 'SPHC' && Math.abs(r.tebal - 1.2) < 0.001).sort((a, b) => b.stok * b.kgPerLbr - a.stok * a.kgPerLbr)[0];
+      S.spk.push({ _id: 'ph41a', no: 9941, status: 'Terbit', customer: 'Uji Serah A', due: '2090-01-01', tgl, terbitAt: new Date().toISOString(), h: g, items: [{ d: 'Cable Tray Uji Serah A', q: 100, u: 'Btg', w: 10, g }] });
+      S.spk.push({ _id: 'ph41b', no: 9942, status: 'Terbit', customer: 'Uji Serah B', due: '2090-01-02', tgl, terbitAt: new Date().toISOString(), h: g, items: [{ d: 'Cable Tray Uji Serah B', q: 200, u: 'Btg', w: 10, g }] });
+      window.__m41 = new Set(S.mutasi.map((m) => m._id));
+      await addDoc('mutasi', { gudang: 'rm', item: rr.id, jenis: 'masuk', delta: 2000, tgl, noDok: 'UJI-MASUK-41', ref: 'uji', pihak: '', ket: 'stok uji PH-41', pr: '' });
+      await new Promise((r) => setTimeout(r, 800)); C = null; window.__stok41 = { id: rr.id, awal: calc().stock.rm[rr.id], kg: rr.kgPerLbr };
+      F['bahan-baku'].tab = 'plate'; renderBody();
+      const rencana = platSerahRencana().filter((x) => /^994[12]$/.test(String(x.s.no))).map((x) => ({ no: x.s.no, lbr: x.baris.reduce((a, r) => a + r.q, 0), penuh: x.penuh }));
+      return { rencana, kg: rr.kgPerLbr, utama: rr.label };
+    });
+    await go('bahan-baku');
+    await page.waitForSelector('[data-act="serahsemua"]', { timeout: 5000 }).catch(async () => { throw new Error('diag ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, tab: F['bahan-baku'].tab, plan: platSerahRencana().length, bar: !!document.querySelector('#serah-semua'), bisa: matBisaPr(), body: document.querySelector('#body').innerText.slice(0, 140).replace(/s+/g, ' ') }))) + JSON.stringify(s41)); });
+    await page.click('[data-act="serahsemua"]'); await page.waitForTimeout(400);
+    await page.click('#mform button[type="submit"], .modal button[type="submit"]'); await page.waitForTimeout(1500);
+    const h41 = await page.evaluate(async () => {
+      const baru = S.mutasi.filter((m) => !window.__m41.has(m._id)); const mine = baru.filter((m) => m.spk === 'ph41a' || m.spk === 'ph41b');
+      const o = { n: mine.length, a: -(mine.find((m) => m.spk === 'ph41a') || {}).delta, b: -(mine.find((m) => m.spk === 'ph41b') || {}).delta, doc: mine.every((m) => String(m.noDok).startsWith(DOCFMT.PK + '/') && m.jenis === 'keluar' && m.gudang === 'rm' && m.pihak === 'Produksi' && /Serah terima plate/.test(m.ket)), docBeda: new Set(mine.map((m) => m.noDok)).size === 2, stokTurun: window.__stok41.awal - calc().stock.rm[window.__stok41.id], ulang: platSerahRencana().filter((x) => /^994[12]$/.test(String(x.s.no))).length };
+      /* mutasi tidak bisa dihapus permanen (migration 13); dibiarkan, tidak ada uji sesudah ini yang membaca stok bahan baku */
+      await new Promise((r) => setTimeout(r, 500)); S.spk = S.spk.filter((z) => z._id !== 'ph41a' && z._id !== 'ph41b'); C = null; F['bahan-baku'].tab = 'stok'; return o;
+    });
+    const ex = (q, kg) => Math.ceil(1.1 * q * 10 / kg);
+    ok('PH-41 T-serah: Serahkan semua membuat satu dokumen PK ber-SPK per SPK sebesar kebutuhan plat tersisa (qty x berat x 1,1 / kg per lembar), stok turun sama, dan tidak ada lagi yang menunggu', s41.rencana.length === 2 && h41.n === 2 && h41.a === ex(100, s41.kg) && h41.b === ex(200, s41.kg) && h41.doc && h41.docBeda && h41.stokTurun >= h41.a + h41.b && h41.ulang === 0, JSON.stringify({ s41, h41, harap: [ex(100, s41.kg), ex(200, s41.kg)] }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

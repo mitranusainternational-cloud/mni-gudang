@@ -502,7 +502,28 @@ function susutTab(){const R=susutRows();
 function platTab(){const ok=matBisaPr(),q=platAntrian();
  const rows=q.map(({s,p})=>{const kel=p.rc.map(r=>esc(r.bahan)+' '+esc(String(r.tebal))+' mm · sisa '+(r.butuhLbr==null?'–':n(r.butuhLbr)+' lbr')+' ('+n(Math.round(r.butuhKg))+' kg)'+(r.status==='Tanpa item RM'?' <span class="chip warn">tanpa item RM</span>':r.status==='Kurang'?' <span class="chip crit">stok kurang</span>':'')).join('<br>');
   return `<tr><td class="mono"><b>${esc(String(s.no))}</b><div class="note">${esc(s.customer||'')}</div></td><td>${fd(s.due)}</td><td>${kel}</td><td class="num">${n(Math.round(p.sudah))} / ${n(Math.round(p.bruto))} kg</td><td>${chip(p.st==='Menunggu'?'Menunggu plate':'Sebagian',p.st==='Menunggu'?'warn':'info')}</td><td class="acts-r">${ok?`<button class="btn sm primary" data-act="platserah" data-id="${s._id}">Serahkan ke produksi</button> `:''}<button class="btn sm ghost" data-act="spksheet" data-id="${s._id}">SPK</button></td></tr>`}).join('');
- return `<div class="pbody note">SPK terbit yang plate-nya belum lengkap diserahkan ke produksi. Tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, jumlah lembar yang masih kurang); sesuaikan bila perlu lalu simpan, dan dokumen pengeluaran (PK) tercatat. Status ini peringatan saja: produksi tetap bisa mulai.</div>${q.length?`<div class="tbl-wrap"><table><thead><tr><th>SPK</th><th>Due</th><th>Plate yang masih perlu diserahkan</th><th class="num">Diserahkan / kebutuhan</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:empty('Semua plate sudah diserahkan','SPK terbit yang butuh plate muncul di sini sampai plate-nya diserahkan ke produksi.')}`}
+ return `${platSerahSemuaBar()}<div class="pbody note">SPK terbit yang plate-nya belum lengkap diserahkan ke produksi. Tombol Serahkan membuka form pengeluaran bahan baku yang sudah terisi (SPK, item plate utama, jumlah lembar yang masih kurang); sesuaikan bila perlu lalu simpan, dan dokumen pengeluaran (PK) tercatat. Status ini peringatan saja: produksi tetap bisa mulai.</div>${q.length?`<div class="tbl-wrap"><table><thead><tr><th>SPK</th><th>Due</th><th>Plate yang masih perlu diserahkan</th><th class="num">Diserahkan / kebutuhan</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:empty('Semua plate sudah diserahkan','SPK terbit yang butuh plate muncul di sini sampai plate-nya diserahkan ke produksi.')}`}
+/* Serahkan semua: satu dokumen PK ber-SPK per SPK yang plate-nya belum lengkap, memakai kebutuhan plat tersisa (bruto dikurangi yang sudah keluar).
+   SPK dilayani berurutan menurut due date sampai stok plat utama habis; yang kekurangan stok diserahkan sebagian dan ditandai. */
+function platSerahRencana(){const sisa={};const out=[];
+ platAntrian().forEach(({s,p})=>{const baris=[];let kurang=false;
+  p.rc.filter(r=>r.utama&&r.butuhLbr>0).forEach(r=>{const id=r.utama.id;if(sisa[id]==null)sisa[id]=Math.max(0,Math.floor((calc().stock.rm[id]||0)+1e-9));
+   const q=Math.min(r.butuhLbr,sisa[id]);if(q<r.butuhLbr)kurang=true;if(q>0){sisa[id]-=q;baris.push({item:id,label:r.utama.label,q,butuh:r.butuhLbr})}});
+  if(baris.length||kurang)out.push({s,baris,penuh:!kurang,tanpaStok:!baris.length})});
+ return out}
+function platSerahSemuaBar(){if(!matBisaPr())return '';const L=platSerahRencana().filter(x=>x.baris.length);if(!L.length)return '';
+ return '<div class="pbody" id="serah-semua"><button type="button" class="btn primary" data-act="serahsemua">'+ic('outb')+'Serahkan semua ('+L.length+' SPK)</button> <span class="note">satu dokumen pengeluaran (PK) per SPK, sesuai kebutuhan plat tersisa</span></div>'}
+function platSerahSemua(){
+ const L=platSerahRencana();const A=L.filter(x=>x.baris.length);if(!A.length){toast('Tidak ada plate yang bisa diserahkan: stok plat utama kosong atau item bahan baku belum ada di Master Data.');return}
+ try{need('mutasi',{gudang:'rm'},null,'add')}catch(e){toast('Anda tidak berhak mencatat pengeluaran bahan baku.');return}
+ const tot=A.reduce((a,x)=>a+x.baris.reduce((b,r)=>b+r.q,0),0);const sebagian=L.filter(x=>!x.penuh).length;
+ openModal('Serahkan semua plate ke produksi',`<div class="full tbl-wrap"><table class="lines"><thead><tr><th>SPK</th><th>Plate</th><th class="num">Diserahkan (lbr)</th><th>Status</th></tr></thead><tbody>${L.map(x=>x.baris.length?x.baris.map((r,i)=>'<tr><td>'+(i===0?'<b>'+esc(String(x.s.no))+'</b>':'')+'</td><td>'+esc(r.label)+'</td><td class="num">'+n(r.q)+(r.q<r.butuh?' <span class="note">dari '+n(r.butuh)+'</span>':'')+'</td><td>'+(i===0?chip(x.penuh?'Penuh':'Sebagian (stok kurang)',x.penuh?'ok':'warn'):'')+'</td></tr>').join(''):'<tr><td><b>'+esc(String(x.s.no))+'</b></td><td colspan="2">stok plat utama habis</td><td>'+chip('Dilewati','crit')+'</td></tr>').join('')}</tbody></table></div><div class="note full">${A.length} dokumen PK, total ${n(tot)} lembar keluar dari Gudang Bahan Baku.${sebagian?' <b>'+sebagian+' SPK belum penuh karena stok kurang; buat PR atau tunggu penerimaan.</b>':''}</div>`+fld('Tanggal',inp('tgl',today(),'date')),
+  async d=>{const tg=d.tgl||today();let doc=0;
+   for(const x of A){const noDok=await nextDocNo('PK',tg);
+    for(const r of x.baris)await addDoc('mutasi',{gudang:'rm',item:r.item,jenis:'keluar',delta:-r.q,tgl:tg,noDok,ref:'SPK '+x.s.no,spk:x.s._id,pihak:'Produksi',ket:'Serah terima plate ke produksi untuk SPK '+x.s.no,pr:''});
+    doc++}
+   toast(doc+' dokumen pengeluaran plate tersimpan');renderBody()},{submit:'Serahkan semua',done:' '});
+}
 function platSerahForm(id){const s=byId('spk',id),p=s&&platSpk(s);if(!p){toast('SPK ini belum punya kebutuhan plate.');return}
  const lines=p.rc.filter(r=>r.utama&&r.butuhLbr>0).map(r=>({item:r.utama.id,q:r.butuhLbr}));
  if(!lines.length){toast('Tidak ada plate yang perlu diserahkan, atau item bahan baku untuk SPK ini belum ada di Master Data.');return}
@@ -6106,7 +6127,7 @@ document.addEventListener('click',async e=>{
   case 'prnew':prNewForm();break;
   case 'mesinedit':mesinForm(ds.nm);break;
   case 'spmesinlihat':{const fs0=F['sparepart'];fs0.tab='mutasi';fs0.mvmesin=ds.nm;fs0.mvj='keluar';renderTools();renderBody();break}
-  case 'prajukan':await prAjukan(ds.id);break;case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
+  case 'prajukan':await prAjukan(ds.id);break;case 'serahsemua':platSerahSemua();break;case 'prstep':await updDoc('pr',ds.id,{status:'Dipesan'});toast('PR ditandai sudah dipesan');break;
   case 'prterima':{const pp=byId('pr',ds.id);mvForm(pp&&pp.gudang==='sp'?'sp':'rm','masuk',null,ds.id);break}
   case 'spprnew':spPrNewForm();break;
   case 'fgspknew':fgSpkNewForm();break;
