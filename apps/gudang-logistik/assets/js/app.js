@@ -2932,6 +2932,16 @@ function dataIssues(){
    if(fl&&fl.stage==='Siap ke vendor')add(1,'Produksi',`SPK ${esc(String(s.no))}: hasil produksi selesai, belum dikirim ke vendor`,`${esc(s.customer||'')} · produksi 100% · belum ada surat jalan vendor`,`data-act="go" data-href="vendor">Buka Kirim ke Vendor`,'WIP siap dikirim ke vendor untuk finishing.');
   })}
 
+ /* ── KESEHATAN DATA (T4): angka yang tidak mungkin atau tidak cocok antar tempat ── */
+ {const c3=calc();
+  [['rm',rmLabel,'bahan-baku','Bahan baku'],['fg',fgLabel,'barang-jadi','Barang jadi'],['sp',spLabel,'sparepart','Sparepart']].forEach(([g,lb,mod,nm])=>(S[g]||[]).forEach(it=>{const v=(c3.stock[g]||{})[it._id];
+   if(v!=null&&v<-0.0005)add(3,'Stok',`${nm}: stok ${esc(lb(it))} negatif (${n(v)})`,'Pengeluaran melebihi stok yang tercatat. Cek mutasi terakhir atau lakukan koreksi atau opname.',`data-act="go" data-href="${mod}">Buka ${nm}`,'Stok negatif membuat laporan stok dan kebutuhan material tidak valid.')}));
+  S.spk.forEach(s=>{const x=c3.spk[s._id];if(!x||s.status!=='Terbit'||x.st==='Batal')return;
+   const p=platSpk(s);
+   if(p&&p.bruto>0&&p.sudah>p.bruto*1.05+0.5)add(1,'Stok',`SPK ${esc(String(s.no))}: plat keluar ${n(Math.round(p.sudah))} kg melebihi kebutuhan ${n(Math.round(p.bruto))} kg`,`${esc(s.customer||'')} · selisih ${n(Math.round(p.sudah-p.bruto))} kg (${Math.round((p.sudah/p.bruto-1)*100)}%). Bila memang lebih, catat alasannya; bila sisa utuh, kembalikan ke gudang.`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku','Plat keluar di atas kebutuhan SPK berarti susut berlebih atau salah catat.');
+   if(s.stokReq)(x.lines||[]).forEach(l=>{if((l.kirim||0)>(l.prodEff||0)+0.0005)add(2,'Barang jadi',`SPK ${esc(String(s.no))}: masuk gudang ${n(l.kirim)} melebihi hasil produksi ${n(l.prodEff||0)}`,`${esc(l.d||'')}. Laporkan hasil produksi yang belum tercatat atau koreksi penerimaan.`,'data-act="go" data-href="barang-jadi">Buka Barang Jadi','Barang jadi masuk tanpa hasil produksi yang cocok.')})
+  })}
+
  /* ── KATALOG ── */
  {const X=katIndex();
   const sim=X.arr.filter(x=>x.sim.length).length;

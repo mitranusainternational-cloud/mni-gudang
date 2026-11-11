@@ -209,6 +209,25 @@ export async function runProduksiHuluHilir(page, base) {
       return { ...hasil, dup };
     });
     ok('PH-28 F-12: SPK dengan deskripsi item kembar tidak Selesai bila baru satu baris terkirim; Selesai setelah keduanya; Cek Data memperingatkan', r28.satu.k0 === 10 && r28.satu.k1 === 0 && r28.satu.pK === 0.5 && r28.satu.st !== 'Selesai' && r28.dua.k0 === 10 && r28.dua.k1 === 10 && r28.dua.st === 'Selesai' && r28.dup, JSON.stringify(r28));
+
+    langkah = 'PH-29';
+    const r29 = await page.evaluate(() => {
+      const hasil = {}; const it = (S.fg || [])[0];
+      if (!it) return { err: 'tidak ada item barang jadi' };
+      C = null; hasil.dasar = dataIssues().filter((i) => i.cat === 'Stok' && /negatif/.test(i.title)).length; const tgl = today(); S.mutasi.push({ _id: 'ph29m', gudang: 'fg', item: it._id, jenis: 'keluar', delta: -999999, tgl, at: new Date().toISOString(), by: 'admin@mni.local' });
+      C = null; const neg = dataIssues().filter((i) => i.cat === 'Stok' && /negatif/.test(i.title));
+      hasil.neg = neg.length; hasil.negJudul = neg[0] ? neg[0].title.replace(/<[^>]+>/g, '') : '';
+      S.mutasi = S.mutasi.filter((m) => m._id !== 'ph29m'); C = null;
+      hasil.setelah = dataIssues().filter((i) => i.cat === 'Stok' && /negatif/.test(i.title)).length;
+      // silang angka: total selesai laporan admin = jumlah selesai per item di perhitungan SPK
+      const c = calc(); let sum = 0; S.spk.filter((s) => s.status === 'Terbit' && (c.spk[s._id] || {}).st !== 'Selesai').forEach((s) => { ((c.spk[s._id] || {}).lines || []).forEach((l) => { const q = +l.q || 0; if (q > 0) sum += Math.min(q, l.prodEff || 0); }); });
+      hasil.sumCalc = Math.round(sum * 1000) / 1000;
+      return hasil;
+    });
+    await page.evaluate(() => { window.__PRODUKSI_MESIN = false; });
+    await go('mesin');
+    const tot29 = await page.evaluate(() => { const r = [...document.querySelectorAll('#prod-lap tbody tr')].pop(); if (!r) return null; const td = r.querySelectorAll('td'); return +String(td[3].innerText).replace(/\./g, '').replace(',', '.'); });
+    ok('PH-29 Kesehatan data: stok negatif terdeteksi dan hilang setelah dikoreksi; total selesai di laporan Produksi Hari Ini = jumlah selesai per item di SPK', !r29.err && r29.neg === r29.dasar + 1 && /negatif/.test(r29.negJudul) && r29.setelah === r29.dasar && tot29 === r29.sumCalc, JSON.stringify({ r29, tot29 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
