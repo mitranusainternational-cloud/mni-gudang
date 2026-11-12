@@ -956,3 +956,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Hasil:** tujuh bagian Laporan dapat diunduh sendiri ke PDF dan Excel, rinci untuk analisa bottleneck.
 - **Bukti:** `verified in browser` (mock); PH-51. [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]].
 - **Hambatan:** belum diuji di Supabase; tampilan PDF belum dibandingkan dengan format resmi.
+
+### 2026-11-12 · T-233: input langsung di modul, uji ujung ke ujung, perbaikan rework
+- **Hasil:** pengguna tidak perlu mengisi Master Data dahulu; uji ujung ke ujung berhasil sampai SPK Selesai dan laporan; satu bug rework diperbaiki.
+- **Bukti:** `verified in browser` (mock); PH-52, PH-53. [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata.

@@ -577,6 +577,39 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-51 Laporan per bagian: 7 bagian masing-masing punya tombol PDF dan Excel, model dokumen dengan ringkasan dan tabel rinci (jumlah kolom tiap baris sama dengan kolom tabel), PDF dan Excel terbentuk', r51.tombol === 14 && ['Produksi', 'Pengiriman', 'Bahan baku', 'Barang jadi', 'Vendor', 'Sparepart', 'Kesehatan data'].every((k) => /^[2-9]:true:true:true$/.test(r51[k])), JSON.stringify(r51));
+
+    langkah = 'PH-52';
+    const r52 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const o = {}; const tgl = today();
+      const d = 'Cable Tray W300xH100xL3000'; const g = 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED';
+      S.spk.push({ _id: 'ph52', no: 9952, status: 'Terbit', customer: 'Uji Rework', due: '2099-01-01', tgl, h: g, terbitAt: new Date().toISOString(), items: [{ d, g, q: 40, u: 'Btg', w: 13.5, prod: 40 }] });
+      const vd = (id, q, kembali, reject, rework) => ({ _id: id, spk: 'ph52', vendor: 'Vendor Uji', proses: 'ELG', tgl, noSJ: id, status: kembali + reject >= q ? 'Selesai' : 'Di Vendor', rework: !!rework, items: [{ d, q, kembali, reject, u: 'Btg' }], riwayat: [] });
+      S.vendor.push(vd('ph52v1', 40, 38, 2, false)); C = null;
+      const l1 = calc().spk['ph52'].lines[0]; o.sebelum = [l1.vOut, l1.vBack, fgSiapKirimList().filter((x) => x.s._id === 'ph52').map((x) => x.rows[0].sisa)[0]];
+      S.vendor.push(vd('ph52v2', 2, 0, 0, true)); C = null;
+      const l2 = calc().spk['ph52'].lines[0]; o.rework = [l2.vOut, l2.vBack, fgSiapKirimList().filter((x) => x.s._id === 'ph52').map((x) => x.rows[0].sisa)[0]];
+      S.vendor.find((v) => v._id === 'ph52v2').items[0].kembali = 2; S.vendor.find((v) => v._id === 'ph52v2').status = 'Selesai'; C = null;
+      const l3 = calc().spk['ph52'].lines[0]; o.kembali = [l3.vOut, l3.vBack, fgSiapKirimList().filter((x) => x.s._id === 'ph52').map((x) => x.rows[0].sisa)[0]];
+      S.vendor.push(vd('ph52v3', 40, 0, 0, true)); C = null;
+      const l4 = calc().spk['ph52'].lines[0]; o.rework2 = [l4.vOut, l4.vBack];
+      S.spk = S.spk.filter((z) => z._id !== 'ph52'); S.vendor = S.vendor.filter((v) => !/^ph52/.test(v._id)); C = null; await w(100);
+      return o;
+    });
+    ok('PH-52 kirim ulang (rework) pengganti reject: 2 pcs reject lalu 2 pcs rework kembali membuat 40 siap kirim (sebelumnya SPK macet di 38); selama rework masih di vendor yang siap tetap 38; rework barang yang sudah kembali tetap dihitung keluar', JSON.stringify(r52.sebelum) === '[40,38,38]' && JSON.stringify(r52.rework) === '[40,38,38]' && JSON.stringify(r52.kembali) === '[40,40,40]' && r52.rework2[0] === 80, JSON.stringify(r52));
+
+    langkah = 'PH-53';
+    const r53 = await page.evaluate(async () => {
+      const o = {}; const w = (ms) => new Promise((r) => setTimeout(r, ms));
+      o.a = await ensureMaster('vendor', 'PT UJI OTOMATIS SEJAHTERA', null, 'vendor', { proses: 'ELG' }); await w(700);
+      o.terdaftar = S.mvendor.some((v) => v.nama === 'PT UJI OTOMATIS SEJAHTERA' && v.proses === 'ELG');
+      o.b = await ensureMaster('vendor', 'UJI OTOMATIS SEJAHTERA', null, 'vendor'); await w(300);
+      o.sama = o.b === 'PT UJI OTOMATIS SEJAHTERA' && S.mvendor.filter((v) => /UJI OTOMATIS SEJAHTERA/.test(v.nama)).length === 1;
+      o.c = await ensureMaster('supplier', 'CV SUPPLIER OTOMATIS UJI', null, 'pihak'); await w(700); o.sup = S.msupplier.some((s) => s.nama === 'CV SUPPLIER OTOMATIS UJI');
+      for (const v of S.mvendor.filter((x) => /UJI OTOMATIS/.test(x.nama))) await DB.doc('mvendor/' + v._id).delete();
+      for (const s of S.msupplier.filter((x) => /SUPPLIER OTOMATIS UJI/.test(x.nama))) await DB.doc('msupplier/' + s._id).delete();
+      await w(600); return o;
+    });
+    ok('PH-53 input langsung di modul: vendor dan supplier baru otomatis masuk Master Data pada simpan pertama (tanpa klik kedua); penulisan mirip dipakai sebagai nama terdaftar (tidak ganda)', r53.terdaftar && r53.sama && r53.sup, JSON.stringify(r53));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
