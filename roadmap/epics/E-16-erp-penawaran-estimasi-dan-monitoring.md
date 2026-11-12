@@ -9,13 +9,13 @@ status: active
 progress: 9
 tasks_total: 21
 tasks_done: 4
-updated: 2026-11-11
+updated: 2026-11-12
 ---
 
 # E-16 ERP hulu: Penawaran, estimasi, dan monitoring operasional
 
 Rilis target: **v1.2** · Tema: Integrasi · Prioritas: P2
-Induk: [[roadmap/PRODUCT_ROADMAP|Roadmap produk]] · Rancangan: [[documentation/ERP_QUOTATION_ANALISIS]]
+Induk: [[roadmap/PRODUCT_ROADMAP|Roadmap produk]] · Rancangan: [[documentation/arsip/ERP_QUOTATION_ANALISIS]]
 
 ## Hasil yang diinginkan
 

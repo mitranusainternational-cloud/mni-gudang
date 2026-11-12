@@ -37,4 +37,4 @@ Tampilkan selisih dan penyebab dugaan; jangan menyimpulkan tanpa data. Tonase da
 ## Keadaan dan hak
 Status penawaran: Draft, Terkirim, Revisi, Disetujui, Ditolak, Kedaluwarsa (berlaku satu minggu menurut catatan template). Hak akses per modul; harga dan biaya hanya terlihat untuk peran yang berhak (jangan tampil di tampilan produksi).
 
-Rujukan: [[documentation/ERP_QUOTATION_ANALISIS]], [[documentation/PRD_PRODUKSI]], skill `erp-quotation-engine` dan `erp-module-boundary`.
+Rujukan: [[documentation/arsip/ERP_QUOTATION_ANALISIS]], [[documentation/PRD_PRODUKSI]], skill `erp-quotation-engine` dan `erp-module-boundary`.

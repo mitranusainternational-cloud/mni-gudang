@@ -48,14 +48,14 @@ export async function runSpkAturan(page, base) {
     // AR-03 ACCS memuat fitting dan aksesori; COVER memuat tutup; tombol Section COVER
     await bukaBaru();
     await page.selectOption('#ed-hp-0', 'ACCS TRAY'); await wait(500);
-    await page.selectOption('#ed-sb-0-0', { label: 'Elbow 90' }); await wait(300);
+    await page.selectOption('#ed-sb-0-0', { label: 'Elbow' }); await wait(300);
     const oA = await opsi('ed-sb-0-0');
     await page.click('[data-act="ed-addcov"]'); await wait(400);
     const cov = await page.evaluate(() => ({ h: document.getElementById('ed-h-1').value, p: document.getElementById('ed-hp-1').value }));
     await page.selectOption('#ed-hp-1', 'COVER TRAY'); await wait(400);
     const oC = await opsi('ed-sb-1-0').catch(() => []);
     await tutupEditor(); await wait(300);
-    ok('AR-03 section ACCS TRAY menawarkan fitting saja (Elbow, Reducer), tanpa Straight dan tanpa aksesori (Hanger Beam)', ['Elbow 90', 'Reducer'].every((x) => oA.includes(x)) && !oA.includes('Straight') && !oA.includes('Hanger Beam'), oA.join());
+    ok('AR-03 section ACCS TRAY menawarkan fitting saja (Elbow, Reducer), tanpa Straight dan tanpa aksesori (Hanger Beam)', ['Elbow', 'Reducer'].every((x) => oA.includes(x)) && !oA.includes('Straight') && !oA.includes('Hanger Beam'), oA.join());
     ok('AR-04 tombol Section COVER menambah section COVER TRAY yang menawarkan tutup', /^COVER TRAY/.test(cov.h) && cov.p === 'COVER TRAY' && oC.includes('Cover Tray') && !oC.includes('Elbow 90'), JSON.stringify({ cov, oC }));
 
     // AR-05 ubah aturan di Master Data lalu pulihkan
@@ -64,11 +64,20 @@ export async function runSpkAturan(page, base) {
     await page.click('[data-act="aturansimpan"]'); await wait(1200);
     const sv = await page.evaluate(() => { const a = (byId('master', 'setting') || {}).aturanSection || null; return { ct: a && a['CABLE TRAY'], accs: a && a['ACCS TRAY'] }; });
     await bukaBaru(); const o2 = await opsi('ed-sb-0-0'); await tutupEditor(); await wait(300);
-    ok('AR-05 aturan kustom tersimpan di master/setting.aturanSection dan langsung dipakai editor (Elbow kini tampil di Cable Tray)', sv.ct && sv.ct.includes('STRAIGHT') && sv.ct.includes('ELBOW') && Array.isArray(sv.accs) && o2.includes('Elbow 90') && o2.includes('Straight'), JSON.stringify({ sv: sv.ct, o2 }));
+    ok('AR-05 aturan kustom tersimpan di master/setting.aturanSection dan langsung dipakai editor (Elbow kini tampil di Cable Tray)', sv.ct && sv.ct.includes('STRAIGHT') && sv.ct.includes('ELBOW') && Array.isArray(sv.accs) && o2.includes('Elbow') && o2.includes('Straight'), JSON.stringify({ sv: sv.ct, o2 }));
     await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="aturan"]'); await wait(500);
     await page.click('[data-act="aturanreset"]'); await wait(1200);
     await bukaBaru(); const o3 = await opsi('ed-sb-0-0'); await tutupEditor(); await wait(300);
     ok('AR-06 pulihkan standar: aturan kustom dihapus, Cable Tray kembali hanya Straight', o3.join() === 'Teks bebas,Straight' && (await page.evaluate(() => !((byId('master', 'setting') || {}).aturanSection))), o3.join());
+    // AR-07 nama bentuk bisa diedit di Master Data, dipakai editor SPK, dan dipulihkan bersama aturan
+    await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="aturan"]'); await wait(500);
+    await page.fill('input[data-nb="ELBOW"]', 'Siku'); await page.click('[data-act="aturansimpan"]'); await wait(1200);
+    const nmSv = await page.evaluate(() => ((byId('master', 'setting') || {}).namaBentuk) || null);
+    await bukaBaru(); await page.selectOption('#ed-sb-0-0', { label: 'Siku' }).catch(() => {}); const o4 = await opsi('ed-sb-0-0'); await tutupEditor(); await wait(300);
+    await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="aturan"]'); await wait(500);
+    await page.click('[data-act="aturanreset"]'); await wait(1200);
+    await bukaBaru(); const o5 = await opsi('ed-sb-0-0'); await tutupEditor(); await wait(300);
+    ok('AR-07 nama bentuk dari Master Data (Elbow menjadi Siku) tersimpan di setting.namaBentuk; pulihkan standar mengembalikan Elbow', nmSv && nmSv.ELBOW === 'Siku' && !(await page.evaluate(() => (byId('master', 'setting') || {}).namaBentuk)) && o5.join() === 'Teks bebas,Straight', JSON.stringify({ nmSv, o4, o5 }));
 
     // AR-07..09 stok barang jadi di editor SPK
     await bukaBaru();
@@ -98,7 +107,7 @@ export async function runSpkAturan(page, base) {
     // AR-12 SPK lama: bentuk di luar aturan tetap terbuka dan terhitung
     const lama = await page.evaluate(async () => {
       const s = S.spk.find((x) => x.customer === 'PT Aturan Uji'); const items = JSON.parse(JSON.stringify(s.items));
-      items[0].sb = 'ELBOW_STU_R_D'; items[0].dim = { w: 100, h: 50, r: 300 }; items[0].d = 'Cable Tray Elbow 90 W100xH50xR300';
+      items[0].sb = 'ELBOW_STU_R_D'; items[0].dim = { w: 100, h: 50, r: 300 }; items[0].d = 'Cable Tray Elbow W100xH50xR300';
       await updDoc('spk', s._id, { items }); return s._id;
     });
     await wait(600);

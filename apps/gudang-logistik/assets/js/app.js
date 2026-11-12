@@ -582,6 +582,14 @@ async function prOtomatisSpk(id,tries){
   return noPR;
  }catch(e){return null}
 }
+/* Susulan draf PR: SPK yang diterbitkan PPIC (tanpa hak Gudang Bahan Baku) belum punya draf PR; saat petugas gudang bahan baku (atau admin) membuka Bahan baku, draf dibuat untuk SPK terbit 7 hari terakhir yang belum punya PR sama sekali. */
+let _prSusulanAt=0,_prSusulanJalan=false;
+async function prSusulan(){
+ if(_prSusulanJalan||Date.now()-_prSusulanAt<60000||!matBisaPr()||!MT())return;
+ _prSusulanAt=Date.now();_prSusulanJalan=true;
+ try{const batas=addDays(today(),-7),adaPr=new Set((S.pr||[]).map(p=>p.spk).filter(Boolean));
+  for(const s of S.spk.filter(x=>x.status==='Terbit'&&x.terbitAt&&String(x.terbitAt).slice(0,10)>=batas&&!adaPr.has(x._id)))await prOtomatisSpk(s._id,5)}
+ catch(e){}finally{_prSusulanJalan=false}}
 function matBuatPr(){
  const pr=MT().usulanPr(matRencana(MAT.items,MAT.opt));if(!pr.length){toast('Tidak ada kekurangan.');return}
  try{need('bahan-baku')}catch(e){toast('Anda tidak berhak membuat PR bahan baku.');return}
@@ -2165,16 +2173,16 @@ function aturanBentuk(){const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.ke
  return Object.values(peta)}
 function aturanTab(){const B=window.MNIBerat,ok=canManage();const sem=aturanBentuk();
  if(!sem)return `<section class="panel"><div class="pbody note">Aturan section memakai katalog berat. Pasang katalog di Master Data › Katalog berat lebih dulu.</div></section>`;
- B.setAturan((byId('master','setting')||{}).aturanSection);const prods=[...new Set([...OPSI().p,...B.produkBentuk()])],cust=!!((byId('master','setting')||{}).aturanSection);
+ B.setAturan((byId('master','setting')||{}).aturanSection,(byId('master','setting')||{}).namaBentuk);const prods=[...new Set([...OPSI().p,...B.produkBentuk()])],cust=!!((byId('master','setting')||{}).aturanSection);
  const rows=ARATUR_KEL.map(([kel,jud])=>{const xs=sem.filter(x=>x.kelompok===kel);if(!xs.length)return '';
-  return `<tr class="ar-g"><td colspan="${prods.length+1}">${esc(jud)}</td></tr>`+xs.map(x=>`<tr><td>${esc(x.nama)}</td>${prods.map(p=>`<td class="c"><input type="checkbox" data-ar="${esc(p)}|${esc(x.kunci)}" ${B.diizinkan(p,x.kunci)?'checked':''} ${ok?'':'disabled'} aria-label="${esc(x.nama)} di ${esc(p)}"></td>`).join('')}</tr>`).join('')}).join('');
- return `<section class="panel"><div class="pbody note">Menentukan bentuk apa yang boleh dipilih di tiap section SPK. Standar MNI: <b>Cable Tray, Perforated, dan Ladder</b> hanya batang lurus; <b>ACCS</b> (Tray, Ladder, Duct) memuat fitting dan aksesori; <b>Cover Tray</b> memuat semua tutup. Baris SPK lama yang bentuknya di luar aturan tetap terbaca dan hanya diberi tanda. ${cust?'<b>Aturan kustom aktif.</b>':'Memakai standar.'}</div>
+  return `<tr class="ar-g"><td colspan="${prods.length+1}">${esc(jud)}</td></tr>`+xs.map(x=>`<tr><td>${ok?`<input class="inp" data-nb="${esc(x.kunci)}" value="${esc(x.nama)}" placeholder="${esc(B.namaBawaan?B.namaBawaan(x.kunci):x.nama)}" aria-label="Nama ${esc(x.kunci)}" style="min-width:150px">`:esc(x.nama)}</td>${prods.map(p=>`<td class="c"><input type="checkbox" data-ar="${esc(p)}|${esc(x.kunci)}" ${B.diizinkan(p,x.kunci)?'checked':''} ${ok?'':'disabled'} aria-label="${esc(x.nama)} di ${esc(p)}"></td>`).join('')}</tr>`).join('')}).join('');
+ return `<section class="panel"><div class="pbody note">Menentukan bentuk apa yang boleh dipilih di tiap section SPK dan nama tampilannya (kolom Bentuk bisa diedit, mis. Elbow; nama ikut dipakai di nama item SPK baru). Standar MNI: <b>Cable Tray, Perforated, Ladder, dan Cable Duct</b> hanya batang lurus; <b>Accs Tray, Ladder, Duct</b> memuat fitting (Elbow, Inside/Outside Riser, Tee, Cross, Reducer); <b>Cover Tray, Ladder, Duct</b> memuat tutup; <b>Other Support</b> memuat aksesori pendukung. Baris SPK lama yang bentuknya di luar aturan tetap terbaca dan hanya diberi tanda. ${cust?'<b>Aturan kustom aktif.</b>':'Memakai standar.'}</div>
  <div class="pbody"><div class="tbl-wrap"><table class="lines ar-t"><thead><tr><th>Bentuk</th>${prods.map(p=>`<th class="c">${esc(p)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>
  <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?'<button class="btn primary" data-act="aturansimpan">Simpan aturan</button><button class="btn ghost" data-act="aturanreset">Pulihkan standar</button>':'<span class="note">Hanya admin yang dapat mengubah aturan.</span>'}</div></section>`}
-async function aturanSimpan(reset){let aturanSection=null;
- if(!reset){aturanSection={};document.querySelectorAll('input[data-ar]').forEach(c=>{const [p,k]=c.dataset.ar.split('|');(aturanSection[p]=aturanSection[p]||[]);if(c.checked)aturanSection[p].push(k)});const kosong=Object.keys(aturanSection).filter(p=>!aturanSection[p].length);kosong.forEach(p=>{delete aturanSection[p]});if(kosong.length)toast('Produk tanpa bentuk dikembalikan ke standar: '+kosong.join(', '))}
+async function aturanSimpan(reset){let aturanSection=null,namaBentuk=null;
+ if(!reset){aturanSection={};document.querySelectorAll('input[data-ar]').forEach(c=>{const [p,k]=c.dataset.ar.split('|');(aturanSection[p]=aturanSection[p]||[]);if(c.checked)aturanSection[p].push(k)});const kosong=Object.keys(aturanSection).filter(p=>!aturanSection[p].length);kosong.forEach(p=>{delete aturanSection[p]});if(kosong.length)toast('Produk tanpa bentuk dikembalikan ke standar: '+kosong.join(', '));const B=window.MNIBerat;namaBentuk={};document.querySelectorAll('input[data-nb]').forEach(i=>{const k=i.dataset.nb,v=i.value.trim();if(v&&B&&B.namaBawaan&&v!==B.namaBawaan(k))namaBentuk[k]=v});if(!Object.keys(namaBentuk).length)namaBentuk=null}
  const cur={...(byId('master','setting')||{})};delete cur._id;
- try{if(byId('master','setting'))await updDoc('master','setting',{aturanSection});else{need();await DB.doc('master/setting').set({...cur,aturanSection})}toast(reset?'Aturan section dipulihkan ke standar':'Aturan section disimpan')}catch(e){toast(e.message||String(e))}
+ try{if(byId('master','setting'))await updDoc('master','setting',{aturanSection,namaBentuk});else{need();await DB.doc('master/setting').set({...cur,aturanSection,namaBentuk})}toast(reset?'Aturan section dipulihkan ke standar':'Aturan section disimpan')}catch(e){toast(e.message||String(e))}
  renderBody()}
 /* ---------- Master Data: kop dokumen (logo, nama, alamat, kontak, warna) ---------- */
 let KOP_PEND=null;
@@ -2212,7 +2220,7 @@ document.addEventListener('change',async e=>{const el=e.target;if(!el||el.id!=='
  try{KOP_PEND=await kopBacaLogo(el.files[0]);kopPrevRender();toast('Logo siap. Tekan Simpan kop untuk memakainya.')}catch(err){toast(err.message||String(err));el.value=''}});
 /* ---------- Master Data: rute produksi per produk dan per bentuk ---------- */
 const RUTE_BENTUK_FAM='STU';
-function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
+function ruteBentukDaftar(prod){const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return [];try{if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection,(byId('master','setting')||{}).namaBentuk);return (B.bentukProduk(RUTE_BENTUK_FAM,prod)||[]).map(x=>({kunci:kunciDariId(x.id),nama:x.nama}))}catch(_){return []}}
 /* Rute belum disalin ke tiap item, jadi perubahan rute produk berlaku ke semua SPK aktif. Perubahan yang mengubah rute item yang sudah punya
    catatan produksi ditolak (progres dan antrian akan bergeser); item tanpa catatan boleh mengikuti rute baru. */
 function ruteDampak(petaBaru){const P=PXL();const hit=new Set();if(!P)return [];
@@ -3315,7 +3323,7 @@ T['bahan-baku']=()=>{const f=F['bahan-baku'];return `<input class="inp search" i
  <button class="btn ghost" data-act="csv" data-what="rm">${ic('dl')}CSV</button>`};
 function rmFilter(all){const f=F['bahan-baku'],q=f.q.toLowerCase();return S.rm.filter(r=>{if(!all&&!rmOn(r)&&f.st!=='Nonaktif')return false;if(q&&!rmLabel(r).toLowerCase().includes(q)&&!String(r.lokasi||'').toLowerCase().includes(q))return false;if(f.grade&&grade(r)!==f.grade)return false;return true})}
 B['bahan-baku']=()=>{
- const f=F['bahan-baku'],R=rmCalc(),I=Object.values(R.info).filter(x=>!x.off);
+ setTimeout(prSusulan,300);const f=F['bahan-baku'],R=rmCalc(),I=Object.values(R.info).filter(x=>!x.off);
  const totKg=I.reduce((a,x)=>a+x.kg,0),c30=I.reduce((a,x)=>a+x.cons30*x.kg1,0),c90=I.reduce((a,x)=>a+x.cons90*x.kg1,0);
  const need=I.filter(x=>x.sug>0),crit=I.filter(x=>x.st==='Habis'||x.st==='Kritis'),dead=I.filter(x=>x.st==='Tidak bergerak');
  const val=I.reduce((a,x)=>a+x.kg*(+x.r.harga||0),0);
@@ -4525,7 +4533,7 @@ function edDimCols(cap){const out=[],seen=new Set();cap.shapes.forEach(x=>x.dim.
 /* kg per pcs dari katalog (estimasi = plate yang diambil, real = barang jadi); null bila belum bisa dihitung */
 function edKgPair(s,l,cap){const B=window.MNIBerat;if(!cap||cap.fallback||!l.sb||!B||!B.kgPerPcs)return null;const dv=derive(s.h);const r=B.kgPerPcs({keluarga:cap.fam,bentuk:l.sb,dim:l.dim||{},tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});return r&&r.ok?r:null}
 function edKgSub(s,l,cap){const r=edKgPair(s,l,cap);return r?'<div class="kgsub">est '+n(Math.round(r.kgPcsEst*100)/100)+' · real '+n(Math.round(r.kgPcsReal*100)/100)+' Kg</div>':''}
-function edCap(s){bjHook();const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
+function edCap(s){bjHook();const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection,(byId('master','setting')||{}).namaBentuk);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
 /* Perforated Cable Tray otomatis Full hole; produk lain Bawah. Pilihan manual pengguna (lubangManual) tidak diganti oleh bawaan. */
 const lubangBawaan=cap=>cap&&TANPA_LUBANG.has(cap.prod)?'tanpa':cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
 function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&cap.shapes.length&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}

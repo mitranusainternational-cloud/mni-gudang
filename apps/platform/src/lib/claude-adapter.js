@@ -571,7 +571,8 @@ window.MNIBerat = {
   // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
   keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
   // aturan section dari Master Data (setting.aturanSection); kosong = bawaan standar (berat/bentuk.js ATURAN_DEFAULT)
-  setAturan: (a) => { _aturanSection = a && typeof a === 'object' ? a : null; },
+  setAturan: (a, nama) => { _aturanSection = a && typeof a === 'object' ? a : null; _bentuk.setNamaBentuk(nama); },
+  namaBawaan: (kunci) => _bentuk.namaBentukBawaan(kunci),
   aturanBawaan: () => JSON.parse(JSON.stringify(_bentuk.ATURAN_DEFAULT)),
   bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk, _aturanSection) : []),
   bentukSemua: (keluarga) => (_katalogBerat ? _bentuk.bentukSemua(_katalogBerat, keluarga) : []),

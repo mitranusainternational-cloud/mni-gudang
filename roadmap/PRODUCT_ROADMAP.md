@@ -64,7 +64,7 @@ v0.9 Fondasi ──► v1.0 Pilot go-live ──► v1.1 Stabilisasi ──► v
 
 ### v1.2 Integrasi dan pelaporan
 **Tujuan:** kurangi kerja manual dan beri nilai bagi manajemen.
-**Epic:** [[roadmap/epics/E-11-integrasi-sumber-data|E-11]] integrasi sumber data, [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen|E-12]] pelaporan, notifikasi, dokumen. Ditambah [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring (modul terpisah, lokal dulu; lihat [[documentation/ERP_QUOTATION_ANALISIS]]).
+**Epic:** [[roadmap/epics/E-11-integrasi-sumber-data|E-11]] integrasi sumber data, [[roadmap/epics/E-12-pelaporan-notifikasi-dan-dokumen|E-12]] pelaporan, notifikasi, dokumen. Ditambah [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]] ERP hulu: Penawaran, estimasi, dan monitoring (modul terpisah, lokal dulu; lihat [[documentation/arsip/ERP_QUOTATION_ANALISIS]]).
 **Hasil (hipotesis):** impor terjadwal dari sumber resmi, satu sumber master data, dashboard kinerja, notifikasi SPK jatuh tempo dan stok di bawah buffer, dokumen cetak terstandar.
 **Syarat masuk:** discovery integrasi (T-121) membuktikan kebutuhan, owner, dan scope; kanal notifikasi dipilih tim.
 

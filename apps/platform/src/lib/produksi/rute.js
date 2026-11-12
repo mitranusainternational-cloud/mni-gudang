@@ -7,7 +7,7 @@ export const RUTE_STANDAR = {
   'CABLE TRAY': ['Shearing', 'Punching', 'Bending'],
   'PERFORATED CABLE TRAY': ['Shearing', 'Punching', 'Bending'],
   'CABLE LADDER': ['Shearing', 'Punching', 'Bending', 'Welding'],
-  'CABLE DUCT': ['Shearing', 'Punching', 'Bending'],
+  'CABLE DUCT': ['Shearing', 'Bending'], // tanpa lubang, jadi tanpa Punching (keputusan pemilik 2026-11-12: Cable Duct = Cable Tray tanpa lubang)
   'COVER TRAY': ['Shearing', 'Bending'],
   'COVER LADDER': ['Shearing', 'Bending'],
   'COVER DUCT': ['Shearing', 'Bending'],

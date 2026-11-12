@@ -20,7 +20,7 @@ export const KELOMPOK_PRODUK = {
 };
 const UTAMA = new Set(['STRAIGHT', 'ELBOW', 'TEE', 'CROSS', 'INSIDE', 'OUTSIDE', 'REDUCER']);
 const NAMA = {
-  STRAIGHT: 'Straight', ELBOW: 'Elbow 90', TEE: 'Tee', CROSS: 'Cross', INSIDE: 'Inside Riser', OUTSIDE: 'Outside Riser', REDUCER: 'Reducer',
+  STRAIGHT: 'Straight', ELBOW: 'Elbow', TEE: 'Tee', CROSS: 'Cross', INSIDE: 'Inside Riser', OUTSIDE: 'Outside Riser', REDUCER: 'Reducer',
   COVER_STRAIGHT: 'Cover Straight', COVER_ELBOW: 'Cover Elbow', COVER_TEE: 'Cover Tee', COVER_CROSS: 'Cover Cross', COVER_INSIDE: 'Cover Inside Riser', COVER_OUTSIDE: 'Cover Outside Riser', COVER_REDUCER: 'Cover Reducer',
   JOINTING: 'Jointing', HORIZONTAL_FISH_PLATE: 'Horizontal Fish Plate', VERTICAL_FISH_PLATE: 'Vertical Fish Plate', SPLICE_PLATE_SET_FOR_STAND: 'Splice Plate Set',
   BRACKET_SUPPORT: 'Bracket Support', DOUBLE_CHANEEL_BRACKET: 'Double Channel Bracket', DOUBLE_CHANNEL_BRACKET: 'Double Channel Bracket', SINGLE_CHANEEL_BRACKET: 'Single Channel Bracket',
@@ -41,7 +41,11 @@ export function kunciBentuk(id, keluarga) {
   }
   return String(id);
 }
-export const namaBentuk = (kunci) => NAMA[kunci] || judulKata(kunci);
+/** Nama tampilan bentuk yang diganti pemilik di Master Data (setting.namaBentuk); kosong = nama standar. */
+let _namaKustom = {};
+export const setNamaBentuk = (m) => { _namaKustom = m && typeof m === 'object' ? m : {}; };
+export const namaBentukBawaan = (kunci) => NAMA[kunci] || judulKata(kunci);
+export const namaBentuk = (kunci) => { const k = _namaKustom[kunci]; return typeof k === 'string' && k.trim() ? k.trim() : namaBentukBawaan(kunci); };
 const produkJudul = (p) => String(p || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
 /** Dimensi yang harus diisi pengguna (tanpa tebal, massa jenis, dan "jika w yg kecil" yang dihitung otomatis), berurutan W, H, L, R. */
@@ -112,7 +116,7 @@ export function bentukUntukProduk(katalog, keluarga, produk, aturan) {
     .sort((a, b) => urut(a) - urut(b));
 }
 
-/** Teks deskripsi item dari pilihan: "Cable Tray W100xH50xL3000", "Cable Tray Elbow 90 W100xH50xR300", "Hanger Beam W100". */
+/** Teks deskripsi item dari pilihan: "Cable Tray W100xH50xL3000", "Cable Tray Elbow W100xH50xR300", "Hanger Beam W100". */
 export function namaItem(produk, kunci, dim, daftarDim) {
   const ukuran = (daftarDim || []).map((d) => (Number.isFinite(+dim[d.k]) && dim[d.k] !== '' && dim[d.k] != null ? d.label + (+dim[d.k]) : d.label + '?')).join('x');
   const P = String(produk || '').toUpperCase();
@@ -121,7 +125,7 @@ export function namaItem(produk, kunci, dim, daftarDim) {
   const bagian = [];
   if (kunci === 'STRAIGHT') { if (!accs && !cover && !other) bagian.push(produkJudul(produk)); } // Cable Tray, Perforated, Ladder, Duct: "Cable Duct W100xH50xL3000"
   else if (kunci === 'COVER_STRAIGHT') bagian.push(cover ? produkJudul(produk) : 'Cover Straight'); // "Cover Tray W200xL3000", "Cover Ladder ...", "Cover Duct ..."
-  else if (accs && FITTING.has(kunci) && dasarAccs) bagian.push(dasarAccs, namaBentuk(kunci)); // "Cable Tray Elbow 90 W100xH50xR300": nama memuat jenis tray, ladder, atau duct
+  else if (accs && FITTING.has(kunci) && dasarAccs) bagian.push(dasarAccs, namaBentuk(kunci)); // "Cable Tray Elbow W100xH50xR300": nama memuat jenis tray, ladder, atau duct
   else if (accs || cover || other) bagian.push(namaBentuk(kunci)); // "Cover Elbow W50xR150", "Hanger Beam W100", "Jointing H100"
   else bagian.push(produkJudul(produk), namaBentuk(kunci)); // produk lain dengan aturan khusus dari Master Data
   if (ukuran) bagian.push(ukuran);

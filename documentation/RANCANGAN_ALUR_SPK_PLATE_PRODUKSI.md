@@ -58,4 +58,4 @@ Lihat pertanyaan di sesi diskusi: apakah serah terima plate wajib atau peringata
 - Rute komponen kecil: **pakai usulan dulu** (ikut rute ACCS), dikoreksi lewat tabel rute di Master Data.
 - Urutan: **matriks rute dulu**, lalu serah terima plate, lalu Cek Data dan laporan susut.
 
-Hasil audit alur lengkap: [[documentation/AUDIT_ALUR_2026-11-09]].
+Hasil audit alur lengkap: [[documentation/arsip/AUDIT_ALUR_2026-11-09]].

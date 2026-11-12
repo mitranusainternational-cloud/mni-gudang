@@ -467,6 +467,22 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-44 daftar section bawaan: 11 section sesuai permintaan pemilik; Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 11 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,CABLE LADDER,CABLE DUCT,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
+
+    langkah = 'PH-45';
+    const r45 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const o = {}; const tgl = today(); const awal = (S.pr || []).length;
+      const mk = (id, no, hari) => ({ _id: id, no, status: 'Terbit', customer: 'Uji susulan', due: '2099-01-01', tgl, h: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG', terbitAt: new Date(Date.now() - hari * 86400000).toISOString(), items: [{ d: 'Cable Tray W300xH100xL3000', q: 5000, u: 'Btg', w: 10, g: 'CABLE TRAY TYPE STU 1.2 mm SPHC / ELG' }] });
+      S.spk.push(mk('ph45', 9945, 0), mk('ph45lama', 9946, 30)); C = null;
+      _prSusulanAt = 0; await prSusulan(); await w(1200);
+      o.baru = (S.pr || []).filter((p) => p.spk === 'ph45').length; o.lama = (S.pr || []).filter((p) => p.spk === 'ph45lama').length;
+      _prSusulanAt = 0; await prSusulan(); await w(900);
+      o.ulang = (S.pr || []).filter((p) => p.spk === 'ph45').length;
+      S.spk = S.spk.filter((z) => !/^ph45/.test(z._id));
+      for (const pp of (S.pr || []).filter((x) => /^ph45/.test(x.spk || ''))) { try { await DB.doc('pr/' + pp._id).delete(); } catch (e) { o.errDel = String(e.message || e).slice(0, 80); } await w(300); }
+      C = null; await w(900); o.bersih = (S.pr || []).filter((x) => /^ph45/.test(x.spk || '') && x.status !== 'Batal').length === 0;
+      return o;
+    });
+    ok('PH-45 susulan draf PR: SPK terbit baru tanpa PR (mis. diterbitkan PPIC) mendapat draf saat gudang bahan baku membuka modul; tidak ganda; SPK lama (30 hari) tidak dibanjiri', r45.baru === 1 && r45.lama === 0 && r45.ulang === 1 && r45.bersih, JSON.stringify(r45));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

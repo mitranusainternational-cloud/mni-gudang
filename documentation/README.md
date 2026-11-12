@@ -39,3 +39,5 @@ updated: 2026-11-02
 - [[apps/gudang-logistik/docs/DATA_INVENTORY|Inventaris data berbasis source]]
 
 Dokumen operasional harus mencantumkan pemilik proses, tujuan, ruang lingkup, langkah, bukti, dan tanggal berlaku. Jangan mengubah hasil riset menjadi SOP sebelum divalidasi pemilik proses.
+
+- Arsip dokumen lama: [[documentation/arsip/README]]

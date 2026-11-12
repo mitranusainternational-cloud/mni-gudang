@@ -27,7 +27,7 @@ Kamu melanjutkan proyek "MNI Gudang & Logistik" (PT Mitra Nusa Internasional) da
 1. CLAUDE.md dan AGENTS.md (aturan kerja)
 2. documentation/SERTIJOB.md bagian ini, lalu documentation/HANDOFF.md (posisi proyek, berkas yang hanya ada di mesin lama, konektor)
 3. documentation/PETA_MODUL.md (modul dari hulu ke hilir, status per lingkungan), PRD_GUDANG.md dan PRD_PRODUKSI.md (aturan)
-4. documentation/AUDIT_PROGRESS_2026-11-06.md, FEATURE_AUDIT.md, STANDAR_INDUSTRI.md (audit dan kesenjangan)
+4. documentation/arsip/AUDIT_PROGRESS_2026-11-06.md, FEATURE_AUDIT.md, STANDAR_INDUSTRI.md (audit dan kesenjangan)
 5. tasks/ (sumber kebenaran status; terbaru T-195 sampai T-212) dan documentation/PROJECT_PROGRESS.md (entri terakhir di bawah)
 6. .claude/skills dan .claude/agents (terutama gudang-stok-flow, e2e-regression, release-pipeline, adapter-contract, rls-roles, vault-progress)
 

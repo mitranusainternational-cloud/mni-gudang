@@ -61,10 +61,10 @@ export async function runSpkTerstruktur(page, base) {
   await page.selectOption('#ed-hp-0', 'ACCS TRAY'); await wait(500);
   const luarStraight = await teks('ed-lr-0-0');
   ok('S-05a section dipindah ke ACCS TRAY: baris Straight lama tetap terbaca dan diberi tanda di luar aturan beserta saran section', /di luar aturan section ACCS TRAY/.test(luarStraight) && /CABLE TRAY/.test(luarStraight) && (await nilai('ed-w-0-0')) !== '', luarStraight);
-  await page.selectOption('#ed-sb-0-0', { label: 'Elbow 90' }); await wait(400);
+  await page.selectOption('#ed-sb-0-0', { label: 'Elbow' }); await wait(400);
   const dimElbow = await page.evaluate(() => [...document.querySelectorAll('#ed-secs tr[data-l="0"] .dm span')].map((x) => x.textContent));
   const galatElbow = await teks('ed-gl-0-0');
-  ok('S-05 ganti ke Elbow 90: yang diminta W H R, isian W dan H dipertahankan, berat dikosongkan dan alasan ditampilkan sampai R diisi', dimElbow.join() === 'W,H,R' && (await nilai('ed-dm-0-0-w')) === '100' && (await nilai('ed-w-0-0')) === '' && /Isi ukuran: R/.test(galatElbow) && (await teks('ed-nm-0-0')) === 'Cable Tray Elbow 90 W100xH50xR?', JSON.stringify({ dimElbow, galatElbow, nama: await teks('ed-nm-0-0') }));
+  ok('S-05 ganti ke Elbow: yang diminta W H R, isian W dan H dipertahankan, berat dikosongkan dan alasan ditampilkan sampai R diisi', dimElbow.join() === 'W,H,R' && (await nilai('ed-dm-0-0-w')) === '100' && (await nilai('ed-w-0-0')) === '' && /Isi ukuran: R/.test(galatElbow) && (await teks('ed-nm-0-0')) === 'Cable Tray Elbow 90 W100xH50xR?', JSON.stringify({ dimElbow, galatElbow, nama: await teks('ed-nm-0-0') }));
   await page.fill('#ed-dm-0-0-r', '300'); await wait(300);
   const elb = berat('STU', 'ELBOW_STU_R_D', { w: 100, h: 50, r: 300 }, 1.2, 'SPHC / ELG');
   ok('S-06 R diisi: berat Elbow muncul sesuai kalkulator', dekat(+(await nilai('ed-w-0-0')), elb.beratSPK) && (await teks('ed-gl-0-0')) === '', await nilai('ed-w-0-0'));

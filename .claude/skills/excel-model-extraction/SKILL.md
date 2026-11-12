@@ -20,4 +20,4 @@ description: Membaca model hitung di workbook Excel (.xls atau .xlsx) milik peru
 ## Keluaran
 Dokumen analisis di `documentation/` (struktur, rumus, temuan, tanpa angka komersial), fixture di folder privat, dan tugas di `tasks/`. Jangan mengubah workbook sumber.
 
-Rujukan: [[documentation/KALKULATOR_BERAT]], [[documentation/ERP_QUOTATION_ANALISIS]].
+Rujukan: [[documentation/KALKULATOR_BERAT]], [[documentation/arsip/ERP_QUOTATION_ANALISIS]].
