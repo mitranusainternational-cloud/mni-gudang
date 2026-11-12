@@ -13,7 +13,7 @@ import { TABLE_COLS, STRICT_COLS } from './schema-columns.js';
 
 const STORE_KEY = 'mni-local-mock-db';
 const SESSION_KEY = 'mni-local-mock-session';
-const VERSION = 9; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
+const VERSION = 11; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
 // Kode masuk untuk pratinjau lokal. Bukan rahasia dan tidak berlaku di environment lain.
 export const LOCAL_OTP = '123456';
 
@@ -23,6 +23,19 @@ const ymdLokal = (x) => { const d = x instanceof Date ? x : new Date(x); const p
 const day = (offset = 0) => ymdLokal(new Date(Date.now() + offset * 864e5));
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random().toString(16).slice(2) + Date.now());
 
+// Hak modul bawaan per peran (sama dengan paket peran di app: ubah = lihat dan ubah, lihat = hanya melihat; modul yang tidak ada = tidak tampil). Admin tanpa batas.
+const U = 'ubah', L = 'lihat';
+const MODUL_BAWAAN = {
+  ppic: { spk: U, vendor: U, 'bahan-baku': L, 'barang-jadi': L, pengiriman: L, 'bongkar-muat': L, maintenance: L },
+  gudang: { 'bahan-baku': U, 'barang-jadi': U, sparepart: U, spk: L, 'bongkar-muat': L, vendor: L, pengiriman: L, maintenance: L },
+  gbb: { 'bahan-baku': U, 'bongkar-muat': U, sparepart: U, spk: L, maintenance: L },
+  gbj: { 'barang-jadi': U, vendor: U, pengiriman: U, 'bongkar-muat': U, spk: L, maintenance: L },
+  logistik: { 'bongkar-muat': U, vendor: U, pengiriman: U, spk: L, 'bahan-baku': L, 'barang-jadi': L, maintenance: L },
+  produksi: { spk: U, vendor: L, maintenance: L },
+  maintenance: { maintenance: U, sparepart: U, spk: L },
+  sales: { spk: L },
+  viewer: { 'bahan-baku': L, 'barang-jadi': L, sparepart: L, vendor: L, pengiriman: L, spk: L, 'bongkar-muat': L, maintenance: L },
+};
 function seed() {
   const now = iso();
   const base = (o) => ({ id: uid(), created_at: now, updated_at: now, created_by: 'seed', updated_by: 'seed', data: {}, ...o });
@@ -30,13 +43,15 @@ function seed() {
   db.muser = [
     ['admin@mni.local', 'Admin Lokal', 'admin'],
     ['ppic@mni.local', 'PPIC Lokal', 'ppic'],
+    ['gudang@mni.local', 'Gudang Lokal', 'gudang'],
     ['gbb@mni.local', 'Gudang Bahan Baku Lokal', 'gbb'],
     ['gbj@mni.local', 'Gudang Barang Jadi Lokal', 'gbj'],
     ['logistik@mni.local', 'Logistik Lokal', 'logistik'],
     ['produksi@mni.local', 'Produksi Lokal', 'produksi'],
+    ['maintenance@mni.local', 'Maintenance Lokal', 'maintenance'],
     ['viewer@mni.local', 'Viewer Lokal', 'viewer'],
     ['sales@mni.local', 'Sales Lokal', 'sales'],
-  ].map(([email, nama, role]) => base({ email, nama, role, aktif: true }));
+  ].map(([email, nama, role]) => base({ email, nama, role, aktif: true, ...(MODUL_BAWAAN[role] ? { data: { modul: MODUL_BAWAAN[role] } } : {}) }));
   db.mwc = [['SHEARING', 'Shearing', 'Internal', 1], ['PUNCHING', 'Punching', 'Internal', 2], ['BENDING', 'Bending', 'Internal', 3], ['CNC', 'CNC Laser', 'Internal', 4], ['WELDING', 'Welding', 'Internal', 5],
     ['COATING', 'Coating / Painting', 'Internal', 5], ['QC', 'Quality Control', 'Internal', 6], ['PACKING', 'Packing', 'Internal', 7]]
     .map(([kode, nama, tipe, urutan]) => base({ kode, nama, tipe, urutan, aktif: true }));
@@ -91,13 +106,13 @@ function save(state) {
 // Meniru fungsi SQL mod_level/can_view: hak per modul (muser.data.modul) atau, bila kosong, peta peran bawaan.
 const HAPUS_DITOLAK = new Set(['spk', 'vendor', 'kirim', 'bongkar', 'pr', 'mutasi', 'opname', 'rmhist', 'rm', 'fg']);
 const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', sp: 'sparepart', mtc: 'maintenance' };
-const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk'], gudang: ['bahan-baku', 'barang-jadi', 'sparepart'], gbb: ['bahan-baku', 'bongkar-muat', 'sparepart'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['bongkar-muat', 'vendor', 'pengiriman'], maintenance: ['maintenance', 'sparepart'], sales: [] };
 const levelOf = (u, m) => {
   if (!u || u.aktif === false) return null;
   if (u.role === 'admin') return 'ubah';
   const modul = u.data && u.data.modul;
   if (modul && typeof modul === 'object') return modul[m] || null;
-  return (ROLE_MODS[u.role] || []).includes(m) ? 'ubah' : 'lihat';
+  // tanpa peta modul pengguna: ikut paket peran; modul di luar paket tidak terlihat (sama dengan app)
+  return (MODUL_BAWAAN[u.role] && MODUL_BAWAAN[u.role][m]) || null;
 };
 
 // Data contoh untuk meninjau produksi multi work center: buka http://127.0.0.1:5173/?demo=produksi sekali (hanya mock lokal).

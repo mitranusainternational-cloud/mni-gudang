@@ -155,6 +155,40 @@ export async function runMaintenance(page, base) {
     });
     ok('MT-11 sparepart ditambah lewat tombol (bukan baris tetap) dan foto dokumentasi terpisah Sebelum, Sesudah, Bukti: unggah saat mencatat (dua Sebelum, satu Sesudah, terkompres JPEG), galeri dengan tahap dan keterangan, tambah foto bukti, batas 8 foto, dokumen PDF dan Excel per catatan memuat foto, KPI dan Cek Data memakai kelengkapan foto', r11.baris0 === 1 && r11.baris2 === 3 && r11.baris3 === 2 && r11.bagian && r11.n1 === 3 && r11.tahap === 'Sebelum,Sebelum,Sesudah' && r11.data && r11.galeri === 3 && r11.tambah3 === 3 && r11.tombol && r11.n2 === 4 && r11.tahap2 === 'Bukti / nota' && r11.ket === 'sebelum diganti' && r11.batas === 4 && r11.dok.foto === 4 && r11.dok.pdf > r11.dok.pdf0 && r11.dok.xlsx && r11.rs[0] >= 1 && r11.rs[1] === 4 && r11.cek.length === 1, JSON.stringify(r11));
 
+    langkah = 'MG-02';
+    const masuk = async (u) => {
+      await page.evaluate(async () => { try { await USER.signOut(); } catch (e) { /* sudah keluar */ } }); await wait(1500);
+      await page.goto(base); await page.reload(); await wait(1200);
+      await page.fill('#auth-email', u + '@mni.local'); await page.click('#auth-btn');
+      await page.waitForSelector('#auth-otp', { state: 'visible' }); await page.fill('#auth-otp', '123456');
+      await page.waitForFunction(() => document.querySelectorAll('#nav a').length > 0 && !/Tamu/.test(document.getElementById('who').innerText), null, { timeout: 30000 }); await wait(1500);
+      return page.evaluate(async () => {
+        const w = (ms) => new Promise((x) => setTimeout(x, ms)); const o = {};
+        o.menu = [...document.querySelectorAll('#nav a')].map((a) => a.getAttribute('href').slice(1)); o.heads = [...document.querySelectorAll('#nav .sec')].map((e) => e.innerText.trim().toUpperCase());
+        o.aksi = {}; for (const id of o.menu) { location.hash = '#' + id; await w(450); const b = [...document.querySelectorAll('#tools button.primary')].filter((x) => x.offsetParent !== null).map((x) => x.innerText.replace(/\s+/g, ' ').trim()); if (b.length) o.aksi[id] = b.join('/'); }
+        return o;
+      });
+    };
+    const rp = await masuk('produksi'), rmt = await masuk('maintenance'), rgj = await masuk('gbj'), rv = await masuk('viewer');
+    const tanpa = (o, ...ids) => ids.every((i) => !o.menu.includes(i));
+    ok('MG-02 menu per peran (login nyata di mock): Produksi tanpa gudang tetapi tetap ada judul Logistik; Maintenance hanya Gudang Sparepart di bagian Gudang dan tombol Catat maintenance; Gudang Barang Jadi punya judul Gudang walau bahan baku tersembunyi; Viewer tanpa tombol aksi', rp.menu.includes('vendor') && tanpa(rp, 'bahan-baku', 'barang-jadi', 'sparepart', 'bongkar-muat', 'pengiriman', 'kinerja', 'pengguna') && !rp.heads.includes('GUDANG') && rp.heads.includes('LOGISTIK') && rp.aksi.spk === 'SPK baru' && rmt.menu.includes('sparepart') && tanpa(rmt, 'bahan-baku', 'barang-jadi', 'vendor', 'pengiriman') && rmt.heads.includes('GUDANG') && rmt.aksi.maintenance === 'Catat maintenance' && rmt.aksi.sparepart === 'Terima sparepart' && !rmt.aksi.spk && rgj.menu.includes('barang-jadi') && tanpa(rgj, 'bahan-baku', 'sparepart') && rgj.heads.includes('GUDANG') && Object.keys(rv.aksi).filter((k) => k !== 'master-data').length === 0 && rv.menu.includes('maintenance') && tanpa(rv, 'master-data', 'kinerja', 'pengguna'), JSON.stringify({ rp: [rp.heads, rp.aksi], rmt: [rmt.heads, rmt.aksi], rgj: [rgj.heads, rgj.aksi], rv: [rv.heads, rv.aksi] }).slice(0, 700));
+
+    langkah = 'MG-03';
+    await masuk('maintenance');
+    const s3 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((x) => setTimeout(x, ms)); const o = {};
+      location.hash = '#bahan-baku'; await w(700); o.langsungGudang = location.hash + '|' + document.getElementById('ttl').textContent.trim();
+      location.hash = '#master-data'; await w(700); o.langsungMaster = document.getElementById('ttl').textContent.trim();
+      location.hash = '#laporan'; await w(700); o.laporan = [...document.querySelectorAll('[id^="lap-"] h2')].map((h) => h.innerText).join();
+      o.csv = ringkasLaporan('bln').map((r) => r.bag).filter((x, i, a) => a.indexOf(x) === i).join();
+      location.hash = '#produksi'; await w(700); o.tabAnalisa = [...document.querySelectorAll('#tools [data-key="tab"]')].map((b) => b.innerText.trim()).join();
+      location.hash = '#dashboard'; await w(700); o.dash = [...document.querySelectorAll('.panel header h2')].map((h) => h.innerText).join();
+      o.feed = document.querySelector('.feed') ? document.querySelector('.feed').innerText.replace(/\s+/g, ' ').slice(0, 300) : '';
+      o.level = MODS.map(([m]) => m + '=' + (myLevel(m) || '-')).join();
+      return o;
+    });
+    ok('MG-03 hak ketat: peran Maintenance hanya melihat modul yang diatur (membuka gudang bahan baku atau Master Data lewat alamat langsung kembali ke Dashboard), Laporan hanya Produksi dan Sparepart, Analisa Produksi tanpa tab Vendor dan Pengiriman, Dashboard tanpa panel stok dan vendor, aktivitas tanpa modul lain', /dashboard|Dashboard/.test(s3.langsungGudang) && s3.langsungMaster === 'Dashboard' && s3.laporan === 'Produksi,Sparepart' && s3.csv === 'Produksi,Sparepart' && !/Vendor|Pengiriman/.test(s3.tabAnalisa) && /Laporan Produksi/.test(s3.tabAnalisa) && !/Stok bahan baku|vendor finishing|Top customer/.test(s3.dash) && /bahan-baku=-/.test(s3.level) && /maintenance=ubah/.test(s3.level), JSON.stringify(s3).slice(0, 900));
+
     ok('MT-99 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   } catch (e) {
     ok('MT-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g, '').slice(0, 900));

@@ -187,3 +187,9 @@ updated: 2026-11-02
 - **Keputusan pemilik:** label bentuk cukup "Elbow" (bukan "Elbow 90"), dan nama bentuk dapat diubah di Master Data supaya terhubung ke editor SPK. Disimpan di `master/setting.namaBentuk` (kosong = nama standar); tanpa migration database.
 - **Turunan (menunggu konfirmasi):** Cable Duct tanpa lubang, jadi rute standarnya Shearing, Bending tanpa Punching. Dapat diubah di Master Data › Rute produksi.
 - **Draf PR susulan:** SPK yang diterbitkan peran tanpa hak Gudang Bahan Baku (mis. PPIC) mendapat draf PR saat petugas gudang bahan baku atau admin membuka Bahan baku; hanya SPK terbit 7 hari terakhir yang belum punya PR.
+
+## 2026-11-12: Hak modul ketat (hanya modul yang diatur, kecuali super admin)
+- **Keputusan pemilik:** setiap peran atau pengguna hanya melihat modul yang diatur untuknya; hanya super admin yang melihat semua. Yang diatur bisa dibuat sepenuhnya di Pengguna & Akses (peta modul per pengguna, atau paket peran sebagai titik awal).
+- **Perilaku aplikasi:** tanpa peta modul pengguna, hak mengikuti paket peran (ubah, lihat, atau tidak tampil); sebelumnya modul di luar paket dianggap "lihat". Menu Master Data hanya untuk admin atau pemegang modul `master-data`. Laporan menampilkan hanya bagian dari modul yang boleh dilihat (Kesehatan data khusus admin). Dashboard (peringatan dan aktivitas) dan tab Vendor serta Pengiriman di Analisa Produksi mengikuti hak modul. Membuka alamat modul yang tidak diizinkan kembali ke Dashboard.
+- **Pratinjau lokal:** pengguna contoh membawa peta modul sesuai paket peran, termasuk peran baru Gudang dan Maintenance.
+- **Database:** draf `20240101000025_hak_modul_ketat.sql` membuat `mod_level()` ketat untuk pengguna tanpa peta modul (belum diterapkan; periksa pengguna lama tanpa peta modul sebelum diterapkan). Pengguna yang dibuat dari form Tambah anggota sudah punya peta modul sehingga sudah ketat di database.

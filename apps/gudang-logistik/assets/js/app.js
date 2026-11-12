@@ -90,7 +90,7 @@ function viewOk(v){const id=v.id||v;
  if(!ME_P)return !['kinerja','pengguna'].includes(id);
  const adm=myRole()==='admin';
  if(ADMIN_VIEWS.includes(id))return adm;
- if(id==='master-data')return adm||myAnyEdit();
+ if(id==='master-data')return adm||!!myLevel('master-data');
  const m=VIEW_MOD[id];return !m||!!myLevel(m)}
 let VIEW='dashboard';
 const issues=()=>{const c=calc();return c._iss||(c._iss=dataIssues())};
@@ -190,7 +190,7 @@ function renderNav(){
   cnt['bongkar-muat']=[S.bongkar.filter(b=>b.status!=='Selesai').length,false];
   cnt['spk']=[Object.values(c.spk).filter(x=>x.st==='Terlambat').length,true];}
  let h='';
- let secShown='';for(const v of VIEWS){if(!viewOk(v)||v.hide)continue;if(v.sec&&v.sec!==secShown){h+=`<div class="sec">${v.sec}</div>`;secShown=v.sec}const k=cnt[v.id];
+ let secShown='',secNow='';for(const v of VIEWS){if(v.sec)secNow=v.sec;/* judul bagian mengikuti item pertama yang tampil, walau item pertama bagian itu disembunyikan karena hak akses */if(!viewOk(v)||v.hide)continue;if(secNow&&secNow!==secShown){h+=`<div class="sec">${secNow}</div>`;secShown=secNow}const k=cnt[v.id];
   h+=`<a href="#${v.id}" class="${VIEW===v.id?'on':''}" title="${v.t}${k&&k[0]?' · '+k[0]:''}" aria-label="${v.t}">${ic(v.ic)}<span>${v.t}</span>${k&&k[0]?`<span class="cnt ${k[1]?'hot':''}">${k[0]}</span>`:''}</a>`}
  $('#nav').innerHTML=h;
  const on=$('#nav a.on');if(on&&on.scrollIntoView)on.scrollIntoView({block:'nearest'});
@@ -346,16 +346,17 @@ B.dashboard=()=>{
  vOpen.filter(x=>x.age>7).sort((a,b)=>b.age-a.age).slice(0,6).forEach(x=>al.push({sev:x.age>14?2.4:1.5,cls:x.age>14?'crit':'',href:'vendor',open:'vendor:'+x.v._id,t:`<b>${n(x.sisa)} ${esc(x.v.items?.[0]?.u||'')}</b> masih di ${esc(x.v.vendor)} ${x.age} hari`,m:`${esc(spkName(x.v.spk))} · ${esc(x.v.proses||'')} · dikirim ${fd(x.v.tgl)}`}));
  // Late open SPK (past due, belum selesai)
  K90.lateOpen.filter(f=>!lateSeen.has(f.s._id)).slice(0,4).forEach(f=>al.push({sev:2.3,cls:'crit',href:'spk',open:'spk:'+f.s._id,t:`<b>SPK ${f.s.no}</b> ${esc(f.s.customer)} lewat due date, belum terkirim`,m:`Due ${fd(f.s.due)} · stage: ${flow(f.s._id)?.stage||'–'} · produksi ${Math.round(f.x.pP*100)}%`}));
+ al.splice(0,al.length,...al.filter(a=>vis(VIEW_MOD[a.href]||a.href)));
  al.sort((a,b)=>b.sev-a.sev);
  const alH=al.length?`<div class="alerts">${al.slice(0,12).map(a=>`<div class="alert ${a.cls}" data-act="go" data-href="${a.href}" ${a.open?`data-open="${a.open}"`:''}><span class="st"></span><div><div>${a.t}</div><div class="meta">${a.m}</div></div><span class="muted">›</span></div>`).join('')}</div>${al.length>12?`<div class="pbody note">+${al.length-12} peringatan lain</div>`:''}`:empty('Tidak ada yang perlu ditindak','Stok aman, SPK sesuai jadwal, barang di vendor masih dalam batas.');
 
  // === Activity feed ===
  const fe=[];
- S.mutasi.forEach(m=>{const it=byId(m.gudang,m.item);const lbl=m.gudang==='rm'?rmLabel(it):m.gudang==='sp'?spLabel(it):fgLabel(it);fe.push({at:m.at,ic:m.jenis==='masuk'?'inb':m.jenis==='keluar'?'outb':'chk',cls:m.jenis==='masuk'?'ok':m.jenis==='keluar'?'':'warn',t:`${MVL[m.jenis]||m.jenis} ${m.delta>0?'+':''}${n(m.delta)} · ${esc(lbl)}`,m:`${m.gudang==='rm'?'Gudang bahan baku':m.gudang==='sp'?'Gudang sparepart':'Gudang barang jadi'}${m.ref?' · '+esc(m.ref):''} · ${who(m.by)}`})});
- S.vendor.forEach(v=>fe.push({at:v.updAt||v.at,ic:'vendor',cls:'warn',t:`${v.updAt?'Terima kembali dari':'Kirim ke'} ${esc(v.vendor)} · ${esc(spkName(v.spk))}`,m:`${esc(v.noSJ||'')} · ${esc(v.proses||'')} · ${who(v.updAt?v.updBy:v.by)}`,tgl:v.tgl}));
- S.kirim.forEach(k=>fe.push({at:k.updAt||k.at,ic:'truck',cls:k.status==='Diterima'?'ok':'',t:`${esc(k.status)} · ${esc(k.customer)}`,m:`${esc(k.noSJ||'')} · ${esc(spkName(k.spk))} · ${who(k.updAt?k.updBy:k.by)}`,tgl:k.tgl}));
- S.spk.forEach(s=>{const ev=s.updAt&&s.rev?{at:s.updAt,t:`SPK ${s.no} direvisi (Rev.${s.rev}) · ${esc(s.customer)}`,by:s.updBy}:s.terbitAt?{at:s.terbitAt,t:`SPK ${s.no} terbit · ${esc(s.customer)}`,by:s.terbitBy}:(s.status==='Draft'&&s.at)?{at:s.at,t:`Draft SPK ${s.no} · ${esc(s.customer)}`,by:s.by}:null;if(ev)fe.push({at:ev.at,ic:'spk',cls:'',t:ev.t,m:`${esc(s.lead||'')}${s.due?' · estimasi kirim '+fd(s.due):''} · ${who(ev.by)}`})});
- S.bongkar.forEach(b=>fe.push({at:b.updAt||b.at,ic:'dock',cls:b.status==='Selesai'?'ok':'warn',t:`${esc(b.jenis)} ${esc(b.muatan)} · ${esc(b.nopol||'')} (${esc(b.status)})`,m:`${esc(b.pihak||'')} · ${who(b.updAt?b.updBy:b.by)}`}));
+ S.mutasi.forEach(m=>{if(!vis(m.gudang==='rm'?'bahan-baku':m.gudang==='sp'?'sparepart':'barang-jadi'))return;const it=byId(m.gudang,m.item);const lbl=m.gudang==='rm'?rmLabel(it):m.gudang==='sp'?spLabel(it):fgLabel(it);fe.push({at:m.at,ic:m.jenis==='masuk'?'inb':m.jenis==='keluar'?'outb':'chk',cls:m.jenis==='masuk'?'ok':m.jenis==='keluar'?'':'warn',t:`${MVL[m.jenis]||m.jenis} ${m.delta>0?'+':''}${n(m.delta)} · ${esc(lbl)}`,m:`${m.gudang==='rm'?'Gudang bahan baku':m.gudang==='sp'?'Gudang sparepart':'Gudang barang jadi'}${m.ref?' · '+esc(m.ref):''} · ${who(m.by)}`})});
+ S.vendor.filter(()=>vis('vendor')).forEach(v=>fe.push({at:v.updAt||v.at,ic:'vendor',cls:'warn',t:`${v.updAt?'Terima kembali dari':'Kirim ke'} ${esc(v.vendor)} · ${esc(spkName(v.spk))}`,m:`${esc(v.noSJ||'')} · ${esc(v.proses||'')} · ${who(v.updAt?v.updBy:v.by)}`,tgl:v.tgl}));
+ S.kirim.filter(()=>vis('pengiriman')).forEach(k=>fe.push({at:k.updAt||k.at,ic:'truck',cls:k.status==='Diterima'?'ok':'',t:`${esc(k.status)} · ${esc(k.customer)}`,m:`${esc(k.noSJ||'')} · ${esc(spkName(k.spk))} · ${who(k.updAt?k.updBy:k.by)}`,tgl:k.tgl}));
+ S.spk.filter(()=>vis('spk')).forEach(s=>{const ev=s.updAt&&s.rev?{at:s.updAt,t:`SPK ${s.no} direvisi (Rev.${s.rev}) · ${esc(s.customer)}`,by:s.updBy}:s.terbitAt?{at:s.terbitAt,t:`SPK ${s.no} terbit · ${esc(s.customer)}`,by:s.terbitBy}:(s.status==='Draft'&&s.at)?{at:s.at,t:`Draft SPK ${s.no} · ${esc(s.customer)}`,by:s.by}:null;if(ev)fe.push({at:ev.at,ic:'spk',cls:'',t:ev.t,m:`${esc(s.lead||'')}${s.due?' · estimasi kirim '+fd(s.due):''} · ${who(ev.by)}`})});
+ S.bongkar.filter(()=>vis('bongkar-muat')).forEach(b=>fe.push({at:b.updAt||b.at,ic:'dock',cls:b.status==='Selesai'?'ok':'warn',t:`${esc(b.jenis)} ${esc(b.muatan)} · ${esc(b.nopol||'')} (${esc(b.status)})`,m:`${esc(b.pihak||'')} · ${who(b.updAt?b.updBy:b.by)}`}));
  fe.sort((a,b)=>((b.at||'')+(b.tgl||'')).localeCompare((a.at||'')+(a.tgl||'')));
  const feH=fe.length?`<div class="feed">${fe.slice(0,14).map(f=>`<div class="fi"><span class="ic ${f.cls}">${ic(f.ic)}</span><div><div class="t">${f.t}</div><div class="m">${f.m}</div></div><time>${f.at&&!f.at.startsWith('2026-10-30T08:00')?ago(f.at):fd(f.tgl||f.at)}</time></div>`).join('')}</div>`:empty('Belum ada aktivitas','Transaksi gudang dan logistik akan muncul di sini begitu dicatat.');
 
@@ -1094,8 +1095,8 @@ async function lapAnalisaCsv(){
  try{await DLS.save({filename:`Laporan-produksi-${by}-${per.sampai}.csv`,data:new Blob([csv],{type:'text/csv'})})}catch(e){if(e.code!=='declined')toast('Gagal mengunduh: '+(e.message||e.code))}
 }
 
-const tabKinerja=()=>segBtns('produksi','tab',produksiAdmin()?[['laporan','Laporan Produksi'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]:[['wc','Work Center'],['laporan','Laporan Produksi'],['progres','Progres WC'],['produk','Produk'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]);
-const tabAdm=f=>{if(produksiAdmin()&&!['laporan','vendor','kirim','rincian'].includes(f.tab))f.tab='laporan'};
+const tabKinerja=()=>segBtns('produksi','tab',(produksiAdmin()?[['laporan','Laporan Produksi'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]:[['wc','Work Center'],['laporan','Laporan Produksi'],['progres','Progres WC'],['produk','Produk'],['vendor','Vendor'],['kirim','Pengiriman'],['rincian','Rincian harian']]).filter(([k])=>k==='vendor'?!!myLevel('vendor'):k==='kirim'?!!myLevel('pengiriman'):true));
+const tabAdm=f=>{if((f.tab==='vendor'&&!myLevel('vendor'))||(f.tab==='kirim'&&!myLevel('pengiriman')))f.tab='laporan';if(produksiAdmin()&&!['laporan','vendor','kirim','rincian'].includes(f.tab))f.tab='laporan'};
 T['produksi']=()=>{const f=F['produksi'];tabAdm(f);if(f.tab==='progres'){const ws=wcInternal();if(!f.pwc||!ws.some(w=>w.nama===f.pwc))f.pwc=(ws[0]||{}).nama||'';return tabKinerja()+'<div class="tb-group"><div class="tb-lbl">Work Centre</div><select class="sel" id="f-pwc" data-act="filtsel" data-view="produksi" data-key="pwc">'+ws.map(w=>'<option'+(f.pwc===w.nama?' selected':'')+'>'+esc(w.nama)+'</option>').join('')+'</select></div><span class="grow"></span><button class="btn ghost" data-act="progcsv">'+ic('dl')+' Unduh CSV</button>'}if(f.tab==='rincian')return tabKinerja()+'<span class="grow"></span>'+T['laporan-produksi']();if(f.tab==='laporan')return tabKinerja()+'<span class="grow"></span><button class="btn ghost" data-act="lapacsv">'+ic('dl')+' Unduh CSV</button>';const per=['wc','produk','kirim'].includes(f.tab)?segBtns('produksi','hari',[['7','7 hari'],['14','14 hari'],['30','30 hari'],['90','90 hari']]):'';return tabKinerja()+per+'<span class="grow"></span>'+(f.tab==='wc'?'<button class="btn ghost" data-act="csv" data-what="prodlog">'+ic('dl')+' CSV Log</button>':'')};
 const _tProdLama=()=>{
  const f=F['produksi']||(F['produksi']={wc:'',p:'aktif'});
@@ -5161,7 +5162,8 @@ function myLevel(m){
  if(!ME_P)return CAN?'ubah':'lihat';
  if(ME_P.role==='admin')return 'ubah';
  if(ME_P.modul&&typeof ME_P.modul==='object')return ME_P.modul[m]||null;
- const md=(ROLES[ME_P.role]||{mods:[]}).mods;return md.includes(m)?'ubah':'lihat'}
+ /* tanpa peta modul pengguna: ikut paket peran (ubah = mods, lihat = lihat); modul di luar paket tidak tampil */
+ const pr=ROLES[ME_P.role];if(!pr)return null;if((pr.mods||[]).includes(m))return 'ubah';return (pr.lihat||[]).includes(m)?'lihat':null}
 const myAnyEdit=()=>ME_P?(ME_P.role==='admin'||MODS.some(([m])=>myLevel(m)==='ubah')):CAN;
 const roleL=r=>(ROLES[r]||{}).l||'Belum terdaftar';
 function myAcc(){
@@ -5348,6 +5350,8 @@ function kpiUser(uid){openDrawer(()=>{
   <h4 class="dh">Aktivitas terbaru</h4>
   ${all.length?`<div class="feed">${all.slice(0,60).map(e=>`<div class="fi"><span class="ic ${/^Batalkan|^Hapus/.test(e.k)?'crit':e.late?'warn':''}">${ic(VIEWS.find(v=>v.id===e.mod)?.ic||'db')}</span><div><div class="t">${esc(e.k)}${e.late?` <span class="chip warn">input telat ${e.late} hari</span>`:''}</div><div class="m">${esc(e.ref||MODL[e.mod]||'')}${e.tgl?' · tgl '+fd(e.tgl):''}</div></div><time>${ago(e.at)}</time></div>`).join('')}</div>${all.length>60?`<div class="note" style="padding:8px 0">+${all.length-60} aktivitas lebih lama</div>`:''}`:empty('Belum ada aktivitas','Aktivitas pengguna ini akan muncul begitu mereka mencatat transaksi.')}`}});}
 /* T9: Laporan satu pintu. Semua angka dihitung dari data yang sama dengan layar lain (calc, mutasi, SPK, surat jalan), jadi selalu cocok. */
+const LAP_MOD={'Produksi':'spk','Pengiriman':'pengiriman','Bahan baku':'bahan-baku','Barang jadi':'barang-jadi','Vendor':'vendor','Sparepart':'sparepart'};
+const lapBolehBag=bag=>!ME_P||myRole()==='admin'||(bag==='Kesehatan data'?false:!!LAP_MOD[bag]&&!!myLevel(LAP_MOD[bag]));
 function ringkasLaporan(p){
  const [a,b]=period(p);const c=calc();const inR=d=>{d=String(d||'').slice(0,10);return d>=a&&d<=b};const R=[];
  const add=(bag,k,v,u,note,href)=>R.push({bag,k,v:Math.round(v*100)/100,u:u||'',note:note||'',href:href||''});
@@ -5392,7 +5396,7 @@ function ringkasLaporan(p){
  add('Kesehatan data','Temuan kritis',I.filter(i=>i.sev>=3).length,'temuan','','cek-data');
  add('Kesehatan data','Perlu perhatian',I.filter(i=>i.sev===2).length,'temuan','','cek-data');
  add('Kesehatan data','Informasi',I.filter(i=>i.sev<2).length,'temuan','','cek-data');
- return R}
+ return R.filter(r=>lapBolehBag(r.bag))}
 T['laporan']=()=>segBtns('laporan','p',[['0','Hari ini'],['7','7 hari'],['30','30 hari'],['bln','Bulan ini'],['90','90 hari']])+'<span class="grow"></span><button class="btn ghost" data-act="ringkascsv">'+ic('dl')+' Unduh CSV</button>';
 B['laporan']=()=>{const f=F['laporan'];const [,,lbl]=period(f.p);const R=ringkasLaporan(f.p);const bags=[...new Set(R.map(r=>r.bag))];
  const nilai=r=>r.u==='kg'&&r.v>=1000?n(Math.round(r.v/10)/100)+' ton':n(r.v)+' '+esc(r.u);
@@ -5472,6 +5476,7 @@ function lapBagianModel(bag,p){
   meta:[['Bagian',bag],['Periode',lbl],['Rentang',tgl(a)+' s/d '+tgl(b)],['Dasar','Data sistem yang sama dengan layar lain; "saat ini" = kondisi sekarang']],tables:T.map(x=>x.rows.length?x:{...x,rows:[['Tidak ada data pada periode atau kondisi ini',...Array(x.cols.length-1).fill('')]]})};
 }
 async function lapBagianUnduh(bag,fmt){
+ if(!lapBolehBag(bag)){toast('Anda tidak punya akses ke laporan '+bag+'.');return}
  try{const m=lapBagianModel(bag,F['laporan'].p);await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
 async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R=ringkasLaporan(f.p);
  await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
