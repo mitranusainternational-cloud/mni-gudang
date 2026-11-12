@@ -5486,11 +5486,14 @@ const mtcRutinList=()=>MTM()?MTM().statusRutin(mtcAll(),today()):[];
 const mtcMesinKenal=nm=>mesinSemua().find(m=>m.nama.toLowerCase()===String(nm||'').trim().toLowerCase());
 /* Foto dokumentasi maintenance (sebelum, sesudah, bukti/nota): disimpan di catatan (foto[]), dikompres seperti foto Bongkar Muat; maksimal 8 per catatan */
 const MT_FOTO_MAKS=8,MT_TAHAP=['Sebelum','Sesudah','Bukti / nota','Lainnya'];
-const mtcFotoInputHtml=(jml)=>'<div class="fld full"><label>Foto dokumentasi (opsional, disarankan: sebelum dan sesudah)</label><div style="display:grid;grid-template-columns:150px 1fr;gap:6px"><select class="sel" name="tahapFoto" id="m-tahapFoto" aria-label="Tahap foto">'+MT_TAHAP.map(x=>'<option'+(x==='Sesudah'?' selected':'')+'>'+x+'</option>').join('')+'</select><input class="inp" type="file" id="m-fotoMtc" accept="image/*" multiple></div><small class="muted">Maksimal '+MT_FOTO_MAKS+' foto per catatan, otomatis dikecilkan. Foto membantu pelacakan dan keabsahan data di kemudian hari.</small></div>';
-async function mtcFotoBaca(form,tahap,lama){
- const el=form&&form.querySelector('input[type=file]');const fl=el?[...(el.files||[])]:[];if(!fl.length)return [];
- if((lama||[]).length+fl.length>MT_FOTO_MAKS)throw new Error('Maksimal '+MT_FOTO_MAKS+' foto per catatan.');
- const out=[];for(const f of fl){const x=await FOTO.baca(f);out.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap:tahap||'Sesudah'})}
+const MT_FOTO_BAGIAN=[['Sebelum','foto_sebelum','Foto SEBELUM perbaikan','kondisi awal atau kerusakan'],['Sesudah','foto_sesudah','Foto SESUDAH perbaikan','hasil setelah dikerjakan'],['Bukti / nota','foto_bukti','Bukti atau nota','nota sparepart, surat jalan, dokumen lain']];
+const mtcFotoInputHtml=()=>'<div class="fld full"><label>Foto dokumentasi (opsional)</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px">'+MT_FOTO_BAGIAN.map(([th,nm,jd,ket])=>'<div style="border:1px solid var(--line);border-radius:8px;padding:8px"><b style="font-size:12px">'+jd+'</b><div class="muted" style="font-size:11px;margin:2px 0 6px">'+ket+'</div><input class="inp" type="file" id="m-'+nm+'" name="'+nm+'" data-tahap="'+th+'" accept="image/*" multiple></div>').join('')+'</div><small class="muted">Maksimal '+MT_FOTO_MAKS+' foto per catatan, otomatis dikecilkan. Foto sebelum dan sesudah membuat riwayat mesin dapat dipertanggungjawabkan.</small></div>';
+async function mtcFotoBaca(form,lama){
+ const els=form?[...form.querySelectorAll('input[type=file][data-tahap]')]:[];const daftar=[];
+ els.forEach(el=>[...(el.files||[])].forEach(f=>daftar.push({f,tahap:el.dataset.tahap})));
+ if(!daftar.length)return [];
+ if((lama||[]).length+daftar.length>MT_FOTO_MAKS)throw new Error('Maksimal '+MT_FOTO_MAKS+' foto per catatan.');
+ const out=[];for(const {f,tahap} of daftar){const x=await FOTO.baca(f);out.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap})}
  return out}
 function mtcFotoModal(id){
  const c=byId('mtc',id);if(!c)return;const fotos=c.foto||[],bisa=canMod('maintenance');
@@ -5498,7 +5501,7 @@ function mtcFotoModal(id){
   '<div class="note full">'+esc(c.jenis||'')+' · '+esc(c.masalah||c.tindakan||'')+' · '+fd(c.tgl)+'</div>'+
   '<div class="full" style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0"><button type="button" class="btn sm" data-act="mtcdokpdf" data-id="'+id+'">'+ic('file')+' Dokumen PDF</button><button type="button" class="btn sm ghost" data-act="mtcdokxls" data-id="'+id+'">'+ic('dl')+' Excel</button></div>'+
   (fotos.length?'<div class="full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">'+fotos.map((x,i)=>'<figure style="margin:0;border:1px solid var(--line);border-radius:8px;padding:6px"><img src="'+x.data+'" alt="Foto maintenance '+(i+1)+'" loading="lazy" style="width:100%;border-radius:6px;display:block"><figcaption style="font-size:11px;margin-top:4px">'+(bisa?'<select class="sel" data-act="mtcfototahap" data-id="'+id+'" data-fid="'+x.id+'" style="width:100%;margin-bottom:4px">'+MT_TAHAP.map(t=>'<option'+(t===(x.tahap||'Sesudah')?' selected':'')+'>'+t+'</option>').join('')+'</select><input class="inp" data-act="mtcfotoket" data-id="'+id+'" data-fid="'+x.id+'" placeholder="Keterangan" value="'+esc(x.ket||'')+'" style="width:100%"><button type="button" class="btn sm ghost" data-act="mtcfotodel" data-id="'+id+'" data-fid="'+x.id+'" style="margin-top:4px">Hapus</button>':'<b>'+esc(x.tahap||'')+'</b> '+esc(x.ket||''))+'<div class="muted">'+new Date(x.at).toLocaleString('id-ID')+'</div></figcaption></figure>').join('')+'</div>':'<div class="full note">Belum ada foto. Tambahkan foto sebelum dan sesudah perbaikan, serta nota atau bukti penggantian sparepart.</div>')+
-  (bisa?'<div class="fld full" style="margin-top:10px"><label>Tambah foto</label><div style="display:grid;grid-template-columns:150px 1fr;gap:6px"><select class="sel" id="mtc-tahap-baru">'+MT_TAHAP.map(x=>'<option'+(x==='Sesudah'?' selected':'')+'>'+x+'</option>').join('')+'</select><input class="inp mtc-foto-in" type="file" accept="image/*" multiple data-id="'+id+'"></div></div>':''),
+  (bisa?'<div class="fld full" style="margin-top:10px"><label>Tambah foto</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">'+MT_FOTO_BAGIAN.map(([th,nm,jd])=>'<div><div style="font-size:12px;font-weight:700;margin-bottom:4px">'+jd+'</div><input class="inp mtc-foto-in" type="file" accept="image/*" multiple data-id="'+id+'" data-tahap="'+th+'"></div>').join('')+'</div></div>':''),
   async()=>{},{submit:'Tutup',done:' '});
 }
 async function mtcFotoTambah(id,files,tahap){
@@ -5512,7 +5515,7 @@ async function mtcFotoHapus(id,fid){const c=byId('mtc',id);if(!c)return;if(!conf
 document.addEventListener('change',async e=>{const el=e.target;if(!el||!el.dataset)return;
  if(el.dataset.act==='mtcfotoket'){await mtcFotoUbah(el.dataset.id,el.dataset.fid,{ket:el.value.trim()});return}
  if(el.dataset.act==='mtcfototahap'){await mtcFotoUbah(el.dataset.id,el.dataset.fid,{tahap:el.value});return}
- if(el.classList&&el.classList.contains('mtc-foto-in')){const fl=[...(el.files||[])],id=el.dataset.id,th=(document.getElementById('mtc-tahap-baru')||{}).value;el.value='';if(fl.length)await mtcFotoTambah(id,fl,th)}});
+ if(el.classList&&el.classList.contains('mtc-foto-in')){const fl=[...(el.files||[])],id=el.dataset.id,th=el.dataset.tahap;el.value='';if(fl.length)await mtcFotoTambah(id,fl,th)}});
 function mtcDokModel(id){
  const c=byId('mtc',id),M=MTM(),tgl=d=>d?fdS(String(d).slice(0,10)):'';
  return {kind:'lpp',title:'Laporan Maintenance',no:c.no||'',date:c.tgl,landscape:false,file:'Maintenance-'+String(c.no||'').replace(/[^A-Za-z0-9]+/g,'-'),
@@ -5521,16 +5524,17 @@ function mtcDokModel(id){
   tables:[{title:'Uraian',cols:[['Bidang',28,'l'],['Isi',90,'l']],rows:[['Tanggal',tgl(c.tgl)],['Masalah / tugas',c.masalah||'-'],['Tindakan yang dikerjakan',c.tindakan||'-'],['Jam mulai - selesai',(c.mulai?String(c.mulai).slice(11,16):'-')+' - '+(c.selesai?String(c.selesai).slice(11,16):'-')],['Biaya di luar sparepart (Rp)',c.biaya?n(c.biaya):'-'],['Jumlah foto',String((c.foto||[]).length)]]},
    {title:'Sparepart diganti',cols:[['Sparepart',60,'l'],['Qty',20,'r'],['Dokumen gudang',38,'l']],rows:(c.parts||[]).length?c.parts.map(p=>[p.nama||'',p.q,p.noDok||'']):[['Tidak ada sparepart yang diganti','','']]}]}}
 async function mtcDokUnduh(id,fmt){try{const m=mtcDokModel(id);await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
-function mtcPartsHtml(jml){
+let MTC_OPSI_SP='';
+const mtcPartBaris=i=>'<div class="mtc-part" style="display:grid;grid-template-columns:1fr 110px 36px;gap:6px;margin-bottom:6px"><select class="sel" name="sp_'+i+'" id="m-sp_'+i+'">'+MTC_OPSI_SP+'</select><input class="inp" type="number" min="0" step="any" name="q_'+i+'" id="m-q_'+i+'" placeholder="Qty" inputmode="decimal"><button type="button" class="btn sm ghost" data-act="mtcpartdel" aria-label="Hapus baris sparepart" title="Hapus baris">×</button></div>';
+function mtcPartsHtml(){
  if(!canMod('sparepart'))return '<div class="full note">Anda tidak punya hak mengeluarkan sparepart. Catat maintenance tanpa sparepart; petugas Gudang Sparepart dapat mengeluarkan sparepart untuk mesin ini di Gudang Sparepart.</div>';
  const I=Object.values(spCalc()).filter(x=>spOn(x.r)).sort((a,b)=>spLabel(a.r).localeCompare(spLabel(b.r)));
- const opts='<option value="">Pilih sparepart…</option>'+I.map(x=>`<option value="${x.r._id}">${esc(spLabel(x.r))} — stok ${n(x.stok)}${x.r.satuan?' '+esc(x.r.satuan):''}</option>`).join('');
- let h='<div class="full"><div class="note" style="margin-bottom:4px">Sparepart yang diganti atau dipakai (otomatis keluar dari Gudang Sparepart)</div>';
- for(let i=0;i<jml;i++)h+=`<div style="display:grid;grid-template-columns:1fr 110px;gap:6px;margin-bottom:6px"><select class="sel" name="sp_${i}" id="m-sp_${i}">${opts}</select><input class="inp" type="number" min="0" step="any" name="q_${i}" id="m-q_${i}" placeholder="Qty" inputmode="decimal"></div>`;
- return h+'</div>'}
-function mtcPartsBaca(d,jml){
+ MTC_OPSI_SP='<option value="">Pilih sparepart…</option>'+I.map(x=>'<option value="'+x.r._id+'">'+esc(spLabel(x.r))+' — stok '+n(x.stok)+(x.r.satuan?' '+esc(x.r.satuan):'')+'</option>').join('');
+ return '<div class="full"><div class="note" style="margin-bottom:4px">Sparepart yang diganti atau dipakai (otomatis keluar dari Gudang Sparepart). Kosongkan bila tidak ada.</div><div id="mtc-parts" data-n="1">'+mtcPartBaris(0)+'</div><button type="button" class="btn sm" data-act="mtcpartadd">+ Tambah sparepart</button></div>'}
+function mtcPartTambah(btn){const w=btn.closest('.full')&&btn.closest('.full').querySelector('#mtc-parts');if(!w)return;const i=+w.dataset.n||0;if(i>=30){toast('Maksimal 30 baris sparepart.');return}w.dataset.n=i+1;w.insertAdjacentHTML('beforeend',mtcPartBaris(i))}
+function mtcPartsBaca(d){
  const out=[],R=spCalc(),tot={};
- for(let i=0;i<jml;i++){const id=d['sp_'+i],q=num0(d['q_'+i]);if(!id&&!(q>0))continue;
+ for(let i=0;i<30;i++){if(!(('sp_'+i) in d)&&!(('q_'+i) in d))continue;const id=d['sp_'+i],q=num0(d['q_'+i]);if(!id&&!(q>0))continue;
   if(!id)throw new Error('Pilih sparepart untuk baris '+(i+1)+'.');if(!(q>0))throw new Error('Isi qty untuk '+spLabel(byId('sp',id))+'.');
   tot[id]=(tot[id]||0)+q;const x=R[id];if(x&&tot[id]>x.stok)throw new Error(spLabel(x.r)+': qty '+n(tot[id])+' melebihi stok '+n(x.stok)+'.');
   out.push({sp:id,q})}
@@ -5565,7 +5569,7 @@ function mtcForm(pre){
   mtcPartsHtml(4)+mtcFotoInputHtml()+`<input type="hidden" name="rutin" value="${esc(pre.rutin||'')}">`,
   async (d,form)=>{
    const mesin=cleanName(d.mesin);if(!mesin)throw new Error('Isi nama mesin.');
-   const foto=await mtcFotoBaca(form,d.tahapFoto,[]);
+   const foto=await mtcFotoBaca(form,[]);
    const tgl=d.tgl||today();if(tgl>today())throw new Error('Tanggal tidak boleh di masa depan.');
    const masalah=String(d.masalah||'').trim(),tindakan=String(d.tindakan||'').trim();if(!masalah&&!tindakan)throw new Error('Isi masalah atau tindakan.');
    const parts=mtcPartsBaca(d,4);
@@ -5589,7 +5593,7 @@ function mtcSelesaiForm(id){
   fld('Jam selesai',inp('selesai','','time'))+fld('Lama mesin berhenti (menit)',inp('downtime',c.downtime||'','number','min="0" step="any" inputmode="decimal"'))+
   mtcPartsHtml(3)+mtcFotoInputHtml(),
   async (d,form)=>{
-   const parts=mtcPartsBaca(d,3);const fotoBaru=await mtcFotoBaca(form,d.tahapFoto,c.foto||[]);const tindakan=String(d.tindakan||'').trim();if(!tindakan)throw new Error('Isi tindakan yang dikerjakan.');
+   const parts=mtcPartsBaca(d,3);const fotoBaru=await mtcFotoBaca(form,c.foto||[]);const tindakan=String(d.tindakan||'').trim();if(!tindakan)throw new Error('Isi tindakan yang dikerjakan.');
    const tg=c.tgl||today();const selesai=d.selesai?tg+'T'+d.selesai+':00':(c.selesai||'');
    const ket=('Maintenance '+c.jenis+': '+(c.masalah||tindakan)).slice(0,140);
    const pk=await mtcKeluarkanParts({no:c.no,tgl:today(),mesin:c.mesin,wc:c.wc,teknisi:c.teknisi,ket,parts});
@@ -6632,7 +6636,7 @@ document.addEventListener('click',async e=>{
   case 'papanbuka':{F.mesin.wc=ds.wc;F.mesin.mesin='';lsSet('mni-wc',ds.wc);lsSet('mni-mesin','');location.hash='mesin';break}
   case 'mrstep':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){const mx=q.max===''?Infinity:+q.max;const v=Math.max(0,Math.min(mx,(+q.value||0)+(+ds.d)));q.value=String(Math.round(v*1000)/1000);mrLabel(q.closest('.mesin-run'))}break}
   case 'mesinsemua':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){q.value=ds.max;mrLabel(q.closest('.mesin-run'))}break}
-  case 'lapbag':await lapBagianUnduh(ds.bag,ds.fmt);break;case 'mtcnew':mtcForm();break;case 'mtcrutinnew':mtcRutinForm();break;case 'mtcselesai':mtcSelesaiForm(ds.id);break;case 'mtcbatal':await mtcBatal(ds.id);break;case 'mtckerjakan':{const r=byId('mtc',ds.id);if(r)mtcForm({jenis:'Preventif',mesin:r.mesin,masalah:r.tugas,rutin:r._id,status:'Selesai'})}break;case 'mtcrutinoff':try{await updDoc('mtc',ds.id,{aktif:false});toast('Jadwal rutin dinonaktifkan')}catch(e){toast(e.message||String(e))}break;case 'mtcmesin':F.maintenance.mesin=ds.m;renderBody();break;case 'mtcfoto':mtcFotoModal(ds.id);break;case 'mtcfotodel':await mtcFotoHapus(ds.id,ds.fid);break;case 'mtcdokpdf':await mtcDokUnduh(ds.id,'pdf');break;case 'mtcdokxls':await mtcDokUnduh(ds.id,'xlsx');break;case 'mtcpdf':await mtcUnduh('pdf');break;case 'mtcxls':await mtcUnduh('xlsx');break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
+  case 'lapbag':await lapBagianUnduh(ds.bag,ds.fmt);break;case 'mtcnew':mtcForm();break;case 'mtcrutinnew':mtcRutinForm();break;case 'mtcselesai':mtcSelesaiForm(ds.id);break;case 'mtcbatal':await mtcBatal(ds.id);break;case 'mtckerjakan':{const r=byId('mtc',ds.id);if(r)mtcForm({jenis:'Preventif',mesin:r.mesin,masalah:r.tugas,rutin:r._id,status:'Selesai'})}break;case 'mtcrutinoff':try{await updDoc('mtc',ds.id,{aktif:false});toast('Jadwal rutin dinonaktifkan')}catch(e){toast(e.message||String(e))}break;case 'mtcmesin':F.maintenance.mesin=ds.m;renderBody();break;case 'mtcpartadd':mtcPartTambah(el);break;case 'mtcpartdel':{const r=el.closest('.mtc-part');if(r){const w=r.parentElement;if(w.children.length>1)r.remove();else{const s=r.querySelector('select'),q=r.querySelector('input');if(s)s.value='';if(q)q.value=''}}}break;case 'mtcfoto':mtcFotoModal(ds.id);break;case 'mtcfotodel':await mtcFotoHapus(ds.id,ds.fid);break;case 'mtcdokpdf':await mtcDokUnduh(ds.id,'pdf');break;case 'mtcdokxls':await mtcDokUnduh(ds.id,'xlsx');break;case 'mtcpdf':await mtcUnduh('pdf');break;case 'mtcxls':await mtcUnduh('xlsx');break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
   case 'progcsv':await progCsv();break;
   case 'lapacsv':await lapAnalisaCsv();break;
   case 'lapprint':lapPrint();break;

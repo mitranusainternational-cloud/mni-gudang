@@ -135,15 +135,17 @@ export async function runMaintenance(page, base) {
       const w = (ms) => new Promise((x) => setTimeout(x, ms)); const o = {};
       const bikin = (warna) => new Promise((res) => { const cv = document.createElement('canvas'); cv.width = 640; cv.height = 480; const cx = cv.getContext('2d'); cx.fillStyle = warna; cx.fillRect(0, 0, 640, 480); cx.fillStyle = '#fff'; cx.fillText('uji', 20, 20); cv.toBlob((b) => res(new File([b], 'uji-' + warna.slice(1) + '.png', { type: 'image/png' })), 'image/png'); });
       mtcForm({ jenis: 'Korektif', mesin: 'Foto Uji 1', masalah: 'Bocor', tindakan: 'Ganti seal', status: 'Selesai' }); await w(500);
-      const dt = new DataTransfer(); dt.items.add(await bikin('#aa3333')); dt.items.add(await bikin('#33aa33'));
-      const inp = document.getElementById('m-fotoMtc'); inp.files = dt.files; document.getElementById('m-tahapFoto').value = 'Sebelum';
+      o.baris0 = document.querySelectorAll('#mtc-parts .mtc-part').length; document.querySelector('[data-act="mtcpartadd"]').click(); document.querySelector('[data-act="mtcpartadd"]').click(); o.baris2 = document.querySelectorAll('#mtc-parts .mtc-part').length; document.querySelectorAll('#mtc-parts [data-act="mtcpartdel"]')[2].click(); o.baris3 = document.querySelectorAll('#mtc-parts .mtc-part').length;
+      o.bagian = ['foto_sebelum', 'foto_sesudah', 'foto_bukti'].every((n) => !!document.getElementById('m-' + n));
+      const dt = new DataTransfer(); dt.items.add(await bikin('#aa3333')); dt.items.add(await bikin('#33aa33')); const dt1 = new DataTransfer(); dt1.items.add(await bikin('#3333aa'));
+      document.getElementById('m-foto_sebelum').files = dt.files; document.getElementById('m-foto_sesudah').files = dt1.files;
       document.getElementById('msub').click(); await w(2500);
-      const c = S.mtc.find((x) => x.mesin === 'Foto Uji 1'); o.n1 = (c.foto || []).length; o.tahap = (c.foto || []).map((f) => f.tahap).join(); o.data = (c.foto || [])[0] && c.foto[0].data.startsWith('data:image/jpeg');
-      mtcFotoModal(c._id); await w(500); o.galeri = document.querySelectorAll('#modal figure img').length; o.tombol = !!document.querySelector('[data-act="mtcdokpdf"]');
-      const dt2 = new DataTransfer(); dt2.items.add(await bikin('#3333aa')); const tambah = document.querySelector('.mtc-foto-in'); document.getElementById('mtc-tahap-baru').value = 'Bukti / nota'; tambah.files = dt2.files; tambah.dispatchEvent(new Event('change', { bubbles: true })); await w(2000);
-      const c2 = byId('mtc', c._id); o.n2 = (c2.foto || []).length; o.tahap2 = c2.foto[2] && c2.foto[2].tahap;
+      const c = S.mtc.find((x) => x.mesin === 'Foto Uji 1'); o.n1 = (c.foto || []).length; o.tahap = (c.foto || []).map((f) => f.tahap).sort().join(); o.data = (c.foto || [])[0] && c.foto[0].data.startsWith('data:image/jpeg');
+      mtcFotoModal(c._id); await w(500); o.galeri = document.querySelectorAll('#modal figure img').length; o.tambah3 = document.querySelectorAll('#modal .mtc-foto-in').length; o.tombol = !!document.querySelector('[data-act="mtcdokpdf"]');
+      const dt2 = new DataTransfer(); dt2.items.add(await bikin('#3333aa')); const tambah = document.querySelector('.mtc-foto-in[data-tahap="Bukti / nota"]'); tambah.files = dt2.files; tambah.dispatchEvent(new Event('change', { bubbles: true })); await w(2000);
+      const c2 = byId('mtc', c._id); o.n2 = (c2.foto || []).length; o.tahap2 = c2.foto[3] && c2.foto[3].tahap;
       await mtcFotoUbah(c._id, c2.foto[0].id, { ket: 'sebelum diganti' }); await w(500); o.ket = byId('mtc', c._id).foto[0].ket;
-      const lebih = new DataTransfer(); for (let i = 0; i < 7; i++) lebih.items.add(await bikin('#aaaa33')); const ed = document.querySelector('.mtc-foto-in'); if (ed) { ed.files = lebih.files; ed.dispatchEvent(new Event('change', { bubbles: true })); await w(1500); }
+      const lebih = new DataTransfer(); for (let i = 0; i < 7; i++) lebih.items.add(await bikin('#aaaa33')); const ed = document.querySelector('.mtc-foto-in[data-tahap="Sesudah"]'); if (ed) { ed.files = lebih.files; ed.dispatchEvent(new Event('change', { bubbles: true })); await w(1500); }
       o.batas = (byId('mtc', c._id).foto || []).length; closeModal();
       const m = mtcDokModel(c._id); const pdf = await docPdf(m); const xl = await docXlsx(m); const m0 = mtcDokModel(S.mtc.find((x) => x.kind === 'catat' && !(x.foto || []).length)._id); const pdf0 = await docPdf(m0);
       o.dok = { foto: m.foto.length, pdf: (pdf.byteLength || pdf.size || pdf.length), pdf0: (pdf0.byteLength || pdf0.size || pdf0.length), xlsx: (xl.byteLength || xl.size || xl.length) > 5000 };
@@ -151,7 +153,7 @@ export async function runMaintenance(page, base) {
       o.cek = issues().filter((i) => i.cat === 'Maintenance').map((i) => i.title.replace(/<[^>]+>/g, '')).filter((x) => /tanpa foto/.test(x));
       return o;
     });
-    ok('MT-11 foto dokumentasi: unggah saat mencatat (dua foto Sebelum, terkompres JPEG), galeri dengan tahap dan keterangan, tambah foto bukti, batas 8 foto, dokumen PDF dan Excel per catatan memuat foto, KPI dan Cek Data memakai kelengkapan foto', r11.n1 === 2 && r11.tahap === 'Sebelum,Sebelum' && r11.data && r11.galeri === 2 && r11.tombol && r11.n2 === 3 && r11.tahap2 === 'Bukti / nota' && r11.ket === 'sebelum diganti' && r11.batas === 3 && r11.dok.foto === 3 && r11.dok.pdf > r11.dok.pdf0 && r11.dok.xlsx && r11.rs[0] >= 1 && r11.rs[1] === 3 && r11.cek.length === 1, JSON.stringify(r11));
+    ok('MT-11 sparepart ditambah lewat tombol (bukan baris tetap) dan foto dokumentasi terpisah Sebelum, Sesudah, Bukti: unggah saat mencatat (dua Sebelum, satu Sesudah, terkompres JPEG), galeri dengan tahap dan keterangan, tambah foto bukti, batas 8 foto, dokumen PDF dan Excel per catatan memuat foto, KPI dan Cek Data memakai kelengkapan foto', r11.baris0 === 1 && r11.baris2 === 3 && r11.baris3 === 2 && r11.bagian && r11.n1 === 3 && r11.tahap === 'Sebelum,Sebelum,Sesudah' && r11.data && r11.galeri === 3 && r11.tambah3 === 3 && r11.tombol && r11.n2 === 4 && r11.tahap2 === 'Bukti / nota' && r11.ket === 'sebelum diganti' && r11.batas === 4 && r11.dok.foto === 4 && r11.dok.pdf > r11.dok.pdf0 && r11.dok.xlsx && r11.rs[0] >= 1 && r11.rs[1] === 4 && r11.cek.length === 1, JSON.stringify(r11));
 
     ok('MT-99 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   } catch (e) {

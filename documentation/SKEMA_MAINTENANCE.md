@@ -39,14 +39,14 @@ Jatuh tempo = catatan Selesai terakhir untuk jadwal itu + interval (atau `mulai`
 
 ## Tautan ke Gudang Sparepart
 
-1. Form Catat maintenance memilih sparepart dan qty dari daftar Gudang Sparepart (stok terlihat, tidak boleh melebihi stok).
+1. Form Catat maintenance memilih sparepart dan qty dari daftar Gudang Sparepart; baris ditambah dengan tombol **Tambah sparepart** (tidak ada jumlah baris tetap), stok terlihat, dan qty tidak boleh melebihi stok.
 2. Saat disimpan, tiap baris membuat mutasi: `gudang sp`, `jenis keluar`, `tujuan mesin`, `mesin`, `ref MTC/...`, `pihak` mesin.
 3. Stok sparepart berkurang, tab Pemakaian mesin dan Riwayat mutasi di Gudang Sparepart langsung menampilkan pemakaian itu, dan rencana pembelian ikut menghitungnya.
 4. Membatalkan catatan membuat mutasi koreksi (mutasi tidak dihapus permanen, aturan migration 13) dan mengembalikan stok.
 
 ## Foto dan dokumen
 
-- Setiap catatan bisa diberi foto **sebelum**, **sesudah**, dan **bukti atau nota** penggantian sparepart, lengkap dengan waktu dan pengunggah; keterangan dan tahap bisa diedit, foto bisa dihapus (hanya yang berhak mengubah).
+- Setiap catatan punya **tiga bagian foto terpisah** di form: **Foto SEBELUM perbaikan**, **Foto SESUDAH perbaikan**, dan **Bukti atau nota** (nota sparepart, surat jalan, dokumen lain), lengkap dengan waktu dan pengunggah; keterangan dan tahap bisa diedit, foto bisa dihapus (hanya yang berhak mengubah).
 - Tombol **Foto** di tiap catatan membuka galeri dan unduhan **dokumen PDF atau Excel per catatan** (uraian, sparepart diganti, dan lampiran foto), memakai mesin dokumen yang sama dengan lampiran foto Bongkar Muat.
 - Foto disimpan di catatan (JSONB `data.foto`, mode inline seperti Bongkar Muat); untuk Supabase, penyimpanan ke bucket privat mengikuti draf migration 23 saat bucket dipasang.
 - Keabsahan data: KPI **Berdokumentasi foto**, kolom Foto di laporan Excel dan PDF, dan Cek Data **maintenance selesai tanpa foto dokumentasi**.
