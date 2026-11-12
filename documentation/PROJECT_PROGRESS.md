@@ -966,3 +966,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Hasil:** skema, modul, jadwal rutin, akumulasi (hari sampai selamanya), per mesin dan MTBF, sparepart diganti terhubung ke stok Gudang Sparepart, Cek Data, PDF dan Excel.
 - **Bukti:** `verified in browser` (mock); unit M-01..M-09, e2e MT-01..MT-10. [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]].
 - **Hambatan:** tabel `mtc` baru hanya draf migration (butuh persetujuan pemilik untuk Supabase dev); belum diuji login nyata.
+
+### 2026-11-12 · Migration Maintenance (24) dan hak modul ketat (25) disiapkan
+- **Hasil:** kedua migration siap diterapkan beserta berkas pembatalan dan rencana bertahap; ditemukan dan diperbaiki celah `can_any()` (Viewer bisa mencatat setelah baris hak lihat ditambahkan); pengaman otomatis terhadap pengguna yang akan kehilangan akses. [[documentation/RENCANA_MIGRATION_MAINTENANCE_DAN_HAK|RENCANA_MIGRATION_MAINTENANCE_DAN_HAK]].
+- **Bukti:** `source-level` (SQL ditinjau manual; tidak ada psql lokal; definisi `mod_level()` dan `table_stamps()` production dibaca saja dan sama dengan migration 11). Belum diterapkan ke Supabase mana pun.
+- **Langkah berikut:** perintah pemilik untuk menerapkan (cakupan: 24 saja atau 24 dan 25, project production, uji di cabang atau langsung), lalu verifikasi per peran dan rilis kode lewat PR.
