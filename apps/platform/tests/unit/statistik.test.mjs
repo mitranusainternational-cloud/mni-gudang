@@ -1,5 +1,5 @@
 // Uji statistik Laporan Produksi.  node tests/unit/statistik.test.mjs
-import { periodeRentang, kelompokkan, totalPeriode, butirOtomatis, tren, akumulasi, klasifikasi, pohonProduk } from '../../src/lib/produksi/statistik.js';
+import { periodeRentang, kelompokkan, totalPeriode, butirOtomatis, tren, akumulasi, klasifikasi, pohonProduk, rincianProduk, bentukDari } from '../../src/lib/produksi/statistik.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -60,7 +60,7 @@ ok('S-24 data setelah tanggal acuan tidak ikut', akumulasi(kej, { by: 'operator'
 
 // Klasifikasi dan pohon produk (kelompok, type, material)
 const kl = (j, d, m) => klasifikasi(j, d, m);
-ok('S-25 klasifikasi Cable Tray: type, finishing, material', eq(kl('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray W100', 'spcc'), { kelompok: 'Cable Tray', induk: '', tipe: 'STU', finishing: 'ELG', material: 'SPCC' }));
+ok('S-25 klasifikasi Cable Tray: type, finishing, material', eq(kl('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray W100', 'spcc'), { kelompok: 'Cable Tray', induk: '', tipe: 'STU', finishing: 'ELG', material: 'SPCC', produk: 'CABLE TRAY', bentuk: 'Straight' }));
 ok('S-26 Cable Ladder dan Cable Duct dikenali; non finishing disebut', kl('CABLE LADDER TYPE SLW 2.0 HOTDIP GALVANIZED', 'x', '').kelompok === 'Cable Ladder' && kl('CABLE LADDER TYPE SLW 2.0 HOTDIP GALVANIZED', 'x', '').tipe === 'SLW' && kl('CABLE DUCT TYPE STU 1.5 NON FINISHING', 'x', 'SS304').finishing === 'Non finishing' && kl('CABLE DUCT TYPE STU 1.5 NON FINISHING', 'x', '').kelompok === 'Cable Duct');
 ok('S-27 aksesoris dikenali dari judul ACCS (dengan induknya) atau dari deskripsi', kl('ACCS LADDER TYPE SLW 2.0 HOTDIP GALVANIZED', 'Horizontal Elbow', '').kelompok === 'Aksesoris' && kl('ACCS LADDER TYPE SLW 2.0 HOTDIP GALVANIZED', 'Horizontal Elbow', '').induk === 'Ladder' && kl('', 'Clamp Hanger 20', '').kelompok === 'Aksesoris');
 ok('S-28 cover tidak tertukar dengan cable tray', kl('COVER CABLE TRAY 1.2 ELECTRO', 'Cover 200', '').kelompok === 'Cover' && kl('', 'sesuatu', '').kelompok === 'Lainnya');
@@ -78,6 +78,24 @@ ok('S-32 material tanpa finishing hanya menyebut material; kelompok bisa dipakai
 const akk = akumulasi(kp, { by: 'kelompok', sampai: '2026-11-04' });
 ok('S-33 akumulasi per kelompok produk dan per type', akk.baris.find((x) => x.nama === 'Cable Tray').hari.qty === 180 && akk.baris.find((x) => x.nama === 'Cable Tray').total.qty === 1179 && akumulasi(kp, { by: 'tipe', sampai: '2026-11-04' }).baris.find((x) => x.nama === 'SLW').hari.qty === 80);
 ok('S-34 kelompokkan per kelompok dan per material', kelompokkan(kp, { dari: '2026-11-01', sampai: '2026-11-04', by: 'kelompok' })[0].nama === 'Cable Tray' && kelompokkan(kp, { dari: '2026-11-01', sampai: '2026-11-04', by: 'material' }).some((x) => x.nama === 'SS304'));
+
+// Laporan per jenis produk (permintaan pemilik 2026-11-12): triwulan, bentuk, tebal, finishing, tonase aktual dan estimasi
+const evk = (kls, d, qty, ton, est, extra = {}) => ({ jenis: 'hasil', tgl: '2026-10-15', item_desc: d, qty, tonase: ton, tonaseEst: est, reject: 0, ...kls, ...extra });
+const kA = (j, d, m) => ({ ...klasifikasi(j, d, m), tebal: '1.2' });
+const evs2 = [
+  evk(kA('CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray W200xH50xL3000', 'SPHC'), 'Cable Tray W200xH50xL3000', 100, 1500, 1650),
+  evk(kA('CABLE TRAY TYPE STC 1.2 ELECTRO GALVANIZED', 'Cable Tray W100xH50xL3000', 'SPHC'), 'Cable Tray W100xH50xL3000', 40, 400, 440),
+  evk(kA('ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray Elbow W200xH50xR300', 'SPHC'), 'Cable Tray Elbow W200xH50xR300', 30, 150, 165),
+  evk(kA('ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray Tee W1200xW2200xW3200xH50xR300', 'SPHC'), 'Cable Tray Tee W200', 10, 80, 88),
+  evk(kA('OTHER SUPPORT TYPE STU 1.2 ELECTRO GALVANIZED', 'Hanger Beam W200', 'SPHC'), 'Hanger Beam W200', 500, 125, 130),
+];
+const rp = rincianProduk(evs2, { dari: '2026-10-01', sampai: '2026-12-31' });
+ok('S-60 rincian produk: Cable Tray per type (STU dan STC terpisah), Aksesoris per bentuk (Elbow, Tee), Other Support (Hanger Beam), total qty dan tonase aktual', rp.baris.length === 5 && rp.total.qty === 680 && rp.total.tonase === 2255 && rp.total.tonaseEst === 2473 && rp.baris.some((r) => r.kelompok === 'Cable Tray' && r.tipe === 'STC' && r.qty === 40) && rp.baris.some((r) => r.bentuk === 'Elbow' && r.finishing === 'ELG') && rp.baris.some((r) => r.bentuk === 'Hanger Beam' && r.produk === 'OTHER SUPPORT' && r.qty === 500), JSON.stringify(rp.total));
+ok('S-61 urutan rincian mengikuti kelompok: Cable Tray dulu, Aksesoris, lalu Other Support (kelompok Aksesoris)', rp.baris[0].kelompok === 'Cable Tray' && rp.baris[rp.baris.length - 1].produk === 'OTHER SUPPORT', rp.baris.map((r) => r.kelompok + '/' + r.bentuk).join(', '));
+ok('S-62 periode triwulan berjalan dan triwulan lalu (lintas tahun benar)', eq(periodeRentang('triwulan', '2026-11-12'), { dari: '2026-10-01', sampai: '2026-11-12', label: 'Triwulan IV 2026 (berjalan)' }) && eq(periodeRentang('triwulanlalu', '2026-11-12'), { dari: '2026-07-01', sampai: '2026-09-30', label: 'Triwulan III 2026' }) && periodeRentang('triwulanlalu', '2026-02-03').dari === '2025-10-01' && periodeRentang('triwulanlalu', '2026-02-03').sampai === '2025-12-31');
+ok('S-63 bentuk dari deskripsi: Elbow, Inside Riser, Tee, Hanger Beam, Cover Elbow, Straight, Perforated', bentukDari('Cable Tray Elbow W1', 'Aksesoris', 'ACCS TRAY') === 'Elbow' && bentukDari('Cable Ladder Inside Riser W1', 'Aksesoris', 'ACCS LADDER') === 'Inside Riser' && bentukDari('Hanger Beam W1', 'Aksesoris', 'OTHER SUPPORT') === 'Hanger Beam' && bentukDari('Cover Elbow W1', 'Cover', 'COVER LADDER') === 'Cover Elbow' && bentukDari('Cable Duct W1xH2xL3', 'Cable Duct', 'CABLE DUCT') === 'Straight' && bentukDari('Perforated Cable Tray W1', 'Cable Tray', 'PERFORATED CABLE TRAY') === 'Perforated (straight)');
+const pb = pohonProduk(evs2, { dari: '2026-10-01', sampai: '2026-12-31', sumbu: ['kelompok', 'bentuk', 'tipe'] });
+ok('S-64 pohon produk dengan sumbu bentuk: Aksesoris > Elbow > STU', pb.some((r) => r.depth === 0 && r.nama === 'Aksesoris') && pb.some((r) => r.depth === 1 && r.nama === 'Elbow') && pb.some((r) => r.jalur === 'Aksesoris > Elbow > STU'), pb.map((r) => r.jalur).join(' | '));
 
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n')); console.log(`${R.length - fail} PASS, ${fail} FAIL`); process.exit(fail ? 1 : 0);

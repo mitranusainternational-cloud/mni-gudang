@@ -42,7 +42,7 @@ export async function runMasterData(page, base) {
     // MD-03 Aturan section memuat semua produk dari Opsi SPK (bukan hanya tujuh produk bawaan kode)
     await tab('aturan');
     const prod3 = await page.evaluate(() => [...new Set([...document.querySelectorAll('input[data-ar]')].map((c) => c.dataset.ar.split('|')[0]))]);
-    ok('MD-03 Aturan section memuat SUPPORT TRAY dan WIREMESH CABLE TRAY dari Opsi SPK', prod3.includes('SUPPORT TRAY') && prod3.includes('WIREMESH CABLE TRAY') && prod3.includes('CABLE TRAY'), JSON.stringify(prod3));
+    ok('MD-03 Aturan section memuat 11 section bawaan dari Opsi SPK (termasuk Cable Duct, Cover Ladder, Cover Duct, Other Support)', ['CABLE DUCT', 'COVER LADDER', 'COVER DUCT', 'OTHER SUPPORT', 'CABLE TRAY'].every((x) => prod3.includes(x)) && prod3.length === 11, JSON.stringify(prod3));
 
     // MD-04 jenis material eksplisit pada item
     const id = await page.evaluate(async () => {

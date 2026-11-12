@@ -64,7 +64,7 @@ export async function runSpkTerstruktur(page, base) {
   await page.selectOption('#ed-sb-0-0', { label: 'Elbow' }); await wait(400);
   const dimElbow = await page.evaluate(() => [...document.querySelectorAll('#ed-secs tr[data-l="0"] .dm span')].map((x) => x.textContent));
   const galatElbow = await teks('ed-gl-0-0');
-  ok('S-05 ganti ke Elbow: yang diminta W H R, isian W dan H dipertahankan, berat dikosongkan dan alasan ditampilkan sampai R diisi', dimElbow.join() === 'W,H,R' && (await nilai('ed-dm-0-0-w')) === '100' && (await nilai('ed-w-0-0')) === '' && /Isi ukuran: R/.test(galatElbow) && (await teks('ed-nm-0-0')) === 'Cable Tray Elbow 90 W100xH50xR?', JSON.stringify({ dimElbow, galatElbow, nama: await teks('ed-nm-0-0') }));
+  ok('S-05 ganti ke Elbow: yang diminta W H R, isian W dan H dipertahankan, berat dikosongkan dan alasan ditampilkan sampai R diisi', dimElbow.join() === 'W,H,R' && (await nilai('ed-dm-0-0-w')) === '100' && (await nilai('ed-w-0-0')) === '' && /Isi ukuran: R/.test(galatElbow) && (await teks('ed-nm-0-0')) === 'Cable Tray Elbow W100xH50xR?', JSON.stringify({ dimElbow, galatElbow, nama: await teks('ed-nm-0-0') }));
   await page.fill('#ed-dm-0-0-r', '300'); await wait(300);
   const elb = berat('STU', 'ELBOW_STU_R_D', { w: 100, h: 50, r: 300 }, 1.2, 'SPHC / ELG');
   ok('S-06 R diisi: berat Elbow muncul sesuai kalkulator', dekat(+(await nilai('ed-w-0-0')), elb.beratSPK) && (await teks('ed-gl-0-0')) === '', await nilai('ed-w-0-0'));
@@ -186,16 +186,16 @@ export async function runSpkTerstruktur(page, base) {
   ok('S-21 tab Rute produksi: rute khusus Elbow di ACCS TRAY dengan Punching berlaku untuk Elbow; Straight tetap rute produk; langkah vendor tetap mengikuti finishing', tabelAda && !awal.includes('Punching') && sesudah.elbow.includes('Punching') && sesudah.elbow.at(-1) === 'Vendor ELG' && sesudah.lurus.includes('Punching'), JSON.stringify({ awal, sesudah }));
 
   // ---------- S-22 rute produk diubah di Master Data; minimal satu work center ----------
-  await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(700);
-  const duct = await page.evaluate(() => itemRute({ g: 'CABLE DUCT TYPE STU 1.2 NON FINISHING', d: 'x' }));
+  await page.click('#rute-tabel input[data-rk="PERFORATED CABLE TRAY"][value="Punching"]'); await wait(700);
+  const duct = await page.evaluate(() => itemRute({ g: 'PERFORATED CABLE TRAY TYPE STU 1.2 NON FINISHING', d: 'x' }));
   const rowCb = await page.$$eval('#rute-tabel input[data-rk="COVER TRAY"]:checked', (x) => x.length);
   for (let i = 0; i < rowCb + 1; i++) { await page.evaluate(() => document.querySelector('#rute-tabel input[data-rk="COVER TRAY"]:checked')?.click()); await wait(500); }
   const coverMasih = await page.$$eval('#rute-tabel input[data-rk="COVER TRAY"]:checked', (x) => x.length);
   ok('S-22 rute produk dapat diubah per work center; mencentang terakhir dicabut ditolak (rute minimal satu langkah)', !duct.includes('Punching') && coverMasih === 1, JSON.stringify({ duct, coverMasih }));
   await page.click('[data-act="rutedel"][data-rk="ACCS TRAY|ELBOW"]'); await wait(600);
   const hapus = await page.evaluate(() => itemRute({ g: 'ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', d: 'x', sb: 'ELBOW_STU_R_D' }));
-  await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(700);
-  const ductLagi = await page.evaluate(() => itemRute({ g: 'CABLE DUCT TYPE STU 1.2 NON FINISHING', d: 'x' }));
+  await page.click('#rute-tabel input[data-rk="PERFORATED CABLE TRAY"][value="Punching"]'); await wait(700);
+  const ductLagi = await page.evaluate(() => itemRute({ g: 'PERFORATED CABLE TRAY TYPE STU 1.2 NON FINISHING', d: 'x' }));
   ok('S-22b mencentang kembali sebuah langkah tidak mengacak urutan langkah lain (Shearing tetap sebelum Bending)', ductLagi.includes('Punching') && ductLagi.indexOf('Shearing') < ductLagi.indexOf('Bending'), JSON.stringify(ductLagi));
   ok('S-23 menghapus rute khusus bentuk mengembalikan bentuk itu ke rute produk', !hapus.includes('Punching'), JSON.stringify(hapus));
 
@@ -222,6 +222,19 @@ export async function runSpkTerstruktur(page, base) {
   });
   ok('S-24c SPK dengan nama manual (nm) dibuka dan dihitung ulang: nama tetap, berat tetap dari ukuran', bolakBalik.sebelum.nm === true && bolakBalik.sesudah.d === 'Nama Khusus Saya' && bolakBalik.w > 0, JSON.stringify(bolakBalik));
   await tutupEditorBatal();
+
+  // ---------- S-25 Cable Ladder dan Cable Duct tanpa pilihan lubang; Cable Tray tetap ada ----------
+  await page.evaluate(() => { try { closeEditor(); } catch (e) { /* sudah tertutup */ } }); await wait(400);
+  await bukaBaru();
+  const adaTray = await ada('ed-lb-0-0');
+  await page.selectOption('#ed-hp-0', 'CABLE LADDER'); await wait(500);
+  await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '2'); await wait(500);
+  const adaLadder = await ada('ed-lb-0-0'); const wLadder = +(await nilai('ed-w-0-0'));
+  await page.selectOption('#ed-hp-0', 'CABLE DUCT'); await wait(500);
+  const adaDuct = await ada('ed-lb-0-0');
+  const hbTanpa = berat('STU', 'STRAIGHT_STU', { w: 100, h: 50, l: 3000 }, 1.2, 'SPHC / ELG', 'tanpa');
+  ok('S-25 Cable Tray punya pilihan Lubang; Cable Ladder dan Cable Duct tidak (tanpa lubang), berat ladder memakai kolom tanpa lubang', adaTray && !adaLadder && !adaDuct && dekat(wLadder, hbTanpa.beratSPK), JSON.stringify({ adaTray, adaLadder, adaDuct, wLadder, harap: hbTanpa.beratSPK }));
+  await page.evaluate(() => { try { closeEditor(); } catch (e) { /* sudah tertutup */ } }); await wait(300);
 
   ok('S-18 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   void tutupEditorBatal;

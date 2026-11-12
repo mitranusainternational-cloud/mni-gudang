@@ -407,7 +407,7 @@ export async function runProduksiHuluHilir(page, base) {
       return { rencana, kg: rr.kgPerLbr, utama: rr.label };
     });
     await go('bahan-baku');
-    await page.waitForSelector('[data-act="serahsemua"]', { timeout: 5000 }).catch(async () => { throw new Error('diag ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, tab: F['bahan-baku'].tab, plan: platSerahRencana().length, bar: !!document.querySelector('#serah-semua'), bisa: matBisaPr(), body: document.querySelector('#body').innerText.slice(0, 140).replace(/s+/g, ' ') }))) + JSON.stringify(s41)); });
+    await page.waitForSelector('[data-act="serahsemua"]', { timeout: 5000 }).catch(async () => { throw new Error('diag ' + JSON.stringify(await page.evaluate(() => ({ hash: location.hash, tab: F['bahan-baku'].tab, plan: platSerahRencana().length, bar: !!document.querySelector('#serah-semua'), bisa: matBisaPr(), body: document.querySelector('#body').innerText.slice(0, 140).replace(/\s+/g, ' ') }))) + JSON.stringify(s41)); });
     await page.click('[data-act="serahsemua"]'); await page.waitForTimeout(400);
     await page.click('#mform button[type="submit"], .modal button[type="submit"]'); await page.waitForTimeout(1500);
     const h41 = await page.evaluate(async () => {
@@ -483,6 +483,38 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-45 susulan draf PR: SPK terbit baru tanpa PR (mis. diterbitkan PPIC) mendapat draf saat gudang bahan baku membuka modul; tidak ganda; SPK lama (30 hari) tidak dibanjiri', r45.baru === 1 && r45.lama === 0 && r45.ulang === 1 && r45.bersih, JSON.stringify(r45));
+
+    langkah = 'PH-46';
+    await buatSpk('Customer HH Tunda', 'CABLE TRAY TYPE STU 1.2 NON FINISHING', 'Cable Tray W200xH50xL3000', 10);
+    const id46 = await page.evaluate(() => S.spk.find((z) => z.customer === 'Customer HH Tunda')._id);
+    await page.evaluate((id) => prodForm(id), id46); await wait(500);
+    await page.selectOption('#m-ta_0', 'Mesin rusak'); await page.fill('#m-tk_0', 'unit 2 menunggu sparepart');
+    await page.evaluate(() => document.getElementById('msub').click()); await wait(1200);
+    const a46 = await page.evaluate((id) => { const s = byId('spk', id); return { tunda: s.items[0].tunda && s.items[0].tunda.alasan, ket: s.items[0].tunda && s.items[0].tunda.ket, log: (s.prodLog || []).filter((e) => e.tunda).map((e) => e.ket), mon: /Mesin rusak/.test(tundaMon(s)), aktif: tundaAktif(s).length }; }, id46);
+    await page.evaluate(() => { location.hash = '#spk'; }); await wait(300);
+    await page.evaluate(() => { F.spk.tab = 'berjalan'; render(); }); await wait(600);
+    const kartu46 = await page.evaluate(() => /Belum diproduksi/.test(document.body.innerText) && /Mesin rusak/.test(document.body.innerText));
+    await page.evaluate(() => { F.spk.tab = 'list'; render(); }); await wait(300);
+    await page.evaluate((id) => { const s = byId('spk', id); updDoc('spk', id, { items: s.items.map((i) => ({ ...i, prod: 4 })) }); }, id46); await wait(900);
+    const b46 = await page.evaluate((id) => tundaAktif(byId('spk', id)).length, id46);
+    ok('PH-46 alasan belum produksi: admin memilih alasan di Update produksi, tersimpan di item dan log, tampil di monitoring SPK dan kartu Berjalan; hilang dari daftar aktif setelah produksi mulai (log tetap)', a46.tunda === 'Mesin rusak' && /sparepart/.test(a46.ket) && a46.log.length === 1 && /Mesin rusak/.test(a46.log[0]) && a46.mon && a46.aktif === 1 && kartu46 && b46 === 0, JSON.stringify({ a46, kartu46, b46 }));
+
+    langkah = 'PH-47';
+    const r47 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const o = {}; const tgl = today();
+      const mk = (id, no, h, d, q, wt, we) => ({ _id: id, no, status: 'Terbit', customer: 'Uji Laporan', due: '2099-01-01', tgl, h, material: 'SPHC', terbitAt: new Date(Date.now() - 3 * 86400000).toISOString(), items: [{ d, g: h, q, u: 'Btg', w: wt, wEst: we, prod: q }], prodLog: [{ tgl, at: new Date().toISOString(), by: 'admin@mni.local', ket: '', items: [{ d, q, wc: '' }] }] });
+      S.spk.push(mk('ph47a', 9947, 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray W200xH50xL3000', 10, 15, 16.5), mk('ph47b', 9948, 'ACCS TRAY TYPE STU 1.2 ELECTRO GALVANIZED', 'Cable Tray Elbow W200xH50xR300', 4, 5, 5.5), mk('ph47c', 9949, 'OTHER SUPPORT TYPE STU 1.2 ELECTRO GALVANIZED', 'Hanger Beam W200', 20, 0.25, 0.27));
+      C = null; F.produksi.tab = 'laporan'; F.produksi.lper = 'triwulan'; F.produksi.lby = 'produk'; F.produksi.lsusun = 'sec';
+      location.hash = '#produksi'; await w(700); render(); await w(500);
+      const tb = document.getElementById('lp-rinci'); o.rinci = tb ? tb.innerText.replace(/\s+/g, ' ') : '';
+      o.pohon = document.getElementById('lp-tabel') ? document.getElementById('lp-tabel').innerText.replace(/\s+/g, ' ') : '';
+      o.lama = document.getElementById('lp-lama') ? document.getElementById('lp-lama').innerText.replace(/\s+/g, ' ') : '';
+      const m = lapRincianModel(); o.model = m.tables.map((x) => x.title + ':' + x.rows.length).join(' | ');
+      const bytes = await docXlsx(m); o.xlsx = bytes && (bytes.byteLength || bytes.size || bytes.length) > 1000;
+      S.spk = S.spk.filter((z) => !/^ph47/.test(z._id)); C = null; F.produksi.lsusun = 'std'; F.produksi.lper = 'bulan';
+      return o;
+    });
+    ok('PH-47 laporan produksi per jenis produk: rincian (Cable Tray, Accs Elbow, Other Support Hanger Beam) dengan tonase aktual dan estimasi, susunan Section, lama produksi per SPK, model Excel terbentuk', /Cable Tray/.test(r47.rinci) && /Elbow/.test(r47.rinci) && /Hanger Beam/.test(r47.rinci) && /OTHER SUPPORT/.test(r47.pohon) && /9947/.test(r47.lama) && /terbit ke laporan pertama/i.test(r47.lama) && r47.model.includes('Rincian per jenis produk:') && r47.xlsx === true, JSON.stringify({ c: [/Cable Tray/.test(r47.rinci), /Elbow/.test(r47.rinci), /Hanger Beam/.test(r47.rinci), /OTHER SUPPORT/.test(r47.pohon), /9947/.test(r47.lama), /terbit ke laporan pertama/i.test(r47.lama), r47.lama.slice(0, 160)], rinci: r47.rinci.slice(0, 100), model: r47.model, xlsx: r47.xlsx, pohon: r47.pohon.slice(0, 200) }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

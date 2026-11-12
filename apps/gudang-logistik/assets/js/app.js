@@ -621,7 +621,9 @@ function pgItems(s,x,ses){
  return (s.items||[]).map((it,ix)=>{
   const qq=+it.q||0,l=x.lines[ix]||{},st=itemState(s,it,ix);
   if(!st)return {it,ix,q:qq,tanpaRute:true};
-  const steps=st.rute.map((w,i)=>{const vend=P.langkahVendor(w);const mine=ses.filter(e=>e.spk_id===s._id&&+e.item_idx===ix&&P.indeksLangkah(st.rute,st.alt,e.wc)===i);return {w,i,vend,key:vend?'Vendor':w,val:Math.min(st.kum[w]||0,qq),out:vend?(st.vendorKirim[w]||0):0,live:mine.length>0,mesin:[...new Set(mine.map(e=>e.mesin||e.wc))]}});
+  let steps=st.rute.map((w,i)=>{const vend=P.langkahVendor(w);const mine=ses.filter(e=>e.spk_id===s._id&&+e.item_idx===ix&&P.indeksLangkah(st.rute,st.alt,e.wc)===i);return {w,i,vend,key:vend?'Vendor':w,val:Math.min(st.kum[w]||0,qq),out:vend?(st.vendorKirim[w]||0):0,live:mine.length>0,mesin:[...new Set(mine.map(e=>e.mesin||e.wc))]}});
+  // Laporan produksi dipegang satu admin: posisi produksi cukup satu langkah "Produksi" (langkah vendor tetap terpisah)
+  if(produksiAdmin()){const dlm=steps.filter(z=>!z.vend);if(dlm.length){const lv=dlm.some(z=>z.live);steps=[{w:'Produksi',i:0,vend:false,key:'Produksi',val:Math.min(l.prodEff||0,qq),out:0,live:lv,mesin:[]},...steps.filter(z=>z.vend)]}}
   const kir=Math.min(l.kirim||0,qq);const cur=steps.find(z=>z.val<qq);
   const evs=evIdx()[s._id+'|'+ix]||[];const last=evs.reduce((m,e)=>{const d=evTgl(e);return d&&d>m?d:m},'');
   let pos,label,nada;
@@ -680,7 +682,7 @@ function spkBerjalan(){
   const items=data.get(s._id).filter(it=>!f.pos||it.pos===f.pos);if(f.pos&&!items.length)return '';
   const dueC=!due?'':x.st==='Selesai'?'':due<t?chip('Telat · '+fdp(due),'crit'):due===t?chip('Due hari ini','warn'):chip('Due '+fdp(due),'plain');
   const sek=ses.filter(e=>e.spk_id===s._id);
-  const sekTeks=sek.length?`<div class="sb-now">${chip('Sedang dikerjakan','warn')} ${sek.map(e=>`${esc(e.mesin||e.wc)}${e.operator?' ('+esc(e.operator)+')':''}`).join(' · ')}</div>`:'';
+  const sekTeks=(sek.length?`<div class="sb-now">${chip('Sedang dikerjakan','warn')} ${sek.map(e=>`${esc(e.mesin||e.wc)}${e.operator?' ('+esc(e.operator)+')':''}`).join(' · ')}</div>`:'')+(tundaAktif(s).length?`<div class="sb-now">${chip('Belum diproduksi','warn')} ${tundaAktif(s).map(tundaTeks).join(' · ')}</div>`:'');
   const pct=Math.round((x.pP||0)*100)||0;
   return `<section class="panel sb-card t-${j}"><div class="pbody">
    <div class="sb-h" data-act="openspk" data-id="${s._id}"><div><b class="sb-no">SPK ${esc(String(s.no))}</b> <span class="sb-cust">${esc(s.customer)}</span><div class="note">${esc(s.po||'')} · ${s.items.length} item</div></div><div class="sb-chips">${dueC}${j==='selesai'?chip('Selesai','ok'):chip(stage(s)||x.st,STAGE_CLS[stage(s)]||'plain')}</div></div>
@@ -978,7 +980,7 @@ function analisaKirim(){
 }
 
 /* ---------- Laporan Produksi (analisa): periode, qty atau tonase atau kecepatan, kelompok produk, tren, akumulasi ---------- */
-const LAP_PER=[['hari','Hari ini'],['minggu','Minggu ini'],['30','30 hari'],['bulan','Bulan ini'],['tahun','Tahun ini'],['semua','Semua']];
+const LAP_PER=[['hari','Hari ini'],['minggu','Minggu ini'],['30','30 hari'],['bulan','Bulan ini'],['triwulan','Triwulan ini'],['triwulanlalu','Triwulan lalu'],['tahun','Tahun ini'],['semua','Semua']];
 const LAP_MET=[['qty','Jumlah (pcs)'],['ton','Tonase (kg)'],['kec','Kecepatan']];
 const LAP_BY=[['produk','Produk'],['wc','Work center'],['mesin','Mesin'],['operator','Operator'],['customer','Customer']];
 const LAP_AKM=[['operator','Operator'],['mesin','Mesin'],['wc','Work center'],['kelompok','Kelompok produk']];
@@ -989,7 +991,7 @@ function evAdmin(){const out=[];
   const prev={};
   log.forEach(en=>(en.items||[]).forEach((li,k)=>{const q=+li.q||0;const d=Math.round((q-(prev[k]||0))*1e6)/1e6;prev[k]=Math.max(prev[k]||0,q);if(d<=0)return;
    const it=(s.items||[])[k]||{};const w=+it.w>0?+it.w:null;const tgl=en.tgl||String(en.at||'').slice(0,10);if(!tgl)return;
-   out.push({_id:'adm-'+s._id+'-'+k+'-'+tgl+'-'+out.length,jenis:'hasil',spk_id:s._id,item_idx:k,item_desc:li.d||it.d||'',spk_no:String(s.no),customer:s.customer||'',tebal:thkOf(it.g)||'',wc:li.wc||'',mesin:li.wc||'',operator:'Admin produksi',by:en.by||null,qty:d,reject:0,tgl,mulai:null,selesai:tgl+'T17:00:00',menit:null,berat:w,tonase:w?Math.round(d*w*100)/100:null,at:en.at||tgl+'T17:00:00',_admin:true})}))});
+   out.push({_id:'adm-'+s._id+'-'+k+'-'+tgl+'-'+out.length,jenis:'hasil',spk_id:s._id,item_idx:k,item_desc:li.d||it.d||'',spk_no:String(s.no),customer:s.customer||'',tebal:thkOf(it.g)||'',wc:li.wc||'',mesin:li.wc||'',operator:'Admin produksi',by:en.by||null,qty:d,reject:0,tgl,mulai:null,selesai:tgl+'T17:00:00',menit:null,berat:w,tonase:w?Math.round(d*w*100)/100:null,tonaseEst:(+it.wEst>0?+it.wEst:w)?Math.round(d*(+it.wEst>0?+it.wEst:w)*100)/100:null,at:en.at||tgl+'T17:00:00',_admin:true})}))});
  return out}
 const lapBy=()=>produksiAdmin()?LAP_BY.filter(x=>['produk','customer'].includes(x[0])):LAP_BY;
 const lapAkm=()=>produksiAdmin()?LAP_AKM.filter(x=>x[0]==='kelompok'):LAP_AKM;
@@ -1002,25 +1004,72 @@ function lapKolom(r,met){
  const ut=met==='ton'?r.pangsaTonase:r.pangsaQty;
  return `<td style="min-width:130px"><div class="jb"><i style="width:${Math.round((ut||0)*100)}%"></i></div><span class="note">${Math.round((ut||0)*100)}%</span></td><td class="num${met==='qty'?' lp-em':''}">${n(r.qty)}</td><td class="num${met==='ton'?' lp-em':''}">${tonA(r.tonase)}</td><td class="num">${n(r.rataHari)}</td><td class="num${met==='kec'?' lp-em':''}">${r.pcsPerJam==null?'–':n(r.pcsPerJam)}</td><td class="num${met==='kec'?' lp-em':''}">${r.kgPerJam==null?'–':n(r.kgPerJam)}</td><td class="num">${r.menitPerPcs==null?'–':String(r.menitPerPcs).replace('.',',')}</td><td class="num">${pctA(r.rejectPct)}</td><td class="num">${r.hariAktif}</td>`;
 }
+const LAP_SUSUN=[['std','Kelompok › type › material','kelompok,tipe,material'],['sec','Section › bentuk › type','produk,bentuk,tipe'],['bentuk','Kelompok › bentuk › type','kelompok,bentuk,tipe'],['tebal','Kelompok › tebal › material','kelompok,tebal,material'],['finishing','Kelompok › finishing › type','kelompok,finishing,tipe']];
+const lapSumbu=f=>(LAP_SUSUN.find(x=>x[0]===f.lsusun)||LAP_SUSUN[0])[2].split(',');
 function lapBaris(evs,per,by,met){
  const P=PXL();
- if(by==='produk')return P.pohonProduk(evs,{...per,urut:met==='ton'?'tonase':'qty'}).map(r=>`<tr class="lp-d${r.depth}" data-depth="${r.depth}"><td><span class="lp-nm" style="padding-left:${r.depth*18}px">${r.depth===0?'<b>'+esc(r.nama)+'</b>':esc(r.nama)}</span></td>${lapKolom(r,met)}</tr>`).join('');
+ if(by==='produk')return P.pohonProduk(evs,{...per,sumbu:lapSumbu(F.produksi),urut:met==='ton'?'tonase':'qty'}).map(r=>`<tr class="lp-d${r.depth}" data-depth="${r.depth}"><td><span class="lp-nm" style="padding-left:${r.depth*18}px">${r.depth===0?'<b>'+esc(r.nama)+'</b>':esc(r.nama)}</span></td>${lapKolom(r,met)}</tr>`).join('');
  const rows=P.kelompokkan(evs,{...per,by}).slice();
  rows.sort((a,b)=>met==='ton'?b.tonase-a.tonase:met==='kec'?(b.pcsPerJam==null)-(a.pcsPerJam==null)||(b.pcsPerJam||0)-(a.pcsPerJam||0):b.qty-a.qty);
  return rows.map(r=>`<tr data-nama="${esc(r.nama)}"><td><b>${esc(r.nama)}</b>${r.jedaCatat!=null&&r.jedaCatat>0&&(by==='operator'||by==='mesin')?`<div class="note">jeda catat rata-rata ${r.jedaCatat} mnt</div>`:''}</td>${lapKolom(r,met)}</tr>`).join('');
 }
+/* Rincian produk datar: dasar laporan triwulan (Kemenperin). Satu baris per kelompok, section, bentuk, type, tebal, material, dan finishing. */
+function lapRincianData(evs,per){const R=PXL().rincianProduk(evs,per);return R}
+function lapRincianHtml(evs,per){
+ const R=lapRincianData(evs,per);if(!R.baris.length)return '';
+ let kel='',sub={qty:0,ton:0,est:0};const out=[];
+ const tutup=()=>{if(kel)out.push(`<tr class="lp-d0"><td colspan="7"><b>Jumlah ${esc(kel)}</b></td><td class="num"><b>${n(sub.qty)}</b></td><td class="num"><b>${tonA(Math.round(sub.ton*10)/10)}</b></td><td class="num">${tonA(Math.round(sub.est*10)/10)}</td></tr>`)};
+ R.baris.forEach(r=>{if(r.kelompok!==kel){tutup();kel=r.kelompok;sub={qty:0,ton:0,est:0}}sub.qty+=r.qty;sub.ton+=r.tonase;sub.est+=r.tonaseEst;
+  out.push(`<tr><td>${esc(r.kelompok)}</td><td>${esc(r.produk||'–')}</td><td>${esc(r.bentuk)}</td><td>${esc(r.tipe||'–')}</td><td class="num">${r.tebal?esc(String(r.tebal).replace('.',','))+' mm':'–'}</td><td>${esc(r.material||'–')}</td><td>${esc(r.finishing||'–')}</td><td class="num">${n(r.qty)}</td><td class="num">${tonA(r.tonase)}</td><td class="num">${tonA(r.tonaseEst)}</td></tr>`)});
+ tutup();
+ return `<section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="lp-akh"><div class="dw-section-title" style="margin:8px 0 6px 0">Rincian per jenis produk · ${esc(per.label)}</div><div><button class="btn sm" data-act="laprinxls">${ic('dl')} Excel</button> <button class="btn sm" data-act="laprincsv">${ic('dl')} CSV</button></div></div><div class="tbl-wrap"><table id="lp-rinci"><thead><tr><th>Kelompok</th><th>Section</th><th>Bentuk</th><th>Type</th><th class="num">Tebal</th><th>Material</th><th>Finishing</th><th class="num">Jumlah (pcs)</th><th class="num">Tonase aktual</th><th class="num">Tonase estimasi</th></tr></thead><tbody>${out.join('')}</tbody><tfoot><tr><td colspan="7"><b>Total</b></td><td class="num"><b>${n(R.total.qty)}</b></td><td class="num"><b>${tonA(R.total.tonase)}</b></td><td class="num">${tonA(R.total.tonaseEst)}</td></tr></tfoot></table></div><div class="note" style="padding:6px 16px 0">Cable Tray, Ladder, Duct dirinci per type (mis. STU, STC, SLU); Aksesoris dan Cover per bentuk (Elbow, Tee, Reducer, dan lain-lain); Other Support per jenis (Hanger Beam, Bracket, dan lain-lain). Tonase aktual = jumlah x berat real per pcs; tonase estimasi = berat estimasi plate. Dasar laporan triwulan: pilih periode Triwulan ini atau Triwulan lalu, lalu unduh Excel.</div></div></section>`}
+/* Lama produksi per SPK: dari SPK terbit sampai laporan produksi pertama dan sampai semua item selesai (admin melapor saat barang selesai, jadi bukan per langkah). */
+function lamaProduksiRows(per){
+ const t=today(),out=[];
+ S.spk.forEach(s=>{if(s.status==='Batal'||s.status==='Draft'||!s.terbitAt)return;
+  const lg=logProduksi(s).filter(l=>!l.tunda&&(l.items||[]).some(i=>(+(i.qw!=null?i.qw:i.q)||0)>0));if(!lg.length)return;
+  const need={};(s.items||[]).forEach(i=>need[i.d]=(need[i.d]||0)+(+i.q||0));
+  let selesai='';for(const e of lg.filter(l=>l.sumber==='lama')){const m={};(e.items||[]).forEach(i=>m[i.d]=(m[i.d]||0)+(+i.q||0));if(Object.keys(need).every(d=>(m[d]||0)>=need[d])){selesai=e.tgl;break}}
+  const terbit=String(s.terbitAt).slice(0,10),pertama=lg[0].tgl,akhir=lg[lg.length-1].tgl;
+  if(!(lg.some(l=>l.tgl>=per.dari&&l.tgl<=per.sampai)))return;
+  const tn=(s.prodLog||[]).filter(e=>e.tunda).slice(-1)[0];
+  out.push({s,terbit,pertama,selesai,akhir,hkPertama:wd(terbit,pertama),hkSelesai:selesai?wd(terbit,selesai):null,hkJalan:selesai?null:wd(terbit,t),alasan:tn?tn.ket.replace('Belum produksi · ',''):''})});
+ return out.sort((a,b)=>String(b.akhir).localeCompare(String(a.akhir)))}
+function lapLamaHtml(per){
+ const L=lamaProduksiRows(per);if(!L.length)return '';
+ return `<section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:8px 0 6px 0">Lama produksi per SPK · ${esc(per.label)}</div><div class="tbl-wrap"><table id="lp-lama"><thead><tr><th>SPK</th><th>Customer</th><th>SPK terbit</th><th>Laporan pertama</th><th>Selesai produksi</th><th class="num">Terbit ke laporan pertama (hk)</th><th class="num">Terbit ke selesai (hk)</th><th>Alasan belum produksi terakhir</th></tr></thead><tbody>${L.slice(0,60).map(r=>`<tr class="click" data-act="openspk" data-id="${r.s._id}"><td class="mono"><b>${esc(String(r.s.no))}</b></td><td>${esc(r.s.customer)}</td><td>${fd(r.terbit)}</td><td>${fd(r.pertama)}</td><td>${r.selesai?fd(r.selesai):'<span class="note">belum semua selesai</span>'}</td><td class="num">${r.hkPertama}</td><td class="num">${r.hkSelesai!=null?r.hkSelesai:'berjalan '+r.hkJalan}</td><td>${r.alasan?esc(r.alasan):'<span class="note">–</span>'}</td></tr>`).join('')}</tbody></table></div><div class="note" style="padding:6px 16px 0">Admin melapor saat barang selesai dan siap kirim, jadi lama dihitung dari SPK terbit sampai laporan, tanpa rincian per langkah. Alasan belum produksi diisi admin di Update produksi.</div></div></section>`}
+async function lapRincianCsv(){
+ const P=PXL(),f=F.produksi,per=P.periodeRentang(f.lper||'bulan',today());const R=lapRincianData(lapEv(),per);
+ const q=v=>{const s=v==null?'':String(v);return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+ const csv='\ufeff'+[['Periode',per.label,'Dari',per.dari==='0000-00-00'?'':per.dari,'Sampai',per.sampai],['Kelompok','Section','Bentuk','Type','Tebal (mm)','Material','Finishing','Jumlah (pcs)','Tonase aktual (kg)','Tonase estimasi (kg)','Reject (pcs)'],
+  ...R.baris.map(r=>[r.kelompok,r.produk,r.bentuk,r.tipe,r.tebal,r.material,r.finishing,r.qty,r.tonase,r.tonaseEst,r.reject]),['TOTAL','','','','','','',R.total.qty,R.total.tonase,R.total.tonaseEst,'']].map(r=>r.map(q).join(',')).join('\r\n');
+ try{await DLS.save({filename:`Laporan-produksi-jenis-produk-${per.sampai}.csv`,data:new Blob([csv],{type:'text/csv'})})}catch(e){if(e.code!=='declined')toast('Gagal mengunduh: '+(e.message||e.code))}}
+function lapRincianModel(){
+ const P=PXL(),f=F.produksi,per=P.periodeRentang(f.lper||'bulan',today());const evs=lapEv(),R=lapRincianData(evs,per);
+ const tot=P.totalPeriode(evs,per);const kel={};R.baris.forEach(r=>{const o=kel[r.kelompok]||(kel[r.kelompok]={qty:0,ton:0,est:0});o.qty+=r.qty;o.ton+=r.tonase;o.est+=r.tonaseEst});
+ const fin={};R.baris.forEach(r=>{const k=r.finishing||'(tanpa finishing)';const o=fin[k]||(fin[k]={qty:0,ton:0});o.qty+=r.qty;o.ton+=r.tonase});
+ const r1=v=>Math.round(v*10)/10;
+ return {kind:'lpp',title:'Laporan Produksi per Jenis Produk',no:'LP-'+per.sampai.replace(/-/g,''),date:per.sampai,landscape:true,file:'Laporan-produksi-jenis-produk-'+per.sampai,
+  meta:[['Periode',per.label],['Rentang',(per.dari==='0000-00-00'?'awal data':fd(per.dari))+' s/d '+fd(per.sampai)],['Total jumlah',n(R.total.qty)+' pcs'],['Total tonase aktual',n(R.total.tonase)+' kg'],['Hari aktif produksi',String(tot.hariAktif)],['Dasar laporan','Laporan admin produksi (barang selesai dan siap kirim)']],
+  tables:[
+   {title:'Ringkasan per kelompok',cols:[['Kelompok',30,'l'],['Jumlah (pcs)',18,'r'],['Tonase aktual (kg)',20,'r'],['Tonase estimasi (kg)',20,'r']],rows:Object.entries(kel).map(([k,o])=>[k,o.qty,r1(o.ton),r1(o.est)]),foot:['TOTAL',R.total.qty,R.total.tonase,R.total.tonaseEst]},
+   {title:'Ringkasan per finishing',cols:[['Finishing',30,'l'],['Jumlah (pcs)',18,'r'],['Tonase aktual (kg)',20,'r'],['',20,'r']],rows:Object.entries(fin).map(([k,o])=>[k,o.qty,r1(o.ton),'']),foot:['TOTAL',R.total.qty,R.total.tonase,'']},
+   {title:'Rincian per jenis produk',cols:[['Kelompok',16,'l'],['Section',22,'l'],['Bentuk',18,'l'],['Type',8,'c'],['Tebal (mm)',10,'r'],['Material',14,'l'],['Finishing',14,'l'],['Jumlah (pcs)',14,'r'],['Tonase aktual (kg)',16,'r'],['Tonase estimasi (kg)',16,'r']],rows:R.baris.map(r=>[r.kelompok,r.produk,r.bentuk,r.tipe,r.tebal,r.material,r.finishing,r.qty,r.tonase,r.tonaseEst]),foot:['TOTAL','','','','','','',R.total.qty,R.total.tonase,R.total.tonaseEst]},
+   {title:'Lama produksi per SPK',cols:[['SPK',16,'l'],['Customer',22,'l'],['SPK terbit',18,'c'],['Laporan pertama',18,'c'],['Selesai produksi',18,'c'],['Terbit ke laporan pertama (hk)',16,'r'],['Terbit ke selesai (hk)',16,'r'],['Alasan belum produksi terakhir',26,'l'],['',10,'l'],['',10,'l']],rows:lamaProduksiRows(per).map(r=>[String(r.s.no),r.s.customer,r.terbit,r.pertama,r.selesai||'belum semua selesai',r.hkPertama,r.hkSelesai!=null?r.hkSelesai:'berjalan '+r.hkJalan,r.alasan,'',''])}
+  ]}}
+async function lapRincianXlsx(){try{await saveDocModel(lapRincianModel(),'xlsx',lapRincianModel().file)}catch(e){if(e.code!=='declined')toast('Gagal membuat Excel: '+(e.message||e.code))}}
 function laporanAnalisa(){
  const P=PXL();if(!P)return empty('Laporan belum siap','Muat ulang halaman.');
  const f=F.produksi;const t=today();const per=P.periodeRentang(f.lper||'bulan',t);const evs=lapEv();
  const met=f.lmet||'qty',by=lapBy().some(x=>x[0]===f.lby)?f.lby:'produk';
- const ctr=`<div class="lp-ctl"><div class="lp-g"><span>Periode</span>${segBtns('produksi','lper',LAP_PER)}</div><div class="lp-g"><span>Analisa</span>${segBtns('produksi','lmet',LAP_MET)}</div><div class="lp-g"><span>Kelompokkan per</span>${segBtns('produksi','lby',lapBy())}</div></div>`;
+ const ctr=`<div class="lp-ctl"><div class="lp-g"><span>Periode</span>${segBtns('produksi','lper',LAP_PER)}</div><div class="lp-g"><span>Analisa</span>${segBtns('produksi','lmet',LAP_MET)}</div><div class="lp-g"><span>Kelompokkan per</span>${segBtns('produksi','lby',lapBy())}</div>${by==='produk'?`<div class="lp-g"><span>Susun produk</span>${segBtns('produksi','lsusun',LAP_SUSUN.map(x=>[x[0],x[1]]))}</div>`:''}</div>`;
  const tot=P.totalPeriode(evs,per);
  if(!tot.catatan)return `<section class="panel"><div class="pbody">${ctr}</div></section>`+empty('Belum ada hasil produksi pada '+per.label.toLowerCase(),'Ganti periode di atas. Hasil muncul setelah operator menekan Selesai atau admin mengisi hasil di Produksi Hari Ini.');
  const kp=`<div class="kpi-row">${kpiA('info','Jumlah produksi',n(tot.qty)+' pcs',per.label+' · '+tot.hariAktif+' hari aktif')}${kpiA('info','Tonase',tonA(tot.tonase),'rata-rata '+tonA(tot.rataHariTonase)+' per hari aktif')}${kpiA('ok','Rata-rata per hari',n(tot.rataHari)+' pcs','per hari yang ada produksi')}${kpiA('info','Kecepatan',tot.pcsPerJam==null?'–':n(tot.pcsPerJam)+' pcs/jam',tot.kgPerJam==null?'dari catatan berwaktu':n(tot.kgPerJam)+' kg/jam')}${kpiA(tot.rejectPct!=null&&tot.rejectPct>=0.03?'warn':'ok','Reject',pctA(tot.rejectPct),n(tot.reject)+' pcs')}</div>`;
  const tr=P.tren(evs,per);const nilai=x=>met==='ton'?x.tonase:x.qty;const mx=Math.max(1,...tr.titik.map(nilai));
  const chart=`<div class="lp-chart" id="lp-trend">${tr.titik.map(x=>`<div class="lp-col" title="${esc(x.kunci)}: ${n(x.qty)} pcs · ${tonA(x.tonase)}"><span class="lp-v">${tr.titik.length<=16&&nilai(x)>0?(met==='ton'?n(Math.round(x.tonase)):n(x.qty)):''}</span><i style="height:${Math.max(nilai(x)>0?4:1,Math.round(nilai(x)/mx*100))}%"></i><span class="lp-l">${esc(butirLabel(tr.butir,x.kunci))}</span></div>`).join('')}</div>`;
- const kepala=by==='produk'?'Produk (kelompok › type › material)':LAP_BY.find(x=>x[0]===by)[1];
- const tabel=`<table id="lp-tabel"><thead><tr><th>${kepala}</th><th>Pangsa ${met==='ton'?'tonase':'jumlah'}</th><th class="num">Jumlah (pcs)</th><th class="num">Tonase</th><th class="num">Rata-rata/hari</th><th class="num">pcs/jam</th><th class="num">kg/jam</th><th class="num">Menit/pcs</th><th class="num">Reject</th><th class="num">Hari aktif</th></tr></thead><tbody>${lapBaris(evs,per,by,met)}</tbody></table>`;
+ const kepala=by==='produk'?'Produk ('+(LAP_SUSUN.find(x=>x[0]===f.lsusun)||LAP_SUSUN[0])[1].toLowerCase()+')':LAP_BY.find(x=>x[0]===by)[1];
+ const tabel=`<table id="lp-tabel"><thead><tr><th>${kepala}</th><th>Pangsa ${met==='ton'?'tonase':'jumlah'}</th><th class="num">Jumlah (pcs)</th><th class="num">Tonase aktual</th><th class="num">Rata-rata/hari</th><th class="num">pcs/jam</th><th class="num">kg/jam</th><th class="num">Menit/pcs</th><th class="num">Reject</th><th class="num">Hari aktif</th></tr></thead><tbody>${lapBaris(evs,per,by,met)}</tbody></table>`;
  // akumulasi hari ini sampai tahun ini untuk operator, mesin, work center, atau kelompok produk
  const akm=lapAkm().some(x=>x[0]===f.lakm)?f.lakm:lapAkm()[0][0];const ak=P.akumulasi(evs,{by:akm,sampai:t});
  const sel=(w,mm)=>`<td class="num"><b>${mm==='ton'?tonA(w.tonase):n(w.qty)}</b><div class="note">${mm==='ton'?n(w.qty)+' pcs':tonA(w.tonase)}</div></td>`;
@@ -1028,11 +1077,12 @@ function laporanAnalisa(){
  return `<section class="panel"><div class="pbody">${ctr}</div></section>${kp}
   <section class="panel"><div class="pbody"><div class="dw-section-title" style="margin:0 0 8px 0">Tren ${BUTIR_NAMA[tr.butir]} · ${met==='ton'?'tonase (kg)':'jumlah (pcs)'}</div>${chart}</div></section>
   <section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="dw-section-title" style="margin:8px 0 6px 0">${per.label} per ${by==='produk'?'produk':LAP_BY.find(x=>x[0]===by)[1].toLowerCase()}</div><div class="tbl-wrap">${tabel}</div>${by==='produk'?'<div class="note" style="padding:6px 16px 0">Cable Tray, Cable Ladder, Cable Duct, Cover, dan Aksesoris, lalu rinciannya per type (STU, STC, SLU, SLW, SLHD) dan material dengan finishing. Dibaca dari judul section SPK; operator tidak perlu mengisi apa pun.</div>':''}<div class="note" style="padding:6px 16px 0">Kecepatan dihitung dari catatan yang punya jam mulai dan selesai (tombol Mulai dan Selesai). Jeda catat = selisih saat dicatat dan jam selesai.</div></div></section>
+  ${lapRincianHtml(evs,per)}${lapLamaHtml(per)}
   <section class="panel"><div class="pbody" style="padding:0 0 8px 0"><div class="lp-akh"><div class="dw-section-title" style="margin:8px 0 6px 0">Akumulasi produksi</div><div class="lp-g"><span>per</span>${segBtns('produksi','lakm',lapAkm())}</div></div><div class="tbl-wrap">${akTab}</div><div class="note" style="padding:6px 16px 0">Hari ini, Senin sampai hari ini, awal bulan, awal tahun, dan seluruh data. Dasar penilaian kinerja operator dan mesin.</div></div></section>`;
 }
 async function lapAnalisaCsv(){
  const P=PXL();const f=F.produksi;const per=P.periodeRentang(f.lper||'bulan',today());const by=lapBy().some(x=>x[0]===f.lby)?f.lby:'produk';const evs=lapEv();
- const rows=by==='produk'?P.pohonProduk(evs,per).map(r=>({...r,nama:'  '.repeat(r.depth)+r.nama})):P.kelompokkan(evs,{...per,by});
+ const rows=by==='produk'?P.pohonProduk(evs,{...per,sumbu:lapSumbu(f)}).map(r=>({...r,nama:'  '.repeat(r.depth)+r.nama})):P.kelompokkan(evs,{...per,by});
  const q=v=>{const s=v==null?'':String(v);return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
  const csv='﻿'+[['Periode',per.label,'Dari',per.dari==='0000-00-00'?'':per.dari,'Sampai',per.sampai],['Kelompok','Jumlah (pcs)','Tonase (kg)','Rata-rata per hari (pcs)','pcs per jam','kg per jam','Menit per pcs','Reject (%)','Hari aktif'],
   ...rows.map(r=>[r.nama,r.qty,r.tonase,r.rataHari,r.pcsPerJam??'',r.kgPerJam??'',r.menitPerPcs??'',r.rejectPct==null?'':Math.round(r.rejectPct*1000)/10,r.hariAktif])].map(r=>r.map(q).join(',')).join('\r\n');
@@ -1181,7 +1231,7 @@ function prodForm(id){
   return `<div style="border:1px solid var(--${done?'ok':'line'});border-radius:10px;padding:12px;margin-bottom:10px;background:var(--surface)">
    <div style="font-weight:700;font-size:13px">${esc(i.d)}${done?' <span class="chip ok">selesai</span>':''}</div>
    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 0"><div style="flex:1;height:7px;background:var(--line);border-radius:4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--${done?'ok':'accent'});border-radius:4px"></div></div><span style="font-size:12px;color:var(--muted);white-space:nowrap">${n(eff)} / ${n(q)} ${esc(i.u||'')} · ${pct}%</span></div>
-   ${rantai}${posisi}<div style="margin-top:8px">${aksi}</div>${manual}
+   ${rantai}${posisi}<div style="margin-top:8px">${aksi}</div>${manual}${(eff<=0&&!done&&produksiAdmin())?tundaItemHtml(i,k):''}
   </div>`;
  }).join('');
  const adaManual=s.items.some((i,k)=>{const st=P?itemState(s,i,k):null;return !st||!st.ev.length});
@@ -1201,10 +1251,24 @@ function prodForm(id){
    const items=s.items.map((i,k)=>('p_'+k) in d?{...i,prod:Math.min(+i.q,num0(d['p_'+k]))}:i);
    const berubah=items.some((i,k)=>(+i.prod||0)!==(+s.items[k].prod||0));
    const patch={alasan:d.alasan||''};
-   if(berubah){patch.items=items;patch.prodLog=[...(s.prodLog||[]),{tgl,at:new Date().toISOString(),by:ME||null,ket:d.alasan||'',items:items.map(i=>({d:i.d,q:+i.prod||0,wc:''}))}]}
+   const logT=[];let tundaUbah=false;const nowIso=new Date().toISOString();
+   items.forEach((i,k)=>{if(!(('ta_'+k) in d))return;const al=String(d['ta_'+k]||''),ket=String(d['tk_'+k]||'').trim(),lama=i.tunda||{};
+    if(+i.prod>0||!al){if(i.tunda){const {tunda:_x,...sisa}=i;items[k]=sisa;tundaUbah=true}return}
+    if(al!==(lama.alasan||'')||ket!==(lama.ket||'')){items[k]={...i,tunda:{alasan:al,ket,tgl,at:nowIso,by:ME||null}};tundaUbah=true;logT.push({tgl,at:nowIso,by:ME||null,tunda:true,ket:'Belum produksi · '+i.d+': '+al+(ket?' ('+ket+')':''),items:[]})}});
+   if(berubah||tundaUbah){patch.items=items;patch.prodLog=[...(s.prodLog||[]),...(berubah?[{tgl,at:nowIso,by:ME||null,ket:d.alasan||'',items:items.map(i=>({d:i.d,q:+i.prod||0,wc:''}))}]:[]),...logT]}
    await updDoc('spk',id,patch);
   },{submit:'Simpan'});
 }
+/* Alasan item belum diproduksi: diisi admin saat Update produksi; tersimpan di item (tunda) dan jejaknya di prodLog (tunda:true), tampil di monitoring SPK, Berjalan, dan Cek Data. */
+const TUNDA_ALASAN=['Menunggu plate / bahan baku','Mesin rusak','Mesin penuh / overload','Menunggu gambar atau approval','Menunggu proses lain','Lainnya'];
+function tundaItemHtml(i,k){const tn=i.tunda||{};
+ return `<div class="tunda-box" style="margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:8px"><div class="note" style="margin-bottom:4px">Belum diproduksi? Pilih alasannya; tercatat dan terlihat di monitoring SPK.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select class="sel" name="ta_${k}" id="m-ta_${k}"><option value="">Tidak ada alasan</option>${TUNDA_ALASAN.map(a=>`<option${tn.alasan===a?' selected':''}>${esc(a)}</option>`).join('')}</select><input class="inp" name="tk_${k}" id="m-tk_${k}" value="${esc(tn.ket||'')}" placeholder="Keterangan (opsional)"></div></div>`}
+function tundaAktif(s){const l=((calc().spk[s._id]||{}).lines)||[];
+ return (s.items||[]).map((it,k)=>({it,k,t:it.tunda})).filter(x=>x.t&&x.t.alasan&&!(+x.it.prod>0)&&!((l[x.k]||{}).prodEff>0))}
+function tundaTeks(x){return `${esc(x.it.d)}: <b>${esc(x.t.alasan)}</b>${x.t.ket?' ('+esc(x.t.ket)+')':''}`}
+function tundaMon(s){const a=tundaAktif(s);const lg=(s.prodLog||[]).filter(e=>e.tunda).slice(-6).reverse();
+ if(!a.length&&!lg.length)return '';
+ return `<div class="note" style="margin-top:6px">${a.length?'<b>Belum diproduksi:</b><ul style="margin:4px 0 4px 16px;padding:0">'+a.map(x=>'<li>'+tundaTeks(x)+(x.t.tgl?' <span class="muted">· '+fd(x.t.tgl)+(x.t.by?' · '+esc(x.t.by):'')+'</span>':'')+'</li>').join('')+'</ul>':''}${lg.length?'<details><summary>Log alasan belum produksi ('+lg.length+')</summary><ul style="margin:4px 0 0 16px;padding:0">'+lg.map(e=>'<li>'+fd(e.tgl)+' · '+esc(e.ket||'')+(e.by?' <span class="muted">· '+esc(e.by)+'</span>':'')+'</li>').join('')+'</ul></details>':''}</div>`}
 /* Form khusus input kendala / alasan keterlambatan — tanpa update qty produksi */
 function kendalForm(id){
  const s=byId('spk',id);if(!s)return;
@@ -2540,7 +2604,7 @@ const fDur=m=>m==null?'–':m<60?`${Math.round(m)} mnt`:`${Math.floor(m/60)} j $
 const evHasil=()=>evData().filter(e=>(e.jenis||'hasil')==='hasil');
 /* Kejadian dilengkapi nomor SPK dan customer dari SPK bila belum tersalin di baris kejadian */
 const evLengkap=e=>{const s=byId('spk',e.spk_id)||{};const it=(s.items||[])[+e.item_idx]||{};const k=e.kelompok||!PXL()?null:PXL().klasifikasi(it.g,e.item_desc||it.d,s.material);
- return {...e,spk_no:e.spk_no||s.no||'',customer:e.customer||s.customer||'',kelompok:e.kelompok||(k&&k.kelompok)||'Lainnya',tipe:e.kelompok?(e.tipe||''):(k?k.tipe:''),material:e.kelompok?(e.material||''):(k?k.material:''),finishing:e.kelompok?(e.finishing||''):(k?k.finishing:'')}};
+ return {...e,spk_no:e.spk_no||s.no||'',customer:e.customer||s.customer||'',kelompok:e.kelompok||(k&&k.kelompok)||'Lainnya',tipe:e.kelompok?(e.tipe||''):(k?k.tipe:''),material:e.kelompok?(e.material||''):(k?k.material:''),finishing:e.kelompok?(e.finishing||''):(k?k.finishing:''),...(()=>{const kk=PXL()?PXL().klasifikasi(it.g,e.item_desc||it.d,s.material):{};return {produk:e.produk||kk.produk||'',bentuk:e.bentuk||kk.bentuk||'',tebal:e.tebal||thkOf(it.g)||''}})()}};
 
 T.mesin=()=>{const p=mesinPilih();const ops=[...new Set(p.daftar.flatMap(m=>m.operator||[]))];
  return `<div class="tb-group"><div class="tb-lbl">Work center</div><select class="sel" data-act="mesinwc" id="f-mesin">${wcInternal().map(x=>`<option ${x.nama===p.wc?'selected':''}>${esc(x.nama)}</option>`).join('')}</select></div>`+
@@ -2984,7 +3048,7 @@ function dataIssues(){
    add(1,'Produksi',`SPK ${s.no}: ${stale.length} item sudah terkirim, produksi belum dicatat 100%`,esc(s.customer),`data-act="prodfix" data-id="${s._id}">Tandai selesai`,'Progress produksi tidak sinkron dengan pengiriman');
   // SPK aktif tapi 0% progress & sudah >3 hari dari terbit
   if((x.st==='Berjalan'||x.st==='Terlambat')&&x.pP===0&&s.terbitAt&&days(String(s.terbitAt).slice(0,10),t)>3)
-   add(2,'Produksi',`SPK ${s.no} aktif tapi produksi 0% sudah ${days(String(s.terbitAt).slice(0,10),t)} hari`,`${esc(s.customer)} · deadline ${fd(s.deadline||'')}`,`data-act="openspk" data-id="${s._id}">Lihat SPK & update`,'Belum ada input progres sama sekali');
+   add(2,'Produksi',`SPK ${s.no} aktif tapi produksi 0% sudah ${days(String(s.terbitAt).slice(0,10),t)} hari`,`${esc(s.customer)} · deadline ${fd(s.deadline||'')}`,`data-act="openspk" data-id="${s._id}">Lihat SPK & update`,tundaAktif(s).length?'Alasan tercatat: '+tundaAktif(s).map(tundaTeks).join('; '):'Belum ada input progres dan belum ada alasan belum produksi');
  });
 
  /* ── PENGIRIMAN ── */
@@ -4472,7 +4536,7 @@ const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 /* ----- input item terstruktur: bentuk dan ukuran per section, nama dan berat otomatis dari kalkulator ----- */
 const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT','OTHER SUPPORT'];
 /* Cable Duct = Cable Tray tanpa lubang: masukan berat sama, memakai kolom berat tanpa lubang */
-const TANPA_LUBANG=new Set(['CABLE DUCT']);
+const TANPA_LUBANG=new Set(['CABLE DUCT','CABLE LADDER']);
 const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHC|SLHD)(_.*)?$/,'');
 /* Bendera layout SPK per dimensi (T-222 tahap 2): kolom W, H, L terpisah, bentuk selalu terlihat, kg estimasi dan real. Mati secara bawaan. */
 /* Massa jenis dari Master Data (Bahan baku > Jenis material): kalkulator berat SPK memakai angka yang sama dengan stok bahan baku. */
@@ -5751,7 +5815,7 @@ function spkFlowHtml(id){
  let h='';
  h+=step(s.terbitAt||s.status!=='Draft'?'done':'now',`SPK ${(s.status||'Terbit')==='Draft'?'draft':'terbit'} <span class="note">${fd(s.tgl)}</span>`,`Due ${fd(s.due)} · ${esc(s.lead||'')}`,`<span class="docn">Surat Perintah Kerja</span>`+dl2('spk',id));
  const pSt=f.x.pP>=1?'done':f.x.pP>0?'now':'todo';
- h+=step(pSt,`Produksi ${f.x.pP>=1?'selesai':Math.round(f.x.pP*100)+'%'} ${f.P?`<span class="note">${fd(f.P)}${f.Pest?' · est. '+f.Pest:''}</span>`:f.x.pP>=1?'<span class="note">tanggal tidak tercatat</span>':''}`,f.P?`${f.dProd} hari kerja · target ${T.prod} ${okChip(f.okProd)}`:f.x.pP>=1?'update berikutnya akan menyimpan tanggal':`berjalan ${Math.max(0,wd(s.tgl,today()))} hari kerja · target ${T.prod}`,`<span class="docn">Laporan Progres Produksi · ${f.log.length} update</span>`+dl2('lpp',id));
+ h+=step(pSt,`Produksi ${f.x.pP>=1?'selesai':Math.round(f.x.pP*100)+'%'} ${f.P?`<span class="note">${fd(f.P)}${f.Pest?' · est. '+f.Pest:''}</span>`:f.x.pP>=1?'<span class="note">tanggal tidak tercatat</span>':''}`,f.P?`${f.dProd} hari kerja · target ${T.prod} ${okChip(f.okProd)}`:f.x.pP>=1?'update berikutnya akan menyimpan tanggal':`berjalan ${Math.max(0,wd(s.tgl,today()))} hari kerja · target ${T.prod}`,`<span class="docn">Laporan Progres Produksi · ${f.log.length} update</span>`+dl2('lpp',id),tundaMon(s));
  if(f.vend.length)f.vend.forEach(o=>{
   h+=step(o.done?'done':'now',`Kirim ke ${esc(o.v.vendor||'vendor')} <span class="note">${fd(o.v.tgl)} · ${esc(o.v.proses||'')}</span>`,`${n(o.out)} pcs · ${esc(o.v.noSJ||'')}${f.dWaitV!=null&&o===f.vend[0]?` · ${f.dWaitV} hk setelah produksi selesai`:''}`,`<span class="docn">Surat Jalan Vendor</span>`+dl2('sjv',o.v._id));
   o.R.forEach(r=>h+=step('done',`Kembali dari ${esc(o.v.vendor||'vendor')} <span class="note">${r.tgl?fd(r.tgl):'tgl tidak tercatat'}${r.est?' · est.':''}</span>`,`${n(sumBy(Object.values(r.items||{}),q=>q))} OK${sumBy(Object.values(r.rej||{}),q=>q)?` · <b style="color:var(--crit)">${n(sumBy(Object.values(r.rej||{}),q=>q))} reject</b>`:''}${r.ket?' · '+esc(r.ket):''}`,`<span class="docn">Bukti Terima Barang</span>`+dl2('btb',o.v._id+'|'+r.k)));
@@ -6259,7 +6323,7 @@ document.addEventListener('click',async e=>{
   case 'papanbuka':{F.mesin.wc=ds.wc;F.mesin.mesin='';lsSet('mni-wc',ds.wc);lsSet('mni-mesin','');location.hash='mesin';break}
   case 'mrstep':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){const mx=q.max===''?Infinity:+q.max;const v=Math.max(0,Math.min(mx,(+q.value||0)+(+ds.d)));q.value=String(Math.round(v*1000)/1000);mrLabel(q.closest('.mesin-run'))}break}
   case 'mesinsemua':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){q.value=ds.max;mrLabel(q.closest('.mesin-run'))}break}
-  case 'lapcsv':await lapCsv();break;
+  case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
   case 'progcsv':await progCsv();break;
   case 'lapacsv':await lapAnalisaCsv();break;
   case 'lapprint':lapPrint();break;

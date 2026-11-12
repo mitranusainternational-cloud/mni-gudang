@@ -51,7 +51,7 @@ let total = 0, gagal = [];
 for (const f of FAM) for (const p of SECTION) for (const b of bentukUntukProduk(katalog, f, p)) {
   total++;
   const dim = Object.fromEntries(b.dim.map((d) => [d.k, contoh[d.k]]));
-  const lubang = p === 'CABLE DUCT' ? 'tanpa' : p === 'PERFORATED CABLE TRAY' ? 'full' : 'standar';
+  const lubang = (p === 'CABLE DUCT' || p === 'CABLE LADDER') ? 'tanpa' : p === 'PERFORATED CABLE TRAY' ? 'full' : 'standar';
   const r = kgPerPcs(katalog, { keluarga: f, bentuk: b.id, dim, tebal: '1.5', material: 'SPHC / ELG', lubang });
   const nama = namaItem(p, b.kunci, dim, b.dim);
   if (!r.ok || !(r.kgPcsEst > 0) || !(r.kgPcsReal > 0) || !nama || /\?/.test(nama)) gagal.push(`${f}/${p}/${b.kunci}: ${r.ok ? 'nama' : r.alasan}`);

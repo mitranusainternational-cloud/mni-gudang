@@ -124,8 +124,8 @@ async function isi(page, base, R) {
   await page.fill('#ed-rev', 'bekukan rute'); await page.click('#editor button:has-text("Simpan revisi")'); await wait(1500);
   ok('AF-11d menyimpan revisi membekukan rute item lama (snapshot dibuat dari rute berlaku; progres tidak berubah)', await page.evaluate((a) => { const s = byId('spk', a); const st = itemState(s, s.items[1], 1); return s.items.every((i) => Array.isArray(i.rute) && i.rute.length === 3) && st.kum.Punching === 12; }, a));
   await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="rute"]'); await wait(600);
-  await page.click('#rute-tabel input[data-rk="CABLE DUCT"][value="Punching"]'); await wait(900);
-  ok('AF-12 rute produk yang tidak dipakai SPK berjalan tetap bebas diubah', await page.evaluate(() => !ruteStd()['CABLE DUCT'].includes('Punching')));
+  await page.click('#rute-tabel input[data-rk="PERFORATED CABLE TRAY"][value="Punching"]'); await wait(900);
+  ok('AF-12 rute produk yang tidak dipakai SPK berjalan tetap bebas diubah', await page.evaluate(() => !ruteStd()['PERFORATED CABLE TRAY'].includes('Punching')));
 
   // ---------- surat jalan vendor yang sudah menerima barang kembali tidak boleh dibatalkan ----------
   const vid = await page.evaluate(async (b) => { const r = await addDoc('vendor', { spk: b, tgl: today(), vendor: 'Vendor Uji', proses: 'ELG', noSJ: 'SJV-UJI-1', status: 'Di Vendor', items: [{ d: byId('spk', b).items[0].d, q: 6, kembali: 2, reject: 1 }] }); return r && (r.id || r._id) || (S.vendor.find((v) => v.noSJ === 'SJV-UJI-1') || {})._id; }, b);

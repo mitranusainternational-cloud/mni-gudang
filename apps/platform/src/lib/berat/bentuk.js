@@ -81,7 +81,7 @@ export const ATURAN_DEFAULT = {
   'OTHER SUPPORT': ['@AKSESORI'],
 };
 /** Produk yang tidak memakai lubang sama sekali (Cable Duct): memakai kolom berat tanpa lubang di kalkulator. */
-export const PRODUK_TANPA_LUBANG = new Set(['CABLE DUCT']);
+export const PRODUK_TANPA_LUBANG = new Set(['CABLE DUCT', 'CABLE LADDER']);
 export const PRODUK_BENTUK = Object.keys(ATURAN_DEFAULT);
 /** Apakah bentuk (kunci) boleh dipilih di section produk ini. aturan = { PRODUK: [kunci,...] } dari Master Data; produk yang tidak ada di aturan memakai bawaan. */
 export function bentukDiizinkan(produk, kunci, aturan) {
