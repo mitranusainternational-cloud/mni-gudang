@@ -6,8 +6,8 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 9
-tasks_total: 23
+progress: 8
+tasks_total: 24
 tasks_done: 4
 updated: 2026-11-12
 ---
@@ -50,5 +50,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-227-produksi-hulu-hilir-wc-selaras-progres-per-wc|T-227]] Produksi hulu ke hilir: Work Centre selaras rute, item langsung terlihat di tiap WC, Progres WC · review · P1 · 1 hari
 - [ ] [[tasks/T-228-nama-bentuk-master-data-susulan-pr-dan-sapu-bug|T-228]] Nama bentuk bisa diedit di Master Data, Elbow tanpa 90, susulan draf PR, rute Cable Duct, sapu bug dan perapian workspace · review · P1 · 1 hari
 - [ ] [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]] Laporan produksi per jenis produk (triwulan), alasan belum produksi, Ladder dan Duct tanpa lubang, posisi Berjalan satu langkah Produksi · review · P1 · 1 hari
+- [ ] [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]] Master Data, Pengguna & Akses, dan Kinerja Tim selaras modul terbaru (angka punya dasar) · review · P1 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

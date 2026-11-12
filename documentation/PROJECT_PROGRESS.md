@@ -941,3 +941,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Bukti:** `verified in browser` (mock). Unit dan e2e terkait PASS; regresi penuh dicatat di [[documentation/RENCANA_PERBAIKAN_LOKAL]]. Rincian: [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]].
 - **Hambatan:** format laporan triwulan Kemenperin belum dicocokkan dengan formulir resmi; belum diuji di Supabase.
 - **Langkah berikut:** pemilik mengirim contoh formulir triwulan Kemenperin; skenario uji pemilik.
+
+### 2026-11-12 · T-230: Master Data, Pengguna, Kinerja Tim selaras modul
+- **Hasil:** Kinerja Tim tanpa baris ganda dan tanpa "pengguna" dari data awal, angka hasil produksi bisa ditelusuri ke Laporan Produksi; Alasan belum produksi dapat diatur di Master Data.
+- **Bukti:** `verified in browser` (mock); PH-48, unit, lint. [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata.
