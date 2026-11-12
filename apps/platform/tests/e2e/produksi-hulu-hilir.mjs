@@ -466,7 +466,7 @@ export async function runProduksiHuluHilir(page, base) {
       o.urut = HB_DEF.p;
       return o;
     });
-    ok('PH-44 daftar section bawaan: 12 section (11 dari pemilik + Cable Tray Wiremesh); Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 12 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,WIREMESH CABLE TRAY,CABLE LADDER,CABLE DUCT,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
+    ok('PH-44 daftar section bawaan: 12 section (11 dari pemilik + Cable Tray Wiremesh); Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 12 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,CABLE LADDER,CABLE DUCT,WIREMESH CABLE TRAY,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
 
     langkah = 'PH-45';
     const r45 = await page.evaluate(async () => {
