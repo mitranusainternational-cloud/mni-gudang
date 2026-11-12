@@ -466,7 +466,7 @@ export async function runProduksiHuluHilir(page, base) {
       o.urut = HB_DEF.p;
       return o;
     });
-    ok('PH-44 daftar section bawaan: 11 section sesuai permintaan pemilik; Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 11 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,CABLE LADDER,CABLE DUCT,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
+    ok('PH-44 daftar section bawaan: 12 section (11 dari pemilik + Cable Tray Wiremesh); Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 12 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,WIREMESH CABLE TRAY,CABLE LADDER,CABLE DUCT,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
 
     langkah = 'PH-45';
     const r45 = await page.evaluate(async () => {
@@ -547,6 +547,24 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-49 Opsi SPK tanpa duplikasi: Type bawaan STU, STC, SLU, SLHD, SLHDC, SLW (tanpa C dan U); daftar lama berisi C dan U dilebur ke STC dan STU, nilai kembar dibuang', r49.bawaan === 'STU,STC,SLU,SLHD,SLHDC,SLW' && r49.lama === 'STU,STC,SLU' && r49.f === 1, JSON.stringify(r49));
+
+    langkah = 'PH-50';
+    const r50 = await page.evaluate(() => {
+      const o = {}; o.header = composeH({ p: WIREMESH, dm: '4', f: 'ELECTRO GALVANIZED', t: 'STU', tb: '1.2' });
+      const hb = parseH('WIREMESH CABLE TRAY DIAMETER 4 MM ELECTRO GALVANIZED'); o.parse = hb.p + '|' + hb.dm + '|' + hb.f + '|' + hb.t + '|' + hb.tb;
+      o.kls = PXL().klasifikasi(o.header, 'Cable Tray Wiremesh W200xH50xL2500', 'SPHC').kelompok;
+      o.rute = itemRute({ g: o.header, d: 'Cable Tray Wiremesh W200xH50xL2500' }).join('>');
+      o.os = PXL().klasifikasi('OTHER SUPPORT TYPE STU 1.2 ELECTRO GALVANIZED', 'Hanger Beam W200', 'SPHC').kelompok;
+      o.opsi = OPSI().p.includes(WIREMESH) && OPSI().dia.join() === '3,4,5,6';
+      return o;
+    });
+    await go('spk'); await page.click('#tools [data-act="newspk"]'); await page.waitForSelector('#ed-secs'); await wait(400);
+    await page.selectOption('#ed-hp-0', 'WIREMESH CABLE TRAY'); await wait(400);
+    const ui50 = await page.evaluate(() => ({ dm: !!document.getElementById('ed-hdm-0'), tipe: !!document.getElementById('ed-ht-0'), tebal: !!document.getElementById('ed-htb-0'), teks: !!document.getElementById('ed-d-0-0') }));
+    await page.selectOption('#ed-hdm-0', '4'); await page.selectOption('#ed-hf-0', 'ELECTRO GALVANIZED'); await wait(400);
+    const h50 = await page.inputValue('#ed-h-0');
+    await page.evaluate(() => { try { closeEditor(); } catch (e) { /* sudah tertutup */ } }); await wait(300);
+    ok('PH-50 Cable Tray Wiremesh: section ada di daftar, judul memakai Diameter dan finishing (tanpa Type dan Tebal), masukan teks bebas seperti versi pertama, rute sementara Shearing > Bending > Welding > vendor, kelompok laporan Wiremesh; Other Support kelompok sendiri', r50.header === 'WIREMESH CABLE TRAY DIAMETER 4 MM ELECTRO GALVANIZED' && r50.parse === 'WIREMESH CABLE TRAY|4|ELECTRO GALVANIZED||' && r50.kls === 'Wiremesh' && /^Shearing>Bending>Welding/.test(r50.rute) && r50.os === 'Other Support' && r50.opsi && ui50.dm && !ui50.tipe && !ui50.tebal && ui50.teks && h50 === 'WIREMESH CABLE TRAY DIAMETER 4 MM ELECTRO GALVANIZED', JSON.stringify({ r50, ui50, h50 }));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

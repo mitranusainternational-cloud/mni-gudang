@@ -126,8 +126,10 @@ const AKSESORIS = /(ELBOW|TEE|CROSS|REDUCER|BRACKET|CLAMP|HANGER|JOINTING|SUPPOR
 export function klasifikasi(judul, deskripsi, material) {
   const H = String(judul || '').toUpperCase().replace(/\bTYPE\s+C\b/, 'TYPE STC').replace(/\bTYPE\s+U\b/, 'TYPE STU'), D = String(deskripsi || '').toUpperCase();
   let kelompok = 'Lainnya', induk = '';
-  if (/ACCS|ACCESS|OTHER\s+SUPPORT/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
+  if (/OTHER\s+SUPPORT/.test(H)) kelompok = 'Other Support';
+  else if (/ACCS|ACCESS/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
   else if (/COVER/.test(H)) kelompok = 'Cover';
+  else if (/WIREMESH/.test(H)) kelompok = 'Wiremesh';
   else if (/CABLE\s+LADDER/.test(H)) kelompok = 'Cable Ladder';
   else if (/CABLE\s+TRAY|PERFORATED/.test(H)) kelompok = 'Cable Tray';
   else if (/CABLE\s+DUCT/.test(H)) kelompok = 'Cable Duct';
@@ -154,8 +156,9 @@ export function bentukDari(deskripsi, kelompok, produk) {
   const D = String(deskripsi || '').toUpperCase(); const hit = BENTUK_KATA.find(([, re]) => re.test(D));
   if (kelompok === 'Cover') return hit ? 'Cover ' + hit[0] : 'Cover';
   if (hit) return hit[0];
+  if (kelompok === 'Wiremesh') return 'Wiremesh';
   if (/PERFORATED/.test(String(produk || ''))) return 'Perforated (straight)';
-  return kelompok === 'Aksesoris' ? 'Aksesoris lain' : 'Straight';
+  return kelompok === 'Aksesoris' || kelompok === 'Other Support' ? 'Aksesoris lain' : 'Straight';
 }
 
 const NAMA_SUMBU = { produk: (e) => e.produk || '(tanpa section)', bentuk: (e) => e.bentuk || bentukDari(e.item_desc, e.kelompok, e.produk), tebal: (e) => (e.tebal ? String(e.tebal).replace('.', ',') + ' mm' : '(tanpa tebal)'), finishing: (e) => e.finishing || '(tanpa finishing)', kelompok: (e) => e.kelompok || 'Lainnya', tipe: (e) => e.tipe || '(tanpa type)', material: (e) => [e.material, e.finishing].filter(Boolean).join(' · ') || '(tanpa material)' };
@@ -172,7 +175,7 @@ function agregat(ev) {
 }
 
 // Rincian produk datar (satu baris per kombinasi kelompok, section, bentuk, type, tebal, material, finishing): dasar laporan triwulan dan unduhan Excel.
-const URUT_KELOMPOK = ['Cable Tray', 'Cable Ladder', 'Cable Duct', 'Aksesoris', 'Cover', 'Lainnya'];
+const URUT_KELOMPOK = ['Cable Tray', 'Wiremesh', 'Cable Ladder', 'Cable Duct', 'Aksesoris', 'Other Support', 'Cover', 'Lainnya'];
 export function rincianProduk(kejadian, { dari, sampai }) {
   const ev = hasilDalam(kejadian, dari, sampai); const grup = {};
   ev.forEach((e) => {

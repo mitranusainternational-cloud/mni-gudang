@@ -946,3 +946,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Hasil:** Kinerja Tim tanpa baris ganda dan tanpa "pengguna" dari data awal, angka hasil produksi bisa ditelusuri ke Laporan Produksi; Alasan belum produksi dapat diatur di Master Data.
 - **Bukti:** `verified in browser` (mock); PH-48, unit, lint. [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]].
 - **Hambatan:** belum diuji di Supabase dengan login nyata.
+
+### 2026-11-12 · T-231: Wiremesh, SPK contoh uji, Other Support
+- **Hasil:** section Cable Tray Wiremesh (input teks bebas, Diameter), SPK contoh uji, Other Support kelompok laporan sendiri. Regresi penuh sebelumnya 730 PASS, 0 FAIL.
+- **Bukti:** `verified in browser` (mock); PH-50 dan suite SPK terdampak. [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]].
+- **Hambatan:** rute Wiremesh dan Other Support masih sementara; belum diuji di Supabase.

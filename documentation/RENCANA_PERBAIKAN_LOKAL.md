@@ -160,3 +160,5 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 **Master Data, Pengguna, Kinerja Tim selaras (2026-11-12, lokal, T-230):** Kinerja Tim: satu orang satu baris (akun dikenali lewat id atau email), data awal `seed` bukan orang, jejak laporan produksi admin ikut aktivitas, selisih hasil dengan Laporan Produksi ditampilkan sebagai "tanpa nama pelapor". Master Data: Alasan belum produksi dapat diatur di Opsi SPK; teks Work Centre menyesuaikan mode admin. PH-48. Sapuan 40 tampilan tanpa NaN atau galat.
 
 **Type tanpa duplikasi (2026-11-12, T-230):** Type C dan U dilebur ke STC dan STU di Opsi SPK, pembacaan judul section, dan laporan; semua daftar Opsi SPK bebas nilai kembar (PH-49, S-65).
+
+**Wiremesh, SPK contoh uji (2026-11-12, lokal, T-231):** section Cable Tray Wiremesh (Diameter, finishing, teks bebas, berat manual, rute sementara), Other Support dan Wiremesh kelompok laporan sendiri, tombol SPK contoh uji (pratinjau lokal), Type C/U dilebur ke STC/STU. Regresi penuh sebelum perubahan ini: 32 suite, 730 PASS, 0 FAIL; uji terdampak sesudahnya hijau (PH-50).
