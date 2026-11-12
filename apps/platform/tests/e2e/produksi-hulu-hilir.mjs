@@ -515,6 +515,26 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-47 laporan produksi per jenis produk: rincian (Cable Tray, Accs Elbow, Other Support Hanger Beam) dengan tonase aktual dan estimasi, susunan Section, lama produksi per SPK, model Excel terbentuk', /Cable Tray/.test(r47.rinci) && /Elbow/.test(r47.rinci) && /Hanger Beam/.test(r47.rinci) && /OTHER SUPPORT/.test(r47.pohon) && /9947/.test(r47.lama) && /terbit ke laporan pertama/i.test(r47.lama) && r47.model.includes('Rincian per jenis produk:') && r47.xlsx === true, JSON.stringify({ c: [/Cable Tray/.test(r47.rinci), /Elbow/.test(r47.rinci), /Hanger Beam/.test(r47.rinci), /OTHER SUPPORT/.test(r47.pohon), /9947/.test(r47.lama), /terbit ke laporan pertama/i.test(r47.lama), r47.lama.slice(0, 160)], rinci: r47.rinci.slice(0, 100), model: r47.model, xlsx: r47.xlsx, pohon: r47.pohon.slice(0, 200) }));
+
+    langkah = 'PH-48';
+    const r48 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((r) => setTimeout(r, ms)); const o = {}; const tgl = today();
+      const mk = (id, no, by) => ({ _id: id, no, status: 'Terbit', customer: 'Uji Tim', due: '2099-01-01', tgl, h: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', material: 'SPHC', terbitAt: new Date().toISOString(), items: [{ d: 'Cable Tray W200xH50xL3000', g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', q: 10, u: 'Btg', w: 15, wEst: 16, prod: 10 }], prodLog: [{ tgl, at: new Date().toISOString(), by, ket: '', items: [{ d: 'Cable Tray W200xH50xL3000', q: 10, wc: '' }] }] });
+      S.spk.push(mk('ph48a', 9948, ME), mk('ph48b', 9949, null)); S.log.push({ u: 'seed', at: '2000-01-01T00:00:00Z', c: 'rm', k: 'Data awal', mod: 'bahan-baku' }); C = null; await w(300);
+      const K = kpiAgg('30'); const idAdm = Object.keys(K.U).filter((u) => (uname(u) || '') === (uname(ME) || ''));
+      o.unikAdmin = idAdm.length === 1; o.tanpaSeed = !Object.keys(K.U).includes('seed');
+      const per = PXL().periodeRentang('30', tgl); const tot = PXL().totalPeriode(lapEv(), per).qty; const att = Object.values(K.U).reduce((s, x) => s + (x.hq || 0), 0);
+      o.lap = tot; o.att = att; o.selisih = hasilSelisih(per.dari, per.sampai, Object.values(K.U));
+      o.aktA = (K.U[ME] || K.U[Object.keys(K.U).find((u) => (uname(u) || '') === (uname(ME) || ''))] || {}).total || 0;
+      // alasan dari Master Data > Opsi SPK
+      let s = byId('master', 'setting'); const dibuat = !s; if (dibuat) { s = { _id: 'setting', key: 'setting' }; S.master.push(s); } const asli = s.spkOpsi;
+      s.spkOpsi = { ...(asli || {}), alasan: ['Menunggu cat', 'Listrik padam'] }; o.opsi = OPSI().alasan.join('|'); o.html = /Listrik padam/.test(tundaItemHtml({ d: 'x' }, 0)) && !/Mesin rusak/.test(tundaItemHtml({ d: 'x' }, 0));
+      s.spkOpsi = asli; if (asli === undefined) delete s.spkOpsi; if (dibuat) S.master = S.master.filter((x) => x !== s);
+      o.bawaan = OPSI().alasan.length === 6;
+      S.spk = S.spk.filter((z) => !/^ph48/.test(z._id)); S.log = S.log.filter((l) => l.u !== 'seed'); C = null;
+      return o;
+    });
+    ok('PH-48 Kinerja Tim dan Master Data selaras: satu orang satu baris, data awal (seed) bukan orang, hasil produksi per orang dicocokkan dengan Laporan Produksi (selisih tanpa pelapor ditampilkan), jejak laporan admin ikut aktivitas, alasan belum produksi dari Master Data', r48.unikAdmin && r48.tanpaSeed && r48.lap - r48.att === 10 && /10 pcs tanpa nama pelapor/.test(r48.selisih) && r48.opsi === 'Menunggu cat|Listrik padam' && r48.html && r48.bawaan, JSON.stringify(r48));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

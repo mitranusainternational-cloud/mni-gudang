@@ -209,7 +209,7 @@ function route(){
   'pengiriman':'Surat jalan barang jadi ke customer',
   'spk':'Progres produksi, finishing, dan pengiriman per SPK',
   'cek-data':'Temuan data yang belum lengkap, tidak konsisten, atau statusnya tertinggal',
-  'master-data':'Daftar resmi vendor, customer, supplier, dan armada yang dipakai semua form',
+  'master-data':'Data acuan yang dipakai semua modul: vendor, customer, supplier, armada, bahan baku, Work Centre, rute, aturan dan opsi SPK, kop dokumen',
   'kinerja':'Siapa mencatat apa, seberapa aktif, dan seberapa tepat waktu input data tiap anggota tim',
   get 'mesin'(){return produksiAdmin()?'Laporan produksi diisi satu admin: isi jumlah item yang sudah selesai dan siap dikirim':'Satu-satunya tempat input produksi: pilih mesin, tekan Mulai, isi jumlah, tekan Selesai'},
   'papan':'Posisi semua item per work center: yang sedang berjalan dan yang antri',
@@ -1262,7 +1262,7 @@ function prodForm(id){
 /* Alasan item belum diproduksi: diisi admin saat Update produksi; tersimpan di item (tunda) dan jejaknya di prodLog (tunda:true), tampil di monitoring SPK, Berjalan, dan Cek Data. */
 const TUNDA_ALASAN=['Menunggu plate / bahan baku','Mesin rusak','Mesin penuh / overload','Menunggu gambar atau approval','Menunggu proses lain','Lainnya'];
 function tundaItemHtml(i,k){const tn=i.tunda||{};
- return `<div class="tunda-box" style="margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:8px"><div class="note" style="margin-bottom:4px">Belum diproduksi? Pilih alasannya; tercatat dan terlihat di monitoring SPK.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select class="sel" name="ta_${k}" id="m-ta_${k}"><option value="">Tidak ada alasan</option>${TUNDA_ALASAN.map(a=>`<option${tn.alasan===a?' selected':''}>${esc(a)}</option>`).join('')}</select><input class="inp" name="tk_${k}" id="m-tk_${k}" value="${esc(tn.ket||'')}" placeholder="Keterangan (opsional)"></div></div>`}
+ return `<div class="tunda-box" style="margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:8px"><div class="note" style="margin-bottom:4px">Belum diproduksi? Pilih alasannya; tercatat dan terlihat di monitoring SPK.</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><select class="sel" name="ta_${k}" id="m-ta_${k}"><option value="">Tidak ada alasan</option>${[...new Set([...OPSI().alasan,...(tn.alasan?[tn.alasan]:[])])].map(a=>`<option${tn.alasan===a?' selected':''}>${esc(a)}</option>`).join('')}</select><input class="inp" name="tk_${k}" id="m-tk_${k}" value="${esc(tn.ket||'')}" placeholder="Keterangan (opsional)"></div></div>`}
 function tundaAktif(s){const l=((calc().spk[s._id]||{}).lines)||[];
  return (s.items||[]).map((it,k)=>({it,k,t:it.tunda})).filter(x=>x.t&&x.t.alasan&&!(+x.it.prod>0)&&!((l[x.k]||{}).prodEff>0))}
 function tundaTeks(x){return `${esc(x.it.d)}: <b>${esc(x.t.alasan)}</b>${x.t.ket?' ('+esc(x.t.ket)+')':''}`}
@@ -2219,15 +2219,16 @@ const mesinSeedDari=nama=>(MESIN_SEED[nama]||[]).map(m=>({nama:m,operator:[],kap
 function opsiTab(){const o=OPSI();const ok=canManage();const ta=(k,j,ket,baris)=>`<div class="fld full"><label for="op-${k}">${j}</label><textarea class="inp" id="op-${k}" data-op="${k}" rows="${baris||6}" ${ok?'':'disabled'}>${esc(o[k].join('\n'))}</textarea><small class="muted">${ket}</small></div>`;
  return `<section class="panel"><div class="pbody note">Daftar pilihan yang dipakai editor SPK dan lembar SPK. Satu baris satu pilihan. Mengubah daftar tidak mengubah SPK yang sudah ada. Produk baru muncul di tab Rute produksi (work center yang dilewati) dan Aturan section (bentuk yang boleh dipilih).</div>
  <div class="pbody opsi-g">${ta('p','Produk (judul section)','Huruf besar. Nama yang lebih panjang dicocokkan lebih dulu.',9)}${ta('t','Type','mis. STU, STC, SLU',9)}${ta('tb','Tebal (mm)','Angka dengan titik, mis. 1.2',9)}${ta('f','Finishing','Kata ELECTRO, HOTDIP, POWDER atau PDC menentukan vendor finishing (ELG, HDG, PDC); STAINLESS dan ALUMIN tanpa vendor.',9)}${ta('dist','Distribusi lembar SPK (Distributed to)','Daftar bawaan di SPK baru',5)}${ta('lead','Pilihan lead time','Saran isian Lead time di header SPK',5)}
+ ${ta('alasan','Alasan belum produksi','Pilihan admin di Update produksi saat item belum diproduksi. Alasan tercatat di log dan monitoring SPK.',6)}
  <div class="fld"><label for="op-signProc">Procurement / Estimator (bawaan)</label><input class="inp" id="op-signProc" data-op="signProc" value="${esc(o.signProc)}" ${ok?'':'disabled'}></div><div class="fld"><label for="op-signPpic">PPIC (bawaan)</label><input class="inp" id="op-signPpic" data-op="signPpic" value="${esc(o.signPpic)}" ${ok?'':'disabled'}></div></div>
  <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap">${ok?`<button class="btn primary" data-act="opsisimpan">Simpan opsi SPK</button><button class="btn ghost" data-act="opsireset">Pulihkan bawaan</button>`:''}<button class="btn ghost" data-act="spktarget">Target waktu proses</button>${ok?`<button class="btn ghost" data-act="spkdimtoggle">Layout SPK per dimensi: ${spkDimBaru()?'Aktif':'Nonaktif'}</button>`:''}</div></section>`}
 async function opsiSimpan(reset){const baca=k=>{const e=document.getElementById('op-'+k);return e?String(e.value).split('\n').map(x=>x.trim()).filter(Boolean):[]};
  const cur={...(byId('master','setting')||{})};delete cur._id;
  let spkOpsi=null;
- if(!reset){const p=[...new Set(baca('p').map(x=>x.toUpperCase()))],tt=[...new Set(baca('t').map(x=>x.toUpperCase()))],tb=[...new Set(baca('tb').map(x=>x.replace(',','.')))],ff=[...new Set(baca('f').map(x=>x.toUpperCase()))],dist=baca('dist'),lead=baca('lead');
-  for(const [n,v] of [['Produk',p],['Type',tt],['Tebal',tb],['Finishing',ff],['Distribusi',dist],['Lead time',lead]])if(!v.length){toast(n+' tidak boleh kosong.');return}
+ if(!reset){const p=[...new Set(baca('p').map(x=>x.toUpperCase()))],tt=[...new Set(baca('t').map(x=>x.toUpperCase()))],tb=[...new Set(baca('tb').map(x=>x.replace(',','.')))],ff=[...new Set(baca('f').map(x=>x.toUpperCase()))],dist=baca('dist'),lead=baca('lead'),alasan=[...new Set(baca('alasan'))];
+  for(const [n,v] of [['Alasan belum produksi',alasan],['Produk',p],['Type',tt],['Tebal',tb],['Finishing',ff],['Distribusi',dist],['Lead time',lead]])if(!v.length){toast(n+' tidak boleh kosong.');return}
   const salah=tb.find(x=>!(parseFloat(x)>0));if(salah){toast('Tebal "'+salah+'" bukan angka.');return}
-  spkOpsi={p,t:tt,tb,f:ff,dist,lead,signProc:(document.getElementById('op-signProc').value||'').trim()||OPSI_DEF.signProc,signPpic:(document.getElementById('op-signPpic').value||'').trim()||OPSI_DEF.signPpic}}
+  spkOpsi={p,t:tt,tb,f:ff,alasan,dist,lead,signProc:(document.getElementById('op-signProc').value||'').trim()||OPSI_DEF.signProc,signPpic:(document.getElementById('op-signPpic').value||'').trim()||OPSI_DEF.signPpic}}
  try{if(byId('master','setting'))await updDoc('master','setting',{spkOpsi});else{need();await DB.doc('master/setting').set({...cur,spkOpsi})}toast(reset?'Opsi SPK dipulihkan ke bawaan':'Opsi SPK disimpan')}catch(e){toast(e.message||String(e))}
  renderBody()}
 /* ---------- Master Data: aturan section (bentuk apa yang boleh dipilih di section produk mana) ---------- */
@@ -2442,13 +2443,13 @@ function wcTab(){
  }).join('');
 
  return kpiRow+`<section class="panel">
-  <div class="pbody note">Work Centre (WC) adalah mesin atau proses produksi yang digunakan dalam routing item. Subcont = dikerjakan oleh vendor luar.</div>
+  <div class="pbody note">Work Centre (WC) adalah mesin atau proses produksi yang digunakan dalam routing item. Subcont = dikerjakan oleh vendor luar.${produksiAdmin()?' Saat ini laporan produksi dipegang admin: Work Centre dan mesin dipakai untuk rute, jadwal, dan kapasitas, bukan untuk pelaporan per mesin.':''}</div>
   <div class="tbl-wrap"><table>
    <thead><tr><th>Kode WC</th><th>Nama / Proses</th><th>Tipe</th><th>Vendor Subcont</th><th class="num">Urutan</th><th>Status</th><th></th></tr></thead>
    <tbody>${tblRows}</tbody>
   </table></div>
   <div style="margin-top:12px;display:flex;gap:8px">
-   ${S.mwc.length===0?`<button class="btn ghost" data-act="wcseed">${ic('zap')} Isi 10 WC Default</button>`:`<button class="btn ghost" data-act="wcmesinseed">${ic('zap')} Isi mesin sesuai form laporan</button>`}
+   ${S.mwc.length===0?`<button class="btn ghost" data-act="wcseed">${ic('zap')} Isi 10 WC Default</button>`:(produksiAdmin()?'':`<button class="btn ghost" data-act="wcmesinseed">${ic('zap')} Isi mesin sesuai form laporan</button>`)}
   </div>
  </section>`;
 }
@@ -4520,7 +4521,7 @@ const DIST_DEF0=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing 
 const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','ACCS TRAY','ACCS LADDER','ACCS DUCT','COVER TRAY','COVER LADDER','COVER DUCT','OTHER SUPPORT'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
 const LEAD_DEF=['2 Hari Kerja','3 Hari Kerja','5 Hari Kerja','5 - 7 Hari Kerja','7 Hari Kerja','7 - 10 Hari Kerja','10 Hari Kerja','14 Hari Kerja'];
 /* Opsi SPK dari Master Data (master/setting.spkOpsi); tanpa isian memakai bawaan. Mengubah opsi tidak mengubah SPK yang sudah ada. */
-const OPSI_DEF={p:HB_DEF.p,t:HB_DEF.t,tb:HB_DEF.tb,f:HB_DEF.f,dist:null,lead:LEAD_DEF,signProc:'Halimah',signPpic:'Muin M.K.'};
+const OPSI_DEF={p:HB_DEF.p,t:HB_DEF.t,tb:HB_DEF.tb,f:HB_DEF.f,alasan:TUNDA_ALASAN.slice(),dist:null,lead:LEAD_DEF,signProc:'Halimah',signPpic:'Muin M.K.'};
 /* Daftar section bawaan lama: bila daftar tersimpan di Opsi SPK persis sama (belum pernah diubah pemilik), pakai bawaan baru; daftar yang diubah pemilik tetap dihormati. */
 const PRODUK_BAWAAN_LAMA=JSON.stringify(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY']);
 const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(k==='p'&&JSON.stringify(v)===PRODUK_BAWAAN_LAMA)continue;if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}return r};
@@ -5149,7 +5150,7 @@ const myAnyEdit=()=>ME_P?(ME_P.role==='admin'||MODS.some(([m])=>myLevel(m)==='ub
 const roleL=r=>(ROLES[r]||{}).l||'Belum terdaftar';
 function myAcc(){
  if(!ME)return {st:'anon',role:null};
- const mu=byId('muser',ME);
+ const mu=muserDari(ME);
  if(ME_P&&ME_P.role){if(ME_P.terdaftar===false)return {st:'new',role:null,mu};return {st:'ok',role:ROLES[ME_P.role]?ME_P.role:'viewer',mu}} /* peran dari tabel pengguna (Supabase) */
  if(IS_OWNER)return {st:'ok',role:'admin',mu};
  if(mu&&mu.aktif===false)return {st:'off',role:'viewer',mu};
@@ -5228,6 +5229,7 @@ function acts(){
  for(const cn of ['rm','fg','mutasi','spk','vendor','kirim','bongkar','pr','opname','mvendor','mcustomer','msupplier','marmada']){
   for(const d of S[cn]){const seen=new Set();
    if(d.by&&d.at){push(d.by,d.at,cn,actLabel(cn,'add',d),refOf(cn,d),d.tgl,d.auto,modOf(cn,d,d._id,'add'));seen.add(d.at)}
+   if(cn==='spk')(d.prodLog||[]).forEach(en=>{if(en.by&&en.at){push(en.by,en.at,cn,en.tunda?'Alasan belum produksi':'Update produksi',refOf(cn,d),en.tgl,false,'spk');seen.add(en.at)}});
    if(cn==='spk'){if(d.terbitBy&&d.terbitAt&&d.terbitAt!==d.at){push(d.terbitBy,d.terbitAt,cn,'Terbitkan SPK',refOf(cn,d));seen.add(d.terbitAt)}(d.revisi||[]).forEach(r=>{push(r.by,r.at,cn,'Revisi SPK',refOf(cn,d));seen.add(r.at)})}
    if(cn==='vendor')(d.riwayat||[]).forEach(r=>{const at=r.at||(r.tgl?r.tgl+'T12:00:00':'');push(r.by,at,cn,'Terima dari vendor',refOf(cn,d),r.tgl);seen.add(at)});
    if(d.batal&&d.batal.by){push(d.batal.by,d.batal.at,cn,'Batalkan '+CNM[cn],refOf(cn,d));seen.add(d.batal.at)}
@@ -5239,12 +5241,15 @@ function acts(){
  ev.sort((a,b)=>b.at.localeCompare(a.at));
  c._acts=ev;c._logStart=START;return ev;
 }
-const uname=id=>(byId('muser',id)||{}).nama||(byId('ureq',id)||{}).nama||'';
+const muserDari=id=>byId('muser',id)||(id?S.muser.find(m=>m.email&&String(m.email).toLowerCase()===String(id).toLowerCase()):null)||null;
+const uname=id=>(muserDari(id)||{}).nama||(byId('ureq',id)||{}).nama||'';
 const initials=s=>String(s||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 const av=(id,sz)=>`<span class="av${sz?' '+sz:''}" data-uav="${esc(id||'')}" aria-hidden="true">${esc(initials(uname(id)))}</span>`;
-const uName=id=>`<span data-uid="${esc(id)}">${esc(uname(id)||'Pengguna')}</span>`;
-function userIds(){const s=new Set();S.muser.forEach(m=>s.add(m._id));acts().forEach(e=>s.add(e.u));if(ME&&myAcc().role)s.add(ME);return [...s]}
-const userRole=id=>{const m=byId('muser',id);if(m)return m.aktif===false?'off':m.role;return id===ME&&myAcc().role?myAcc().role:''};
+const uName=id=>`<span data-uid="${esc(id)}">${esc(uname(id)||(/@/.test(id)?id:'Pengguna'))}</span>`;
+function userIds(){const s=new Set(),em=new Set();const tambah=u=>{if(!u)return;const k=muserDari(u);const kunci=k?(k.email&&String(k.email).toLowerCase()===String(u).toLowerCase()?u:k._id):u;if(k&&em.has(k._id))return;if(k)em.add(k._id);s.add(kunci)};
+ S.muser.forEach(m=>{if(!em.has(m._id)){const lg=acts().find(e=>m.email&&String(e.u).toLowerCase()===String(m.email).toLowerCase());tambah(lg?lg.u:(ME&&m.email&&String(ME).toLowerCase()===String(m.email).toLowerCase()?ME:m._id))}});
+ acts().forEach(e=>tambah(e.u));if(ME&&myAcc().role)tambah(ME);return [...s]}
+const userRole=id=>{const m=muserDari(id);if(m)return m.aktif===false?'off':m.role;return id===ME&&myAcc().role?myAcc().role:''};
 /* ---- period ---- */
 F.kinerja={p:'30',role:'',sort:'total'};
 function period(p){const t=today();const d=new Date();
@@ -5252,7 +5257,7 @@ function period(p){const t=today();const d=new Date();
  const k=+p||30;return [addDays(t,-(k-1)),t,k+' hari terakhir']}
 function workdays(a,b){let k=0;for(let d=a;d<=b;d=addDays(d,1)){const w=new Date(d+'T00:00:00').getDay();if(w!==0)k++}return Math.max(1,k)}
 function kpiAgg(p){
- const [a,b]=period(p);const E=acts().filter(e=>!e.auto&&e.day>=a&&e.day<=b);
+ const [a,b]=period(p);const E=acts().filter(e=>!e.auto&&e.u!=='seed'&&e.day>=a&&e.day<=b);
  const U={};const get=u=>U[u]||(U[u]={u,total:0,mods:{},days:new Set(),meas:0,late:0,lateDays:0,batal:0,last:'',ev:[]});
  userIds().forEach(u=>{const r=userRole(u);if(r&&r!=='off'||E.some(e=>e.u===u))get(u)});
  E.forEach(e=>{const o=get(e.u);o.total++;o.mods[e.mod]=(o.mods[e.mod]||0)+1;o.days.add(e.day);if(e.tgl){o.meas++;if(e.late>0){o.late++;o.lateDays+=e.late}}if(/^Batalkan|^Hapus/.test(e.k))o.batal++;if(!o.last||e.at>o.last)o.last=e.at;o.ev.push(e)});
@@ -5263,6 +5268,8 @@ function kpiAgg(p){
  Object.values(U).forEach(o=>{o.lastAll=lastAll[o.u]||'';o.tw=o.meas?(o.meas-o.late)/o.meas:null});
  return {a,b,E,U,wd:workdays(a,b)};
 }
+/* Hasil produksi per orang berasal dari laporan admin atau operator; selisih dengan Laporan Produksi (laporan tanpa nama pelapor) ditampilkan, bukan disembunyikan. */
+function hasilSelisih(a,b,rows){if(!PXL()||F.kinerja.role)return '';const tot=PXL().totalPeriode(lapEv(),{dari:a,sampai:b}).qty,per=rows.reduce((s,o)=>s+(o.hq||0),0),sel=Math.round((tot-per)*100)/100;return sel>0?' · '+n(sel)+' pcs tanpa nama pelapor':''}
 /* ---- KINERJA TIM ---- */
 T.kinerja=()=>{const f=F.kinerja;const roles=[...new Set(userIds().map(userRole).filter(r=>r&&r!=='off'))];
  return `${segBtns('kinerja','p',[['0','Hari ini'],['7','7 hari'],['30','30 hari'],['bln','Bulan ini'],['90','90 hari']])}
@@ -5279,7 +5286,7 @@ B.kinerja=()=>{
  const kp=(cls,lb,v,unit,s,g)=>`<div class="kpi ${cls}" style="cursor:default"><span class="lb">${lb}</span><span class="v">${v}${unit?`<small>${unit}</small>`:''}</span><span class="s">${s}</span>${g!=null?`<div class="kgauge"><i style="width:${Math.max(0,Math.min(100,Math.round(g*100)))}%"></i></div>`:''}</div>`;
  let h=`<section class="kpis">
   ${kp('info','Total aktivitas',n(E.length),'entri',`${lbl} · ${n(Math.round(E.length/K.wd*10)/10)} per hari kerja`)}
-  ${kp('info','Hasil produksi dilaporkan',n(rows.reduce((s,o)=>s+(o.hq||0),0)),'pcs',tonA(rows.reduce((s,o)=>s+(o.hkg||0),0))+' · '+lbl)}
+  ${kp('info','Hasil produksi dilaporkan',n(rows.reduce((s,o)=>s+(o.hq||0),0)),'pcs',tonA(rows.reduce((s,o)=>s+(o.hkg||0),0))+' · '+lbl+hasilSelisih(a,b,rows))}
   ${kp(act?'ok':'warn','Pengguna aktif',act,'/ '+rows.length,`mencatat minimal 1 transaksi ${lbl}`)}
   ${kp(tw==null?'':tw>=.9?'ok':tw>=.75?'warn':'crit','Input tepat waktu',tw==null?'–':Math.round(tw*100)+'%','',tw==null?'belum ada transaksi bertanggal':`${n(late)} dari ${n(meas)} dicatat lewat H+1`)}
   ${kp(E.filter(e=>/^Batalkan|^Hapus/.test(e.k)).length?'warn':'ok','Batal / hapus',E.filter(e=>/^Batalkan|^Hapus/.test(e.k)).length,'entri','koreksi data setelah dicatat')}
@@ -5315,7 +5322,7 @@ B.kinerja=()=>{
 };
 function kpiUser(uid){openDrawer(()=>{
  const f=F.kinerja;const K=kpiAgg(f.p);const o=K.U[uid]||{total:0,mods:{},days:new Set(),meas:0,late:0,batal:0,ev:[],tw:null};const [,,lbl]=period(f.p);
- const r=userRole(uid);const mu=byId('muser',uid)||{};const all=acts().filter(e=>e.u===uid);
+ const r=userRole(uid);const mu=muserDari(uid)||{};const all=acts().filter(e=>e.u===uid);
  const mmx=Math.max(1,...Object.values(o.mods));
  return {t:`${av(uid,'lg')} ${uName(uid)}`,s:`${esc(roleL(r==='off'?'':r))}${mu.jabatan?' · '+esc(mu.jabatan):''} · ${lbl}`,b:`
   <div class="ustat"><div><b>${n(o.total)}</b><span>aktivitas</span></div><div><b>${o.days.size}<small>/${K.wd}</small></b><span>hari aktif</span></div><div><b>${o.tw==null?'–':Math.round(o.tw*100)+'%'}</b><span>tepat waktu</span></div><div><b>${o.batal}</b><span>batal/hapus</span></div></div>
@@ -5394,7 +5401,7 @@ async function kpiCsv(){
  const f=F.kinerja;const K=kpiAgg(f.p);const [a,b]=period(f.p);
  const head=['Pengguna','Peran','Jabatan','Total aktivitas',...MODS.map(m=>m[1]),'Hari aktif','Hari kerja','Transaksi bertanggal','Input telat (>H+1)','Tepat waktu %','Batal/hapus','Terakhir aktif'];
  const ps=USER?await USER.profiles(Object.keys(K.U)):{};
- const rows=Object.values(K.U).filter(o=>!f.role||userRole(o.u)===f.role).sort((x,y)=>y.total-x.total).map(o=>{const m=byId('muser',o.u)||{};return [uname(o.u)||(ps[o.u]&&ps[o.u].name)||'Pengguna',roleL(userRole(o.u)),m.jabatan||'',o.total,...MODS.map(([k])=>o.mods[k]||0),o.days.size,K.wd,o.meas,o.late,o.tw==null?'':Math.round(o.tw*100),o.batal,o.lastAll?o.lastAll.slice(0,16).replace('T',' '):'']});
+ const rows=Object.values(K.U).filter(o=>!f.role||userRole(o.u)===f.role).sort((x,y)=>y.total-x.total).map(o=>{const m=muserDari(o.u)||{};return [uname(o.u)||(ps[o.u]&&ps[o.u].name)||'Pengguna',roleL(userRole(o.u)),m.jabatan||'',o.total,...MODS.map(([k])=>o.mods[k]||0),o.days.size,K.wd,o.meas,o.late,o.tw==null?'':Math.round(o.tw*100),o.batal,o.lastAll?o.lastAll.slice(0,16).replace('T',' '):'']});
  await saveCsv(`MNI-kinerja-${a}_${b}.csv`,head,rows);
 }
 async function saveCsv(name,head,rows){
