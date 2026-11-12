@@ -97,5 +97,6 @@ ok('S-63 bentuk dari deskripsi: Elbow, Inside Riser, Tee, Hanger Beam, Cover Elb
 const pb = pohonProduk(evs2, { dari: '2026-10-01', sampai: '2026-12-31', sumbu: ['kelompok', 'bentuk', 'tipe'] });
 ok('S-64 pohon produk dengan sumbu bentuk: Aksesoris > Elbow > STU', pb.some((r) => r.depth === 0 && r.nama === 'Aksesoris') && pb.some((r) => r.depth === 1 && r.nama === 'Elbow') && pb.some((r) => r.jalur === 'Aksesoris > Elbow > STU'), pb.map((r) => r.jalur).join(' | '));
 
+ok('S-65 Type C dan U adalah penulisan lain STC dan STU (tidak ada type ganda)', klasifikasi('CABLE TRAY TYPE C 1.2 ELECTRO GALVANIZED', 'x', 'SPHC').tipe === 'STC' && klasifikasi('CABLE TRAY TYPE U 1.2 ELECTRO GALVANIZED', 'x', 'SPHC').tipe === 'STU');
 const fail = R.filter((x) => x.startsWith('FAIL')).length;
 console.log(R.join('\n')); console.log(`${R.length - fail} PASS, ${fail} FAIL`); process.exit(fail ? 1 : 0);

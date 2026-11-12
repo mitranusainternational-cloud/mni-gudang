@@ -89,7 +89,7 @@ export function kenaliDeskripsi(deskripsi) {
 
 // Keluarga dan tebal dari judul section SPK: "CABLE LADDER TYPE SLW 2.0 HOTDIP GALVANIZED"
 export function bacaSection(judul) {
-  const s = String(judul || '').toUpperCase();
+  const s = String(judul || '').toUpperCase().replace(/\bTYPE\s+C\b/, 'TYPE STC').replace(/\bTYPE\s+U\b/, 'TYPE STU'); // C dan U adalah penulisan lain STC dan STU
   const k = KELUARGA.find((f) => new RegExp('\\b' + f + '\\b').test(s));
   const m = k && s.match(new RegExp('\\b' + k + '\\s+([0-9]+(?:[.,][0-9]+)?)'));
   return { keluarga: k || null, tebal: m ? num(m[1]) : null };

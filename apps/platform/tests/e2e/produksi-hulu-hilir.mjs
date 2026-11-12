@@ -535,6 +535,18 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-48 Kinerja Tim dan Master Data selaras: satu orang satu baris, data awal (seed) bukan orang, hasil produksi per orang dicocokkan dengan Laporan Produksi (selisih tanpa pelapor ditampilkan), jejak laporan admin ikut aktivitas, alasan belum produksi dari Master Data', r48.unikAdmin && r48.tanpaSeed && r48.lap - r48.att === 10 && /10 pcs tanpa nama pelapor/.test(r48.selisih) && r48.opsi === 'Menunggu cat|Listrik padam' && r48.html && r48.bawaan, JSON.stringify(r48));
+
+    langkah = 'PH-49';
+    const r49 = await page.evaluate(() => {
+      let s = byId('master', 'setting'); const dibuat = !s; if (dibuat) { s = { _id: 'setting', key: 'setting' }; S.master.push(s); } const asli = s.spkOpsi; const o = {};
+      o.bawaan = OPSI().t.join(',');
+      s.spkOpsi = { ...(asli || {}), t: ['STU', 'STC', 'SLU', 'C', 'U', 'STU'], f: ['ELECTRO GALVANIZED', 'ELECTRO GALVANIZED'] };
+      o.lama = OPSI().t.join(','); o.f = OPSI().f.length;
+      o.parser = MNIBerat.siap && MNIBerat.siap() ? 'ada' : 'tanpa katalog';
+      s.spkOpsi = asli; if (asli === undefined) delete s.spkOpsi; if (dibuat) S.master = S.master.filter((x) => x !== s);
+      return o;
+    });
+    ok('PH-49 Opsi SPK tanpa duplikasi: Type bawaan STU, STC, SLU, SLHD, SLHDC, SLW (tanpa C dan U); daftar lama berisi C dan U dilebur ke STC dan STU, nilai kembar dibuang', r49.bawaan === 'STU,STC,SLU,SLHD,SLHDC,SLW' && r49.lama === 'STU,STC,SLU' && r49.f === 1, JSON.stringify(r49));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

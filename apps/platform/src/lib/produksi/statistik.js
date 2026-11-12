@@ -124,7 +124,7 @@ export function akumulasi(kejadian, { by = 'operator', sampai, produk = produkDa
 // ---------------------------------------------------------------------------------------------
 const AKSESORIS = /(ELBOW|TEE|CROSS|REDUCER|BRACKET|CLAMP|HANGER|JOINTING|SUPPORT|COUPLER|SPLICE|FLANGE|ACCS)/;
 export function klasifikasi(judul, deskripsi, material) {
-  const H = String(judul || '').toUpperCase(), D = String(deskripsi || '').toUpperCase();
+  const H = String(judul || '').toUpperCase().replace(/\bTYPE\s+C\b/, 'TYPE STC').replace(/\bTYPE\s+U\b/, 'TYPE STU'), D = String(deskripsi || '').toUpperCase();
   let kelompok = 'Lainnya', induk = '';
   if (/ACCS|ACCESS|OTHER\s+SUPPORT/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
   else if (/COVER/.test(H)) kelompok = 'Cover';

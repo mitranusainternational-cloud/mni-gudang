@@ -2225,7 +2225,7 @@ function opsiTab(){const o=OPSI();const ok=canManage();const ta=(k,j,ket,baris)=
 async function opsiSimpan(reset){const baca=k=>{const e=document.getElementById('op-'+k);return e?String(e.value).split('\n').map(x=>x.trim()).filter(Boolean):[]};
  const cur={...(byId('master','setting')||{})};delete cur._id;
  let spkOpsi=null;
- if(!reset){const p=[...new Set(baca('p').map(x=>x.toUpperCase()))],tt=[...new Set(baca('t').map(x=>x.toUpperCase()))],tb=[...new Set(baca('tb').map(x=>x.replace(',','.')))],ff=[...new Set(baca('f').map(x=>x.toUpperCase()))],dist=baca('dist'),lead=baca('lead'),alasan=[...new Set(baca('alasan'))];
+ if(!reset){const p=[...new Set(baca('p').map(x=>x.toUpperCase()))],tt=[...new Set(baca('t').map(x=>x.toUpperCase()).map(x=>({C:'STC',U:'STU'})[x]||x))],tb=[...new Set(baca('tb').map(x=>x.replace(',','.')))],ff=[...new Set(baca('f').map(x=>x.toUpperCase()))],dist=baca('dist'),lead=baca('lead'),alasan=[...new Set(baca('alasan'))];
   for(const [n,v] of [['Alasan belum produksi',alasan],['Produk',p],['Type',tt],['Tebal',tb],['Finishing',ff],['Distribusi',dist],['Lead time',lead]])if(!v.length){toast(n+' tidak boleh kosong.');return}
   const salah=tb.find(x=>!(parseFloat(x)>0));if(salah){toast('Tebal "'+salah+'" bukan angka.');return}
   spkOpsi={p,t:tt,tb,f:ff,alasan,dist,lead,signProc:(document.getElementById('op-signProc').value||'').trim()||OPSI_DEF.signProc,signPpic:(document.getElementById('op-signPpic').value||'').trim()||OPSI_DEF.signPpic}}
@@ -4518,13 +4518,13 @@ function derive(h){const H=String(h||'').toUpperCase();let fin='';if(H.includes(
  let base='SPHC';if(H.includes('STAINLESS')||/SS ?3\d\d/.test(H))base=H.includes('316')?'SS316':'SS304';else if(H.includes('ALU'))base='Aluminium';
  return {material:(base==='SPHC'&&fin)?`SPHC / ${fin}`:base,tebal:thkOf(h),type:(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||''}}
 const DIST_DEF0=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing / Punching Tray)','Procurement','Logistic'];
-const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','ACCS TRAY','ACCS LADDER','ACCS DUCT','COVER TRAY','COVER LADDER','COVER DUCT','OTHER SUPPORT'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
+const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','ACCS TRAY','ACCS LADDER','ACCS DUCT','COVER TRAY','COVER LADDER','COVER DUCT','OTHER SUPPORT'],t:['STU','STC','SLU','SLHD','SLHDC','SLW'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
 const LEAD_DEF=['2 Hari Kerja','3 Hari Kerja','5 Hari Kerja','5 - 7 Hari Kerja','7 Hari Kerja','7 - 10 Hari Kerja','10 Hari Kerja','14 Hari Kerja'];
 /* Opsi SPK dari Master Data (master/setting.spkOpsi); tanpa isian memakai bawaan. Mengubah opsi tidak mengubah SPK yang sudah ada. */
 const OPSI_DEF={p:HB_DEF.p,t:HB_DEF.t,tb:HB_DEF.tb,f:HB_DEF.f,alasan:TUNDA_ALASAN.slice(),dist:null,lead:LEAD_DEF,signProc:'Halimah',signPpic:'Muin M.K.'};
 /* Daftar section bawaan lama: bila daftar tersimpan di Opsi SPK persis sama (belum pernah diubah pemilik), pakai bawaan baru; daftar yang diubah pemilik tetap dihormati. */
 const PRODUK_BAWAAN_LAMA=JSON.stringify(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY']);
-const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(k==='p'&&JSON.stringify(v)===PRODUK_BAWAAN_LAMA)continue;if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}return r};
+const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(k==='p'&&JSON.stringify(v)===PRODUK_BAWAAN_LAMA)continue;if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}r.t=r.t.map(x=>({C:'STC',U:'STU'})[x]||x);for(const k of ['p','t','tb','f','dist','lead','alasan'])r[k]=[...new Set(r[k])];return r};
 const HB={get p(){return OPSI().p},get t(){return OPSI().t},get tb(){return OPSI().tb},get f(){return OPSI().f}};
 /* produk lama (tidak ada lagi di daftar section) tetap terbaca agar SPK lama bisa dibuka dan diedit */
 const PRODUK_LAMA=['SUPPORT TRAY','WIREMESH CABLE TRAY'];
