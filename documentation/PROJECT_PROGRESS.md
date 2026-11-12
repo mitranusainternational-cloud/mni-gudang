@@ -935,3 +935,9 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Bukti:** `verified in browser` (mock, katalog asli di pratinjau). Unit semua PASS, spkaturan 19, produksihh 45, lint 0 error, `sync-vault` OK. Rincian: [[tasks/T-228-nama-bentuk-master-data-susulan-pr-dan-sapu-bug|T-228]].
 - **Hambatan:** belum diuji di Supabase dengan login nyata; rute Cable Duct dan Other Support menunggu konfirmasi pemilik.
 - **Langkah berikut:** pemilik menjalankan skenario uji; rilis tetap menunggu persetujuan.
+
+### 2026-11-12 · T-229: laporan produksi per jenis produk, alasan belum produksi
+- **Hasil:** Ladder dan Duct tanpa pilihan lubang; Berjalan satu langkah Produksi; alasan belum produksi dicatat admin dan terlihat di monitoring SPK; Laporan Produksi diperkuat (triwulan, rincian per jenis produk, finishing, tonase aktual dan estimasi, lama produksi per SPK, unduh Excel dan CSV).
+- **Bukti:** `verified in browser` (mock). Unit dan e2e terkait PASS; regresi penuh dicatat di [[documentation/RENCANA_PERBAIKAN_LOKAL]]. Rincian: [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]].
+- **Hambatan:** format laporan triwulan Kemenperin belum dicocokkan dengan formulir resmi; belum diuji di Supabase.
+- **Langkah berikut:** pemilik mengirim contoh formulir triwulan Kemenperin; skenario uji pemilik.
