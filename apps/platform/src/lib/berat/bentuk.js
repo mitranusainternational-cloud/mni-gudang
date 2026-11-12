@@ -18,7 +18,6 @@ export const KELOMPOK_PRODUK = {
   'COVER DUCT': 'COVER',
   'OTHER SUPPORT': 'AKSESORI',
 };
-const UTAMA = new Set(['STRAIGHT', 'ELBOW', 'TEE', 'CROSS', 'INSIDE', 'OUTSIDE', 'REDUCER']);
 const NAMA = {
   STRAIGHT: 'Straight', ELBOW: 'Elbow', TEE: 'Tee', CROSS: 'Cross', INSIDE: 'Inside Riser', OUTSIDE: 'Outside Riser', REDUCER: 'Reducer',
   COVER_STRAIGHT: 'Cover Straight', COVER_ELBOW: 'Cover Elbow', COVER_TEE: 'Cover Tee', COVER_CROSS: 'Cover Cross', COVER_INSIDE: 'Cover Inside Riser', COVER_OUTSIDE: 'Cover Outside Riser', COVER_REDUCER: 'Cover Reducer',

@@ -7,7 +7,7 @@ if (!existsSync(new URL('../../src/lib/berat/catalog.json', import.meta.url))) {
   console.log('SKIP: catalog.json tidak ada (dibuat lokal dari workbook, tidak disimpan di Git).');
   process.exit(0);
 }
-import { bentukUntukProduk, namaItem, hitungBentuk, kgPerPcs, ATURAN_DEFAULT } from '../../src/lib/berat/bentuk.js';
+import { bentukUntukProduk, namaItem, kgPerPcs, ATURAN_DEFAULT } from '../../src/lib/berat/bentuk.js';
 
 const katalog = JSON.parse(fs.readFileSync(new URL('../../src/lib/berat/catalog.json', import.meta.url)));
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));

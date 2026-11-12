@@ -1,5 +1,5 @@
 // Uji mesin rute produksi multi work center.  node tests/unit/rute.test.mjs
-import { finishingDari, langkahVendor, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual, materialDari, vendorUntuk, perluFinishing, RUTE_STANDAR, setAturanProses, kataCocok, aturanKhususAktif, ATURAN_KHUSUS_BAWAAN, FINISHING_BAWAAN, MATERIAL_TANPA_VENDOR_BAWAAN } from '../../src/lib/produksi/rute.js';
+import { finishingDari, siapKirimVendor, usulanLangkah, tentukanRute, kumulatif, antrianPerLangkah, periksaMasukan, progresItem, bebanWC, prediksiSelesai, tambahHariKerja, throughputAktual, materialDari, vendorUntuk, perluFinishing, RUTE_STANDAR, setAturanProses, kataCocok, aturanKhususAktif, ATURAN_KHUSUS_BAWAAN, FINISHING_BAWAAN, MATERIAL_TANPA_VENDOR_BAWAAN } from '../../src/lib/produksi/rute.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);

@@ -5482,7 +5482,6 @@ async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R
  await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
 /* ---------- Maintenance: catatan perawatan dan perbaikan mesin, jadwal rutin, akumulasi; sparepart tersambung ke Gudang Sparepart (lihat documentation/SKEMA_MAINTENANCE.md) ---------- */
 F['maintenance']={tab:'ringkas',p:'bulan',q:'',mesin:''};
-const MT_JENIS_CLS={Preventif:'ok',Korektif:'crit',Inspeksi:'info',Kalibrasi:'plain'};
 const MT_STATUS_CLS={Selesai:'ok','Dikerjakan':'warn','Menunggu sparepart':'crit'};
 const MTM=()=>window.MNIMaint;
 const mtcAll=()=>S.mtc||[];
