@@ -951,3 +951,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Hasil:** section Cable Tray Wiremesh (input teks bebas, Diameter), SPK contoh uji, Other Support kelompok laporan sendiri. Regresi penuh sebelumnya 730 PASS, 0 FAIL.
 - **Bukti:** `verified in browser` (mock); PH-50 dan suite SPK terdampak. [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]].
 - **Hambatan:** rute Wiremesh dan Other Support masih sementara; belum diuji di Supabase.
+
+### 2026-11-12 · T-232: Laporan per bagian (PDF dan Excel)
+- **Hasil:** tujuh bagian Laporan dapat diunduh sendiri ke PDF dan Excel, rinci untuk analisa bottleneck.
+- **Bukti:** `verified in browser` (mock); PH-51. [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]].
+- **Hambatan:** belum diuji di Supabase; tampilan PDF belum dibandingkan dengan format resmi.

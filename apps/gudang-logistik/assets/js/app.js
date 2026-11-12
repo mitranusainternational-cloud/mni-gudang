@@ -5411,7 +5411,83 @@ function ringkasLaporan(p){
 T['laporan']=()=>segBtns('laporan','p',[['0','Hari ini'],['7','7 hari'],['30','30 hari'],['bln','Bulan ini'],['90','90 hari']])+'<span class="grow"></span><button class="btn ghost" data-act="ringkascsv">'+ic('dl')+' Unduh CSV</button>';
 B['laporan']=()=>{const f=F['laporan'];const [,,lbl]=period(f.p);const R=ringkasLaporan(f.p);const bags=[...new Set(R.map(r=>r.bag))];
  const nilai=r=>r.u==='kg'&&r.v>=1000?n(Math.round(r.v/10)/100)+' ton':n(r.v)+' '+esc(r.u);
- return '<div class="pbody note">Periode: <b>'+esc(lbl)+'</b>. Angka waktu (produksi, kirim, bahan baku, sparepart) mengikuti periode; angka "saat ini" selalu kondisi sekarang. Semua dihitung dari data yang sama dengan layar lain.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px">'+bags.map(bag=>'<section class="panel" id="lap-'+esc(bag.toLowerCase().replace(/ /g,'-'))+'"><header><h2>'+esc(bag)+'</h2></header><div class="tbl-wrap"><table><tbody>'+R.filter(r=>r.bag===bag).map(r=>'<tr'+(r.href?' class="click" data-act="go" data-href="'+esc(r.href)+'"':'')+'><td>'+esc(r.k)+(r.note?'<div class="note">'+esc(r.note)+'</div>':'')+'</td><td class="num"><b>'+nilai(r)+'</b></td></tr>').join('')+'</tbody></table></div></section>').join('')+'</div>'};
+ return '<div class="pbody note">Periode: <b>'+esc(lbl)+'</b>. Angka waktu (produksi, kirim, bahan baku, sparepart) mengikuti periode; angka "saat ini" selalu kondisi sekarang. Semua dihitung dari data yang sama dengan layar lain.</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px">'+bags.map(bag=>'<section class="panel" id="lap-'+esc(bag.toLowerCase().replace(/ /g,'-'))+'"><header><h2>'+esc(bag)+'</h2><span class="grow"></span><button class="btn sm ghost" data-act="lapbag" data-bag="'+esc(bag)+'" data-fmt="pdf" title="Unduh laporan '+esc(bag)+' (PDF)">'+ic('file')+' PDF</button> <button class="btn sm ghost" data-act="lapbag" data-bag="'+esc(bag)+'" data-fmt="xlsx" title="Unduh laporan '+esc(bag)+' (Excel)">'+ic('dl')+' Excel</button></header><div class="tbl-wrap"><table><tbody>'+R.filter(r=>r.bag===bag).map(r=>'<tr'+(r.href?' class="click" data-act="go" data-href="'+esc(r.href)+'"':'')+'><td>'+esc(r.k)+(r.note?'<div class="note">'+esc(r.note)+'</div>':'')+'</td><td class="num"><b>'+nilai(r)+'</b></td></tr>').join('')+'</tbody></table></div><div class="note" style="padding:6px 14px 10px">Unduhan memuat: '+esc(LAP_ISI[bag]||'ringkasan')+'.</div></section>').join('')+'</div>'};
+/* ---------- Laporan per bagian: PDF dan Excel dengan ringkasan dan tabel rinci untuk analisa dan bottleneck ---------- */
+const LAP_ISI={
+ 'Produksi':'SPK aktif dan posisinya, item belum mulai produksi (umur dan alasan), hasil per jenis produk (tonase aktual dan estimasi), lama produksi per SPK',
+ 'Pengiriman':'Surat jalan customer periode ini, ringkasan per customer, barang menunggu kirim, SPK terlambat',
+ 'Bahan baku':'Plat masuk, plat keluar per SPK, stok per item (cakupan hari, saran beli), susut per SPK, PR terbuka dan draf',
+ 'Barang jadi':'Stok barang jadi, siap masuk stok (SPK stok), mutasi periode ini',
+ 'Vendor':'SJ masih di vendor (umur, sisa), ringkasan per vendor, siap dikirim ke vendor, SJ periode ini',
+ 'Sparepart':'Pemakaian per item, di bawah minimum (saran beli), stok semua sparepart',
+ 'Kesehatan data':'Semua temuan Cek Data dengan tingkat, kategori, dan keterangan'};
+const plainTxt=s=>String(s==null?'':s).replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').replace(/\s+/g,' ').trim();
+function lapBagianModel(bag,p){
+ const [a,b,lbl]=period(p);const c=calc();const t=today();const per={dari:a,sampai:b,label:lbl};const inR=d=>{d=String(d||'').slice(0,10);return d>=a&&d<=b};
+ const r1=v=>Math.round((+v||0)*10)/10,r2=v=>Math.round((+v||0)*100)/100;const sNo=id=>{const s=byId('spk',id);return s?String(s.no):''};const sCust=id=>{const s=byId('spk',id);return s?s.customer:''};
+ const tgl=d=>d?fdS(String(d).slice(0,10)):'';
+ const R=ringkasLaporan(p).filter(r=>r.bag===bag);
+ const tb=(title,cols,rows,foot)=>({title,cols,rows,...(foot?{foot}:{})});
+ const T=[tb('Ringkasan '+bag+' · '+lbl,[['Ukuran',34,'l'],['Nilai',16,'r'],['Satuan',12,'l'],['Catatan',44,'l']],R.map(r=>[r.k,r.v,r.u,r.note]))];
+ const aktif=S.spk.filter(s=>s.status==='Terbit'&&c.spk[s._id]&&c.spk[s._id].st!=='Selesai').sort((x,y)=>String(x.due||'9999').localeCompare(String(y.due||'9999')));
+ const kgSpk=s=>(s.items||[]).reduce((q,i)=>q+(+i.q||0)*(+i.w||0),0);
+ if(bag==='Produksi'){
+  T.push(tb('SPK aktif dan posisinya',[['SPK',9,'l'],['Customer',24,'l'],['PO',14,'l'],['Terbit',12,'c'],['Due',12,'c'],['Progres produksi',12,'r'],['Posisi',16,'l'],['Terlambat',10,'c'],['Tonase SPK (kg)',14,'r'],['Alasan belum produksi',34,'l']],
+   aktif.map(s=>{const x=c.spk[s._id];return [String(s.no),s.customer,s.po||'',tgl(s.terbitAt||s.tgl),tgl(s.due),Math.round((x.pP||0)*100)+'%',(flow(s._id)||{}).stage||x.st,x.st==='Terlambat'?'Ya':'',r1(kgSpk(s)),tundaAktif(s).map(z=>z.it.d+': '+z.t.alasan+(z.t.ket?' ('+z.t.ket+')':'')).join('; ')]})));
+  const bm=[];aktif.forEach(s=>{const x=c.spk[s._id];(s.items||[]).forEach((it,k)=>{const l=(x.lines||[])[k]||{};if((+l.prodEff||0)>0)return;const td=(it.tunda&&it.tunda.alasan)?it.tunda.alasan+(it.tunda.ket?' ('+it.tunda.ket+')':''):'';bm.push([String(s.no),s.customer,it.d,+it.q||0,it.u||'',Math.max(0,days(String(s.terbitAt||s.tgl).slice(0,10),t)),td||'belum ada alasan'])})});
+  T.push(tb('Item belum mulai produksi (bottleneck)',[['SPK',9,'l'],['Customer',24,'l'],['Item',40,'l'],['Qty',10,'r'],['Satuan',9,'l'],['Umur sejak terbit (hari)',16,'r'],['Alasan',34,'l']],bm.sort((x,y)=>y[5]-x[5])));
+  const P=PXL();if(P&&P.rincianProduk){const rp=P.rincianProduk(lapEv(),per);T.push(tb('Hasil produksi per jenis produk · '+lbl,[['Kelompok',16,'l'],['Section',24,'l'],['Bentuk',18,'l'],['Type',8,'c'],['Tebal/diameter (mm)',12,'r'],['Material',14,'l'],['Finishing',14,'l'],['Jumlah (pcs)',13,'r'],['Tonase aktual (kg)',15,'r'],['Tonase estimasi (kg)',15,'r']],rp.baris.map(r=>[r.kelompok,r.produk,r.bentuk,r.tipe,r.tebal,r.material,r.finishing,r.qty,r.tonase,r.tonaseEst]),['TOTAL','','','','','','',rp.total.qty,rp.total.tonase,rp.total.tonaseEst]))}
+  T.push(tb('Lama produksi per SPK',[['SPK',9,'l'],['Customer',24,'l'],['SPK terbit',12,'c'],['Laporan pertama',14,'c'],['Selesai produksi',16,'c'],['Terbit ke laporan pertama (hk)',16,'r'],['Terbit ke selesai (hk)',16,'r'],['Alasan belum produksi terakhir',34,'l']],lamaProduksiRows(per).map(r=>[String(r.s.no),r.s.customer,tgl(r.terbit),tgl(r.pertama),r.selesai?tgl(r.selesai):'belum semua selesai',r.hkPertama,r.hkSelesai!=null?r.hkSelesai:'berjalan '+r.hkJalan,r.alasan])));
+ }
+ if(bag==='Pengiriman'){
+  const kk=S.kirim.filter(k=>k.status!=='Batal'&&inR(k.tgl)).sort((x,y)=>String(x.tgl).localeCompare(String(y.tgl)));
+  const sjQ=k=>(k.items||[]).reduce((s,i)=>s+(+i.q||0),0),sjK=k=>(k.items||[]).reduce((s,i)=>s+(+i.q||0)*wRealDok(k,i),0);
+  T.push(tb('Surat jalan customer · '+lbl,[['No SJ',20,'l'],['Tanggal',12,'c'],['Customer',26,'l'],['SPK',9,'l'],['Status',14,'l'],['Qty (pcs)',12,'r'],['Tonase (kg)',13,'r']],kk.map(k=>[k.noSJ||'',tgl(k.tgl),k.customer||sCust(k.spk),sNo(k.spk),k.status||'',sjQ(k),r1(sjK(k))]),['TOTAL','','','','',kk.reduce((s,k)=>s+sjQ(k),0),r1(kk.reduce((s,k)=>s+sjK(k),0))]));
+  const pc={};kk.forEach(k=>{const n=k.customer||sCust(k.spk)||'(tanpa customer)';const o=pc[n]||(pc[n]={sj:0,q:0,kg:0});o.sj++;o.q+=sjQ(k);o.kg+=sjK(k)});
+  T.push(tb('Ringkasan per customer',[['Customer',30,'l'],['Jumlah SJ',12,'r'],['Qty (pcs)',12,'r'],['Tonase (kg)',13,'r']],Object.entries(pc).sort((x,y)=>y[1].kg-x[1].kg).map(([n,o])=>[n,o.sj,o.q,r1(o.kg)])));
+  const mk=[];fgSiapKirimList().forEach(x=>x.rows.forEach(r=>mk.push([String(x.s.no),x.s.customer,tgl(x.s.due),r.d,r.siap,r.kirim,r.sisa])));
+  T.push(tb('Barang menunggu kirim ke customer (saat ini)',[['SPK',9,'l'],['Customer',24,'l'],['Due',12,'c'],['Item',40,'l'],['Siap',10,'r'],['Sudah dikirim',13,'r'],['Menunggu',11,'r']],mk));
+  T.push(tb('SPK terlambat (belum terkirim penuh)',[['SPK',9,'l'],['Customer',24,'l'],['Due',12,'c'],['Lewat (hari)',12,'r'],['Posisi',16,'l'],['Progres produksi',14,'r']],aktif.filter(s=>c.spk[s._id].st==='Terlambat').map(s=>[String(s.no),s.customer,tgl(s.due),Math.max(0,days(s.due,t)),(flow(s._id)||{}).stage||'',Math.round((c.spk[s._id].pP||0)*100)+'%'])));
+ }
+ if(bag==='Bahan baku'){
+  const rmN=id=>rmLabel(byId('rm',id));const kgl={};matRmSiap().forEach(r=>{kgl[r.id]=+r.kgPerLbr||0});
+  const ms=S.mutasi.filter(m=>m.gudang==='rm'&&inR(m.tgl));
+  T.push(tb('Plat masuk · '+lbl,[['Tanggal',12,'c'],['Item',38,'l'],['Qty (lbr)',11,'r'],['Berat (kg)',13,'r'],['No dokumen',20,'l'],['Dari',22,'l']],ms.filter(m=>m.jenis==='masuk').sort((x,y)=>String(x.tgl).localeCompare(String(y.tgl))).map(m=>[tgl(m.tgl),rmN(m.item),Math.abs(+m.delta||0),r1(Math.abs(+m.delta||0)*(kgl[m.item]||0)),m.noDok||'',m.pihak||''])));
+  const pk={};ms.filter(m=>m.jenis==='keluar'&&m.spk).forEach(m=>{const o=pk[m.spk]||(pk[m.spk]={q:0,kg:0});o.q+=Math.abs(+m.delta||0);o.kg+=Math.abs(+m.delta||0)*(kgl[m.item]||0)});
+  T.push(tb('Plat keluar ke produksi per SPK · '+lbl,[['SPK',9,'l'],['Customer',26,'l'],['Qty (lbr)',11,'r'],['Berat (kg)',13,'r']],Object.entries(pk).sort((x,y)=>y[1].kg-x[1].kg).map(([id,o])=>[sNo(id),sCust(id),o.q,r1(o.kg)])));
+  T.push(tb('Stok bahan baku per item (saat ini)',[['Item',38,'l'],['Stok (lbr)',11,'r'],['Stok (kg)',12,'r'],['Pakai 30 hari (lbr)',16,'r'],['Cakupan (hari)',13,'r'],['Dipesan (lbr)',13,'r'],['Saran beli (lbr)',14,'r'],['Status',16,'l']],Object.values(rmCalc().info).filter(x=>!x.off).sort((x,y)=>(+x.cover||9e9)-(+y.cover||9e9)).map(x=>[rmLabel(x.r),r1(x.stok),r1(x.kg),r1(x.cons30),x.cover==null||!isFinite(x.cover)?'':Math.round(x.cover),r1(x.onOrder),r1(x.sug),plainTxt(x.st)])));
+  T.push(tb('Susut bahan baku per SPK (SPK selesai produksi)',[['SPK',9,'l'],['Bahan',22,'l'],['Plat keluar (kg)',15,'r'],['Hasil (kg)',13,'r'],['Susut (kg)',12,'r'],['Susut (%)',11,'r'],['Status',14,'l']],susutRows().map(r=>[String(r.s.no),r.kunci||r.bahan||'',r1(r.keluarKg),r1(r.hasilKg),r1(r.keluarKg-r.hasilKg),r.keluarKg>0?r1((r.keluarKg-r.hasilKg)/r.keluarKg*100):'',r.status||''])));
+  const pr=[];S.pr.filter(x=>x.gudang!=='sp'&&['Draf','Diajukan','Dipesan'].includes(x.status)).forEach(x=>(x.items||[]).forEach(i=>pr.push([x.noPR,x.status,tgl(x.tgl),tgl(x.butuh),x.supplier||'',rmN(i.item),+i.q||0,+i.qTerima||0,plainTxt(x.ket)])));
+  T.push(tb('PR terbuka dan draf',[['No PR',16,'l'],['Status',11,'l'],['Tanggal',12,'c'],['Dibutuhkan',12,'c'],['Supplier',20,'l'],['Item',36,'l'],['Qty',9,'r'],['Diterima',10,'r'],['Keterangan',34,'l']],pr));
+ }
+ if(bag==='Barang jadi'){
+  T.push(tb('Stok barang jadi (saat ini)',[['Item',46,'l'],['Stok (unit)',12,'r']],Object.entries(c.stock.fg||{}).filter(([,v])=>v!==0).sort((x,y)=>y[1]-x[1]).map(([id,v])=>[fgLabel(byId('fg',id)),v])));
+  const sm=[];fgSiapMasukList().forEach(x=>x.baris.forEach(r=>sm.push([String(x.s.no),x.s.customer,fgLabel(byId('fg',r.fg||r.item)),r.sisa])));
+  T.push(tb('Siap masuk stok (SPK stok, saat ini)',[['SPK',9,'l'],['Customer',22,'l'],['Item',44,'l'],['Menunggu masuk (unit)',18,'r']],sm));
+  T.push(tb('Mutasi barang jadi · '+lbl,[['Tanggal',12,'c'],['Item',40,'l'],['Jenis',11,'l'],['Qty',9,'r'],['Referensi',28,'l'],['Pihak',22,'l']],S.mutasi.filter(m=>m.gudang==='fg'&&inR(m.tgl)).sort((x,y)=>String(x.tgl).localeCompare(String(y.tgl))).map(m=>[tgl(m.tgl),fgLabel(byId('fg',m.item)),m.jenis||'',+m.delta||0,m.ref||m.noDok||'',m.pihak||''])));
+ }
+ if(bag==='Vendor'){
+  const open=c.vend.filter(x=>x.st==='Di Vendor'||x.st==='Kembali Sebagian');
+  T.push(tb('SJ masih di vendor (saat ini)',[['No SJ',20,'l'],['Vendor',22,'l'],['Proses',14,'l'],['Tgl kirim',12,'c'],['Umur (hari)',11,'r'],['Kirim',9,'r'],['Kembali',9,'r'],['Reject',9,'r'],['Sisa',9,'r'],['SPK',9,'l']],open.sort((x,y)=>y.age-x.age).map(x=>[x.v.noSJ||'',x.v.vendor||'',x.v.proses||'',tgl(x.v.tgl),x.age,x.out,x.back,x.rej,x.sisa,sNo(x.v.spk)])));
+  const pv={};open.forEach(x=>{const n=x.v.vendor||'(tanpa vendor)';const o=pv[n]||(pv[n]={sj:0,sisa:0,umur:0,lewat:0});o.sj++;o.sisa+=x.sisa;o.umur+=x.age;if(x.age>14)o.lewat++});
+  T.push(tb('Ringkasan per vendor (yang masih di vendor)',[['Vendor',26,'l'],['SJ terbuka',12,'r'],['Barang belum kembali (pcs)',20,'r'],['Umur rata-rata (hari)',18,'r'],['Lewat 14 hari (SJ)',16,'r']],Object.entries(pv).sort((x,y)=>y[1].sisa-x[1].sisa).map(([n,o])=>[n,o.sj,o.sisa,r1(o.umur/o.sj),o.lewat])));
+  T.push(tb('Siap dikirim ke vendor (saat ini)',[['SPK',9,'l'],['Customer',24,'l'],['Item',40,'l'],['Siap (pcs)',11,'r'],['Proses vendor',16,'l']],siapVendorRows().map(x=>[String(x.s.no),x.s.customer,x.it.d,x.siap,String(x.vN)])));
+  T.push(tb('SJ vendor periode ini · '+lbl,[['No SJ',20,'l'],['Vendor',22,'l'],['Proses',14,'l'],['Tgl kirim',12,'c'],['Kirim',9,'r'],['Kembali',9,'r'],['Reject',9,'r'],['Status',16,'l']],c.vend.filter(x=>x.st!=='Batal'&&inR(x.v.tgl)).map(x=>[x.v.noSJ||'',x.v.vendor||'',x.v.proses||'',tgl(x.v.tgl),x.out,x.back,x.rej,x.st])));
+ }
+ if(bag==='Sparepart'){
+  const sp={};S.mutasi.filter(m=>m.gudang==='sp'&&m.jenis==='keluar'&&inR(m.tgl)).forEach(m=>{const o=sp[m.item]||(sp[m.item]={q:0,n:0});o.q+=Math.abs(+m.delta||0);o.n++});
+  T.push(tb('Pemakaian sparepart per item · '+lbl,[['Item',40,'l'],['Jumlah dipakai',16,'r'],['Jumlah transaksi',16,'r']],Object.entries(sp).sort((x,y)=>y[1].q-x[1].q).map(([id,o])=>[spLabel(byId('sp',id)),o.q,o.n])));
+  T.push(tb('Di bawah minimum (saat ini)',[['Item',38,'l'],['Stok',9,'r'],['Minimum',10,'r'],['Buffer',9,'r'],['Dipesan',10,'r'],['Saran beli',11,'r'],['Status',16,'l'],['Dasar saran',44,'l']],spSug().map(x=>[spLabel(x.r),x.stok,x.min,x.buf,x.oo,x.sug,x.st,plainTxt(x.why)])));
+  T.push(tb('Stok semua sparepart (saat ini)',[['Item',38,'l'],['Stok',9,'r'],['Minimum',10,'r'],['Buffer',9,'r'],['Pakai 30 hari',13,'r'],['Status',16,'l']],Object.values(spCalc()).filter(x=>spOn(x.r)).map(x=>[spLabel(x.r),x.stok,x.min,x.buf,x.k30,x.st])));
+ }
+ if(bag==='Kesehatan data'){
+  T.push(tb('Semua temuan Cek Data',[['Tingkat',11,'l'],['Kategori',16,'l'],['Temuan',52,'l'],['Keterangan',44,'l'],['Detail',44,'l']],issues().slice().sort((x,y)=>y.sev-x.sev).map(i=>[i.sev>=3?'Kritis':i.sev===2?'Perhatian':'Info',plainTxt(i.cat),plainTxt(i.title),plainTxt(i.meta),plainTxt(i.detail)])));
+ }
+ return {kind:'lpp',title:'Laporan '+bag,no:'LAP-'+bag.replace(/[^A-Za-z]/g,'').slice(0,4).toUpperCase()+'-'+b.replace(/-/g,''),date:b,landscape:true,file:'Laporan-'+bag.replace(/ /g,'-')+'-'+b,
+  meta:[['Bagian',bag],['Periode',lbl],['Rentang',tgl(a)+' s/d '+tgl(b)],['Dasar','Data sistem yang sama dengan layar lain; "saat ini" = kondisi sekarang']],tables:T.map(x=>x.rows.length?x:{...x,rows:[['Tidak ada data pada periode atau kondisi ini',...Array(x.cols.length-1).fill('')]]})};
+}
+async function lapBagianUnduh(bag,fmt){
+ try{const m=lapBagianModel(bag,F['laporan'].p);await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
 async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R=ringkasLaporan(f.p);
  await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
 /* T10: Dashboard menampilkan apa yang menunggu tindakan, satu tombol per pekerjaan, langsung ke layar atau tab yang tepat. Hanya yang boleh dilihat peran ini. */
@@ -6362,7 +6438,7 @@ document.addEventListener('click',async e=>{
   case 'papanbuka':{F.mesin.wc=ds.wc;F.mesin.mesin='';lsSet('mni-wc',ds.wc);lsSet('mni-mesin','');location.hash='mesin';break}
   case 'mrstep':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){const mx=q.max===''?Infinity:+q.max;const v=Math.max(0,Math.min(mx,(+q.value||0)+(+ds.d)));q.value=String(Math.round(v*1000)/1000);mrLabel(q.closest('.mesin-run'))}break}
   case 'mesinsemua':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){q.value=ds.max;mrLabel(q.closest('.mesin-run'))}break}
-  case 'spkcontoh':await spkContohUji();break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
+  case 'spkcontoh':await spkContohUji();break;case 'lapbag':await lapBagianUnduh(ds.bag,ds.fmt);break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
   case 'progcsv':await progCsv();break;
   case 'lapacsv':await lapAnalisaCsv();break;
   case 'lapprint':lapPrint();break;

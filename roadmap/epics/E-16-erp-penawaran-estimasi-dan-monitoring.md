@@ -7,7 +7,7 @@ theme: Integrasi
 priority: P2
 status: active
 progress: 8
-tasks_total: 25
+tasks_total: 26
 tasks_done: 4
 updated: 2026-11-12
 ---
@@ -52,5 +52,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]] Laporan produksi per jenis produk (triwulan), alasan belum produksi, Ladder dan Duct tanpa lubang, posisi Berjalan satu langkah Produksi · review · P1 · 1 hari
 - [ ] [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]] Master Data, Pengguna & Akses, dan Kinerja Tim selaras modul terbaru (angka punya dasar) · review · P1 · 1 hari
 - [ ] [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]] Section Cable Tray Wiremesh, SPK contoh uji (Tray, Ladder, Duct, Wiremesh), Other Support kelompok sendiri · review · P1 · 1 hari
+- [ ] [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]] Laporan per bagian: unduh PDF dan Excel dengan ringkasan dan tabel rinci untuk analisa dan bottleneck · review · P1 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

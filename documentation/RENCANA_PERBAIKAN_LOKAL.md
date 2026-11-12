@@ -162,3 +162,5 @@ Urutan kerja (satu paket per sesi, satu commit, regresi penuh hanya di akhir tia
 **Type tanpa duplikasi (2026-11-12, T-230):** Type C dan U dilebur ke STC dan STU di Opsi SPK, pembacaan judul section, dan laporan; semua daftar Opsi SPK bebas nilai kembar (PH-49, S-65).
 
 **Wiremesh, SPK contoh uji (2026-11-12, lokal, T-231):** section Cable Tray Wiremesh (Diameter, finishing, teks bebas, berat manual, rute sementara), Other Support dan Wiremesh kelompok laporan sendiri, tombol SPK contoh uji (pratinjau lokal), Type C/U dilebur ke STC/STU. Regresi penuh sebelum perubahan ini: 32 suite, 730 PASS, 0 FAIL; uji terdampak sesudahnya hijau (PH-50).
+
+**Laporan per bagian PDF dan Excel (2026-11-12, lokal, T-232):** tiap kartu di Laporan punya tombol PDF dan Excel dengan ringkasan dan tabel rinci (SPK aktif, item belum mulai produksi, hasil per jenis produk, SJ, stok, susut, PR, SJ vendor, sparepart, temuan Cek Data). PH-51.

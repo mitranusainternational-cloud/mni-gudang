@@ -565,6 +565,18 @@ export async function runProduksiHuluHilir(page, base) {
     const h50 = await page.inputValue('#ed-h-0');
     await page.evaluate(() => { try { closeEditor(); } catch (e) { /* sudah tertutup */ } }); await wait(300);
     ok('PH-50 Cable Tray Wiremesh: section ada di daftar, judul memakai Diameter dan finishing (tanpa Type dan Tebal), masukan teks bebas seperti versi pertama, rute sementara Shearing > Bending > Welding > vendor, kelompok laporan Wiremesh; Other Support kelompok sendiri', r50.header === 'WIREMESH CABLE TRAY DIAMETER 4 MM ELECTRO GALVANIZED' && r50.parse === 'WIREMESH CABLE TRAY|4|ELECTRO GALVANIZED||' && r50.kls === 'Wiremesh' && /^Shearing>Bending>Welding/.test(r50.rute) && r50.os === 'Other Support' && r50.opsi && ui50.dm && !ui50.tipe && !ui50.tebal && ui50.teks && h50 === 'WIREMESH CABLE TRAY DIAMETER 4 MM ELECTRO GALVANIZED', JSON.stringify({ r50, ui50, h50 }));
+
+    langkah = 'PH-51';
+    const r51 = await page.evaluate(async () => {
+      const o = {}; const w = (ms) => new Promise((r) => setTimeout(r, ms)); F.laporan.p = '90'; location.hash = '#laporan'; await w(800);
+      o.tombol = document.querySelectorAll('[data-act="lapbag"]').length; o.catatan = document.querySelectorAll('#view .note').length > 0;
+      for (const bag of ['Produksi', 'Pengiriman', 'Bahan baku', 'Barang jadi', 'Vendor', 'Sparepart', 'Kesehatan data']) {
+        const m = lapBagianModel(bag, '90'); const x = await docXlsx(m); const pd = await docPdf(m);
+        o[bag] = m.tables.length + ':' + ((x.byteLength || x.size || x.length) > 5000) + ':' + ((pd.byteLength || pd.size || pd.length) > 5000) + ':' + m.tables.every((tb) => tb.rows.every((rw) => rw.length === tb.cols.length));
+      }
+      return o;
+    });
+    ok('PH-51 Laporan per bagian: 7 bagian masing-masing punya tombol PDF dan Excel, model dokumen dengan ringkasan dan tabel rinci (jumlah kolom tiap baris sama dengan kolom tabel), PDF dan Excel terbentuk', r51.tombol === 14 && ['Produksi', 'Pengiriman', 'Bahan baku', 'Barang jadi', 'Vendor', 'Sparepart', 'Kesehatan data'].every((k) => /^[2-9]:true:true:true$/.test(r51[k])), JSON.stringify(r51));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }
