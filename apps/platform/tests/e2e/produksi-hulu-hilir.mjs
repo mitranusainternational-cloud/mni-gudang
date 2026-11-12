@@ -454,6 +454,19 @@ export async function runProduksiHuluHilir(page, base) {
       return o;
     });
     ok('PH-43 hitung ulang berat: SPK belum selesai terdeteksi (3 item berat salinan 8,481), berat lama disimpan, berat baru dan berat estimasi dari kalkulator; SPK yang sudah selesai tidak ikut', r43.daftar && r43.selesaiTidakDiubah && r43.ubah && r43.ubah.length === 3 && r43.wBaru.join() === '13.513,6.813,13.513' && r43.lamaTersimpan.every((x) => x === 8.481) && r43.wEstBaru.join() === '14.712,7.35,14.712', JSON.stringify(r43));
+
+    langkah = 'PH-44';
+    const r44 = await page.evaluate(() => {
+      let s = byId('master', 'setting'); const dibuat = !s; if (dibuat) { s = { _id: 'setting', key: 'setting' }; S.master.push(s); } const asli = s.spkOpsi; const o = {};
+      const lama = ['CABLE TRAY', 'PERFORATED CABLE TRAY', 'CABLE LADDER', 'CABLE DUCT', 'COVER TRAY', 'ACCS TRAY', 'ACCS LADDER', 'ACCS DUCT', 'SUPPORT TRAY', 'WIREMESH CABLE TRAY'];
+      o.bawaan = HB_DEF.p.join('|');
+      s.spkOpsi = { ...(asli || {}), p: lama }; o.lamaTidakDiubah = OPSI().p.join('|') === HB_DEF.p.join('|') && OPSI().p.includes('OTHER SUPPORT');
+      s.spkOpsi = { ...(asli || {}), p: ['CABLE TRAY', 'ACCS TRAY'] }; o.diubahPemilik = OPSI().p.join('|') === 'CABLE TRAY|ACCS TRAY';
+      s.spkOpsi = asli; if (asli === undefined) delete s.spkOpsi; if (dibuat) S.master = S.master.filter((x) => x !== s);
+      o.urut = HB_DEF.p;
+      return o;
+    });
+    ok('PH-44 daftar section bawaan: 11 section sesuai permintaan pemilik; Opsi SPK lama yang belum pernah diubah memakai bawaan baru, daftar yang diubah pemilik dihormati', r44.urut.length === 11 && r44.urut.join() === 'CABLE TRAY,PERFORATED CABLE TRAY,CABLE LADDER,CABLE DUCT,ACCS TRAY,ACCS LADDER,ACCS DUCT,COVER TRAY,COVER LADDER,COVER DUCT,OTHER SUPPORT' && r44.lamaTidakDiubah && r44.diubahPemilik, JSON.stringify(r44));
   } catch (e) {
     ok('PH-ERR ' + langkah, false, String(e.message).replace(/[[0-9;]*m/g,'').slice(0, 900));
   }

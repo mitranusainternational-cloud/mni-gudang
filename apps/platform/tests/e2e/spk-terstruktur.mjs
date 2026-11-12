@@ -18,7 +18,7 @@ export async function runSpkTerstruktur(page, base) {
   const pasangKatalog = (c) => page.evaluate((c) => { window.MNIBerat.setKatalog(c); }, c);
   const bukaBaru = async () => { await go('#spk'); await page.click('#tools [data-act="newspk"]'); await page.waitForSelector('#ed-secs'); await wait(500); };
   const nilai = (id) => page.inputValue('#' + id);
-  const teks = (id) => page.evaluate((id) => (document.getElementById(id) || { textContent: '' }).textContent.trim(), id);
+  const teks = (id) => page.evaluate((id) => { const e = document.getElementById(id) || {}; return String(e.value !== undefined ? e.value : (e.textContent || '')).trim(); }, id);
   const opsi = (id) => page.evaluate((id) => [...document.getElementById(id).options].map((o) => o.textContent), id);
   const ada = (id) => page.evaluate((id) => !!document.getElementById(id), id);
   const berat = (keluarga, bentuk, dim, tebal, material, lubang) => hitungBentuk(kat, { keluarga, bentuk, dim, tebal, material, lubang });
@@ -95,7 +95,7 @@ export async function runSpkTerstruktur(page, base) {
   await page.selectOption('#ed-hp-0', 'COVER TRAY'); await wait(500);
   const optCover = await opsi('ed-sb-0-0');
   const dimCover = await page.evaluate(() => [...document.querySelectorAll('#ed-secs tr[data-l="0"] .dm span')].map((x) => x.textContent));
-  ok('S-10 produk diganti Cover Tray: pilihan bentuk berganti ke Cover, ukuran W dan L', optCover.join() === 'Teks bebas,Cover Straight' && dimCover.join() === 'W,L' && (await teks('ed-nm-0-0')) === 'Cover Tray W100xL3000', JSON.stringify({ optCover, dimCover, nama: await teks('ed-nm-0-0') }));
+  ok('S-10 produk diganti Cover Tray: pilihan bentuk berganti ke Cover, ukuran W dan L', optCover.join() === 'Teks bebas,Cover Tray' && dimCover.join() === 'W,L' && (await teks('ed-nm-0-0')) === 'Cover Tray W100xL3000', JSON.stringify({ optCover, dimCover, nama: await teks('ed-nm-0-0') }));
   await page.selectOption('#ed-hp-0', 'CABLE TRAY'); await wait(400);
 
   // ---------- S-11 bentuk manual: berat manual tidak ditimpa ----------
@@ -124,20 +124,26 @@ export async function runSpkTerstruktur(page, base) {
   await page.reload(); await wait(3000); await pasangKatalog(kat); await go('#spk');
   await page.evaluate((id) => document.querySelector(`[data-act="openspk"][data-id="${id}"]`)?.click(), sp.id); await wait(800);
   await page.evaluate(() => document.querySelector('[data-act="spkedit"]')?.click()); await wait(900);
-  const balik = await page.evaluate(() => ({ sb: (document.getElementById('ed-sb-0-0') || {}).value, w: (document.getElementById('ed-dm-0-0-w') || {}).value, l: (document.getElementById('ed-dm-0-0-l') || {}).value, lub: (document.getElementById('ed-lb-0-0') || {}).value, nama: (document.getElementById('ed-nm-0-0') || {}).textContent, bw: (document.getElementById('ed-w-0-0') || {}).value }));
+  const balik = await page.evaluate(() => ({ sb: (document.getElementById('ed-sb-0-0') || {}).value, w: (document.getElementById('ed-dm-0-0-w') || {}).value, l: (document.getElementById('ed-dm-0-0-l') || {}).value, lub: (document.getElementById('ed-lb-0-0') || {}).value, nama: (document.getElementById('ed-nm-0-0') || {}).value, bw: (document.getElementById('ed-w-0-0') || {}).value }));
   ok('S-14 membuka SPK untuk diubah menampilkan bentuk, ukuran, lubang, dan berat seperti saat disimpan', balik.sb === 'STRAIGHT_STU' && balik.w === '100' && balik.l === '3000' && balik.lub === 'full' && /Full Hole/.test(balik.nama) && dekat(+balik.bw, full.beratSPK), JSON.stringify(balik));
 
   // ---------- S-15 aksesori: bentuk dipilih pengguna; produk tanpa kalkulator tetap teks ----------
   await page.click('[data-act="ed-addsec"]'); await wait(300);
-  await page.selectOption('#ed-hp-1', 'ACCS TRAY'); await wait(500);
+  await page.selectOption('#ed-hp-1', 'OTHER SUPPORT'); await wait(500);
   const awalAccs = await nilai('ed-sb-1-0');
   const teksBebas = await ada('ed-d-1-0');
   await page.selectOption('#ed-sb-1-0', { label: 'Hanger Beam' }); await wait(400);
   await page.fill('#ed-dm-1-0-w', '150'); await page.fill('#ed-q-1-0', '4'); await wait(300);
   const hb = berat('STU', 'HANGER_BEAM_STU', { w: 150 }, 1.2, 'SPHC / ELG');
-  ok('S-15 section aksesori: awalnya teks bebas (bentuk dipilih pengguna); Hanger Beam hanya meminta W; nama "Hanger Beam W150" dan berat otomatis', awalAccs === '' && teksBebas && (await teks('ed-nm-1-0')) === 'Hanger Beam W150' && dekat(+(await nilai('ed-w-1-0')), hb.beratSPK), JSON.stringify({ awalAccs, nama: await teks('ed-nm-1-0'), w: await nilai('ed-w-1-0') }));
+  ok('S-15 section Other Support: awalnya teks bebas (bentuk dipilih pengguna); Hanger Beam hanya meminta W; nama "Hanger Beam W150" dan berat otomatis', awalAccs === '' && teksBebas && (await teks('ed-nm-1-0')) === 'Hanger Beam W150' && dekat(+(await nilai('ed-w-1-0')), hb.beratSPK), JSON.stringify({ awalAccs, nama: await teks('ed-nm-1-0'), w: await nilai('ed-w-1-0') }));
   await page.selectOption('#ed-hp-1', 'CABLE DUCT'); await wait(500);
-  ok('S-16 produk tanpa kalkulator (Cable Duct): kembali ke isian teks bebas tanpa pilihan bentuk', !(await ada('ed-sb-1-0')) && (await ada('ed-d-1-0')));
+  await page.selectOption('#ed-sb-1-0', { label: 'Straight' }); await wait(400); // baris Hanger Beam lama tetap di luar aturan; pilih Straight
+  const sb16 = await nilai('ed-sb-1-0');
+  await page.fill('#ed-dm-1-0-w', '100'); await page.fill('#ed-dm-1-0-h', '50'); await page.fill('#ed-dm-1-0-l', '3000'); await page.fill('#ed-q-1-0', '2'); await wait(500);
+  const ductTanpa = berat('STU', 'STRAIGHT_STU', { w: 100, h: 50, l: 3000 }, 1.2, 'SPHC / ELG', 'tanpa');
+  const lub16 = await ada('ed-lb-1-0'); const nama16 = await teks('ed-nm-1-0'); const w16 = +(await nilai('ed-w-1-0'));
+  ok('S-16 Cable Duct (seperti Cable Tray tanpa lubang): bentuk Straight otomatis, tanpa pilihan lubang, nama "Cable Duct W100xH50xL3000", berat = kolom tanpa lubang kalkulator', sb16 === 'STRAIGHT_STU' && !lub16 && nama16 === 'Cable Duct W100xH50xL3000' && ductTanpa.ok && dekat(w16, ductTanpa.beratSPK), JSON.stringify({ sb16, lub16, nama16, w16, harap: ductTanpa.beratSPK }));
+  await page.fill('#ed-dm-1-0-w', ''); await page.fill('#ed-dm-1-0-h', ''); await page.fill('#ed-dm-1-0-l', ''); await page.fill('#ed-q-1-0', ''); await wait(400);
 
   // ---------- S-17 lembar SPK: nama, berat per pcs, berat per item, dan tonase ----------
   await page.evaluate(() => document.querySelector('#editor [data-act="ed-save"][data-mode="terbit"], #editor button:not([data-mode="draft"]).primary')?.click());
@@ -192,6 +198,30 @@ export async function runSpkTerstruktur(page, base) {
   const ductLagi = await page.evaluate(() => itemRute({ g: 'CABLE DUCT TYPE STU 1.2 NON FINISHING', d: 'x' }));
   ok('S-22b mencentang kembali sebuah langkah tidak mengacak urutan langkah lain (Shearing tetap sebelum Bending)', ductLagi.includes('Punching') && ductLagi.indexOf('Shearing') < ductLagi.indexOf('Bending'), JSON.stringify(ductLagi));
   ok('S-23 menghapus rute khusus bentuk mengembalikan bentuk itu ke rute produk', !hapus.includes('Punching'), JSON.stringify(hapus));
+
+  // ---------- S-24 nama otomatis tetap bisa diedit manual (hanya nama); ukuran dan berat tetap dari kalkulator ----------
+  await bukaBaru();
+  await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '5'); await wait(500);
+  const otomatis = await nilai('ed-nm-0-0'); const w3000 = +(await nilai('ed-w-0-0'));
+  await page.fill('#ed-nm-0-0', 'Cable Tray Heavy Duty W100'); await page.dispatchEvent('#ed-nm-0-0', 'change'); await wait(500);
+  const manual1 = await nilai('ed-nm-0-0');
+  await page.fill('#ed-dm-0-0-l', '2400'); await wait(600);
+  const manual2 = await nilai('ed-nm-0-0'); const w2400 = +(await nilai('ed-w-0-0'));
+  const hb2400 = berat('STU', 'STRAIGHT_STU', { w: 100, h: 50, l: 2400 }, 1.2, 'SPHC / ELG', 'standar');
+  const adaTombolAuto = await page.evaluate(() => !!document.querySelector('[data-act="ednmauto"]'));
+  ok('S-24a nama otomatis terisi, lalu bisa diganti manual; ubah ukuran: nama manual tetap, berat mengikuti ukuran baru dari kalkulator', otomatis === 'Cable Tray W100xH50xL3000' && manual1 === 'Cable Tray Heavy Duty W100' && manual2 === 'Cable Tray Heavy Duty W100' && w2400 < w3000 && dekat(w2400, hb2400.beratSPK) && adaTombolAuto, JSON.stringify({ otomatis, manual1, manual2, w3000, w2400, harap: hb2400.beratSPK, adaTombolAuto }));
+  await page.click('[data-act="ednmauto"]'); await wait(500);
+  const kembali24 = await nilai('ed-nm-0-0');
+  ok('S-24b tombol "otomatis" mengembalikan nama dari bentuk dan ukuran', kembali24 === 'Cable Tray W100xH50xL2400', kembali24);
+  // nama manual tersimpan di item (nm) dan tidak ditimpa saat SPK dibuka lalu dihitung ulang
+  const bolakBalik = await page.evaluate(() => {
+    const s = { items: [{ d: 'Nama Khusus Saya', g: 'CABLE TRAY TYPE STU 1.2 ELECTRO GALVANIZED', q: 2, u: 'Btg', w: 4.4, ws: 'k', sb: 'STRAIGHT_STU', nm: true, dim: { w: 100, h: 50, l: 3000 } }] };
+    const e = edFrom(s, false); const L = e.sections[0].lines[0]; const sebelum = { nm: L.nm, d: L.d };
+    const sec = { h: s.items[0].g, lines: [L] }; edHitungBaris(sec, L);
+    return { sebelum, sesudah: { nm: L.nm, d: L.d }, w: L.w };
+  });
+  ok('S-24c SPK dengan nama manual (nm) dibuka dan dihitung ulang: nama tetap, berat tetap dari ukuran', bolakBalik.sebelum.nm === true && bolakBalik.sesudah.d === 'Nama Khusus Saya' && bolakBalik.w > 0, JSON.stringify(bolakBalik));
+  await tutupEditorBatal();
 
   ok('S-18 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   void tutupEditorBatal;

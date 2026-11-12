@@ -124,7 +124,7 @@ const AKSESORIS = /(ELBOW|TEE|CROSS|REDUCER|BRACKET|CLAMP|HANGER|JOINTING|SUPPOR
 export function klasifikasi(judul, deskripsi, material) {
   const H = String(judul || '').toUpperCase(), D = String(deskripsi || '').toUpperCase();
   let kelompok = 'Lainnya', induk = '';
-  if (/ACCS|ACCESS/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
+  if (/ACCS|ACCESS|OTHER\s+SUPPORT/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
   else if (/COVER/.test(H)) kelompok = 'Cover';
   else if (/CABLE\s+LADDER/.test(H)) kelompok = 'Cable Ladder';
   else if (/CABLE\s+TRAY|PERFORATED/.test(H)) kelompok = 'Cable Tray';

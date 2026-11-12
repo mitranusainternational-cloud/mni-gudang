@@ -9,9 +9,12 @@ export const RUTE_STANDAR = {
   'CABLE LADDER': ['Shearing', 'Punching', 'Bending', 'Welding'],
   'CABLE DUCT': ['Shearing', 'Punching', 'Bending'],
   'COVER TRAY': ['Shearing', 'Bending'],
+  'COVER LADDER': ['Shearing', 'Bending'],
+  'COVER DUCT': ['Shearing', 'Bending'],
   'ACCS TRAY': ['CNC Laser', 'Bending', 'Welding'],
   'ACCS LADDER': ['CNC Laser', 'Bending', 'Welding'],
   'ACCS DUCT': ['CNC Laser', 'Bending', 'Welding'],
+  'OTHER SUPPORT': ['CNC Laser', 'Bending', 'Welding'], // sama dengan ACCS (sebelumnya aksesori ini berada di section ACCS); aturan khusus per kata (clamp, hanger, jointing, splice) tetap berlaku
 };
 
 // Pengecualian berdasarkan kata di deskripsi (dicek berurutan, yang pertama cocok menang): bentuk tertentu tidak melewati semua mesin.

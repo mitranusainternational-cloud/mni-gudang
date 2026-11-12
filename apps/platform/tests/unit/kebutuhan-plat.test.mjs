@@ -47,6 +47,11 @@ const hasil = kelompokKebutuhan([{ d: 'x', g, q: 1000, w: w.kgPcsEst, sudahWaste
 const su = susutMaterial(kel, hasil, { 'SPHC|1.2': 15100 }, { faktor: 1.1 });
 ok('KP-10 plat keluar 15.100 kg untuk hasil 14.712 kg: susut 2,6% Wajar (batas 5%)', su[0].status === 'Wajar' && dekat(su[0].batas, 0.05, 1e-9), JSON.stringify(su[0]));
 
+
+// Cable Duct = Cable Tray tanpa lubang: masukan sama, berat memakai kolom tanpa lubang
+const std = kgPerPcs(katalog, { keluarga: 'STU', bentuk: 'STRAIGHT_STU', dim: { w: 300, h: 100, l: 3000 }, tebal: '1.2', material: 'SPHC / ELG', lubang: 'standar' });
+const tnp = kgPerPcs(katalog, { keluarga: 'STU', bentuk: 'STRAIGHT_STU', dim: { w: 300, h: 100, l: 3000 }, tebal: '1.2', material: 'SPHC / ELG', lubang: 'tanpa' });
+ok('KP-11 Cable Duct (tanpa lubang): berat estimasi dan real tidak lebih kecil dari yang berlubang, dan sama dengan kolom tanpa lubang di Excel', tnp.ok && tnp.lubang === 'tanpa' && tnp.kgPcsEst >= std.kgPcsEst - 1e-9 && tnp.kgPcsReal >= std.kgPcsReal - 1e-9, JSON.stringify({ standar: [std.kgPcsEst, std.kgPcsReal], tanpa: [tnp.kgPcsEst, tnp.kgPcsReal] }));
 R.forEach((l) => console.log(l));
 const gagal = R.filter((l) => l.startsWith('FAIL')).length;
 console.log(`${R.length - gagal} PASS, ${gagal} FAIL`);

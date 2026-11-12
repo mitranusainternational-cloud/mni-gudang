@@ -105,7 +105,7 @@ export async function runSpkRingkas(page, base) {
     await page.selectOption('#ed-sb-0-0', ''); await wait(500);
     await page.fill('#ed-d-0-0', 'Cable Tray W200xH50xL3000'); await page.press('#ed-d-0-0', 'Tab'); await wait(900);
     await page.fill('#ed-q-0-0', '10'); await wait(600);
-    const k12 = await page.evaluate(() => { const L = ED.sections[0].lines[0]; const t = document.querySelector('tr[data-l="0"]'); return { sb: L.sb, dim: L.dim, ke: t.querySelector('[data-ke]').textContent, nama: (document.getElementById('ed-nm-0-0') || {}).textContent }; });
+    const k12 = await page.evaluate(() => { const L = ED.sections[0].lines[0]; const t = document.querySelector('tr[data-l="0"]'); return { sb: L.sb, dim: L.dim, ke: t.querySelector('[data-ke]').textContent, nama: (document.getElementById('ed-nm-0-0') || {}).value }; });
     ok('RK-12 ketik "Cable Tray W200xH50xL3000" di Teks bebas: dikenali sebagai Straight W200 H50 L3000 dan Kg est langsung muncul', /STRAIGHT/.test(k12.sb || '') && k12.dim && k12.dim.w === 200 && k12.dim.h === 50 && k12.dim.l === 3000 && /\d/.test(k12.ke) && /W200xH50xL3000/.test(k12.nama || ''), JSON.stringify(k12));
 
     langkah = 'RK-13';

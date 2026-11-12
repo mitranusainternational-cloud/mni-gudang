@@ -55,8 +55,8 @@ export async function runSpkAturan(page, base) {
     await page.selectOption('#ed-hp-1', 'COVER TRAY'); await wait(400);
     const oC = await opsi('ed-sb-1-0').catch(() => []);
     await tutupEditor(); await wait(300);
-    ok('AR-03 section ACCS TRAY menawarkan fitting dan aksesori (Elbow, Reducer, Hanger Beam)', ['Elbow 90', 'Reducer', 'Hanger Beam'].every((x) => oA.includes(x)) && !oA.includes('Straight'), oA.join());
-    ok('AR-04 tombol Section COVER menambah section COVER TRAY yang menawarkan tutup', /^COVER TRAY/.test(cov.h) && cov.p === 'COVER TRAY' && oC.includes('Cover Straight') && !oC.includes('Elbow 90'), JSON.stringify({ cov, oC }));
+    ok('AR-03 section ACCS TRAY menawarkan fitting saja (Elbow, Reducer), tanpa Straight dan tanpa aksesori (Hanger Beam)', ['Elbow 90', 'Reducer'].every((x) => oA.includes(x)) && !oA.includes('Straight') && !oA.includes('Hanger Beam'), oA.join());
+    ok('AR-04 tombol Section COVER menambah section COVER TRAY yang menawarkan tutup', /^COVER TRAY/.test(cov.h) && cov.p === 'COVER TRAY' && oC.includes('Cover Tray') && !oC.includes('Elbow 90'), JSON.stringify({ cov, oC }));
 
     // AR-05 ubah aturan di Master Data lalu pulihkan
     await go('#master-data'); await page.click('[data-view="master-data"][data-key="tab"][data-val="aturan"]'); await wait(500);
@@ -113,7 +113,7 @@ export async function runSpkAturan(page, base) {
     await bukaBaru(); await page.selectOption('#ed-hp-0', 'CABLE LADDER'); await wait(400);
     await page.click('[data-act="ed-addcov"]'); await wait(400);
     const cv2 = await page.evaluate(() => ({ h: document.getElementById('ed-h-1').value, p: document.getElementById('ed-hp-1').value }));
-    ok('AR-13 Section COVER dari section Cable Ladder menghasilkan COVER TRAY (bukan menyalin judul ladder)', /^COVER TRAY/.test(cv2.h) && cv2.p === 'COVER TRAY', JSON.stringify(cv2));
+    ok('AR-13 Section COVER dari section Cable Ladder menghasilkan COVER LADDER (bukan menyalin judul ladder)', /^COVER LADDER/.test(cv2.h) && cv2.p === 'COVER LADDER', JSON.stringify(cv2));
     await tutupEditor(); await wait(300);
 
     // AR-14 produk yang semua centangnya dicabut tidak disimpan kosong (kembali ke standar)
@@ -146,7 +146,7 @@ export async function runSpkAturan(page, base) {
     await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '10'); await wait(500);
     await page.click('#ed-ss-0-0 [data-act="ed-stok-pakai"]'); await wait(500);
     await page.selectOption('#ed-hp-0', 'COVER TRAY'); await wait(600);
-    const cvs = await page.evaluate(() => ({ fg: document.getElementById('ed-fg-0-0').value, nm: (document.getElementById('ed-nm-0-0') || {}).textContent }));
+    const cvs = await page.evaluate(() => ({ fg: document.getElementById('ed-fg-0-0').value, nm: (document.getElementById('ed-nm-0-0') || {}).value }));
     ok('AR-17 produk section diganti ke Cover Tray setelah memilih stok: tautan stok Straight dilepas', cvs.fg === '' && /Cover/.test(cvs.nm || ''), JSON.stringify(cvs));
     await tutupEditor(); await wait(300);
   } catch (e) {

@@ -510,7 +510,9 @@ function platTab(){const ok=matBisaPr(),q=platAntrian();
 function spkBeratPerbaikan(s){
  const B=window.MNIBerat;if(!B||!B.siap||!B.siap())return null;
  const items=(s.items||[]).map(i=>({...i}));const ubah=[];const tb=parseFloat(s.tebal)||null;
- items.forEach((it,ix)=>{let r=null;try{r=B.hitungItem({judulSection:it.g,deskripsi:it.d,material:s.material||'',tebal:tb})}catch(e){r=null}
+ items.forEach((it,ix)=>{let r=null;
+  if(it.sb&&it.dim&&B.kgPerPcs&&B.keluargaDari){try{const fam=B.keluargaDari(it.g),dv=derive(it.g);const kp=fam?B.kgPerPcs({keluarga:fam,bentuk:it.sb,dim:it.dim,tebal:dv.tebal||thkOf(it.g),material:dv.material||s.material||'',lubang:it.lubang||'standar'}):null;if(kp&&kp.ok)r={ok:true,beratSPK:kp.kgPcsReal,berat:{estimasi:kp.kgPcsEst,real:kp.kgPcsReal}}}catch(e){r=null}}
+  if(!r)try{r=B.hitungItem({judulSection:it.g,deskripsi:it.d,material:s.material||'',tebal:tb})}catch(e){r=null}
   if(!r||!r.ok)return;const baru=Math.round(r.beratSPK*1000)/1000;if(!(baru>0))return;
   const est=r.berat?(r.berat.estimasiLubang!=null?r.berat.estimasiLubang:r.berat.estimasi):null;const estB=est>0?Math.round(est*1000)/1000:null;
   const lama=+it.w||0;const beda=!lama||Math.abs(lama-baru)/baru>0.02;const estBeda=estB!=null&&Math.abs((+it.wEst||0)-estB)>0.001;
@@ -4443,21 +4445,27 @@ function derive(h){const H=String(h||'').toUpperCase();let fin='';if(H.includes(
  let base='SPHC';if(H.includes('STAINLESS')||/SS ?3\d\d/.test(H))base=H.includes('316')?'SS316':'SS304';else if(H.includes('ALU'))base='Aluminium';
  return {material:(base==='SPHC'&&fin)?`SPHC / ${fin}`:base,tebal:thkOf(h),type:(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||''}}
 const DIST_DEF0=['PPIC','Produksi (CNC / Shearing / Bending / Punching Jointing / Punching Tray)','Procurement','Logistic'];
-const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
+const HB_DEF={p:['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','ACCS TRAY','ACCS LADDER','ACCS DUCT','COVER TRAY','COVER LADDER','COVER DUCT','OTHER SUPPORT'],t:['STU','STC','SLU','SLHD','SLHDC','SLW','C','U'],tb:['1.0','1.2','1.5','1.6','1.8','2.0','2.5','3.0'],f:['ELECTRO GALVANIZED','HOTDIP GALVANIZED','STAINLESS STEEL 304','STAINLESS STEEL 316L','POWDER COATING WHITE','POWDER COATING ORANGE RAL 2000','POWDER COATING BLUE RAL 5017','ALUMINIUM 1100','NON FINISHING']};
 const LEAD_DEF=['2 Hari Kerja','3 Hari Kerja','5 Hari Kerja','5 - 7 Hari Kerja','7 Hari Kerja','7 - 10 Hari Kerja','10 Hari Kerja','14 Hari Kerja'];
 /* Opsi SPK dari Master Data (master/setting.spkOpsi); tanpa isian memakai bawaan. Mengubah opsi tidak mengubah SPK yang sudah ada. */
 const OPSI_DEF={p:HB_DEF.p,t:HB_DEF.t,tb:HB_DEF.tb,f:HB_DEF.f,dist:null,lead:LEAD_DEF,signProc:'Halimah',signPpic:'Muin M.K.'};
-const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}return r};
+/* Daftar section bawaan lama: bila daftar tersimpan di Opsi SPK persis sama (belum pernah diubah pemilik), pakai bawaan baru; daftar yang diubah pemilik tetap dihormati. */
+const PRODUK_BAWAAN_LAMA=JSON.stringify(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT','COVER TRAY','ACCS TRAY','ACCS LADDER','ACCS DUCT','SUPPORT TRAY','WIREMESH CABLE TRAY']);
+const OPSI=()=>{const o=(byId('master','setting')||{}).spkOpsi||{};const r={...OPSI_DEF,dist:DIST_DEF0.slice()};for(const k of Object.keys(r)){const v=o[k];if(k==='p'&&JSON.stringify(v)===PRODUK_BAWAAN_LAMA)continue;if(Array.isArray(r[k])?(Array.isArray(v)&&v.length):(typeof v==='string'&&v.trim()))r[k]=v}return r};
 const HB={get p(){return OPSI().p},get t(){return OPSI().t},get tb(){return OPSI().tb},get f(){return OPSI().f}};
-function parseH(h){const H=String(h||'').toUpperCase();const o={p:'',t:'',tb:'',f:''};o.p=[...HB.p].sort((a,b)=>b.length-a.length).find(x=>H.startsWith(x))||'';o.t=(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||'';const tk=thkOf(H);o.tb=HB.tb.find(x=>parseFloat(x)===parseFloat(tk))||'';o.f=HB.f.find(x=>H.endsWith(x))||'';return o}
+/* produk lama (tidak ada lagi di daftar section) tetap terbaca agar SPK lama bisa dibuka dan diedit */
+const PRODUK_LAMA=['SUPPORT TRAY','WIREMESH CABLE TRAY'];
+function parseH(h){const H=String(h||'').toUpperCase();const o={p:'',t:'',tb:'',f:''};o.p=[...HB.p,...PRODUK_LAMA].sort((a,b)=>b.length-a.length).find(x=>H.startsWith(x))||'';o.t=(H.match(/TYPE\s+([A-Z]+)/)||[])[1]||'';const tk=thkOf(H);o.tb=HB.tb.find(x=>parseFloat(x)===parseFloat(tk))||'';o.f=HB.f.find(x=>H.endsWith(x))||'';return o}
 const composeH=o=>[o.p,o.t?'TYPE '+o.t:'',o.tb,o.f].filter(Boolean).join(' ');
-const coverOf=h=>String(h||'').replace(/^(PERFORATED CABLE TRAY|CABLE TRAY|CABLE LADDER|CABLE DUCT|ACCS TRAY|ACCS LADDER|ACCS DUCT|SUPPORT TRAY|WIREMESH CABLE TRAY)/,'COVER TRAY');
-const accsOf=h=>String(h||'').replace(/^PERFORATED CABLE TRAY|^CABLE TRAY|^COVER TRAY/,'ACCS TRAY').replace(/^CABLE LADDER/,'ACCS LADDER').replace(/^CABLE DUCT/,'ACCS DUCT');
+const coverOf=h=>String(h||'').replace(/^(PERFORATED CABLE TRAY|CABLE TRAY|ACCS TRAY|COVER TRAY|SUPPORT TRAY|WIREMESH CABLE TRAY)/,'COVER TRAY').replace(/^(CABLE LADDER|ACCS LADDER|COVER LADDER)/,'COVER LADDER').replace(/^(CABLE DUCT|ACCS DUCT|COVER DUCT)/,'COVER DUCT');
+const accsOf=h=>String(h||'').replace(/^PERFORATED CABLE TRAY|^CABLE TRAY|^COVER TRAY/,'ACCS TRAY').replace(/^CABLE LADDER|^COVER LADDER/,'ACCS LADDER').replace(/^CABLE DUCT|^COVER DUCT/,'ACCS DUCT');
 const nextNo=()=>Math.max(0,...S.spk.map(s=>+s.no||0))+1;
 const blankLine=()=>({d:'',q:'',u:'Btg',w:'',ket:'',catatan:'',prod:0});
 /* ----- input item terstruktur: bentuk dan ukuran per section, nama dan berat otomatis dari kalkulator ----- */
-const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT'];
-const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHD)(_.*)?$/,'');
+const AKSESORI_PRODUK=['ACCS TRAY','ACCS LADDER','ACCS DUCT','OTHER SUPPORT'];
+/* Cable Duct = Cable Tray tanpa lubang: masukan berat sama, memakai kolom berat tanpa lubang */
+const TANPA_LUBANG=new Set(['CABLE DUCT']);
+const kunciDariId=id=>String(id||'').replace(/_(STU|STC|SLU|SLW|SLHDC|SLHC|SLHD)(_.*)?$/,'');
 /* Bendera layout SPK per dimensi (T-222 tahap 2): kolom W, H, L terpisah, bentuk selalu terlihat, kg estimasi dan real. Mati secara bawaan. */
 /* Massa jenis dari Master Data (Bahan baku > Jenis material): kalkulator berat SPK memakai angka yang sama dengan stok bahan baku. */
 function bjMaster(mat){const s=String(mat||'').trim();if(!s)return 0;const g=GRADES().find(x=>x.toLowerCase()===s.toLowerCase())||grade({item:s});return g&&g!=='Lainnya'?densG(g):0}
@@ -4509,7 +4517,7 @@ const _bVendorF11=B['vendor'];B['vendor']=()=>siapVendorHtml()+_bVendorF11();
 const _bMesinAdm=B.mesin;B.mesin=()=>produksiAdmin()?bProduksiAdmin():_bMesinAdm();
 const _tMesinAdm=T.mesin;T.mesin=()=>produksiAdmin()?'<span class="grow"></span><span class="note">Laporan produksi terpusat (admin)</span>':_tMesinAdm();
 const SHAPE_LURUS_FB={id:'STRAIGHT',kunci:'STRAIGHT',nama:'Straight',dim:[{k:'w',label:'W'},{k:'h',label:'H'},{k:'l',label:'L'}],fullHole:false};
-const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER']);
+const PRODUK_LURUS_FB=new Set(['CABLE TRAY','PERFORATED CABLE TRAY','CABLE LADDER','CABLE DUCT']);
 /* tanpa katalog berat: batang lurus tetap bisa diisi W, H, L; kg dihitung setelah katalog dipasang */
 function edCapTanpaKatalog(s){const hb=parseH(s.h);if(!hb.p||!PRODUK_LURUS_FB.has(hb.p))return null;return {fam:null,prod:hb.p,shapes:[SHAPE_LURUS_FB],all:[SHAPE_LURUS_FB],fallback:true}}
 /* kolom dimensi terpisah: gabungan dimensi semua bentuk yang diizinkan di section */
@@ -4519,15 +4527,16 @@ function edKgPair(s,l,cap){const B=window.MNIBerat;if(!cap||cap.fallback||!l.sb|
 function edKgSub(s,l,cap){const r=edKgPair(s,l,cap);return r?'<div class="kgsub">est '+n(Math.round(r.kgPcsEst*100)/100)+' · real '+n(Math.round(r.kgPcsReal*100)/100)+' Kg</div>':''}
 function edCap(s){bjHook();const B=window.MNIBerat;if(!B||!B.siap||!B.siap()||!B.keluargaDari)return spkDimBaru()?edCapTanpaKatalog(s):null;const hb=parseH(s.h);const fam=B.keluargaDari(s.h);if(!fam||!hb.p)return null;if(B.setAturan)B.setAturan((byId('master','setting')||{}).aturanSection);const shapes=B.bentukProduk(fam,hb.p);if(!shapes.length&&!(B.produkBentuk&&B.produkBentuk().includes(hb.p)))return null;return {fam,prod:hb.p,shapes,all:B.bentukSemua?B.bentukSemua(fam):shapes}}
 /* Perforated Cable Tray otomatis Full hole; produk lain Bawah. Pilihan manual pengguna (lubangManual) tidak diganti oleh bawaan. */
-const lubangBawaan=cap=>cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
+const lubangBawaan=cap=>cap&&TANPA_LUBANG.has(cap.prod)?'tanpa':cap&&cap.prod==='PERFORATED CABLE TRAY'?'full':'standar';
 function lineBaru(h){const l=blankLine();const cap=edCap({h});if(cap&&cap.shapes.length&&!AKSESORI_PRODUK.includes(cap.prod)){l.sb=cap.shapes[0].id;l.dim={};l.lubang=lubangBawaan(cap)}return l}
 const dimKosong=(sh,l)=>sh.dim.every(d=>l.dim==null||l.dim[d.k]===''||l.dim[d.k]==null);
 /* hitung nama dan berat satu baris terstruktur; berat manual (diketik pengguna) tidak ditimpa */
 function edHitungBaris(s,l){
  const cap=edCap(s);if(!l.sb||!cap)return null;const sh=cap.all.find(x=>x.id===l.sb);if(!sh)return null;
  if(cap.fallback){l.dim=l.dim||{};l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim);l.galat='';return null}
- l.dim=l.dim||{};if(!sh.fullHole)l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);
- l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim)+(l.lubang==='full'&&sh.fullHole?' Full Hole':'');
+ l.dim=l.dim||{};if(TANPA_LUBANG.has(cap.prod))l.lubang='tanpa';else if(!sh.fullHole)l.lubang='standar';const kosong=dimKosong(sh,l)&&(l.q===''||l.q==null);
+ /* nama otomatis dari bentuk dan ukuran; bila pengguna mengubah nama secara manual (nm) namanya dipertahankan, ukuran dan berat tetap mengikuti kalkulator */
+ if(!(l.nm&&String(l.d||'').trim()))l.d=kosong?'':window.MNIBerat.namaItem(cap.prod,sh.kunci,l.dim,sh.dim)+(l.lubang==='full'&&sh.fullHole?' Full Hole':'');
  const dv=derive(s.h);const h=window.MNIBerat.hitungBentuk({keluarga:cap.fam,bentuk:l.sb,dim:l.dim,tebal:dv.tebal||thkOf(s.h),material:dv.material,lubang:l.lubang});
  l.galat=h.ok||dimKosong(sh,l)?'':h.alasan;
  if(l.wsrc!=='manual'){if(h.ok){l.w=Math.round(h.beratSPK*1000)/1000;l.wsrc='kalkulator'}else{l.w='';l.wsrc=''}}
@@ -4541,7 +4550,7 @@ function edSesuaikanBaris(s){const cap=edCap(s);let k=0;
   let sh=cap.all.find(x=>x.id===l.sb);
   if(!sh){sh=cap.all.find(x=>x.kunci===kunciDariId(l.sb));if(!sh){if(AKSESORI_PRODUK.includes(cap.prod)||!cap.shapes.length){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}sh=cap.shapes[0]}l.sb=sh.id}
   if(!cap.shapes.some(x=>x.id===sh.id)){const eq=sh.kunci==='STRAIGHT'?'COVER_STRAIGHT':sh.kunci==='COVER_STRAIGHT'?'STRAIGHT':'';const t2=eq&&cap.shapes.find(x=>x.kunci===eq);if(t2){sh=t2;if(l.fg){l.fg='';l.ambil=''}}else if(AKSESORI_PRODUK.includes(cap.prod)&&dimKosong(sh,l)&&(l.q===''||l.q==null)){l.sb='';l.d='';l.w='';l.wsrc='';l.galat='';continue}l.sb=sh.id}
-  if(!sh.fullHole)l.lubang='standar';else if(!l.lubangManual)l.lubang=lubangBawaan(cap);
+  if(TANPA_LUBANG.has(cap.prod))l.lubang='tanpa';else if(!sh.fullHole)l.lubang='standar';else if(!l.lubangManual)l.lubang=lubangBawaan(cap);
   const lama=l.w;edHitungBaris(s,l);if(lama!==l.w)k++}
  return k}
 const HOLDER='tab-'+Math.random().toString(36).slice(2,10);
@@ -4570,7 +4579,7 @@ function revisiGuard(o,items,oiList){
  }
  return '';
 }
-function edFrom(s,copy){let oiN=0;const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({oi:copy?undefined:oiN++,d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wEst:+it.wEst||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang}:{}),...(it.vv?{vv:it.vv}:{}),...((it.fg||s.stokReq)&&(it.fg||fgDariItem(it))?{fg:it.fg||fgDariItem(it)}:{}),...(!s.stokReq&&it.fg&&+it.ambil>0?{ambil:+it.ambil}:{})}))}));
+function edFrom(s,copy){let oiN=0;const secs=secsOf(s).map(x=>({h:x.h,lines:x.lines.map(it=>({oi:copy?undefined:oiN++,d:it.d,q:it.q,u:it.u||'Pcs',w:+it.w||'',wEst:+it.wEst||'',wsrc:it.ws==='k'?'kalkulator':it.ws==='m'?'manual':'',ket:it.ket||'',catatan:it.catatan||'',prod:copy?0:(+it.prod||0),...(it.sb?{sb:it.sb,dim:{...(it.dim||{})},lubang:it.lubang||'standar',lubangManual:!!it.lubang,...(it.nm?{nm:true}:{})}:{}),...(it.vv?{vv:it.vv}:{}),...((it.fg||s.stokReq)&&(it.fg||fgDariItem(it))?{fg:it.fg||fgDariItem(it)}:{}),...(!s.stokReq&&it.fg&&+it.ambil>0?{ambil:+it.ambil}:{})}))}));
  if(!secs.length)secs.push({h:'',lines:[blankLine()]});
  return {stokReq:!!s.stokReq,id:copy?null:s._id,no:copy?nextNo():s.no,tgl:copy?today():s.tgl,sales:s.sales||'',customer:copy?'':s.customer||'',po:copy?'':(s.po||''),lead:s.lead||'',due:copy?'':(s.due||''),dueAuto:copy||!s.due,material:s.material||'',tebal:s.tebal||'',type:s.type||'',matAuto:!s.material,note:copy?'':(s.note||''),noteAuto:copy||!s.note,dist:(s.dist||OPSI().dist).slice(),signProc:s.signProc||OPSI().signProc,signPpic:s.signPpic||OPSI().signPpic,status:copy?'Draft':(s.status||'Terbit'),rev:copy?0:(s.rev||0),revAlasan:'',orig:copy?null:s,sections:secs}}
 function edAuto(){const e=ED;if(e.dueAuto&&leadMax(e.lead))e.due=addWorkdays(e.tgl,leadMax(e.lead));if(e.noteAuto)e.note=e.due?'NOTE : ESTIMASI KIRIM '+tglLong(e.due).toUpperCase():'';
@@ -4593,11 +4602,11 @@ function edSaranSection(s,sh){const B=window.MNIBerat;try{const fam=B.keluargaDa
 function edKolomItem(s,si,li,l,cap,hb){
  const sh=cap&&l.sb?cap.all.find(x=>x.id===l.sb):null;const ada=!sh||cap.shapes.some(x=>x.id===sh.id);
  const pilih='<select class="sel c-sb" data-f="sb" id="ed-sb-'+si+'-'+li+'" aria-label="Bentuk"><option value="">Teks bebas</option>'+cap.shapes.map(x=>'<option value="'+x.id+'" '+(x.id===l.sb?'selected':'')+'>'+esc(x.nama)+'</option>').join('')+(ada?'':'<option value="'+sh.id+'" selected>'+esc(sh.nama)+' (di luar aturan)</option>')+'</select>';
- const nama=sh?'<div class="ed-nama" id="ed-nm-'+si+'-'+li+'">'+(l.d?esc(l.d):'<span class="muted">terisi otomatis dari ukuran</span>')+'</div>'+(ada?'':'<div class="ed-galat" id="ed-lr-'+si+'-'+li+'">'+esc(sh.nama)+' di luar aturan section '+esc(cap.prod)+(edSaranSection(s,sh)?'; biasanya di section '+esc(edSaranSection(s,sh)):'')+'. Tetap bisa disimpan.</div>'):'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
+ const nama=sh?'<div class="ed-nmrow"><input class="inp ed-nm" data-f="nm" id="ed-nm-'+si+'-'+li+'" value="'+esc(l.d||'')+'" placeholder="terisi otomatis dari ukuran" autocomplete="off" aria-label="Nama item (bisa diedit)" title="Nama terisi otomatis dari bentuk dan ukuran; boleh diubah, ukuran dan berat tetap dari kalkulator">'+(l.nm?'<button type="button" class="btn sm ghost" data-act="ednmauto" data-s="'+si+'" data-l="'+li+'" title="Kembalikan nama otomatis">↺ otomatis</button>':'')+'</div>'+(ada?'':'<div class="ed-galat" id="ed-lr-'+si+'-'+li+'">'+esc(sh.nama)+' di luar aturan section '+esc(cap.prod)+(edSaranSection(s,sh)?'; biasanya di section '+esc(edSaranSection(s,sh)):'')+'. Tetap bisa disimpan.</div>'):'<input class="inp" data-f="d" value="'+esc(l.d)+'" list="dl-desc" placeholder="Ketik nama item bebas atau pilih bentuk" id="ed-d-'+si+'-'+li+'" autocomplete="off">';
  const spek='<td class="c-spec"><span class="chip plain">'+esc(hb.t||'–')+'</span><span class="chip plain">'+esc(hb.tb||'–')+' mm</span><span class="chip plain">'+esc(FIN_PENDEK[hb.f]||hb.f||'–')+'</span>'+edVendorHtml(s,si,li,l)+'</td>';
- const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
- if(spkDimBaru()&&cap){const dc=edDimCols(cap),lub=cap.shapes.some(x=>x.fullHole);const galat='<div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div>';
-  return '<td class="c-d">'+pilih+nama+galat+'</td>'+dc.map(c=>{const d=sh&&sh.dim.find(x=>x.k===c.k);return d?'<td class="c-dm"><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+c.k+'" id="ed-dm-'+si+'-'+li+'-'+c.k+'" value="'+esc((l.dim||{})[c.k]==null?'':(l.dim||{})[c.k])+'" aria-label="'+esc(c.label)+'"></td>':'<td class="c-dm muted">–</td>'}).join('')+(lub?(sh&&sh.fullHole?'<td class="c-lub"><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></td>':'<td class="c-lub muted">–</td>'):'');}
+ const dim=sh?'<td class="c-dim"><div class="ed-dims">'+sh.dim.map(d=>'<label class="dm"><span>'+d.label+'</span><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+d.k+'" id="ed-dm-'+si+'-'+li+'-'+d.k+'" value="'+esc((l.dim||{})[d.k]==null?'':(l.dim||{})[d.k])+'"></label>').join('')+(sh.fullHole&&!TANPA_LUBANG.has(cap.prod)?'<label class="dm dm-lub"><span>Lubang</span><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></label>':'')+'</div><div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div></td>':'<td class="c-dim"><span class="muted">–</span></td>';
+ if(spkDimBaru()&&cap){const dc=edDimCols(cap),lub=!TANPA_LUBANG.has(cap.prod)&&cap.shapes.some(x=>x.fullHole);const galat='<div class="ed-galat" id="ed-gl-'+si+'-'+li+'">'+esc(l.galat||'')+'</div>';
+  return '<td class="c-d">'+pilih+nama+galat+'</td>'+dc.map(c=>{const d=sh&&sh.dim.find(x=>x.k===c.k);return d?'<td class="c-dm"><input class="inp num" type="number" min="0" step="any" inputmode="decimal" data-dim="'+c.k+'" id="ed-dm-'+si+'-'+li+'-'+c.k+'" value="'+esc((l.dim||{})[c.k]==null?'':(l.dim||{})[c.k])+'" aria-label="'+esc(c.label)+'"></td>':'<td class="c-dm muted">–</td>'}).join('')+(lub?(sh&&sh.fullHole&&!TANPA_LUBANG.has(cap.prod)?'<td class="c-lub"><select class="sel" data-f="lubang" id="ed-lb-'+si+'-'+li+'"><option value="standar" '+(l.lubang!=='full'?'selected':'')+'>Bawah</option><option value="full" '+(l.lubang==='full'?'selected':'')+'>Full hole</option></select></td>':'<td class="c-lub muted">–</td>'):'');}
   return '<td class="c-d">'+pilih+nama+'</td>'+spek+dim;
 }
 /* Sel "Dari stok": pilih produk gudang barang jadi dan jumlah yang diambil dari stok (sisanya diproduksi). */
@@ -4674,10 +4683,10 @@ function edRowR(s,si,li,l,no,cap,hb,RES){
   <td class="c-bi num" data-bi>${ok?kgF(k.kr):(bi?n(bi):'–')}</td>
   <td class="c-act"><button type="button" class="ibtn" data-act="ed-det" data-s="${si}" data-l="${li}" aria-label="Catatan, vendor, dan produk stok" aria-expanded="${buka}">⋯</button><button type="button" class="ibtn" data-act="ed-delline" data-s="${si}" data-l="${li}" aria-label="Hapus baris">×</button></td></tr>`}
 function edSecHtmlR(s,si,startNo){
- const hb=parseH(s.h),cap=edCap(s),RES=fgResMap(ED&&ED.id);let no=startNo;const dc=edDimCols(cap),lub=cap.shapes.some(x=>x.fullHole);
+ const hb=parseH(s.h),cap=edCap(s),RES=fgResMap(ED&&ED.id);let no=startNo;const dc=edDimCols(cap),lub=!TANPA_LUBANG.has(cap.prod)&&cap.shapes.some(x=>x.fullHole);
  const rows=s.lines.map((l,li)=>{no++;return edRowR(s,si,li,l,no,cap,hb,RES)}).join('');
  return `<div class="esec"><div class="esec-h"><span class="esec-tag">Section ${si+1}</span>
-  <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p,hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
+  <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p.includes(hb.p)||!hb.p?HB.p:[...HB.p,hb.p],hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
   <span class="esec-vend" id="ed-sv-${si}" title="Vendor finishing ditentukan otomatis dari finishing section">${edVendorBadge(s)}</span><span class="esec-sum" id="ed-sum-${si}">${edSecSumHtml(s)}</span>
   <span class="esec-acts"><button type="button" class="ibtn" data-act="ed-up" data-s="${si}" aria-label="Naikkan" ${si?'':'disabled'}>↑</button><button type="button" class="ibtn" data-act="ed-down" data-s="${si}" aria-label="Turunkan" ${si<ED.sections.length-1?'':'disabled'}>↓</button><button type="button" class="ibtn" data-act="ed-delsec" data-s="${si}" aria-label="Hapus section" ${ED.sections.length>1?'':'disabled'}>×</button></span>
   <input class="inp esec-title" data-sf="h" data-s="${si}" value="${esc(s.h)}" list="dl-grup" placeholder="JUDUL SECTION, mis. CABLE TRAY TYPE STU 1.5 ELECTRO GALVANIZED" id="ed-h-${si}"></div>
@@ -4732,7 +4741,7 @@ function edSecHtml(s,si,startNo){if(spkDimBaru()&&edCap(s))return edSecHtmlR(s,s
   <td class="c-cat"><input class="inp" data-f="catatan" value="${esc(l.catatan)}" id="ed-c-${si}-${li}"></td>
   <td><button type="button" class="ibtn" data-act="ed-delline" data-s="${si}" data-l="${li}" aria-label="Hapus baris">×</button></td></tr>`}).join('');
  return `<div class="esec"><div class="esec-h"><span class="esec-tag">Section ${si+1}</span>
-  <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p,hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
+  <select class="sel" data-hb="p" data-s="${si}" id="ed-hp-${si}">${opt(HB.p.includes(hb.p)||!hb.p?HB.p:[...HB.p,hb.p],hb.p,'Produk')}</select><select class="sel" data-hb="t" data-s="${si}" id="ed-ht-${si}">${opt(HB.t,hb.t,'Type')}</select><select class="sel" data-hb="tb" data-s="${si}" id="ed-htb-${si}">${opt(HB.tb,hb.tb,'Tebal')}</select><select class="sel" data-hb="f" data-s="${si}" id="ed-hf-${si}">${opt(HB.f,hb.f,'Finishing')}</select>
   <span class="esec-acts"><button type="button" class="ibtn" data-act="ed-up" data-s="${si}" aria-label="Naikkan" ${si?'':'disabled'}>↑</button><button type="button" class="ibtn" data-act="ed-down" data-s="${si}" aria-label="Turunkan" ${si<ED.sections.length-1?'':'disabled'}>↓</button><button type="button" class="ibtn" data-act="ed-delsec" data-s="${si}" aria-label="Hapus section" ${ED.sections.length>1?'':'disabled'}>×</button></span>
   <input class="inp esec-title" data-sf="h" data-s="${si}" value="${esc(s.h)}" list="dl-grup" placeholder="JUDUL SECTION, mis. CABLE TRAY TYPE STU 1.5 ELECTRO GALVANIZED" id="ed-h-${si}"></div>
   <div class="tbl-wrap"><table class="edt"><thead><tr><th>No</th>${cap?(spkDimBaru()?'<th>Bentuk dan nama item</th><th>Spesifikasi</th>'+edDimCols(cap).map(c=>'<th class="num dmh">'+esc(c.label)+' (mm)</th>').join('')+(cap.shapes.some(x=>x.fullHole)?'<th>Lubang</th>':''):'<th>Bentuk dan nama item</th><th>Spesifikasi</th><th>Ukuran (mm)</th>'):'<th>Description</th>'}<th>Catatan merah</th><th class="num">Qty</th><th>Satuan</th><th>${ED&&ED.stokReq?'':'Dari stok'}</th><th class="num">Berat/pcs</th><th class="num">Berat/item</th><th>Keterangan</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -4829,6 +4838,10 @@ function edInput(e){
  if(trS&&(t.dataset.f==='fg'||t.dataset.f==='ambil')){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li],ff=t.dataset.f;L[ff]=t.value;if(ff==='fg'&&!t.value)L.ambil='';EDDIRTY=true;
   if(ff==='fg'){setTimeout(()=>{if(ED)rerenderSecs()},0)}else{const h=$('#ed-sh-'+si+'-'+li);if(h)h.textContent=edStokHint(L)}return}
  if(trS&&t.dataset.f==='vv'){const si=+trS.dataset.s,li=+trS.dataset.l;ED.sections[si].lines[li].vv=t.value;EDDIRTY=true;setTimeout(()=>{if(ED)rerenderSecs()},0);return}
+ if(trS&&t.dataset.f==='nm'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];const v=String(t.value||'');L.nm=!!v.trim();L.d=L.nm?v:'';EDDIRTY=true;if(!L.nm){edHitungBaris(ED.sections[si],L);t.value=L.d||''}edStokRefresh(si,li);
+  /* tombol "otomatis" muncul atau hilang langsung di DOM (tanpa render ulang, agar tidak bentrok dengan blur) */
+  {const row=t.closest('.ed-nmrow');if(row){let b=row.querySelector('[data-act="ednmauto"]');if(L.nm&&!b){b=document.createElement('button');b.type='button';b.className='btn sm ghost';b.dataset.act='ednmauto';b.dataset.s=String(si);b.dataset.l=String(li);b.title='Kembalikan nama otomatis';b.textContent='↺ otomatis';row.appendChild(b)}else if(!L.nm&&b)b.remove()}}
+  return}
  if(trS&&t.dataset.f==='lubang'){const si=+trS.dataset.s,li=+trS.dataset.l,L=ED.sections[si].lines[li];L.lubang=t.value;L.lubangManual=true;EDDIRTY=true;edBarisBerubah(trS,si,li,null);return}
  const tr=t.closest('tr[data-s]');if(!tr||!t.dataset.f)return;
  const si=+tr.dataset.s,li=+tr.dataset.l,f=t.dataset.f,L=ED.sections[si].lines[li];L[f]=t.value;EDDIRTY=true;
@@ -4846,7 +4859,7 @@ function edInput(e){
 /* baris terstruktur berubah (ukuran, lubang, qty): hitung nama dan berat, perbarui sel tanpa menggambar ulang agar fokus tetap */
 function edBarisBerubah(tr,si,li,fokusDim){
  const s=ED.sections[si],L=s.lines[li];edHitungBaris(s,L);
- const nm=$('#ed-nm-'+si+'-'+li);if(nm)nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>';
+ const nm=$('#ed-nm-'+si+'-'+li);if(nm){if(nm.tagName==='INPUT'){if(document.activeElement!==nm)nm.value=L.d||''}else nm.innerHTML=L.d?esc(L.d):'<span class="muted">terisi otomatis dari ukuran</span>'}
  const gl=$('#ed-gl-'+si+'-'+li);if(gl)gl.textContent=L.galat||'';edStokRefresh(si,li);
  const wf=tr.querySelector('[data-f=w]');if(wf)wf.value=L.w===''?'':L.w;wTag(tr,L);
  const bi=(+L.q||0)*(+L.w||0);const b=tr.querySelector('[data-bi]');if(b)b.textContent=bi?n(bi):'–';const kgEl=$('#ed-kg-'+si+'-'+li);if(kgEl)kgEl.innerHTML=edKgSub(s,L,edCap(s));edKgCells(tr,si,li);renderTotals();
@@ -4879,7 +4892,7 @@ async function saveEditor(mode){
  const e=ED,err=$('#ed-err');err.textContent='';
  try{need('spk');
   const no=parseInt(e.no);if(!no)throw new Error('Isi No SPK.');if(!String(e.customer).trim())throw new Error('Isi nama customer.');e.customer=cleanName(e.customer);{const sim=similarTo('customer',e.customer);if(sim){e.customer=sim.nama;const ci=$('#ed-cust');if(ci)ci.value=sim.nama;throw new Error(`Customer disamakan ke "${sim.nama}" (sudah terdaftar). Klik simpan lagi.`)}}if(!e.tgl)throw new Error('Isi tanggal SPK.');
-  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.all.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),...(l.wsrc==='kalkulator'&&num0(l.wEst)>0?{wEst:num0(l.wEst)}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.fg?{fg:l.fg}:{}),...(!e.stokReq&&l.fg&&num0(l.ambil)>0?{ambil:num0(l.ambil)}:{}),...(l.sb?{sb:l.sb,dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':'standar'}:{})}:{})})}
+  const items=[],oiList=[];for(const s of e.sections)for(const l of s.lines){if(l.sb){const cap=edCap(s),sh=cap&&cap.all.find(x=>x.id===l.sb);if(sh){edHitungBaris(s,l);if(dimKosong(sh,l)&&(l.q===''||l.q==null))continue;const hil=sh.dim.filter(d=>!(+((l.dim||{})[d.k])>0)).map(d=>d.label);if(hil.length)throw new Error(`Baris ${sh.nama} (${s.h}): ukuran ${hil.join(', ')} belum diisi.`);l._fh=!!sh.fullHole;l.dim=Object.fromEntries(sh.dim.map(d=>[d.k,(l.dim||{})[d.k]]).filter(([,v])=>v!==''&&v!=null))}}if(!String(l.d).trim())continue;const q=num0(l.q);if(q<=0)throw new Error(`Qty untuk "${l.d}" belum diisi.`);oiList.push(l.oi);items.push({d:String(l.d).trim(),g:String(s.h||'').trim(),q,u:String(l.u||'Pcs').trim(),w:num0(l.w),...(l.wsrc&&num0(l.w)>0?{ws:l.wsrc==='kalkulator'?'k':'m'}:{}),...(l.wsrc==='kalkulator'&&num0(l.wEst)>0?{wEst:num0(l.wEst)}:{}),ket:String(l.ket||'').trim(),catatan:String(l.catatan||'').trim(),prod:Math.min(q,+l.prod||0),...(l.vv?{vv:l.vv}:{}),...(l.fg?{fg:l.fg}:{}),...(!e.stokReq&&l.fg&&num0(l.ambil)>0?{ambil:num0(l.ambil)}:{}),...(l.sb?{sb:l.sb,...(l.nm?{nm:true}:{}),dim:{...(l.dim||{})},...(l._fh?{lubang:l.lubang==='full'?'full':l.lubang==='tanpa'?'tanpa':'standar'}:{})}:{})})}
   if(!items.length)throw new Error('Tambahkan minimal satu item.');
   if(!e.stokReq){const per={};items.forEach(i=>{if(i.ambil>0){if(i.ambil>i.q)throw new Error(`"${i.d}": jumlah dari stok (${n(i.ambil)}) melebihi qty order (${n(i.q)}).`);per[i.fg]=(per[i.fg]||0)+i.ambil}});
    const res=fgResMap(e.id),klr=e.id?fgKeluarMap():{};
@@ -6134,6 +6147,7 @@ document.addEventListener('click',async e=>{
   case 'ed-delline':{const L=ED.sections[+ds.s].lines;L.splice(+ds.l,1);if(!L.length)L.push(lineBaru(ED.sections[+ds.s].h));EDDIRTY=true;rerenderSecs();break}
   case 'ed-addsec':ED.sections.push({h:ED.sections[ED.sections.length-1].h,lines:[lineBaru(ED.sections[ED.sections.length-1].h),lineBaru(ED.sections[ED.sections.length-1].h)]});EDDIRTY=true;rerenderSecs();break;
   case 'ed-stok-pakai':{const sc=ED.sections[+ds.s],L=sc.lines[+ds.l],c=fgCocokUrut(sc,L)[0];if(c){const ts=(calc().stock.fg[c._id]||0)-(fgResMap(ED.id)[c._id]||0),q=+L.q||0;if(ts<=0){toast('Stok tersedia 0 (habis atau dicadangkan SPK lain); tidak bisa dipakai.');break}L.fg=c._id;L.ambil=Math.max(0,Math.min(q>0?q:ts,ts))||'';EDDIRTY=true;rerenderSecs()}break}
+  case 'ednmauto':{const L=ED&&ED.sections[+ds.s]&&ED.sections[+ds.s].lines[+ds.l];if(L){L.nm=false;edHitungBaris(ED.sections[+ds.s],L);EDDIRTY=true;rerenderSecs()}break}
   case 'ed-addcov':{const hh=coverOf(ED.sections[ED.sections.length-1].h);ED.sections.push({h:hh,lines:[lineBaru(hh),lineBaru(hh)]});EDDIRTY=true;rerenderSecs();break}
   case 'ed-addacc':ED.sections.push({h:accsOf(ED.sections[ED.sections.length-1].h),lines:[lineBaru(accsOf(ED.sections[ED.sections.length-1].h)),lineBaru(accsOf(ED.sections[ED.sections.length-1].h))]});EDDIRTY=true;rerenderSecs();break;
   case 'ed-delsec':if(ED.sections.length>1){ED.sections.splice(+ds.s,1);EDDIRTY=true;edAuto();edSyncHeader();rerenderSecs()}break;
