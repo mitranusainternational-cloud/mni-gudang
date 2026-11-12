@@ -70,3 +70,15 @@ Sama dengan `ROLES` di aplikasi dan pengguna contoh di pratinjau lokal (diuji MG
 1. Terapkan **24 saja**, atau **24 lalu 25**, ke project **MNI Gudang - Production** (`lggqigmvtefkquqjrjsb`)? Dev lama sudah dipensiunkan, jadi tidak ada lingkungan uji kecuali cabang berbiaya.
 2. Mau diuji dulu di cabang Supabase (berbiaya) atau langsung ke production dengan cadangan dan pembatalan siap?
 3. Izin saya membaca daftar pengguna aktif tanpa peta modul (email dan peran saja) untuk pemeriksaan di atas, atau pemilik menjalankannya sendiri.
+
+## Perlindungan data yang sudah tayang (2026-11-12)
+
+Permintaan pemilik: data yang sudah tayang tidak boleh hilang; cadangan GitHub, Supabase, dan Vercel dipastikan. Migration 24 dan 25 hanya menambah (tabel baru, kolom baru, fungsi diganti) dan tidak menghapus atau mengubah data; cadangan tetap disiapkan sebelum penerapan.
+
+| Bagian | Cadangan yang sudah ada | Yang masih dibutuhkan sebelum menerapkan |
+|---|---|---|
+| **GitHub** (`mni-gudang`) | Bundle git semua cabang (terverifikasi) dan daftar commit di `data/private-sources/backup-github-2026-11-12/` (di luar Git); `origin/main` yang live = `191eec9` (PR 16) | tidak ada; bundle dapat dipulihkan dengan `git clone mni-gudang-semua-cabang.bundle` |
+| **Supabase production** | Cadangan data penuh 2026-11-10 (dan pra-tahap 1) serta baseline jumlah baris dan checksum 2026-11-12 di `data/private-sources/`; daftar 15 migration terpasang disimpan di folder bundle | **Cadangan data baru tepat sebelum penerapan**: admin production membuka Pengguna & Akses › **Unduh cadangan** (berkas JSON), atau cadangan bawaan Supabase; saya tidak masuk ke production dan tidak membaca data operasional |
+| **Vercel** (`mitranusainternational-8337`) | Kode yang live ada di GitHub (`191eec9`); setiap deploy lama tetap tersimpan di Vercel | Catat deploy Production saat ini (Deployments, commit harus `191eec9`); pembatalan rilis cukup Promote deploy lama; nilai Environment Variables tidak disalin (rahasia), cukup nama variabelnya dicatat pemilik |
+
+Migration hanya diterapkan setelah cadangan data baru di atas ada. Cabang uji tidak membawa data production sama sekali.
