@@ -899,10 +899,24 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Keputusan: production tidak disentuh. Migrasi data dan pemasangan skill aitmpl.com ditunda sampai koneksi ke akun baru siap (lihat [[documentation/DECISIONS|DECISIONS]] 2026-11-09).
 - Playwright: aplikasi lokal di 5173 dibuka, dashboard tampil dengan 14 menu dan tanpa galat terlihat.
 
+### 2026-11-10 · Lokal: metode input SPK kembali ke versi sebelumnya
+
+- Pengembangan lokal saja (live tidak disentuh). Bawaan `spkDimBaru` = nonaktif; uji PH-18; suite SPK, editor, stok, serah plate lulus; lint 0 error. Dengan katalog berat terpasang, jalur lama menampilkan input terstruktur (bentuk, ukuran); tanpa katalog (seperti production) tampil input teks Description.
+
+### 2026-11-10 · Keputusan: kode lokal disamakan dengan versi live; pengembangan lanjut di lokal
+
+- Pemilik meminta rilis dihentikan dan kode lokal dikembalikan ke versi yang sudah live di Vercel (`main` `191eec9`); perbaikan selanjutnya dikerjakan di lokal tanpa menyentuh live. Perubahan T-228 (input SPK, Dashboard Produksi, tab Berjalan, akses Penawaran) dibatalkan lewat revert (riwayat tetap di Git, commit `6738ea4`).
+- Production tidak diubah sejak merge PR 16.
+
+### 2026-11-10 · Rilis bertahap, Tahap 2 dan 3: PR 16 digabung ke main dan deploy production
+
+- PR #16 (81 commit) lulus CI; merge dengan `--admin` atas persetujuan pemilik; Vercel production Ready; bundel baru tersaji; jumlah baris production tidak berubah (`verified in database`); login page `verified in browser`.
+- **Belum:** verifikasi setelah login oleh pemilik atau tim; periksa nama Work Centre di Master Data production (banner Tambahkan otomatis).
+
 ### 2026-11-10 · Rilis bertahap, Tahap 1: migration 14 dan 18 diterapkan ke production
 
 - Persetujuan pemilik: "Setuju Tahap 1". Backup baru lebih dulu; diterapkan `produksi_log` dan `sparepart` (hanya menambah tabel dan melonggarkan kebijakan mutasi dan pr untuk sparepart).
-- **Bukti** (`verified in database`): jumlah baris tabel lama sama dengan snapshot; tabel baru kosong dengan RLS; advisor tanpa temuan baru. Rincian: [[documentation/RENCANA_RILIS_BERTAHAP_2026-11-10|rencana rilis]].
+- **Bukti** (`verified in database`): jumlah baris tabel lama sama dengan snapshot; tabel baru kosong dengan RLS; advisor tanpa temuan baru. Rincian: [[documentation/arsip/RENCANA_RILIS_BERTAHAP_2026-11-10|rencana rilis]].
 - **Langkah berikut:** Tahap 2 (push cabang, PR, CI, Preview) menunggu persetujuan.
 
 ### 2026-11-10 · T-227: produksi hulu ke hilir, WC selaras rute dan Progres WC
@@ -915,3 +929,45 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: editor SPK (layout dimensi) dirombak sesuai keputusan A sampai D. Baris tanpa kolom Spesifikasi; catatan, vendor, dan produk stok di menu ⋯; stok sebagai angka dengan tombol Pakai stok; dua kolom berat tebal (Kg est untuk plate, Kg real untuk barang jadi), subtotal per section, dan ringkasan di bawah layar. Berat hasil kalkulator tidak bisa diketik. Deskripsi teks dikenali jadi baris terstruktur dan ada Tempel daftar dari Excel.
 - Bukti: verified in browser (mock). Suite spkringkas RK-01..RK-13 (14 PASS), unit kenali KN-01..KN-06, spkdimensi 13 PASS; lint 0 error. Regresi penuh 32 suite, 0 FAIL (produksi dijalankan ulang: uji Timeline M-166b dibuat sadar jendela hari karena bergantung hari dalam minggu).
 - Hambatan: belum diuji dengan katalog perusahaan dan Supabase. Gabungan Tee dan Cross dengan W1..W4 diuji di unit tingkat pengenal, belum di e2e.
+
+### 2026-11-12 · T-228: nama bentuk di Master Data, susulan draf PR, sapu bug, perapian
+- **Hasil:** Elbow tanpa "90"; nama bentuk bisa diedit di Master Data › Aturan section; cek silang 11 section dengan katalog asli (berat, rute, vendor, laporan, kebutuhan plat) bersih; dua bug diperbaiki (rute Cable Duct, draf PR untuk SPK terbitan PPIC); workspace dirapikan dan dokumen usang diarsipkan.
+- **Bukti:** `verified in browser` (mock, katalog asli di pratinjau). Unit semua PASS, spkaturan 19, produksihh 45, lint 0 error, `sync-vault` OK. Rincian: [[tasks/T-228-nama-bentuk-master-data-susulan-pr-dan-sapu-bug|T-228]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata; rute Cable Duct dan Other Support menunggu konfirmasi pemilik.
+- **Langkah berikut:** pemilik menjalankan skenario uji; rilis tetap menunggu persetujuan.
+
+### 2026-11-12 · T-229: laporan produksi per jenis produk, alasan belum produksi
+- **Hasil:** Ladder dan Duct tanpa pilihan lubang; Berjalan satu langkah Produksi; alasan belum produksi dicatat admin dan terlihat di monitoring SPK; Laporan Produksi diperkuat (triwulan, rincian per jenis produk, finishing, tonase aktual dan estimasi, lama produksi per SPK, unduh Excel dan CSV).
+- **Bukti:** `verified in browser` (mock). Unit dan e2e terkait PASS; regresi penuh dicatat di [[documentation/RENCANA_PERBAIKAN_LOKAL]]. Rincian: [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]].
+- **Hambatan:** format laporan triwulan Kemenperin belum dicocokkan dengan formulir resmi; belum diuji di Supabase.
+- **Langkah berikut:** pemilik mengirim contoh formulir triwulan Kemenperin; skenario uji pemilik.
+
+### 2026-11-12 · T-230: Master Data, Pengguna, Kinerja Tim selaras modul
+- **Hasil:** Kinerja Tim tanpa baris ganda dan tanpa "pengguna" dari data awal, angka hasil produksi bisa ditelusuri ke Laporan Produksi; Alasan belum produksi dapat diatur di Master Data.
+- **Bukti:** `verified in browser` (mock); PH-48, unit, lint. [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata.
+
+### 2026-11-12 · T-231: Wiremesh, SPK contoh uji, Other Support
+- **Hasil:** section Cable Tray Wiremesh (input teks bebas, Diameter), SPK contoh uji, Other Support kelompok laporan sendiri. Regresi penuh sebelumnya 730 PASS, 0 FAIL.
+- **Bukti:** `verified in browser` (mock); PH-50 dan suite SPK terdampak. [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]].
+- **Hambatan:** rute Wiremesh dan Other Support masih sementara; belum diuji di Supabase.
+
+### 2026-11-12 · T-232: Laporan per bagian (PDF dan Excel)
+- **Hasil:** tujuh bagian Laporan dapat diunduh sendiri ke PDF dan Excel, rinci untuk analisa bottleneck.
+- **Bukti:** `verified in browser` (mock); PH-51. [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]].
+- **Hambatan:** belum diuji di Supabase; tampilan PDF belum dibandingkan dengan format resmi.
+
+### 2026-11-12 · T-233: input langsung di modul, uji ujung ke ujung, perbaikan rework
+- **Hasil:** pengguna tidak perlu mengisi Master Data dahulu; uji ujung ke ujung berhasil sampai SPK Selesai dan laporan; satu bug rework diperbaiki.
+- **Bukti:** `verified in browser` (mock); PH-52, PH-53. [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata.
+
+### 2026-11-12 · T-234: modul Maintenance terhubung Gudang Sparepart
+- **Hasil:** skema, modul, jadwal rutin, akumulasi (hari sampai selamanya), per mesin dan MTBF, sparepart diganti terhubung ke stok Gudang Sparepart, Cek Data, PDF dan Excel.
+- **Bukti:** `verified in browser` (mock); unit M-01..M-09, e2e MT-01..MT-10. [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]].
+- **Hambatan:** tabel `mtc` baru hanya draf migration (butuh persetujuan pemilik untuk Supabase dev); belum diuji login nyata.
+
+### 2026-11-12 · Migration Maintenance (24) dan hak modul ketat (25) disiapkan
+- **Hasil:** kedua migration siap diterapkan beserta berkas pembatalan dan rencana bertahap; ditemukan dan diperbaiki celah `can_any()` (Viewer bisa mencatat setelah baris hak lihat ditambahkan); pengaman otomatis terhadap pengguna yang akan kehilangan akses. [[documentation/RENCANA_MIGRATION_MAINTENANCE_DAN_HAK|RENCANA_MIGRATION_MAINTENANCE_DAN_HAK]].
+- **Bukti:** `source-level` (SQL ditinjau manual; tidak ada psql lokal; definisi `mod_level()` dan `table_stamps()` production dibaca saja dan sama dengan migration 11). Belum diterapkan ke Supabase mana pun.
+- **Langkah berikut:** perintah pemilik untuk menerapkan (cakupan: 24 saja atau 24 dan 25, project production, uji di cabang atau langsung), lalu verifikasi per peran dan rilis kode lewat PR.

@@ -13,13 +13,15 @@ Vault Obsidian sekaligus repository aplikasi MNI Gudang & Logistik. **Mulai dari
 
 ## Skill proyek (`.claude/skills/`)
 
-`vault-progress`, `e2e-regression`, `supabase-dev-ops`, `adapter-contract`, `rls-roles`, `release-pipeline`, `vps-readiness`, `discovery-session`, **`gudang-stok-flow`** (aturan stok, mutasi, dokumen, SPK stok), dan keluarga ERP: `erp-flow-hulu-hilir`, `erp-module-boundary`, `erp-quotation-engine`, `excel-model-extraction`.
+`vault-progress`, `e2e-regression`, `supabase-dev-ops`, `adapter-contract`, `rls-roles`, `release-pipeline`, `vps-readiness`, `discovery-session`, **`gudang-stok-flow`** (aturan stok, mutasi, dokumen, SPK stok). Skill ERP lama (`erp-flow-hulu-hilir`, `erp-module-boundary`, `excel-model-extraction`) tidak dipakai: lingkup proyek kini WMS (lihat Aturan penting).
 
 ## Agen proyek (`.claude/agents/`)
 
-`progress-keeper`, `qa-regression`, `supabase-engineer`, `app-engineer`, `release-manager`, `ops-analyst`, dan ERP: `erp-architect`, `erp-integrator`, `pricing-engineer`, `ops-monitor-analyst`. Peta peran per tahap: [documentation/TEAM_AND_SKILLS.md](documentation/TEAM_AND_SKILLS.md).
+`progress-keeper`, `qa-regression`, `supabase-engineer`, `app-engineer`, `release-manager`, `ops-analyst`, dan `erp-architect`, `ops-monitor-analyst` (hanya bila diminta). Peta peran per tahap: [documentation/TEAM_AND_SKILLS.md](documentation/TEAM_AND_SKILLS.md).
 
 ## Aturan penting
+
+- **Lingkup WMS (keputusan pemilik 2026-11-11):** Penawaran, Sales Order, harga, dan sejenisnya **dihapus** dari aplikasi, adapter, mock, skema, uji, dan draf migration (15 dan 16). Jangan menambahkannya kembali tanpa permintaan pemilik. Peran `sales` tinggal sisa data lama dan tidak bisa dipilih lagi.
 
 - Jangan menyimpan atau mencetak kunci service-role, password, token, atau data operasional nyata. Workbook privat tetap di `data/private-sources/` (diabaikan Git).
 - Bedakan bukti: `source-level`, `verified in browser`, `verified in database`. Mock bukan bukti Supabase.

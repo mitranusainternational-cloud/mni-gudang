@@ -29,7 +29,7 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 - [ ] Persetujuan eksplisit pemilik untuk jadwal rilis (dijeda 2026-11-06: fokus pemolesan lokal dahulu)
 - [x] Migration 14 (`produksi_log`) lalu 18 (`sp`) diterapkan berurutan 2026-11-10; jumlah baris sama dengan snapshot sebelum tahap; advisor Supabase dicek (tanpa temuan baru)
 - [ ] Migration 17 (anti stok negatif) TIDAK ikut rilis ini: belum pernah diuji di database dan dapat menahan transaksi sah bila data lama memuat stok negatif
-- [ ] PR ke `main` (CI dua pemeriksaan hijau), merge, deploy Vercel Ready
+- [x] PR #16 ke `main` (CI hijau), merge 2026-11-10 (`191eec9`), deploy Vercel Ready
 - [ ] Verifikasi production: login, tiap modul terbuka, jumlah baris tidak berubah, rollback Vercel disiapkan
 
 ## Bukti
@@ -39,7 +39,7 @@ Bergantung pada: T-174, T-196, T-197, T-198, T-199
 
 ## Catatan
 
-- Rencana rilis bertahap terbaru (2026-11-10): [[documentation/RENCANA_RILIS_BERTAHAP_2026-11-10|RENCANA_RILIS_BERTAHAP_2026-11-10]].
+- Rencana rilis bertahap terbaru (2026-11-10): [[documentation/arsip/RENCANA_RILIS_BERTAHAP_2026-11-10|RENCANA_RILIS_BERTAHAP_2026-11-10]].
 
 - Urutan aman: database dahulu (tambahan saja, adapter memperlakukan `produksi_log` dan `sp` sebagai opsional), lalu kode. Rollback kode: Vercel promote deploy sebelumnya; rollback database: `DROP TABLE` kosong plus kembalikan kebijakan (lihat bagian rollback di berkas draf). Dampak perilaku bagi tim: penjaga kirim ke customer dan terima SPK stok (T-199).
 

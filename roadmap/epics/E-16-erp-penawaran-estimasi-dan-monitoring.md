@@ -6,16 +6,16 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 9
-tasks_total: 21
+progress: 8
+tasks_total: 28
 tasks_done: 4
-updated: 2026-11-10
+updated: 2026-11-12
 ---
 
 # E-16 ERP hulu: Penawaran, estimasi, dan monitoring operasional
 
 Rilis target: **v1.2** · Tema: Integrasi · Prioritas: P2
-Induk: [[roadmap/PRODUCT_ROADMAP|Roadmap produk]] · Rancangan: [[documentation/ERP_QUOTATION_ANALISIS]]
+Induk: [[roadmap/PRODUCT_ROADMAP|Roadmap produk]] · Rancangan: [[documentation/arsip/ERP_QUOTATION_ANALISIS]]
 
 ## Hasil yang diinginkan
 
@@ -48,5 +48,12 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-225-perapian-master-data-dan-audit-alur|T-225]] Perapian Master Data (tanpa duplikasi, tanpa data tertanam) dan audit alur Master Data sampai Kinerja · doing · P1 · 3 hari
 - [ ] [[tasks/T-226-ux-input-spk-ringkas-berat-otomatis|T-226]] Input SPK ringkas: berat estimasi dan real langsung tampil, tempel daftar dari Excel · doing · P1 · 2 hari
 - [ ] [[tasks/T-227-produksi-hulu-hilir-wc-selaras-progres-per-wc|T-227]] Produksi hulu ke hilir: Work Centre selaras rute, item langsung terlihat di tiap WC, Progres WC · review · P1 · 1 hari
+- [ ] [[tasks/T-228-nama-bentuk-master-data-susulan-pr-dan-sapu-bug|T-228]] Nama bentuk bisa diedit di Master Data, Elbow tanpa 90, susulan draf PR, rute Cable Duct, sapu bug dan perapian workspace · review · P1 · 1 hari
+- [ ] [[tasks/T-229-laporan-produksi-per-jenis-produk-alasan-belum-produksi|T-229]] Laporan produksi per jenis produk (triwulan), alasan belum produksi, Ladder dan Duct tanpa lubang, posisi Berjalan satu langkah Produksi · review · P1 · 1 hari
+- [ ] [[tasks/T-230-master-data-pengguna-kinerja-tim-selaras-modul|T-230]] Master Data, Pengguna & Akses, dan Kinerja Tim selaras modul terbaru (angka punya dasar) · review · P1 · 1 hari
+- [ ] [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]] Section Cable Tray Wiremesh, SPK contoh uji (Tray, Ladder, Duct, Wiremesh), Other Support kelompok sendiri · review · P1 · 1 hari
+- [ ] [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]] Laporan per bagian: unduh PDF dan Excel dengan ringkasan dan tabel rinci untuk analisa dan bottleneck · review · P1 · 1 hari
+- [ ] [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]] Input langsung di modul memunculkan Master Data otomatis; uji ujung ke ujung di Playwright; perbaikan rework · review · P1 · 1 hari
+- [ ] [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]] Modul Maintenance terhubung Gudang Sparepart: catatan, jadwal rutin, akumulasi, per mesin · review · P1 · 2 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

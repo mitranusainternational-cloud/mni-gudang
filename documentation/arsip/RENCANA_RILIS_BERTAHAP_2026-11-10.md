@@ -1,6 +1,6 @@
 ---
 type: rencana
-status: tahap-1-selesai-menunggu-tahap-2
+status: tahap-3-selesai-menunggu-verifikasi-login
 updated: 2026-11-10
 ---
 
@@ -67,6 +67,18 @@ DELETE FROM public.role_modules WHERE role = 'gbb' AND module = 'sparepart';
 1. Push cabang `fitur/produksi-multi-wc` (tidak menyentuh `main`).
 2. Buka PR ke `main`: CI dua pemeriksaan harus hijau; satu approval (pemilik admin boleh `--admin`).
 3. Vercel membuat Preview (bukan production). Preview dibuka dan diperiksa: login, tiap menu, tanpa galat. Perhatian: Preview memakai Supabase production yang sama; **jangan menyimpan data uji** di Preview.
+
+### Hasil Tahap 2 (2026-11-10)
+
+PR [#16](https://github.com/mitranusainternational-cloud/mni-gudang/pull/16): CI aplikasi (28 menit 51 detik), Vault, dan Vercel Preview hijau. Kegagalan pertama CI hanya batas waktu job 20 menit; dinaikkan ke 45 menit.
+
+### Hasil Tahap 3 (2026-11-10, merge 08:43 UTC)
+
+- Merge PR 16 ke `main` dengan `--admin` (persetujuan pemilik; syarat 1 approval dilewati karena pembuat PR tidak bisa approve sendiri). `main` = `191eec9`.
+- Deploy Vercel production sukses. `https://mni-gudang.vercel.app` menyajikan bundel baru (memuat Progres WC); halaman login tampil tanpa galat (satu 400 refresh token lama, wajar tanpa sesi).
+- Jumlah baris production sebelum dan sesudah deploy sama (rm 24, fg 92, mutasi 21, spk 15, pr 0, kirim 8, vendor 9, bongkar 30, muser 10, log 209, audit_log 422, mwc 2, mcustomer 14; produksi_log 0, sp 0).
+- **Belum diverifikasi:** pemakaian setelah login (menu, SPK live, surat jalan) dan pengisian Master Data Work Centre di production. Perlu login pemilik atau tim.
+- Rollback kode bila perlu: Vercel, Promote deploy sebelumnya (commit `ad73c89`).
 
 ## Tahap 3: merge dan deploy production
 

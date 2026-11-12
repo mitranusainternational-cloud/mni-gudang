@@ -2,9 +2,10 @@
 //
 // Aturan (keputusan sementara, dapat diubah pemilik lewat Pengaturan bahan baku):
 //   - kebutuhan netto = jumlah kg item (qty x berat per pcs); bruto = netto x faktor sisa potong (awal 1,1 mengikuti Waste EST workbook);
+//     KECUALI item yang beratnya sudah berat ESTIMASI workbook (plate yang diambil, sudah memuat waste sekitar 10%): ditandai sudahWaste dan TIDAK dikali faktor lagi (menghindari waste ganda);
 //   - bahan baku dipetakan per (bahan, tebal): bahan dari judul section (SPHC, SS304, SS316, Aluminium), tebal dari judul;
 //   - reservasi = kebutuhan bruto SPK Terbit yang belum Selesai/Batal dikurangi material yang sudah dikeluarkan gudang untuk SPK itu;
-//   - tersedia = stok fisik dikurangi reservasi SPK lain. Pratinjau (Sales Order, SPK Draft) tidak mengubah stok maupun reservasi;
+//   - tersedia = stok fisik dikurangi reservasi SPK lain. Pratinjau (SPK Draft) tidak mengubah stok maupun reservasi;
 //   - kekurangan diusulkan sebagai PR dalam lembar dari item bahan baku utama (stok kg terbesar) pada kelompok itu.
 export const FAKTOR_SISA_DEFAULT = 1.1;
 
@@ -48,13 +49,13 @@ export function kelompokKebutuhan(items, { faktor = FAKTOR_SISA_DEFAULT, tebalSp
   (items || []).forEach((it) => {
     const { bahan, tebal } = bahanTebal(it.g, tebalSpk);
     const kunci = kunciMaterial(bahan, tebal);
-    if (!peta.has(kunci)) peta.set(kunci, { kunci, bahan, tebal, netto: 0, bruto: 0, baris: 0, tanpaBerat: [] });
+    if (!peta.has(kunci)) peta.set(kunci, { kunci, bahan, tebal, netto: 0, bruto: 0, baris: 0, tanpaBerat: [], _bruto: 0 });
     const g = peta.get(kunci);
     const kg = angka(it.q) * angka(it.w);
     g.baris += 1;
-    if (kg > 0) g.netto += kg; else g.tanpaBerat.push(it.d);
+    if (kg > 0) { g.netto += kg; g._bruto += kg * (it.sudahWaste ? 1 : f); } else g.tanpaBerat.push(it.d);
   });
-  return [...peta.values()].map((g) => ({ ...g, netto: r3(g.netto), bruto: r3(g.netto * f) })).sort((a, b) => a.bahan.localeCompare(b.bahan) || a.tebal - b.tebal);
+  return [...peta.values()].map(({ _bruto, ...g }) => ({ ...g, netto: r3(g.netto), bruto: r3(_bruto), faktorEfektif: g.netto > 0 ? r3(_bruto / g.netto) : f })).sort((a, b) => a.bahan.localeCompare(b.bahan) || a.tebal - b.tebal);
 }
 
 /** Reservasi aktif seluruh SPK. spkList = [{ id, aktif, kelompok:[{kunci,bruto}], keluar:{kunci:kg} }].
@@ -102,4 +103,25 @@ export function rencanaMaterial(kelompok, rmSiap, { reservasiLain = {}, keluar =
 /** Usulan PR dari kekurangan: satu baris per kelompok yang Kurang (lembar dari item RM utama). */
 export function usulanPr(rencana) {
   return (rencana || []).filter((r) => r.status === 'Kurang' && r.utama && r.kurangLbr > 0).map((r) => ({ item: r.utama.id, label: r.utama.label, q: r.kurangLbr, kg: r3(r.kurangLbr * r.utama.kgPerLbr), kunci: r.kunci }));
+}
+
+/** Susut bahan baku per SPK: membandingkan plat yang KELUAR (kg) dengan hasil jadi (kg) per (bahan, tebal).
+ *  kelompokRencana = kelompokKebutuhan(seluruh item), kelompokHasil = kelompokKebutuhan(item dengan qty = yang sudah selesai),
+ *  keluar = { kunci: kg }. Batas wajar = (faktor-1)/faktor + toleransi (faktor sisa potong 1,1 => 9,1% + 5%).
+ *  Status: 'Belum keluar', 'Berjalan' (produksi belum selesai, susut sementara tidak dinilai), 'Wajar', 'Berlebih', 'Plat kurang catat' (hasil melebihi plat yang tercatat keluar). */
+export function susutMaterial(kelompokRencana, kelompokHasil, keluar = {}, { faktor = FAKTOR_SISA_DEFAULT, toleransi = 0.05 } = {}) {
+  const f = faktorSisa(faktor);
+  const hasil = new Map((kelompokHasil || []).map((k) => [k.kunci, k.netto]));
+  return (kelompokRencana || []).map((k) => {
+    const keluarKg = r3(angka(keluar[k.kunci])); const hasilKg = r3(hasil.get(k.kunci) || 0);
+    const selesai = k.netto > 0 && hasilKg >= k.netto - 0.0005;
+    const fe = k.faktorEfektif >= 1 ? k.faktorEfektif : f; const batas = (fe - 1) / fe + toleransi; // grup berat estimasi (sudah memuat waste) hanya diberi toleransi
+    const susutKg = r3(keluarKg - hasilKg); const pct = keluarKg > 0 ? susutKg / keluarKg : null;
+    let status;
+    if (keluarKg <= 0) status = hasilKg > 0 ? 'Plat kurang catat' : 'Belum keluar';
+    else if (keluarKg + 0.5 < hasilKg) status = 'Plat kurang catat';
+    else if (!selesai) status = 'Berjalan';
+    else status = pct <= batas ? 'Wajar' : 'Berlebih';
+    return { kunci: k.kunci, bahan: k.bahan, tebal: k.tebal, rencanaKg: k.netto, keluarKg, hasilKg, susutKg, pct, batas, status };
+  });
 }

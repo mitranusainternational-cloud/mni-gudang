@@ -21,7 +21,7 @@ updated: 2026-11-06
 Epic: [[roadmap/epics/E-16-erp-penawaran-estimasi-dan-monitoring|E-16]]
 Fase: P9
 Bergantung pada: T-190
-Rancangan: [[documentation/ERP_QUOTATION_ANALISIS]]
+Rancangan: [[documentation/arsip/ERP_QUOTATION_ANALISIS]]
 
 ## Kriteria selesai
 

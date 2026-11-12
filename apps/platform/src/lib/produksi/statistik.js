@@ -20,6 +20,8 @@ export function periodeRentang(kode, hariIni) {
     case '7': return { dari: geser(t, -6), sampai: t, label: '7 hari terakhir' };
     case '30': return { dari: geser(t, -29), sampai: t, label: '30 hari terakhir' };
     case 'tahun': return { dari: t.slice(0, 4) + '-01-01', sampai: t, label: 'Tahun ini' };
+    case 'triwulan': { const q = Math.floor((Number(t.slice(5, 7)) - 1) / 3); return { dari: t.slice(0, 4) + '-' + p2(q * 3 + 1) + '-01', sampai: t, label: 'Triwulan ' + ['I', 'II', 'III', 'IV'][q] + ' ' + t.slice(0, 4) + ' (berjalan)' }; }
+    case 'triwulanlalu': { let q = Math.floor((Number(t.slice(5, 7)) - 1) / 3) - 1; let y = Number(t.slice(0, 4)); if (q < 0) { q = 3; y -= 1; } const akhirBulan = q * 3 + 3; const hariAkhir = new Date(y, akhirBulan, 0).getDate(); return { dari: y + '-' + p2(q * 3 + 1) + '-01', sampai: y + '-' + p2(akhirBulan) + '-' + p2(hariAkhir), label: 'Triwulan ' + ['I', 'II', 'III', 'IV'][q] + ' ' + y }; }
     case 'semua': return { dari: '0000-00-00', sampai: t, label: 'Semua data' };
     default: return { dari: t.slice(0, 8) + '01', sampai: t, label: 'Bulan ini' };
   }
@@ -122,10 +124,12 @@ export function akumulasi(kejadian, { by = 'operator', sampai, produk = produkDa
 // ---------------------------------------------------------------------------------------------
 const AKSESORIS = /(ELBOW|TEE|CROSS|REDUCER|BRACKET|CLAMP|HANGER|JOINTING|SUPPORT|COUPLER|SPLICE|FLANGE|ACCS)/;
 export function klasifikasi(judul, deskripsi, material) {
-  const H = String(judul || '').toUpperCase(), D = String(deskripsi || '').toUpperCase();
+  const H = String(judul || '').toUpperCase().replace(/\bTYPE\s+C\b/, 'TYPE STC').replace(/\bTYPE\s+U\b/, 'TYPE STU'), D = String(deskripsi || '').toUpperCase();
   let kelompok = 'Lainnya', induk = '';
-  if (/ACCS|ACCESS/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
+  if (/OTHER\s+SUPPORT/.test(H)) kelompok = 'Other Support';
+  else if (/ACCS|ACCESS/.test(H)) { kelompok = 'Aksesoris'; induk = /LADDER/.test(H) ? 'Ladder' : /DUCT/.test(H) ? 'Duct' : /TRAY/.test(H) ? 'Tray' : ''; }
   else if (/COVER/.test(H)) kelompok = 'Cover';
+  else if (/WIREMESH/.test(H)) kelompok = 'Wiremesh';
   else if (/CABLE\s+LADDER/.test(H)) kelompok = 'Cable Ladder';
   else if (/CABLE\s+TRAY|PERFORATED/.test(H)) kelompok = 'Cable Tray';
   else if (/CABLE\s+DUCT/.test(H)) kelompok = 'Cable Duct';
@@ -138,20 +142,50 @@ export function klasifikasi(judul, deskripsi, material) {
   const tm2 = tm ? null : H.match(/(?:^|[^A-Z])(STU|STC|SLU|SLW|SLHD|SLC)(?:[^A-Z]|$)/);
   const tipe = tm ? tm[1] : tm2 ? tm2[1] : '';
   const fin = finishingDari(H) || (/NON\s+FINISHING/.test(H) ? 'Non finishing' : '');
-  return { kelompok, induk, tipe: tipe || '', finishing: fin, material: String(material || '').toUpperCase() };
+  const produk = H.split(/\s+TYPE\s+/)[0].trim();
+  return { kelompok, induk, tipe: tipe || '', finishing: fin, material: String(material || '').toUpperCase(), produk, bentuk: bentukDari(D, kelompok, produk) };
 }
 
-const NAMA_SUMBU = { kelompok: (e) => e.kelompok || 'Lainnya', tipe: (e) => e.tipe || '(tanpa type)', material: (e) => [e.material, e.finishing].filter(Boolean).join(' · ') || '(tanpa material)' };
+// Bentuk produk dari deskripsi item (Elbow, Tee, Hanger Beam, dan lain-lain); batang lurus Cable Tray, Ladder, Duct disebut Straight.
+const BENTUK_KATA = [
+  ['Inside Riser', /INSIDE/], ['Outside Riser', /OUTSIDE/], ['Elbow', /ELBOW/], ['Tee', /\bTEE\b/], ['Cross', /\bCROSS\b/], ['Reducer', /REDUCER/],
+  ['Jointing', /JOINTING/], ['Fish Plate', /FISH\s+PLATE/], ['Splice Plate', /SPLICE/], ['Bracket', /BRACKET/], ['Hanger Beam', /HANGER\s+BEAM/], ['Hanger Clevis', /CLEVIS/],
+  ['U Channel', /U\s+CHANNEL/], ['Clamp', /CLAMP|CLIP/], ['Separator', /SEPARATOR/], ['End Stop', /END\s+STOP/], ['Drop Out', /DROP\s+OUT/],
+];
+export function bentukDari(deskripsi, kelompok, produk) {
+  const D = String(deskripsi || '').toUpperCase(); const hit = BENTUK_KATA.find(([, re]) => re.test(D));
+  if (kelompok === 'Cover') return hit ? 'Cover ' + hit[0] : 'Cover';
+  if (hit) return hit[0];
+  if (kelompok === 'Wiremesh') return 'Wiremesh';
+  if (/PERFORATED/.test(String(produk || ''))) return 'Perforated (straight)';
+  return kelompok === 'Aksesoris' || kelompok === 'Other Support' ? 'Aksesoris lain' : 'Straight';
+}
+
+const NAMA_SUMBU = { produk: (e) => e.produk || '(tanpa section)', bentuk: (e) => e.bentuk || bentukDari(e.item_desc, e.kelompok, e.produk), tebal: (e) => (e.tebal ? String(e.tebal).replace('.', ',') + ' mm' : '(tanpa tebal)'), finishing: (e) => e.finishing || '(tanpa finishing)', kelompok: (e) => e.kelompok || 'Lainnya', tipe: (e) => e.tipe || '(tanpa type)', material: (e) => [e.material, e.finishing].filter(Boolean).join(' · ') || '(tanpa material)' };
 
 function agregat(ev) {
-  let qty = 0, reject = 0, tonase = 0, menit = 0, qtyB = 0, tonB = 0; const hari = new Set();
+  let qty = 0, reject = 0, tonase = 0, menit = 0, qtyB = 0, tonB = 0, tonEst = 0; const hari = new Set();
   ev.forEach((e) => {
-    const q = Number(e.qty) || 0, tn = Number(e.tonase) || 0; qty += q; reject += Number(e.reject) || 0; tonase += tn; hari.add(e.tgl || tanggalLokal(e.at));
+    const q = Number(e.qty) || 0, tn = Number(e.tonase) || 0; tonEst += Number(e.tonaseEst) > 0 ? Number(e.tonaseEst) : tn; qty += q; reject += Number(e.reject) || 0; tonase += tn; hari.add(e.tgl || tanggalLokal(e.at));
     if (e.menit != null && e.menit !== '' && q > 0 && Number(e.menit) > 0) { menit += Number(e.menit); qtyB += q; tonB += tn; }
   });
-  return { qty, reject, tonase: r1(tonase), hariAktif: hari.size, rataHari: hari.size ? r1(qty / hari.size) : 0, jam: r1(menit / 60),
+  return { qty, reject, tonase: r1(tonase), tonaseEst: r1(tonEst), hariAktif: hari.size, rataHari: hari.size ? r1(qty / hari.size) : 0, jam: r1(menit / 60),
     pcsPerJam: menit > 0 ? r1(qtyB / (menit / 60)) : null, kgPerJam: menit > 0 && tonB > 0 ? r1(tonB / (menit / 60)) : null, menitPerPcs: qtyB > 0 ? r2(menit / qtyB) : null,
     rejectPct: qty + reject > 0 ? r2(reject / (qty + reject)) : null };
+}
+
+// Rincian produk datar (satu baris per kombinasi kelompok, section, bentuk, type, tebal, material, finishing): dasar laporan triwulan dan unduhan Excel.
+const URUT_KELOMPOK = ['Cable Tray', 'Wiremesh', 'Cable Ladder', 'Cable Duct', 'Aksesoris', 'Other Support', 'Cover', 'Lainnya'];
+export function rincianProduk(kejadian, { dari, sampai }) {
+  const ev = hasilDalam(kejadian, dari, sampai); const grup = {};
+  ev.forEach((e) => {
+    const k = [NAMA_SUMBU.kelompok(e), e.produk || '', NAMA_SUMBU.bentuk(e), e.tipe || '', e.tebal || '', e.material || '', e.finishing || ''];
+    const kunci = k.join('|'); (grup[kunci] = grup[kunci] || { k, xs: [] }).xs.push(e);
+  });
+  const baris = Object.values(grup).map(({ k, xs }) => { const a = agregat(xs); return { kelompok: k[0], produk: k[1], bentuk: k[2], tipe: k[3], tebal: k[4], material: k[5], finishing: k[6], qty: a.qty, tonase: a.tonase, tonaseEst: a.tonaseEst, reject: a.reject, hariAktif: a.hariAktif }; });
+  baris.sort((a, b) => URUT_KELOMPOK.indexOf(a.kelompok) - URUT_KELOMPOK.indexOf(b.kelompok) || a.produk.localeCompare(b.produk) || a.bentuk.localeCompare(b.bentuk) || b.qty - a.qty);
+  const tot = baris.reduce((a, r) => ({ qty: a.qty + r.qty, tonase: r2(a.tonase + r.tonase), tonaseEst: r2(a.tonaseEst + r.tonaseEst) }), { qty: 0, tonase: 0, tonaseEst: 0 });
+  return { baris, total: tot };
 }
 
 // Pohon produk: kelompok, lalu type, lalu material dan finishing. Hasil dibentangkan (depth 0, 1, 2) siap ditampilkan berindentasi.

@@ -9,7 +9,7 @@ status: planned
 progress: 0
 tasks_total: 7
 tasks_done: 0
-updated: 2026-11-10
+updated: 2026-11-12
 ---
 
 # E-04 Proses, data, dan pilot

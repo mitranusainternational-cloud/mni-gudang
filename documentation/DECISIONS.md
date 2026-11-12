@@ -167,3 +167,29 @@ updated: 2026-11-02
 - **Alasan:** konektor Supabase sudah beralih ke akun baru (`nurilhamj@gmail.com`) dan project production tidak lagi terlihat dari sana; Vercel tim MNI juga belum bisa diakses dari konektor baru.
 - **Konsekuensi:** tidak ada migration, deploy, atau perubahan di production. Tugas T-203 (rilis) tetap menunggu persetujuan. Saat migrasi nanti: ekspor data dari akun lama, buat project baru, migrasi 1 sampai 13 lalu draf 14 sampai 18 satu per satu, dan undang ulang pengguna karena akun login tidak bisa disalin lewat SQL.
 - **Rujukan:** [[HANDOFF]], [[SERTIJOB]], [[T-203-rilis-paket-gudang-dan-produksi-ke-production]].
+
+## 2026-11-11: Penawaran dan Sales Order dihapus, lingkup WMS penuh
+
+- **Keputusan pemilik:** fokus ke WMS. Semua yang berkaitan dengan Penawaran, Sales Order, harga, dan sejenisnya dihilangkan dan dibersihkan dari sistem.
+- **Dilakukan (lokal):** layar, menu, hak akses, pendengar, dan gaya Penawaran/Sales Order dari `app.js` dan `app.css`; mesin harga (`erp/harga.js`, `penawaran.js`, `salesorder.js`, katalog dan skenario harga), tabel `penawaran` dan `salesorder` di adapter, mock, dan skema; uji `penawaran`, `alur-penawaran`, dan unit terkait; skrip `build-quote-catalog.mjs`; draf migration 15 dan 16; skill `erp-quotation-engine` serta agen `pricing-engineer` dan `erp-integrator`.
+- **Dipertahankan:** `erp/material.js` (kebutuhan plat dan reservasi, bagian WMS), kolom `po` dan `sales` pada SPK (nomor PO customer dan nama sales sebagai data SPK), peran `sales` hanya untuk membaca pengguna lama (tidak bisa dipilih).
+- **Production tidak tersentuh:** tabel `penawaran` dan `salesorder` memang tidak pernah dibuat di production (migration 15 dan 16 tidak pernah diterapkan). Galat 404 di konsol live akan hilang setelah kode ini dirilis (butuh persetujuan terpisah).
+- **Catatan riwayat:** catatan tugas lama (`tasks/`, `roadmap/`) yang menyebut Penawaran tidak diubah; itu riwayat.
+
+## 2026-11-12: Section SPK dirapikan menjadi 11 section
+
+- **Keputusan pemilik:** section SPK: (1) Cable Tray, (2) Perforated Cable Tray, (3) Cable Ladder, (4) **Cable Duct**: semuanya hanya **Straight**; Cable Duct seperti Cable Tray tanpa lubang dengan masukan berat yang sama; (5) sampai (7) **Accs Cable Tray, Ladder, Duct**: Elbow, Inside Riser, Outside Riser, Tee, Cross, Reducer; (8) sampai (10) **Cover Tray, Cover Ladder, Cover Duct**: Cover, Cover Elbow, Cover Inside Riser, Cover Outside Riser, Cover Tee, Cover Cross, Cover Reducer; (11) **Other Support**: Jointing, Horizontal dan Vertical Fish Plate, Splice Plate Set, Bracket Support, Double dan Single Channel Bracket, Hanger Beam, U Channel 20x20, Hanger Clevis, Cover Clamp, Cover Clamp Heavy Duty, Separator, Support Separator, Hold Down Clamp, Hold Down Clip, End Stop, Drop Out; strukturnya mengikuti jenis (type) section.
+- **Nama item** tetap otomatis dari bentuk dan ukuran, tetapi **bisa diedit manual** (hanya nama); ukuran W, H, L, R mengikuti struktur kalkulator dan berat tetap dari kalkulator. Tombol "↺ otomatis" mengembalikan nama otomatis; penanda `nm` disimpan di item.
+- **Dampak:** aksesori (Jointing dst.) pindah dari ACCS ke Other Support; SPK lama yang masih berisi aksesori di section ACCS tetap terbaca (ditandai "di luar aturan" dengan saran section). Produk lama SUPPORT TRAY dan WIREMESH CABLE TRAY tidak lagi di daftar tetapi SPK lamanya tetap bisa dibuka. Rute produksi standar: Cover Ladder dan Cover Duct seperti Cover Tray; **Other Support memakai rute yang sama dengan ACCS (CNC Laser, Bending, Welding) sebagai bawaan sementara**, dapat diubah di Master Data (Rute produksi). Production tidak punya pengaturan Opsi SPK atau aturan section yang menimpa (dicek), jadi bawaan baru langsung berlaku.
+- **Catatan katalog:** di katalog asli bentuk Vertical Fish Plate jenis SLHDC berakhiran `SLHC` (salah ketik); kini ditoleransi.
+
+## 2026-11-12: Nama bentuk bisa diedit, Elbow tanpa 90, Cable Duct tanpa Punching
+- **Keputusan pemilik:** label bentuk cukup "Elbow" (bukan "Elbow 90"), dan nama bentuk dapat diubah di Master Data supaya terhubung ke editor SPK. Disimpan di `master/setting.namaBentuk` (kosong = nama standar); tanpa migration database.
+- **Turunan (menunggu konfirmasi):** Cable Duct tanpa lubang, jadi rute standarnya Shearing, Bending tanpa Punching. Dapat diubah di Master Data › Rute produksi.
+- **Draf PR susulan:** SPK yang diterbitkan peran tanpa hak Gudang Bahan Baku (mis. PPIC) mendapat draf PR saat petugas gudang bahan baku atau admin membuka Bahan baku; hanya SPK terbit 7 hari terakhir yang belum punya PR.
+
+## 2026-11-12: Hak modul ketat (hanya modul yang diatur, kecuali super admin)
+- **Keputusan pemilik:** setiap peran atau pengguna hanya melihat modul yang diatur untuknya; hanya super admin yang melihat semua. Yang diatur bisa dibuat sepenuhnya di Pengguna & Akses (peta modul per pengguna, atau paket peran sebagai titik awal).
+- **Perilaku aplikasi:** tanpa peta modul pengguna, hak mengikuti paket peran (ubah, lihat, atau tidak tampil); sebelumnya modul di luar paket dianggap "lihat". Menu Master Data hanya untuk admin atau pemegang modul `master-data`. Laporan menampilkan hanya bagian dari modul yang boleh dilihat (Kesehatan data khusus admin). Dashboard (peringatan dan aktivitas) dan tab Vendor serta Pengiriman di Analisa Produksi mengikuti hak modul. Membuka alamat modul yang tidak diizinkan kembali ke Dashboard.
+- **Pratinjau lokal:** pengguna contoh membawa peta modul sesuai paket peran, termasuk peran baru Gudang dan Maintenance.
+- **Database:** draf `20240101000025_hak_modul_ketat.sql` membuat `mod_level()` ketat untuk pengguna tanpa peta modul (belum diterapkan; periksa pengguna lama tanpa peta modul sebelum diterapkan). Pengguna yang dibuat dari form Tambah anggota sudah punya peta modul sehingga sudah ketat di database.

@@ -6,12 +6,16 @@
 export const RUTE_STANDAR = {
   'CABLE TRAY': ['Shearing', 'Punching', 'Bending'],
   'PERFORATED CABLE TRAY': ['Shearing', 'Punching', 'Bending'],
+  'WIREMESH CABLE TRAY': ['Shearing', 'Bending', 'Welding'], // sementara (belum dikonfirmasi pemilik); ubah di Master Data › Rute produksi
   'CABLE LADDER': ['Shearing', 'Punching', 'Bending', 'Welding'],
-  'CABLE DUCT': ['Shearing', 'Punching', 'Bending'],
+  'CABLE DUCT': ['Shearing', 'Bending'], // tanpa lubang, jadi tanpa Punching (keputusan pemilik 2026-11-12: Cable Duct = Cable Tray tanpa lubang)
   'COVER TRAY': ['Shearing', 'Bending'],
+  'COVER LADDER': ['Shearing', 'Bending'],
+  'COVER DUCT': ['Shearing', 'Bending'],
   'ACCS TRAY': ['CNC Laser', 'Bending', 'Welding'],
   'ACCS LADDER': ['CNC Laser', 'Bending', 'Welding'],
   'ACCS DUCT': ['CNC Laser', 'Bending', 'Welding'],
+  'OTHER SUPPORT': ['CNC Laser', 'Bending', 'Welding'], // sama dengan ACCS (sebelumnya aksesori ini berada di section ACCS); aturan khusus per kata (clamp, hanger, jointing, splice) tetap berlaku
 };
 
 // Pengecualian berdasarkan kata di deskripsi (dicek berurutan, yang pertama cocok menang): bentuk tertentu tidak melewati semua mesin.

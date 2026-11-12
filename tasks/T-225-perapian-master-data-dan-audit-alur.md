@@ -18,7 +18,7 @@ updated: 2026-11-09
 
 # T-225 Perapian Master Data dan audit alur
 
-Audit: [[documentation/AUDIT_ALUR_2026-11-09|AUDIT_ALUR_2026-11-09]]
+Audit: [[documentation/arsip/AUDIT_ALUR_2026-11-09|AUDIT_ALUR_2026-11-09]]
 
 ## Kriteria selesai
 

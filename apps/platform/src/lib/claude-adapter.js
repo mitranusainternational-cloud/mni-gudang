@@ -62,7 +62,7 @@ async function toDbId(id) {
 // Kolom spk.no bertipe TEXT di database, tetapi app memperlakukannya sebagai angka
 // (parseInt, perbandingan !==). Tanpa konversi, mengedit SPK dianggap "ganti nomor".
 // Tabel yang boleh belum ada di database (migration draf belum diterapkan): dibaca sebagai kosong, bukan galat.
-const OPSIONAL = new Set(['produksi_log', 'penawaran', 'salesorder', 'sp']);
+const OPSIONAL = new Set(['produksi_log', 'sp', 'mtc']);
 const numericNo = (table, row) => {
   if (table === 'spk' && row && row.no !== undefined && row.no !== null && /^\d+$/.test(String(row.no))) row.no = Number(row.no);
   return row;
@@ -449,15 +449,13 @@ async function makeUserAdapter() {
   const user = session?.user;
   if (!user) return null;
 
-  // Fetch user role from muser table
-  const { data: muser } = await supabase
-    .from('muser')
-    .select('*')
-    .eq('email', user.email)
-    .maybeSingle();
+  // Data pengguna diambil ulang setiap me() dan can(), supaya perubahan peran atau hak modul berlaku seketika (bukan hanya saat aplikasi dibuka).
+  const ambilMuser = async () => (await supabase.from('muser').select('*').eq('email', user.email).maybeSingle()).data;
+  let muser = await ambilMuser();
+  const segarkan = async () => { try { const baru = await ambilMuser(); if (baru !== undefined) muser = baru; } catch { /* pakai data terakhir */ } };
 
   return {
-    me: async () => ({
+    me: async () => { await segarkan(); return {
       id: user.email,
       email: user.email,
       name: muser?.nama || user.email, // dipakai app untuk nama tampilan
@@ -468,8 +466,9 @@ async function makeUserAdapter() {
       terdaftar: !!muser,
       isOwner: muser?.role === 'admin' && muser?.aktif !== false,
       canEdit: bisaMengubah(muser),
-    }),
+    }; },
     can: async (permission) => {
+      await segarkan();
       if (permission === 'data.write') return bisaMengubah(muser);
       return !!muser && muser.aktif !== false;
     },
@@ -494,7 +493,7 @@ async function makeUserAdapter() {
     })),
     // Cadangan: semua tabel mentah (urutan aman untuk pemulihan). Hanya super admin yang membaca semuanya (RLS).
     exportAll: async () => {
-      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'penawaran', 'salesorder', 'sp'];
+      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'sp', 'mtc'];
       const out = {};
       for (const t of tables) {
         const rows = [];
@@ -572,7 +571,8 @@ window.MNIBerat = {
   // Input item terstruktur: bentuk per produk, dimensi, nama otomatis, berat dari pilihan (lihat berat/bentuk.js)
   keluargaDari: (judulSection) => { const k = _bacaSection(judulSection).keluarga; return k && _katalogBerat && _katalogBerat.keluarga[k] ? k : null; },
   // aturan section dari Master Data (setting.aturanSection); kosong = bawaan standar (berat/bentuk.js ATURAN_DEFAULT)
-  setAturan: (a) => { _aturanSection = a && typeof a === 'object' ? a : null; },
+  setAturan: (a, nama) => { _aturanSection = a && typeof a === 'object' ? a : null; _bentuk.setNamaBentuk(nama); },
+  namaBawaan: (kunci) => _bentuk.namaBentukBawaan(kunci),
   aturanBawaan: () => JSON.parse(JSON.stringify(_bentuk.ATURAN_DEFAULT)),
   bentukProduk: (keluarga, produk) => (_katalogBerat ? _bentuk.bentukUntukProduk(_katalogBerat, keluarga, produk, _aturanSection) : []),
   bentukSemua: (keluarga) => (_katalogBerat ? _bentuk.bentukSemua(_katalogBerat, keluarga) : []),
@@ -591,22 +591,15 @@ import * as _kinerja from './produksi/kinerja.js';
 import * as _laporan from './produksi/laporan.js';
 import * as _analisa from './produksi/analisa.js';
 import * as _statistik from './produksi/statistik.js';
+import * as _maint from './maintenance/hitung.js';
 import * as _jadwal from './produksi/jadwal.js';
 import * as _kapasitas from './produksi/kapasitas.js';
 import * as _rencana from './produksi/rencana.js';
-import * as _harga from './erp/harga.js';
-import * as _penawaran from './erp/penawaran.js';
-import * as _salesorder from './erp/salesorder.js';
 import * as _material from './erp/material.js';
+window.MNIMaint = { ..._maint };
 window.MNIProduksi = { ..._rute, ..._kinerja, ..._laporan, ..._analisa, ..._statistik, ..._jadwal, ..._kapasitas, ..._rencana };
-// Mesin penawaran (harga, aturan, alur). Katalog dan skenario harga dimuat dari tabel master setelah login (setKatalog).
+// Kebutuhan material (fungsi murni): plat, reservasi, usulan PR.
 window.MNIMaterial = { ..._material };
-window.MNIHarga = {
-  ..._harga, ..._penawaran, ..._salesorder, katalog: null, skenario: null,
-  setKatalog(k, s) { this.katalog = k; this.skenario = s; },
-  ada() { return !!(this.katalog && this.skenario && this.skenario.length); },
-  info() { return this.katalog ? { bentuk: this.katalog.bentuk.length, keluarga: _penawaran.daftarKeluarga(this.katalog).length, skenario: (this.skenario || []).length } : null; },
-};
 
 window.claude = CLAUDE_SHIM;
 window.__supabase = supabase;

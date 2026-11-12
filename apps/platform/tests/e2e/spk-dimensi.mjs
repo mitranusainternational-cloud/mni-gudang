@@ -58,7 +58,7 @@ export async function runSpkDimensi(page, base) {
 
     // DM-04 mengisi W, H, L membentuk nama item; tanpa katalog kg belum dihitung
     await page.fill('#ed-dm-0-0-w', '100'); await page.fill('#ed-dm-0-0-h', '50'); await page.fill('#ed-dm-0-0-l', '3000'); await page.fill('#ed-q-0-0', '10'); await wait(500);
-    const d4 = await page.evaluate(() => ({ nama: (document.getElementById('ed-nm-0-0') || {}).textContent || '', kgsub: !!document.querySelector('#ed-secs .kgsub') }));
+    const d4 = await page.evaluate(() => ({ nama: (document.getElementById('ed-nm-0-0') || {}).value || '', kgsub: !!document.querySelector('#ed-secs .kgsub') }));
     ok('DM-04 W 100, H 50, L 3000 membentuk nama Cable Tray W100xH50xL3000; tanpa katalog tidak ada kg otomatis', /W100xH50xL3000/.test(d4.nama) && !d4.kgsub, JSON.stringify(d4));
 
     // DM-05 katalog terpasang: kg estimasi dan real muncul per baris dan di footer

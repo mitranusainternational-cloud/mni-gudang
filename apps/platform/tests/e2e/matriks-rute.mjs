@@ -45,7 +45,7 @@ export async function runMatriksRute(page, base) {
     ok('MR-02 matriks memuat baris produk ACCS TRAY dan komponen Elbow; kolom Work Centre; banner hilang', m2.prod && m2.elbow && !m2.banner && m2.kolom.includes('Shearing') && m2.kolom.includes('CNC Laser'), JSON.stringify(m2));
 
     // MR-03 sumber rute: Elbow ikut produk ACCS; Hanger Beam aturan khusus (CNC Laser, Bending)
-    const e3 = await baris('ACCS TRAY|ELBOW'); const h3 = await baris('ACCS TRAY|HANGER_BEAM'); const p3 = await baris('ACCS TRAY');
+    const e3 = await baris('ACCS TRAY|ELBOW'); const h3 = await baris('OTHER SUPPORT|HANGER_BEAM'); const p3 = await baris('ACCS TRAY');
     ok('MR-03 Elbow = Ikut produk (rute ACCS), Hanger Beam = Aturan khusus (CNC Laser, Bending)', e3.sumber === 'Ikut produk' && e3.rute === p3.rute && h3.sumber === 'Aturan khusus' && h3.ck.includes('CNC Laser') && h3.ck.includes('Bending') && !h3.ck.includes('Welding'), JSON.stringify({ e3, h3 }));
 
     // MR-04 mengubah centang membuat rute kustom hanya untuk komponen itu
@@ -60,15 +60,15 @@ export async function runMatriksRute(page, base) {
     ok('MR-05 Pulihkan menghapus rute kustom Elbow; kembali Ikut produk', peta5['ACCS TRAY|ELBOW'] === undefined && e5.sumber === 'Ikut produk', JSON.stringify(e5));
 
     // MR-06 rute minimal satu Work Centre
-    await centang('ACCS TRAY|HANGER_BEAM', 'Bending');
-    await centang('ACCS TRAY|HANGER_BEAM', 'CNC Laser');
-    const peta6 = await page.evaluate(() => ruteStd()); const h6 = await baris('ACCS TRAY|HANGER_BEAM');
-    ok('MR-06 Work Centre terakhir tidak bisa dicabut: rute tetap CNC Laser dan centang tetap', JSON.stringify(peta6['ACCS TRAY|HANGER_BEAM']) === JSON.stringify(['CNC Laser']) && h6.ck.length === 1 && h6.ck[0] === 'CNC Laser', JSON.stringify({ k: peta6['ACCS TRAY|HANGER_BEAM'], ck: h6.ck }));
+    await centang('OTHER SUPPORT|HANGER_BEAM', 'Bending');
+    await centang('OTHER SUPPORT|HANGER_BEAM', 'CNC Laser');
+    const peta6 = await page.evaluate(() => ruteStd()); const h6 = await baris('OTHER SUPPORT|HANGER_BEAM');
+    ok('MR-06 Work Centre terakhir tidak bisa dicabut: rute tetap CNC Laser dan centang tetap', JSON.stringify(peta6['OTHER SUPPORT|HANGER_BEAM']) === JSON.stringify(['CNC Laser']) && h6.ck.length === 1 && h6.ck[0] === 'CNC Laser', JSON.stringify({ k: peta6['OTHER SUPPORT|HANGER_BEAM'], ck: h6.ck }));
 
     // MR-07 pencarian menyaring baris
     await page.evaluate(() => { const q = document.getElementById('q-master'); q.value = 'hanger'; q.dispatchEvent(new Event('input', { bubbles: true })); }); await wait(700);
     const s7 = await page.evaluate(() => [...document.querySelectorAll('#rute-tabel tbody tr')].map((tr) => tr.dataset.rk));
-    ok('MR-07 pencarian "hanger": komponen Hanger Beam tampil dengan baris produk induknya; komponen lain (Elbow) tersaring', s7.some((k) => /HANGER_BEAM$/.test(k)) && s7.every((k) => /HANGER_BEAM$|^ACCS (TRAY|LADDER|DUCT)$/.test(k)) && !s7.some((k) => /ELBOW/.test(k)), JSON.stringify(s7));
+    ok('MR-07 pencarian "hanger": komponen Hanger Beam tampil dengan baris produk induknya; komponen lain (Elbow) tersaring', s7.some((k) => /HANGER_BEAM$/.test(k)) && s7.every((k) => /HANGER_BEAM$|^OTHER SUPPORT$/.test(k)) && !s7.some((k) => /ELBOW/.test(k)), JSON.stringify(s7));
   } catch (e) {
     R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
   }

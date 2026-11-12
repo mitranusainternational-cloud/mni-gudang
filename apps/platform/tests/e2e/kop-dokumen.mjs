@@ -71,7 +71,7 @@ export async function runKop(page, base) {
     const rs = await page.evaluate(() => { const k = KOP(); return { nama: k.nama, custom: k.custom, a1: k.a1, warna: k.warna }; });
     ok('KO-10 pulihkan bawaan: nama, alamat, warna, dan logo kembali ke semula', /MITRA NUSA/.test(rs.nama) && !rs.custom && /Gravitas/.test(rs.a1) && rs.warna === '#1F3A6E', JSON.stringify(rs));
 
-    // ---- dokumen gudang: mutasi, PR, kartu stok, lembar opname, penawaran ----
+    // ---- dokumen gudang: mutasi, PR, kartu stok, lembar opname ----
     const gd = await page.evaluate(async () => {
       const out = {}; const X = await loadExcelJS(); const rd = async (b) => { const wb = new X.Workbook(); await wb.xlsx.load(b); return wb.worksheets[0]; };
       const jenisList = ['masuk', 'keluar', 'opname', 'koreksi'];
@@ -102,7 +102,7 @@ export async function runKop(page, base) {
     ok('KO-12 cetak jendela bertema: judul, isi, nama penanda tangan ( Budi ) dan ( ____________ ) tetap, markup di-escape, warna jenis OUT', /BUKTI PENGELUARAN BAHAN BAKU/.test(gd.print.txt) && /\( Budi \)/.test(gd.print.txt) && /\( ____________ \)/.test(gd.print.txt) && gd.print.th && gd.print.esc, gd.print.txt.slice(0, 100));
     ok('KO-13 kartu stok bahan baku: model landscape dengan baris saldo, PDF dan Excel jadi, kode KS', gd.ks.kind === 'ks' && gd.ks.land && gd.ks.rows >= 1 && gd.ks.pdf && gd.ks.xl && gd.ks.code === 'KS', JSON.stringify(gd.ks));
     ok('KO-14 PR bahan baku dan sparepart: PDF dan Excel jadi, kode PR, total qty benar', gd.pr.kind === 'pr' && gd.pr.pdf && gd.pr.code === 'PR' && gd.pr.tot === 3 && (!gd.prsp || (/SPAREPART/.test(gd.prsp.title) && gd.prsp.pdf && gd.prsp.xl)), JSON.stringify({ pr: gd.pr, sp: gd.prsp }));
-    ok('KO-15 semua jenis dokumen terdaftar punya warna dan kode unik', gd.doct.n >= 13 && gd.doct.c === gd.doct.n && gd.doct.k === gd.doct.n, JSON.stringify(gd.doct));
+    ok('KO-15 semua jenis dokumen terdaftar punya warna dan kode unik', gd.doct.n >= 12 && gd.doct.c === gd.doct.n && gd.doct.k === gd.doct.n, JSON.stringify(gd.doct));
   } catch (e) {
     R.push('FAIL CRASH · ' + String(e.message).slice(0, 300));
   }
