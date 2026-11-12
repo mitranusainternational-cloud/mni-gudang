@@ -32,3 +32,7 @@ Permintaan pemilik 2026-11-12: Master Data disesuaikan dengan modul baru, seluru
 ## Bukti
 
 `verified in browser` (mock). Uji PH-48 (produksihh 48 PASS), unit semua PASS, lint 0 error. Regresi penuh: lihat [[documentation/RENCANA_PERBAIKAN_LOKAL]]. Belum diuji di Supabase dengan login nyata.
+
+## Tambahan: Type tanpa duplikasi (2026-11-12)
+
+Temuan pemilik: Opsi SPK › Type berisi STU dan STC sekaligus C dan U, padahal C adalah STC dan U adalah STU. Perbaikan: bawaan Type kini STU, STC, SLU, SLHD, SLHDC, SLW; daftar lama yang berisi C atau U dilebur ke STC dan STU; semua daftar Opsi SPK dibuang nilai kembarnya; judul section "TYPE C" dan "TYPE U" dibaca sebagai STC dan STU (berat dan laporan). Uji PH-49, unit S-65.
