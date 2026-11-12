@@ -13,7 +13,7 @@ Permintaan pemilik 2026-11-12: modul Maintenance yang tersambung ke Gudang Spare
 - Satu tabel baru `mtc` dengan dua jenis dokumen (`kind`): **catat** (satu kejadian maintenance) dan **rutin** (jadwal rutin per mesin). Tanpa tabel stok baru: sparepart yang diganti memakai pergerakan stok Gudang Sparepart yang sudah ada (`mutasi`, gudang `sp`, jenis keluar, `tujuan = mesin`), jadi stok sparepart, Pemakaian mesin, dan riwayat mutasi otomatis ikut.
 - Daftar mesin berasal dari Master Data › Work Centre › Mesin (tidak ada daftar mesin kedua). Mesin yang belum ada di master boleh diketik langsung di form (aturan "input di modul"); tersimpan di catatan dan tampil di ranking.
 - Angka turunan (akumulasi, MTBF, jatuh tempo) dihitung dari catatan, tidak disimpan.
-- Hak akses: modul baru `maintenance` (lihat atau ubah). Bawaan: admin semua; Produksi dan Gudang Bahan Baku (pemegang sparepart) ubah; PPIC, Gudang Barang Jadi, Logistik, dan Viewer lihat.
+- Hak akses: modul baru `maintenance` (lihat atau ubah). Bawaan: admin semua; peran baru **Maintenance** mengubah modul Maintenance dan Sparepart (butuh sparepart untuk mencatat penggantian); Produksi, Gudang, PPIC, Logistik, dan Viewer hanya melihat. Pengguna tanpa hak mengubah Sparepart tetap bisa mencatat maintenance, tanpa baris sparepart.
 
 ## Dokumen `catat`
 
@@ -30,6 +30,7 @@ Permintaan pemilik 2026-11-12: modul Maintenance yang tersambung ke Gudang Spare
 | `biaya` | biaya perbaikan di luar sparepart gudang (opsional) |
 | `parts[]` | sparepart terpakai: `{sp (id item), nama, q, mut (id mutasi)}`; tiap baris membuat mutasi keluar di Gudang Sparepart |
 | `rutin` | id jadwal rutin yang dikerjakan (bila dari jadwal) |
+| `foto[]` | foto dokumentasi: `{id, data (JPEG terkompres), w, h, at, by, tahap (Sebelum, Sesudah, Bukti / nota, Lainnya), ket}`; maksimal 8 per catatan; ditambah saat mencatat, saat menyelesaikan, atau kapan saja dari tombol Foto di Catatan |
 
 ## Dokumen `rutin`
 
@@ -42,6 +43,13 @@ Jatuh tempo = catatan Selesai terakhir untuk jadwal itu + interval (atau `mulai`
 2. Saat disimpan, tiap baris membuat mutasi: `gudang sp`, `jenis keluar`, `tujuan mesin`, `mesin`, `ref MTC/...`, `pihak` mesin.
 3. Stok sparepart berkurang, tab Pemakaian mesin dan Riwayat mutasi di Gudang Sparepart langsung menampilkan pemakaian itu, dan rencana pembelian ikut menghitungnya.
 4. Membatalkan catatan membuat mutasi koreksi (mutasi tidak dihapus permanen, aturan migration 13) dan mengembalikan stok.
+
+## Foto dan dokumen
+
+- Setiap catatan bisa diberi foto **sebelum**, **sesudah**, dan **bukti atau nota** penggantian sparepart, lengkap dengan waktu dan pengunggah; keterangan dan tahap bisa diedit, foto bisa dihapus (hanya yang berhak mengubah).
+- Tombol **Foto** di tiap catatan membuka galeri dan unduhan **dokumen PDF atau Excel per catatan** (uraian, sparepart diganti, dan lampiran foto), memakai mesin dokumen yang sama dengan lampiran foto Bongkar Muat.
+- Foto disimpan di catatan (JSONB `data.foto`, mode inline seperti Bongkar Muat); untuk Supabase, penyimpanan ke bucket privat mengikuti draf migration 23 saat bucket dipasang.
+- Keabsahan data: KPI **Berdokumentasi foto**, kolom Foto di laporan Excel dan PDF, dan Cek Data **maintenance selesai tanpa foto dokumentasi**.
 
 ## Laporan dan akumulasi
 

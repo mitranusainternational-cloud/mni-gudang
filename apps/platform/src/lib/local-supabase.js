@@ -91,7 +91,7 @@ function save(state) {
 // Meniru fungsi SQL mod_level/can_view: hak per modul (muser.data.modul) atau, bila kosong, peta peran bawaan.
 const HAPUS_DITOLAK = new Set(['spk', 'vendor', 'kirim', 'bongkar', 'pr', 'mutasi', 'opname', 'rmhist', 'rm', 'fg']);
 const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', sp: 'sparepart', mtc: 'maintenance' };
-const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk', 'maintenance'], gbb: ['bahan-baku', 'bongkar-muat', 'sparepart', 'maintenance'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['pengiriman', 'bongkar-muat'], sales: [] };
+const ROLE_MODS = { ppic: ['spk', 'vendor'], produksi: ['spk'], gudang: ['bahan-baku', 'barang-jadi', 'sparepart'], gbb: ['bahan-baku', 'bongkar-muat', 'sparepart'], gbj: ['barang-jadi', 'vendor', 'pengiriman', 'bongkar-muat'], logistik: ['bongkar-muat', 'vendor', 'pengiriman'], maintenance: ['maintenance', 'sparepart'], sales: [] };
 const levelOf = (u, m) => {
   if (!u || u.aktif === false) return null;
   if (u.role === 'admin') return 'ubah';

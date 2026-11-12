@@ -36,6 +36,7 @@ export function ringkas(daftar, { dari, sampai }) {
     biaya: L.reduce((a, c) => a + (Number(c.biaya) || 0), 0), sparepartQty: L.reduce((a, c) => a + jumlahPart(c), 0),
     sparepartJenis: new Set(L.flatMap((c) => (c.parts || []).map((p) => p.sp || p.nama))).size,
     terbuka: L.filter((c) => c.status !== 'Selesai').length,
+    denganFoto: L.filter((c) => (c.foto || []).length > 0).length, jumlahFoto: L.reduce((a, c) => a + (c.foto || []).length, 0),
   };
 }
 

@@ -51,7 +51,7 @@ export async function runRegression(page, base) {
   ok('F-01 login + nama', (await page.evaluate(() => document.getElementById('who').innerText)).includes('Admin Lokal'));
 
   // Smoke 10 modul
-  const mods = [['dashboard', 'Dashboard'], ['bahan-baku', 'Gudang Bahan Baku'], ['barang-jadi', 'Gudang Barang Jadi'], ['bongkar-muat', 'Bongkar Muat'], ['vendor', 'Kirim ke Vendor'], ['pengiriman', 'Kirim ke Customer'], ['spk', 'SPK Berjalan'], ['produksi', 'Kinerja & Analisa'], ['cek-data', 'Cek Data'], ['master-data', 'Master Data']];
+  const mods = [['dashboard', 'Dashboard'], ['bahan-baku', 'Gudang Bahan Baku'], ['barang-jadi', 'Gudang Barang Jadi'], ['bongkar-muat', 'Bongkar Muat'], ['vendor', 'Kirim ke Vendor'], ['pengiriman', 'Kirim ke Customer'], ['spk', 'SPK'], ['produksi', 'Analisa Produksi'], ['cek-data', 'Cek Data'], ['master-data', 'Master Data']];
   for (const [r, l] of mods) {
     const e0 = errors.length; await go(r);
     const t = await page.evaluate(() => document.getElementById('ttl').textContent.trim());

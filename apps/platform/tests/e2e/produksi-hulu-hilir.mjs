@@ -157,7 +157,7 @@ export async function runProduksiHuluHilir(page, base) {
     await page.click('[data-view="produksi"][data-key="tab"][data-val="laporan"]');
     await page.waitForTimeout(500);
     const r24 = await page.evaluate(() => { const ev = evAdmin().filter((e) => String(e.spk_no) === '1004'); const tot = ev.reduce((a, e) => a + e.qty, 0); return { n: ev.length, tot, prodItem: +(byId('spk', ev[0] && ev[0].spk_id) || { items: [{}] }).items[0].prod, tabel: !!document.querySelector('#lp-tabel'), kosong: /Belum ada hasil produksi/.test(document.body.innerText), undef: /undefined/.test(document.body.innerText) }; });
-    ok('PH-24 Laporan Produksi (Kinerja & Analisa) memuat hasil input admin: kejadian turunan = total item, tabel tampil, tanpa undefined', r24.n >= 1 && r24.tot === r24.prodItem && r24.tabel && !r24.kosong && !r24.undef, JSON.stringify(r24));
+    ok('PH-24 Laporan Produksi (Analisa Produksi) memuat hasil input admin: kejadian turunan = total item, tabel tampil, tanpa undefined', r24.n >= 1 && r24.tot === r24.prodItem && r24.tabel && !r24.kosong && !r24.undef, JSON.stringify(r24));
 
     langkah = 'PH-25';
     await page.evaluate(() => { window.__KINERJA_BARU = false; window.__PRODUKSI_MESIN = false; });

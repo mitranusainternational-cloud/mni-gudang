@@ -23,17 +23,19 @@ Permintaan pemilik 2026-11-12: modul khusus Maintenance yang tersambung ke Gudan
 ## Kriteria selesai
 
 - [x] Skema: satu tabel `mtc` (kind `catat` dan `rutin`), sparepart lewat mutasi stok yang sudah ada (tujuan mesin); draf migration `20240101000024_maintenance.sql` (**belum diterapkan**)
-- [x] Menu **Maintenance** dan modul akses `maintenance` (Produksi dan Gudang Bahan Baku ubah; PPIC, Gudang Barang Jadi, Logistik, Viewer lihat; admin semua), tampil di Pengguna & Akses dan Kinerja Tim
+- [x] Menu **Maintenance** dan modul akses `maintenance` (peran baru Maintenance ubah bersama Sparepart; Produksi, Gudang, PPIC, Logistik, Viewer lihat; admin semua), tampil di Pengguna & Akses dan Kinerja Tim
 - [x] **Catat maintenance**: mesin (pilih atau ketik; mesin baru otomatis masuk Master Data), jenis (Preventif, Korektif, Inspeksi, Kalibrasi), status (Selesai, Dikerjakan, Menunggu sparepart), masalah, tindakan, teknisi, jam atau lama henti, biaya, dan sparepart yang diganti; sparepart otomatis keluar dari Gudang Sparepart (SP-K, ref MTC, tujuan mesin) dan qty tidak boleh melebihi stok
 - [x] **Jadwal rutin** per mesin (tugas, interval hari, jatuh tempo pertama): status Terlambat, Segera, Aman; tombol Kerjakan membuka catatan terisi; jadwal bergeser setelah selesai
 - [x] **Akumulasi** Hari ini, Minggu ini, 30 hari, Bulan ini, Triwulan ini, Triwulan lalu, Tahun ini, Semua: jumlah, preventif dan korektif, downtime (jam), sparepart diganti, belum selesai, tren
 - [x] **Per mesin**: frekuensi, korektif, preventif, downtime, MTBF, sparepart diganti, ranking paling sering; riwayat satu mesin dengan sparepart yang pernah diganti
 - [x] Tab **Sparepart diganti** (per item, kali, mesin) dengan tautan ke Gudang Sparepart (tab Pemakaian mesin dan Riwayat mutasi ikut menampilkan)
 - [x] Cek Data (jadwal rutin terlambat, mesin sering rusak 3 kali dalam 30 hari, menunggu sparepart lebih dari 3 hari), badge menu, Tindakan hari ini di Dashboard
+- [x] **Foto dokumentasi** per catatan (sebelum, sesudah, bukti/nota; maksimal 8; galeri, keterangan, hapus), dokumen PDF dan Excel per catatan dengan lampiran foto, KPI berdokumentasi, Cek Data tanpa foto. Uji MT-11, M-10
+- [x] Modul dikelompokkan: menu dan akses per kelompok (Gudang, Logistik, SPK & Produksi, Maintenance, Data), peran baru Gudang dan Maintenance, Logistik memegang vendor, pengaturan sekaligus per kelompok. Uji MG-01
 - [x] Unduh **PDF** dan **Excel** (ringkasan, per mesin, jadwal rutin, catatan, sparepart diganti)
 - [ ] Diterapkan ke Supabase dev (migration draf; butuh persetujuan) dan diuji dengan login nyata
 - [ ] Pembatalan catatan yang sudah memakai sparepart (koreksi stok otomatis): saat ini koreksi manual di Gudang Sparepart
 
 ## Bukti
 
-`verified in browser` (mock; Playwright terlihat, data bersih). Unit `maintenance.test` 9 PASS (M-01..M-09), e2e `maintenance` 11 PASS (MT-01..MT-10, MT-99), lint 0 error. Regresi penuh: lihat catatan di [[documentation/RENCANA_PERBAIKAN_LOKAL]].
+`verified in browser` (mock; Playwright terlihat, data bersih). Unit `maintenance.test` 10 PASS (M-01..M-10), e2e `maintenance` 13 PASS (MT-01..MT-11, MG-01, MT-99), lint 0 error. Regresi penuh: lihat catatan di [[documentation/RENCANA_PERBAIKAN_LOKAL]].

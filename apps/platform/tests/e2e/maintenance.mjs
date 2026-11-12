@@ -28,8 +28,8 @@ export async function runMaintenance(page, base) {
 
     langkah = 'MT-01';
     await go('#maintenance');
-    const nav = await page.evaluate(() => ({ menu: [...document.querySelectorAll('#nav a')].some((a) => /Maintenance/.test(a.innerText)), tabs: [...document.querySelectorAll('#tools [data-key="tab"]')].map((b) => b.innerText.replace(/\s+/g, ' ')), mod: MODS.some((m) => m[0] === 'maintenance'), ROLES: { produksi: ROLES.produksi.mods.includes('maintenance'), gbb: ROLES.gbb.mods.includes('maintenance'), ppic: ROLES.ppic.lihat.includes('maintenance'), viewer: ROLES.viewer.lihat.includes('maintenance'), admin: ROLES.admin.mods.includes('*') } }));
-    ok('MT-01 menu Maintenance, lima tab, modul dan peran: Produksi dan Gudang Bahan Baku ubah, PPIC dan Viewer lihat', nav.menu && nav.tabs.length >= 5 && nav.mod && nav.ROLES.produksi && nav.ROLES.gbb && nav.ROLES.ppic && nav.ROLES.viewer && nav.ROLES.admin, JSON.stringify(nav));
+    const nav = await page.evaluate(() => ({ menu: [...document.querySelectorAll('#nav a')].some((a) => /Maintenance/.test(a.innerText)), tabs: [...document.querySelectorAll('#tools [data-key="tab"]')].map((b) => b.innerText.replace(/\s+/g, ' ')), mod: MODS.some((m) => m[0] === 'maintenance'), ROLES: { maintenance: ROLES.maintenance.mods.includes('maintenance') && ROLES.maintenance.mods.includes('sparepart'), produksi: ROLES.produksi.lihat.includes('maintenance'), gudang: ROLES.gudang.lihat.includes('maintenance'), ppic: ROLES.ppic.lihat.includes('maintenance'), viewer: ROLES.viewer.lihat.includes('maintenance'), admin: ROLES.admin.mods.includes('*') } }));
+    ok('MT-01 menu Maintenance, lima tab, modul dan peran: peran Maintenance ubah (dengan sparepart), Produksi, Gudang, PPIC, Viewer lihat', nav.menu && nav.tabs.length >= 5 && nav.mod && nav.ROLES.maintenance && nav.ROLES.produksi && nav.ROLES.gudang && nav.ROLES.ppic && nav.ROLES.viewer && nav.ROLES.admin, JSON.stringify(nav));
 
     langkah = 'MT-02';
     await page.click('[data-act="mtcrutinnew"]'); await wait(800);
@@ -107,6 +107,51 @@ export async function runMaintenance(page, base) {
       return o;
     });
     ok('MT-10 Kerjakan jadwal rutin membuka catatan Preventif yang terisi; setelah selesai jadwal bergeser (Aman, 90 hari)', /Bending Uji 1\|Ganti oli hidrolik\|Preventif/.test(r10.prefill) && r10.status === 'Aman' && r10.kali === 1 && r10.sisa >= 85, JSON.stringify(r10));
+
+    langkah = 'MG-01';
+    await go('#pengguna');
+    const g1 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((x) => setTimeout(x, ms)); const o = {};
+      o.sec = [...document.querySelectorAll('#nav .sec, #nav [class*="sec"]')].map((e) => e.innerText.trim().toUpperCase()).filter(Boolean);
+      o.sekDariMenu = VIEWS.filter((v) => v.sec).map((v) => v.sec);
+      o.hdrPaket = [...document.querySelectorAll('table.mx thead tr:first-child th')].map((th) => th.innerText.trim());
+      inviteForm(); await w(600);
+      o.grupBaris = document.querySelectorAll('#mform tr.gh').length; o.grupSel = document.querySelectorAll('#mform [data-grup]').length;
+      const f = document.getElementById('mform'); const ds = f.querySelector('[data-grup="Gudang"]'); ds.value = 'ubah'; ds.dispatchEvent(new Event('change', { bubbles: true })); await w(200);
+      o.gudang = ['bahan-baku', 'barang-jadi', 'sparepart'].map((m) => f['mod_' + m].value).join();
+      o.logistikTetap = ['bongkar-muat', 'vendor', 'pengiriman'].map((m) => f['mod_' + m].value).join();
+      f.role.value = 'maintenance'; f.role.dispatchEvent(new Event('change', { bubbles: true })); await w(200);
+      o.mtRole = ['maintenance', 'sparepart', 'bahan-baku'].map((m) => f['mod_' + m].value).join();
+      f.role.value = 'gudang'; f.role.dispatchEvent(new Event('change', { bubbles: true })); await w(200);
+      o.gdRole = ['bahan-baku', 'barang-jadi', 'sparepart', 'bongkar-muat'].map((m) => f['mod_' + m].value).join();
+      f.role.value = 'logistik'; f.role.dispatchEvent(new Event('change', { bubbles: true })); await w(200);
+      o.lgRole = ['bongkar-muat', 'vendor', 'pengiriman', 'bahan-baku'].map((m) => f['mod_' + m].value).join();
+      closeModal(); return o;
+    });
+    ok('MG-01 Pengguna dan Akses: modul dikelompokkan (Gudang, Logistik, SPK dan Produksi, Maintenance, Data) di menu, dialog akses, dan paket peran; pengaturan sekaligus per kelompok; peran Gudang, Logistik, Maintenance membawa hak yang sesuai', JSON.stringify(g1.sekDariMenu.filter((x, i, a) => a.indexOf(x) === i)) === JSON.stringify(['Pantauan', 'Gudang', 'Logistik', 'SPK & Produksi', 'Maintenance', 'Data', 'Tim']) && g1.grupBaris === 5 && g1.grupSel === 5 && g1.gudang === 'ubah,ubah,ubah' && g1.mtRole === 'ubah,ubah,' && g1.gdRole === 'ubah,ubah,ubah,lihat' && g1.lgRole === 'ubah,ubah,ubah,lihat' && ['GUDANG', 'LOGISTIK', 'SPK & PRODUKSI', 'MAINTENANCE', 'DATA'].every((x) => g1.hdrPaket.map((h) => h.toUpperCase()).includes(x)), JSON.stringify(g1));
+
+    langkah = 'MT-11';
+    const r11 = await page.evaluate(async () => {
+      const w = (ms) => new Promise((x) => setTimeout(x, ms)); const o = {};
+      const bikin = (warna) => new Promise((res) => { const cv = document.createElement('canvas'); cv.width = 640; cv.height = 480; const cx = cv.getContext('2d'); cx.fillStyle = warna; cx.fillRect(0, 0, 640, 480); cx.fillStyle = '#fff'; cx.fillText('uji', 20, 20); cv.toBlob((b) => res(new File([b], 'uji-' + warna.slice(1) + '.png', { type: 'image/png' })), 'image/png'); });
+      mtcForm({ jenis: 'Korektif', mesin: 'Foto Uji 1', masalah: 'Bocor', tindakan: 'Ganti seal', status: 'Selesai' }); await w(500);
+      const dt = new DataTransfer(); dt.items.add(await bikin('#aa3333')); dt.items.add(await bikin('#33aa33'));
+      const inp = document.getElementById('m-fotoMtc'); inp.files = dt.files; document.getElementById('m-tahapFoto').value = 'Sebelum';
+      document.getElementById('msub').click(); await w(2500);
+      const c = S.mtc.find((x) => x.mesin === 'Foto Uji 1'); o.n1 = (c.foto || []).length; o.tahap = (c.foto || []).map((f) => f.tahap).join(); o.data = (c.foto || [])[0] && c.foto[0].data.startsWith('data:image/jpeg');
+      mtcFotoModal(c._id); await w(500); o.galeri = document.querySelectorAll('#modal figure img').length; o.tombol = !!document.querySelector('[data-act="mtcdokpdf"]');
+      const dt2 = new DataTransfer(); dt2.items.add(await bikin('#3333aa')); const tambah = document.querySelector('.mtc-foto-in'); document.getElementById('mtc-tahap-baru').value = 'Bukti / nota'; tambah.files = dt2.files; tambah.dispatchEvent(new Event('change', { bubbles: true })); await w(2000);
+      const c2 = byId('mtc', c._id); o.n2 = (c2.foto || []).length; o.tahap2 = c2.foto[2] && c2.foto[2].tahap;
+      await mtcFotoUbah(c._id, c2.foto[0].id, { ket: 'sebelum diganti' }); await w(500); o.ket = byId('mtc', c._id).foto[0].ket;
+      const lebih = new DataTransfer(); for (let i = 0; i < 7; i++) lebih.items.add(await bikin('#aaaa33')); const ed = document.querySelector('.mtc-foto-in'); if (ed) { ed.files = lebih.files; ed.dispatchEvent(new Event('change', { bubbles: true })); await w(1500); }
+      o.batas = (byId('mtc', c._id).foto || []).length; closeModal();
+      const m = mtcDokModel(c._id); const pdf = await docPdf(m); const xl = await docXlsx(m); const m0 = mtcDokModel(S.mtc.find((x) => x.kind === 'catat' && !(x.foto || []).length)._id); const pdf0 = await docPdf(m0);
+      o.dok = { foto: m.foto.length, pdf: (pdf.byteLength || pdf.size || pdf.length), pdf0: (pdf0.byteLength || pdf0.size || pdf0.length), xlsx: (xl.byteLength || xl.size || xl.length) > 5000 };
+      const rs = MNIMaint.ringkas(S.mtc, PXL().periodeRentang('semua', today())); o.rs = [rs.denganFoto, rs.jumlahFoto];
+      o.cek = issues().filter((i) => i.cat === 'Maintenance').map((i) => i.title.replace(/<[^>]+>/g, '')).filter((x) => /tanpa foto/.test(x));
+      return o;
+    });
+    ok('MT-11 foto dokumentasi: unggah saat mencatat (dua foto Sebelum, terkompres JPEG), galeri dengan tahap dan keterangan, tambah foto bukti, batas 8 foto, dokumen PDF dan Excel per catatan memuat foto, KPI dan Cek Data memakai kelengkapan foto', r11.n1 === 2 && r11.tahap === 'Sebelum,Sebelum' && r11.data && r11.galeri === 2 && r11.tombol && r11.n2 === 3 && r11.tahap2 === 'Bukti / nota' && r11.ket === 'sebelum diganti' && r11.batas === 3 && r11.dok.foto === 3 && r11.dok.pdf > r11.dok.pdf0 && r11.dok.xlsx && r11.rs[0] >= 1 && r11.rs[1] === 3 && r11.cek.length === 1, JSON.stringify(r11));
 
     ok('MT-99 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   } catch (e) {

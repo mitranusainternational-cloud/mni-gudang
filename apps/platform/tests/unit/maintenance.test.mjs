@@ -38,5 +38,9 @@ ok('M-08 mesin sering rusak: 3 korektif dalam 30 hari = Bending 1', eq(seringRus
 const tr = tren(D, periodeRentang('semua', hari), 'bulan');
 ok('M-09 tren per bulan dan butir otomatis', eq(tr.map((x) => x.kunci + ':' + x.jumlah), ['2026-10:1', '2026-11:5']) && butirOtomatis('2026-11-01', '2026-11-12') === 'hari' && butirOtomatis('2026-08-01', '2026-11-12') === 'minggu' && butirOtomatis('0000-00-00', hari) === 'bulan');
 
+const Df = [c({ tgl: '2026-11-02', mesin: 'A', foto: [{ id: 'f1' }, { id: 'f2' }] }), c({ tgl: '2026-11-03', mesin: 'A' }), c({ tgl: '2026-11-04', mesin: 'B', foto: [{ id: 'f3' }] })];
+const rf = ringkas(Df, { dari: '2026-11-01', sampai: '2026-11-30' });
+ok('M-10 ringkasan menghitung catatan berfoto dan jumlah foto (2 dari 3 catatan, 3 foto)', rf.denganFoto === 2 && rf.jumlahFoto === 3 && rf.jumlah === 3, JSON.stringify([rf.denganFoto, rf.jumlahFoto]));
+
 R.forEach((l) => console.log(l));
 const n = R.filter((l) => l.startsWith('FAIL')).length; console.log(`${R.length - n} PASS, ${n} FAIL`); process.exit(n ? 1 : 0);

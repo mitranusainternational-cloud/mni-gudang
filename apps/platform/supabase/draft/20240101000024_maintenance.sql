@@ -55,9 +55,12 @@ CREATE TRIGGER trigger_mtc_updated_at BEFORE UPDATE ON public.mtc
 
 -- sinkron antar pengguna: tambahkan 'mtc' ke daftar tabel fungsi public.table_stamps() (migration 12), sama seperti 'sp'.
 
--- hak modul bawaan: Produksi dan Gudang Bahan Baku mengubah, peran lain melihat
+-- hak modul bawaan: peran baru Maintenance mengubah; Produksi, Gudang, PPIC, Logistik, dan Viewer melihat
 -- (sesuaikan dengan bentuk tabel public.role_modules yang berlaku di production sebelum diterapkan)
 -- INSERT INTO public.role_modules (role, modul, level) VALUES
---   ('produksi','maintenance','ubah'), ('gbb','maintenance','ubah'),
---   ('ppic','maintenance','lihat'), ('gbj','maintenance','lihat'), ('logistik','maintenance','lihat'), ('viewer','maintenance','lihat')
+--   ('maintenance','maintenance','ubah'), ('maintenance','sparepart','ubah'),
+--   ('produksi','maintenance','lihat'), ('gbb','maintenance','lihat'), ('ppic','maintenance','lihat'), ('gbj','maintenance','lihat'), ('logistik','maintenance','lihat'), ('viewer','maintenance','lihat'),
+--   -- peran baru: gudang (semua gudang) dan logistik yang memegang vendor
+--   ('gudang','bahan-baku','ubah'), ('gudang','barang-jadi','ubah'), ('gudang','sparepart','ubah'),
+--   ('logistik','vendor','ubah')
 -- ON CONFLICT DO NOTHING;
