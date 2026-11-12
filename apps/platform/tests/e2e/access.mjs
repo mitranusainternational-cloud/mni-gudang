@@ -54,7 +54,7 @@ export async function runAccess(page, base) {
   // anggota baru hanya melihat modul yang diizinkan
   await login('timgudang@mni.local');
   const ids = await navIds();
-  ok('A-06 menu hanya modul yang diizinkan', sameSet(ids, ['dashboard', 'laporan', 'bahan-baku', 'sparepart', 'bongkar-muat', 'master-data']), ids.join(','));
+  ok('A-06 menu hanya modul yang diizinkan', sameSet(ids, ['dashboard', 'laporan', 'bahan-baku', 'sparepart', 'bongkar-muat', 'maintenance', 'master-data']), ids.join(','));
   await page.evaluate(() => { location.hash = '#spk'; }); await page.waitForTimeout(600);
   ok('A-07 membuka modul tanpa akses dialihkan ke dashboard', (await page.evaluate(() => document.getElementById('ttl').textContent)) === 'Dashboard');
   const nSpk = await page.evaluate(() => new Promise(async (res) => { const db = await window.claude.use('db'); db.collection('spk').onSnapshot((s) => res(s.docs.length)); }));
