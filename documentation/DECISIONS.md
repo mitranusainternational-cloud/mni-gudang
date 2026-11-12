@@ -182,3 +182,8 @@ updated: 2026-11-02
 - **Nama item** tetap otomatis dari bentuk dan ukuran, tetapi **bisa diedit manual** (hanya nama); ukuran W, H, L, R mengikuti struktur kalkulator dan berat tetap dari kalkulator. Tombol "↺ otomatis" mengembalikan nama otomatis; penanda `nm` disimpan di item.
 - **Dampak:** aksesori (Jointing dst.) pindah dari ACCS ke Other Support; SPK lama yang masih berisi aksesori di section ACCS tetap terbaca (ditandai "di luar aturan" dengan saran section). Produk lama SUPPORT TRAY dan WIREMESH CABLE TRAY tidak lagi di daftar tetapi SPK lamanya tetap bisa dibuka. Rute produksi standar: Cover Ladder dan Cover Duct seperti Cover Tray; **Other Support memakai rute yang sama dengan ACCS (CNC Laser, Bending, Welding) sebagai bawaan sementara**, dapat diubah di Master Data (Rute produksi). Production tidak punya pengaturan Opsi SPK atau aturan section yang menimpa (dicek), jadi bawaan baru langsung berlaku.
 - **Catatan katalog:** di katalog asli bentuk Vertical Fish Plate jenis SLHDC berakhiran `SLHC` (salah ketik); kini ditoleransi.
+
+## 2026-11-12: Nama bentuk bisa diedit, Elbow tanpa 90, Cable Duct tanpa Punching
+- **Keputusan pemilik:** label bentuk cukup "Elbow" (bukan "Elbow 90"), dan nama bentuk dapat diubah di Master Data supaya terhubung ke editor SPK. Disimpan di `master/setting.namaBentuk` (kosong = nama standar); tanpa migration database.
+- **Turunan (menunggu konfirmasi):** Cable Duct tanpa lubang, jadi rute standarnya Shearing, Bending tanpa Punching. Dapat diubah di Master Data › Rute produksi.
+- **Draf PR susulan:** SPK yang diterbitkan peran tanpa hak Gudang Bahan Baku (mis. PPIC) mendapat draf PR saat petugas gudang bahan baku atau admin membuka Bahan baku; hanya SPK terbit 7 hari terakhir yang belum punya PR.

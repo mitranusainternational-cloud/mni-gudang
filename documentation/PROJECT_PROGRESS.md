@@ -929,3 +929,9 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - Hasil: editor SPK (layout dimensi) dirombak sesuai keputusan A sampai D. Baris tanpa kolom Spesifikasi; catatan, vendor, dan produk stok di menu ⋯; stok sebagai angka dengan tombol Pakai stok; dua kolom berat tebal (Kg est untuk plate, Kg real untuk barang jadi), subtotal per section, dan ringkasan di bawah layar. Berat hasil kalkulator tidak bisa diketik. Deskripsi teks dikenali jadi baris terstruktur dan ada Tempel daftar dari Excel.
 - Bukti: verified in browser (mock). Suite spkringkas RK-01..RK-13 (14 PASS), unit kenali KN-01..KN-06, spkdimensi 13 PASS; lint 0 error. Regresi penuh 32 suite, 0 FAIL (produksi dijalankan ulang: uji Timeline M-166b dibuat sadar jendela hari karena bergantung hari dalam minggu).
 - Hambatan: belum diuji dengan katalog perusahaan dan Supabase. Gabungan Tee dan Cross dengan W1..W4 diuji di unit tingkat pengenal, belum di e2e.
+
+### 2026-11-12 · T-228: nama bentuk di Master Data, susulan draf PR, sapu bug, perapian
+- **Hasil:** Elbow tanpa "90"; nama bentuk bisa diedit di Master Data › Aturan section; cek silang 11 section dengan katalog asli (berat, rute, vendor, laporan, kebutuhan plat) bersih; dua bug diperbaiki (rute Cable Duct, draf PR untuk SPK terbitan PPIC); workspace dirapikan dan dokumen usang diarsipkan.
+- **Bukti:** `verified in browser` (mock, katalog asli di pratinjau). Unit semua PASS, spkaturan 19, produksihh 45, lint 0 error, `sync-vault` OK. Rincian: [[tasks/T-228-nama-bentuk-master-data-susulan-pr-dan-sapu-bug|T-228]].
+- **Hambatan:** belum diuji di Supabase dengan login nyata; rute Cable Duct dan Other Support menunggu konfirmasi pemilik.
+- **Langkah berikut:** pemilik menjalankan skenario uji; rilis tetap menunggu persetujuan.
