@@ -40,7 +40,7 @@ Untuk tiap pengguna di daftar pertama, bandingkan hasilnya dengan yang seharusny
 ## Langkah penerapan (bertahap, tiap tahap diverifikasi)
 
 1. **Cadangan** data (Pengguna & Akses › Unduh cadangan, atau cadangan Supabase) dan catat versi migration terakhir.
-2. **Uji di cabang** (disarankan): cabang Supabase dari production (berbiaya; konfirmasi biaya dulu) atau salinan, jalankan 24 lalu 25, lalu login sebagai tiap peran.
+2. **Uji (gratis, sudah dilakukan 2026-11-12)**: salinan lokal skema production di Postgres tertanam (PGlite), tanpa Supabase dan tanpa biaya: 27 uji lulus (lihat bagian Hasil uji lokal). Cabang Supabase berbayar tidak diperlukan; login nyata per peran dilakukan setelah penerapan.
 3. **Terapkan 24** (Maintenance). Verifikasi: `SELECT to_regclass('public.mtc')` ada; `SELECT table_stamps() ? 'mtc'` benar; aplikasi lama tetap jalan (tabel `mtc` opsional di aplikasi).
 4. **Terapkan 25** (hak ketat). Verifikasi: tiap peran login dan menu sesuai tabel di Pengguna & Akses; `SELECT public.mod_level('bahan-baku')` per peran sesuai; Viewer tidak dapat menyimpan apa pun.
 5. **Rilis kode aplikasi** (butuh PR ke `main` dengan persetujuan terpisah): kode lokal sudah ketat dan memuat modul Maintenance; tanpa migration 24 modul Maintenance tidak dapat menyimpan.
@@ -82,3 +82,14 @@ Permintaan pemilik: data yang sudah tayang tidak boleh hilang; cadangan GitHub, 
 | **Vercel** (`mitranusainternational-8337`) | Kode yang live ada di GitHub (`191eec9`); setiap deploy lama tetap tersimpan di Vercel | Catat deploy Production saat ini (Deployments, commit harus `191eec9`); pembatalan rilis cukup Promote deploy lama; nilai Environment Variables tidak disalin (rahasia), cukup nama variabelnya dicatat pemilik |
 
 Migration hanya diterapkan setelah cadangan data baru di atas ada. Cabang uji tidak membawa data production sama sekali.
+
+## Hasil uji lokal gratis (2026-11-12)
+
+Alat: `apps/platform/supabase/ops/uji-migration/` (PGlite; skema production dibangun dari migration 1 sampai 13, 14, 18). **27 PASS, 0 FAIL**:
+
+- Sebelum: perilaku lama dipastikan sama dengan production (tanpa peta modul = lihat semua; viewer tidak bisa mencatat).
+- Migration 24: tabel `mtc` dengan RLS, `table_stamps()` memuat `mtc` dan tabel lama, peran maintenance dan pengguna dengan peta modul bisa menyimpan, produksi dan anon ditolak, tidak ada DELETE, audit tercatat.
+- Migration 25: pengaman berhenti dengan pesan menyebut email bila ada pengguna yang akan kehilangan akses (dan perilaku lama tetap utuh); `mod_level()` benar untuk 9 peran x 9 modul; pengguna dengan peta modul tetap memakai petanya; `can_any()` FALSE untuk viewer dan sales (celah tertutup), viewer tidak bisa menambah master, modul di luar paket tidak terbaca; maintenance bisa mengeluarkan sparepart dan viewer tidak.
+- Aman diputar ulang dua kali tanpa galat dan tanpa baris ganda; **data lama identik** sebelum dan sesudah (jumlah baris dan checksum); pembatalan 25 dan 24 memulihkan perilaku lama dan dapat diterapkan kembali.
+
+Batas: bukan Supabase sungguhan (tanpa Realtime, Storage, Auth penuh); pembuktian akhir tetap login nyata setelah diterapkan, dengan cadangan data baru dan pembatalan siap.
