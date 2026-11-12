@@ -7,7 +7,7 @@ theme: Integrasi
 priority: P2
 status: active
 progress: 8
-tasks_total: 27
+tasks_total: 28
 tasks_done: 4
 updated: 2026-11-12
 ---
@@ -54,5 +54,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-231-wiremesh-spk-contoh-uji-other-support|T-231]] Section Cable Tray Wiremesh, SPK contoh uji (Tray, Ladder, Duct, Wiremesh), Other Support kelompok sendiri · review · P1 · 1 hari
 - [ ] [[tasks/T-232-laporan-per-bagian-pdf-excel|T-232]] Laporan per bagian: unduh PDF dan Excel dengan ringkasan dan tabel rinci untuk analisa dan bottleneck · review · P1 · 1 hari
 - [ ] [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]] Input langsung di modul memunculkan Master Data otomatis; uji ujung ke ujung di Playwright; perbaikan rework · review · P1 · 1 hari
+- [ ] [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]] Modul Maintenance terhubung Gudang Sparepart: catatan, jadwal rutin, akumulasi, per mesin · review · P1 · 2 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

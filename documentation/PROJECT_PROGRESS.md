@@ -961,3 +961,8 @@ Permintaan pemilik: input SPK memakai bentuk dan ukuran (W H L, aksesori W H R) 
 - **Hasil:** pengguna tidak perlu mengisi Master Data dahulu; uji ujung ke ujung berhasil sampai SPK Selesai dan laporan; satu bug rework diperbaiki.
 - **Bukti:** `verified in browser` (mock); PH-52, PH-53. [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]].
 - **Hambatan:** belum diuji di Supabase dengan login nyata.
+
+### 2026-11-12 · T-234: modul Maintenance terhubung Gudang Sparepart
+- **Hasil:** skema, modul, jadwal rutin, akumulasi (hari sampai selamanya), per mesin dan MTBF, sparepart diganti terhubung ke stok Gudang Sparepart, Cek Data, PDF dan Excel.
+- **Bukti:** `verified in browser` (mock); unit M-01..M-09, e2e MT-01..MT-10. [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]].
+- **Hambatan:** tabel `mtc` baru hanya draf migration (butuh persetujuan pemilik untuk Supabase dev); belum diuji login nyata.

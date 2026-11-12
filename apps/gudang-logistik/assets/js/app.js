@@ -49,7 +49,7 @@ const I={
 const ic=(k,s=16)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" style="flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle">${I[k]||''}</svg>`;
 
 /* ---------- state ---------- */
-const COLS=['rm','fg','mutasi','spk','vendor','kirim','bongkar','master','mvendor','mcustomer','msupplier','marmada','rmhist','pr','opname','muser','ureq','log','uinv','mwc','produksi_log','sp'];
+const COLS=['rm','fg','mutasi','spk','vendor','kirim','bongkar','master','mvendor','mcustomer','msupplier','marmada','rmhist','pr','opname','muser','ureq','log','uinv','mwc','produksi_log','sp','mtc'];
 const S={};COLS.forEach(c=>S[c]=[]);
 const loaded=new Set();
 let DB=null,USER=null,DLS=null,ME=null,CAN=true,LIVE='wait',LAST=null,C=null;
@@ -75,6 +75,7 @@ const VIEWS=[
  {id:'spk',t:'SPK Berjalan',ic:'spk',sec:'Produksi'},
  {id:'mesin',t:'Produksi Hari Ini',ic:'dock'},
  {id:'produksi',t:'Kinerja & Analisa',ic:'chart'},
+ {id:'maintenance',t:'Maintenance',ic:'tool'},
  {id:'papan',t:'Papan Produksi',ic:'prod',hide:true},
  {id:'laporan-produksi',t:'Laporan Produksi',ic:'file',hide:true},
  {id:'cek-data',t:'Cek Data',ic:'shield',sec:'Data'},
@@ -83,7 +84,7 @@ const VIEWS=[
  {id:'pengguna',t:'Pengguna & Akses',ic:'users'}
 ];
 /* modul yang menjadi dasar hak tiap tampilan; dashboard terbuka untuk semua pengguna terdaftar, tampilan tim khusus admin */
-const VIEW_MOD={'papan':'spk','mesin':'spk','laporan-produksi':'spk','bahan-baku':'bahan-baku','barang-jadi':'barang-jadi','bongkar-muat':'bongkar-muat','vendor':'vendor','pengiriman':'pengiriman','spk':'spk','produksi':'spk','sparepart':'sparepart'};
+const VIEW_MOD={'papan':'spk','mesin':'spk','laporan-produksi':'spk','bahan-baku':'bahan-baku','barang-jadi':'barang-jadi','bongkar-muat':'bongkar-muat','vendor':'vendor','pengiriman':'pengiriman','spk':'spk','produksi':'spk','sparepart':'sparepart','maintenance':'maintenance'};
 const ADMIN_VIEWS=['cek-data','kinerja','pengguna'];
 function viewOk(v){const id=v.id||v;
  if(!ME_P)return !['kinerja','pengguna'].includes(id);
@@ -183,6 +184,7 @@ function renderNav(){
  if(c){cnt['bahan-baku']=[S.rm.filter(r=>['Habis','Kritis','Perlu order'].includes(RMI(r._id).st)).length,S.rm.some(r=>['Habis','Kritis'].includes(RMI(r._id).st))];
   cnt['sparepart']=(()=>{const I=Object.values(spCalc()).filter(x=>x.r.aktif!==false);return [I.filter(x=>x.st==='Habis'||x.st==='Stok minimum'||x.st==='Di bawah buffer').length,I.some(x=>x.st==='Habis')]})();
   cnt['vendor']=[c.vend.filter(x=>x.st==='Di Vendor'||x.st==='Kembali Sebagian').length,false];
+  if(MTM()&&(S.mtc||[]).length){const tl=mtcRutinList().filter(x=>x.status==='Terlambat').length,mp=MTM().catatanSaja(S.mtc).filter(x=>x.status==='Menunggu sparepart').length;cnt['maintenance']=[tl+mp,tl>0]}
   {const I=issues();cnt['cek-data']=[I.filter(i=>i.sev>=2).length,I.some(i=>i.sev>=3)]}
   cnt['pengiriman']=[S.kirim.filter(k=>k.status==='Dalam Perjalanan').length,false];
   cnt['bongkar-muat']=[S.bongkar.filter(b=>b.status!=='Selesai').length,false];
@@ -204,6 +206,7 @@ function route(){
  $('#sub').textContent={dashboard:'Ringkasan realtime gudang, logistik, dan SPK',
   'bahan-baku':'Stok plat & material — penerimaan, pemakaian, stock opname',
   'laporan':'Ringkasan satu halaman: produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, dan kesehatan data; unduh CSV',
+  'maintenance':'Perawatan dan perbaikan mesin: riwayat, jadwal rutin, frekuensi, dan sparepart yang diganti (terhubung ke Gudang Sparepart)',
   'sparepart':'Stok sparepart & consumable mesin — penerimaan, pengeluaran, stok minimum, stock opname',
   'barang-jadi':'Stok cable tray, ladder, cover & aksesoris siap kirim',
   'bongkar-muat':'Antrian kendaraan loading & unloading di dock',
@@ -1317,7 +1320,7 @@ async function ensureMaster(k,raw,form,field,extra={}){
  await addDoc(MK[k],{nama:name,aktif:true,...extra});toast(`"${name}" otomatis masuk Master ${MLBL[k]}`);return name;
 }
 async function rememberArmada(nopol,kendaraan,driver){const p=String(nopol||'').toUpperCase().trim();if(!p||inMaster('armada',p))return;try{await addDoc('marmada',{nopol:p,jenis:kendaraan||'',driver:driver||'',milik:'',aktif:true})}catch(_){}}
-const DOCFMT={SJV:'SJ-V',SJ:'SJ',RCV:'RCV',PK:'PK',BJM:'BJ-M',BJK:'BJ-K',SPM:'SP-M',SPX:'SP-K',SPO:'SP-OPN',PR:'PR',OPN:'OPN'};
+const DOCFMT={SJV:'SJ-V',SJ:'SJ',RCV:'RCV',PK:'PK',BJM:'BJ-M',BJK:'BJ-K',SPM:'SP-M',SPX:'SP-K',SPO:'SP-OPN',PR:'PR',OPN:'OPN',MTC:'MTC'};
 async function nextDocNo(kind,tgl){
  need();const ym=String(tgl||today()).slice(0,7);const ref=DB.doc(`counter/${kind}-${ym.replace('-','')}`);
  let got=false;for(let i=0;i<6&&!got;i++){try{const r=await ref.acquire({holder:(ME||'u')+HOLDER,ttlMs:6000});got=!r||r.acquired!==false}catch(_){got=true}if(!got)await new Promise(r=>setTimeout(r,300+Math.random()*700))}
@@ -3118,6 +3121,10 @@ function dataIssues(){
    if(s.stokReq)(x.lines||[]).forEach(l=>{if((l.kirim||0)>(l.prodEff||0)+0.0005)add(2,'Barang jadi',`SPK ${esc(String(s.no))}: masuk gudang ${n(l.kirim)} melebihi hasil produksi ${n(l.prodEff||0)}`,`${esc(l.d||'')}. Laporkan hasil produksi yang belum tercatat atau koreksi penerimaan.`,'data-act="go" data-href="barang-jadi">Buka Barang Jadi','Barang jadi masuk tanpa hasil produksi yang cocok.')})
   })}
 
+ if(MTM()&&(S.mtc||[]).length){const hr=calc().t;
+  mtcRutinList().filter(x=>x.status==='Terlambat').forEach(x=>add(2,'Maintenance',`Jadwal rutin ${esc(x.mesin)}: ${esc(x.tugas)} terlambat ${-x.sisaHari} hari`,`interval ${x.interval} hari · terakhir ${x.terakhir?fd(x.terakhir):'belum pernah'}`,`data-act="go" data-href="maintenance">Buka Maintenance`,'Perawatan rutin yang terlambat menaikkan risiko mesin berhenti.'));
+  MTM().seringRusak(S.mtc,hr).forEach(x=>add(2,'Maintenance',`Mesin ${esc(x.mesin)} rusak ${x.korektif} kali dalam ${x.hari} hari`,'perbaikan korektif berulang',`data-act="go" data-href="maintenance">Lihat riwayat`,'Periksa penyebab berulang dan sparepart yang sudah diganti.'));
+  MTM().catatanSaja(S.mtc).filter(c=>c.status==='Menunggu sparepart'&&c.tgl&&days(String(c.tgl).slice(0,10),hr)>3).forEach(c=>add(1,'Maintenance',`${esc(c.no||'')} ${esc(c.mesin||'')} menunggu sparepart ${days(String(c.tgl).slice(0,10),hr)} hari`,esc(c.masalah||''),`data-act="go" data-href="maintenance">Buka Maintenance`,'Cek rencana pembelian sparepart.'))}
  S.pr.filter(p=>p.status==='Draf'&&p.tgl&&days(p.tgl,calc().t)>=1).forEach(p=>add(1,'PR',`PR draf ${esc(p.noPR||'')} belum diajukan ${days(p.tgl,calc().t)} hari`,`${esc(p.ket||'')}`,`data-act="go" data-href="${p.gudang==='sp'?'sparepart':'bahan-baku'}">Buka PR`,'PR draf otomatis baru berlaku setelah diajukan oleh user (tombol Ajukan).'));
  {const bd=spkBeratDaftar();if(bd.length)add(1,'SPK',`${bd.length} SPK belum selesai beratnya berbeda dari kalkulator (${bd.reduce((a,x)=>a+x.pb.ubah.length,0)} item)`,'Berat kosong, salinan, atau selisih lebih dari 2% dari rumus Excel. Tonase dan kebutuhan plat SPK tidak akurat sampai dihitung ulang.',`data-act="spkberatsemua">Hitung ulang semua (${bd.length})`,'Hanya SPK yang belum selesai; berat lama disimpan.')}
  susutRows().filter(r=>r.status==='Berlebih'||r.status==='Plat kurang catat').forEach(r=>add(2,'Stok',r.status==='Berlebih'?`SPK ${esc(String(r.s.no))}: susut ${r.bahan} ${n(r.tebal)} mm ${Math.round(r.pct*1000)/10}% (batas ${Math.round(r.batas*1000)/10}%)`:`SPK ${esc(String(r.s.no))}: hasil ${r.bahan} ${n(r.tebal)} mm melebihi plat yang tercatat keluar`,`${esc(r.s.customer||'')} · plat keluar ${n(Math.round(r.keluarKg))} kg, hasil jadi ${n(Math.round(r.hasilKg))} kg`,'data-act="go" data-href="bahan-baku">Buka Bahan Baku',r.status==='Berlebih'?'Plat keluar jauh di atas hasil jadi: susut berlebih, plat tidak terpakai belum dikembalikan, atau salah catat.':'Pengeluaran plat untuk SPK ini belum lengkap dicatat.'));
@@ -5131,15 +5138,15 @@ let delArm=null;
    admin (super admin) selalu memiliki semua modul. mods = modul yang boleh DIUBAH, lihat = modul yang hanya boleh DILIHAT. */
 const ROLES={
  admin:{l:'Super Admin',d:'Semua modul dan kelola pengguna',mods:['*'],lihat:[]},
- ppic:{l:'PPIC',d:'SPK dan kirim ke vendor; melihat gudang dan pengiriman',mods:['spk','vendor'],lihat:['bahan-baku','barang-jadi','pengiriman','bongkar-muat']},
- produksi:{l:'Produksi',d:'Progres produksi pada SPK; melihat vendor',mods:['spk'],lihat:['vendor']},
- gbb:{l:'Gudang Bahan Baku',d:'Stok plat, terima material, pakai produksi, opname, PR; stok sparepart',mods:['bahan-baku','bongkar-muat','sparepart'],lihat:['spk']},
- gbj:{l:'Gudang Barang Jadi',d:'Stok barang jadi, terima dari vendor, surat jalan',mods:['barang-jadi','vendor','pengiriman','bongkar-muat'],lihat:['spk']},
- logistik:{l:'Logistik / Pengiriman',d:'Surat jalan, armada, bongkar muat',mods:['pengiriman','bongkar-muat'],lihat:['spk','barang-jadi']},
+ ppic:{l:'PPIC',d:'SPK dan kirim ke vendor; melihat gudang, pengiriman, dan maintenance',mods:['spk','vendor'],lihat:['bahan-baku','barang-jadi','pengiriman','bongkar-muat','maintenance']},
+ produksi:{l:'Produksi',d:'Progres produksi pada SPK; mencatat maintenance mesin; melihat vendor',mods:['spk','maintenance'],lihat:['vendor']},
+ gbb:{l:'Gudang Bahan Baku',d:'Stok plat, terima material, pakai produksi, opname, PR; stok sparepart; maintenance mesin',mods:['bahan-baku','bongkar-muat','sparepart','maintenance'],lihat:['spk']},
+ gbj:{l:'Gudang Barang Jadi',d:'Stok barang jadi, terima dari vendor, surat jalan',mods:['barang-jadi','vendor','pengiriman','bongkar-muat'],lihat:['spk','maintenance']},
+ logistik:{l:'Logistik / Pengiriman',d:'Surat jalan, armada, bongkar muat',mods:['pengiriman','bongkar-muat'],lihat:['spk','barang-jadi','maintenance']},
  sales:{l:'Sales',d:'Peran lama (tidak dipakai lagi); hanya melihat SPK',mods:[],lihat:['spk']},
- viewer:{l:'Viewer',d:'Hanya melihat semua modul, tidak mencatat',mods:[],lihat:['bahan-baku','barang-jadi','sparepart','vendor','pengiriman','spk','bongkar-muat']}
+ viewer:{l:'Viewer',d:'Hanya melihat semua modul, tidak mencatat',mods:[],lihat:['bahan-baku','barang-jadi','sparepart','vendor','pengiriman','spk','bongkar-muat','maintenance']}
 };
-const MODS=[['bahan-baku','Bahan baku'],['barang-jadi','Barang jadi'],['vendor','Vendor'],['pengiriman','Kirim customer'],['spk','SPK & produksi'],['bongkar-muat','Bongkar muat'],['sparepart','Sparepart'],['master-data','Master data']];
+const MODS=[['bahan-baku','Bahan baku'],['barang-jadi','Barang jadi'],['vendor','Vendor'],['pengiriman','Kirim customer'],['spk','SPK & produksi'],['bongkar-muat','Bongkar muat'],['sparepart','Sparepart'],['maintenance','Maintenance'],['master-data','Master data']];
 const MODL=Object.fromEntries(MODS);
 const presetModul=r=>{const p=ROLES[r];if(!p||p.mods[0]==='*')return {};const o={};p.lihat.forEach(m=>o[m]='lihat');p.mods.forEach(m=>o[m]='ubah');return o};
 let IS_OWNER=false,IS_EDITOR=false,ME_P=null;
@@ -5169,6 +5176,7 @@ function modOf(c,data,id,op){
  if(['rm','rmhist','opname'].includes(c))return 'bahan-baku';
  if(c==='fg')return 'barang-jadi';
  if(c==='sp')return 'sparepart';
+ if(c==='mtc')return 'maintenance';
  if(c==='mutasi'){const g=(data&&data.gudang)||(byId('mutasi',id)||{}).gudang;return g==='rm'?'bahan-baku':g==='sp'?'sparepart':'barang-jadi'}
  if(c==='spk'||c==='produksi_log')return 'spk';if(c==='vendor')return 'vendor';if(c==='kirim')return 'pengiriman';
  if(c==='bongkar')return op==='add'&&data&&data.auto?'*any':'bongkar-muat';
@@ -5185,7 +5193,7 @@ function guard(c,data,id,op){
  if(!canMod(m))throw new Error(`Akses Anda (${roleL(a.role)}) tidak mencakup pencatatan di ${MODL[m]||'modul ini'}. Minta super admin menambah akses.`);
 }
 /* ---- audit log: one row per write ---- */
-const CNM={rm:'item bahan baku',fg:'item barang jadi',mutasi:'mutasi stok',spk:'SPK',vendor:'kiriman vendor',kirim:'surat jalan',bongkar:'bongkar muat',pr:'PR',opname:'opname',master:'pengaturan',mvendor:'master vendor',mcustomer:'master customer',msupplier:'master supplier',marmada:'master armada',rmhist:'riwayat harga',muser:'data pengguna',produksi_log:'hasil produksi per mesin'};
+const CNM={rm:'item bahan baku',fg:'item barang jadi',mutasi:'mutasi stok',spk:'SPK',vendor:'kiriman vendor',kirim:'surat jalan',bongkar:'bongkar muat',pr:'PR',opname:'opname',master:'pengaturan',mvendor:'master vendor',mcustomer:'master customer',msupplier:'master supplier',marmada:'master armada',rmhist:'riwayat harga',muser:'data pengguna',produksi_log:'hasil produksi per mesin',mtc:'catatan maintenance'};
 function actLabel(c,op,d){
  if(op==='del')return 'Hapus '+(CNM[c]||c);
  if(op==='add'){
@@ -5462,10 +5470,179 @@ async function lapBagianUnduh(bag,fmt){
  try{const m=lapBagianModel(bag,F['laporan'].p);await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
 async function ringkasCsv(){const f=F['laporan'];const [a,b]=period(f.p);const R=ringkasLaporan(f.p);
  await saveCsv('MNI-laporan-'+a+'_'+b+'.csv',['Bagian','Ukuran','Nilai','Satuan','Catatan','Periode'],R.map(r=>[r.bag,r.k,r.v,r.u,r.note,a+' s/d '+b]))}
+/* ---------- Maintenance: catatan perawatan dan perbaikan mesin, jadwal rutin, akumulasi; sparepart tersambung ke Gudang Sparepart (lihat documentation/SKEMA_MAINTENANCE.md) ---------- */
+F['maintenance']={tab:'ringkas',p:'bulan',q:'',mesin:''};
+const MT_JENIS_CLS={Preventif:'ok',Korektif:'crit',Inspeksi:'info',Kalibrasi:'plain'};
+const MT_STATUS_CLS={Selesai:'ok','Dikerjakan':'warn','Menunggu sparepart':'crit'};
+const MTM=()=>window.MNIMaint;
+const mtcAll=()=>S.mtc||[];
+const mtcPer=()=>PXL().periodeRentang(F.maintenance.p||'bulan',today());
+const mtcRutinList=()=>MTM()?MTM().statusRutin(mtcAll(),today()):[];
+const mtcMesinKenal=nm=>mesinSemua().find(m=>m.nama.toLowerCase()===String(nm||'').trim().toLowerCase());
+function mtcPartsHtml(jml){
+ const I=Object.values(spCalc()).filter(x=>spOn(x.r)).sort((a,b)=>spLabel(a.r).localeCompare(spLabel(b.r)));
+ const opts='<option value="">Pilih sparepart…</option>'+I.map(x=>`<option value="${x.r._id}">${esc(spLabel(x.r))} — stok ${n(x.stok)}${x.r.satuan?' '+esc(x.r.satuan):''}</option>`).join('');
+ let h='<div class="full"><div class="note" style="margin-bottom:4px">Sparepart yang diganti atau dipakai (otomatis keluar dari Gudang Sparepart)</div>';
+ for(let i=0;i<jml;i++)h+=`<div style="display:grid;grid-template-columns:1fr 110px;gap:6px;margin-bottom:6px"><select class="sel" name="sp_${i}" id="m-sp_${i}">${opts}</select><input class="inp" type="number" min="0" step="any" name="q_${i}" id="m-q_${i}" placeholder="Qty" inputmode="decimal"></div>`;
+ return h+'</div>'}
+function mtcPartsBaca(d,jml){
+ const out=[],R=spCalc(),tot={};
+ for(let i=0;i<jml;i++){const id=d['sp_'+i],q=num0(d['q_'+i]);if(!id&&!(q>0))continue;
+  if(!id)throw new Error('Pilih sparepart untuk baris '+(i+1)+'.');if(!(q>0))throw new Error('Isi qty untuk '+spLabel(byId('sp',id))+'.');
+  tot[id]=(tot[id]||0)+q;const x=R[id];if(x&&tot[id]>x.stok)throw new Error(spLabel(x.r)+': qty '+n(tot[id])+' melebihi stok '+n(x.stok)+'.');
+  out.push({sp:id,q})}
+ return out}
+async function mtcKeluarkanParts(m){
+ if(!m.parts.length)return [];
+ const noDok=await nextDocNo('SPX',m.tgl),out=[];
+ for(const p of m.parts){const r=await addDoc('mutasi',{gudang:'sp',item:p.sp,jenis:'keluar',delta:-p.q,tgl:m.tgl,noDok,ref:'MTC '+m.no,spk:'',pihak:m.mesin,ket:m.ket,tujuan:'mesin',mesin:m.mesin,mesinGrup:m.wc||'',oleh:String(m.teknisi||'').trim()});
+  out.push({sp:p.sp,nama:spLabel(byId('sp',p.sp)),q:p.q,mut:(r&&r.id)||'',noDok})}
+ return out}
+/* mesin yang diketik langsung di Maintenance otomatis masuk Master Data (Work Centre bila dipilih, selain itu peralatan lain); dilewati bila peran tidak berhak mengubah master */
+async function mtcDaftarMesin(nama,wcId){
+ try{const tebak=wcId?null:S.mwc.find(x=>x.aktif!==false&&x.nama&&String(nama).toLowerCase().includes(String(x.nama).toLowerCase()));const w=wcId?S.mwc.find(x=>x._id===wcId):tebak||null;
+  if(w)await updDoc('mwc',w._id,{mesin:[...(Array.isArray(w.mesin)?w.mesin:[]),{nama}]});
+  else await saveSetting({mesinLain:[...mesinLainAll(),{nama,kode:'',lokasi:'',merk:'',ket:'Didaftarkan dari Maintenance',aktif:true}]});
+  toast('Mesin '+nama+' otomatis masuk Master Data'+(w?' ('+w.nama+')':''));return true}catch(e){return false}}
+function mtcForm(pre){
+ pre=pre||{};if(!canMod('maintenance')){toast('Akses Anda lihat saja di Maintenance.');return}
+ const wcOps=S.mwc.filter(w=>w.aktif!==false).sort((a,b)=>(a.urutan||0)-(b.urutan||0));
+ openModal(pre.rutin?'Kerjakan jadwal rutin':'Catat maintenance',
+  fld('Tanggal',inp('tgl',today(),'date','required'))+
+  fld('Mesin',`<input class="inp" id="m-mesin" name="mesin" list="dl-mtcm" value="${esc(pre.mesin||'')}" placeholder="Pilih atau ketik nama mesin" required autocomplete="off">`+dl('dl-mtcm',mesinSemua().filter(m=>m.aktif).map(m=>m.nama)))+
+  fld('Jenis',`<select class="sel" name="jenis" id="m-jenis">${MTM().JENIS.map(j=>`<option ${j===(pre.jenis||'Korektif')?'selected':''}>${j}</option>`).join('')}</select>`)+
+  fld('Status',`<select class="sel" name="status" id="m-status">${MTM().STATUS.map(j=>`<option ${j===(pre.status||'Selesai')?'selected':''}>${j}</option>`).join('')}</select>`)+
+  fld('Masalah / tugas',inp('masalah',pre.masalah||'','text','placeholder="mis. Hidrolik bocor, atau Ganti pisau"'),true)+
+  fld('Tindakan yang dikerjakan',inp('tindakan',pre.tindakan||'','text','placeholder="mis. Ganti seal, tambah oli"'),true)+
+  fld('Teknisi',inp('teknisi',pre.teknisi||''))+
+  fld('Work Centre (bila mesin baru)',`<select class="sel" name="wcbaru" id="m-wcbaru"><option value="">Peralatan lain</option>${wcOps.map(w=>`<option value="${w._id}">${esc(w.nama)}</option>`).join('')}</select>`)+
+  fld('Jam mulai',inp('mulai','','time'))+fld('Jam selesai',inp('selesai','','time'))+
+  fld('Lama mesin berhenti (menit)',inp('downtime','','number','min="0" step="any" inputmode="decimal" placeholder="kosong = dari jam mulai dan selesai"'))+
+  fld('Biaya di luar sparepart gudang (Rp)',inp('biaya','','number','min="0" step="any" inputmode="decimal"'))+
+  mtcPartsHtml(4)+`<input type="hidden" name="rutin" value="${esc(pre.rutin||'')}">`,
+  async d=>{
+   const mesin=cleanName(d.mesin);if(!mesin)throw new Error('Isi nama mesin.');
+   const tgl=d.tgl||today();if(tgl>today())throw new Error('Tanggal tidak boleh di masa depan.');
+   const masalah=String(d.masalah||'').trim(),tindakan=String(d.tindakan||'').trim();if(!masalah&&!tindakan)throw new Error('Isi masalah atau tindakan.');
+   const parts=mtcPartsBaca(d,4);
+   const kenal=mtcMesinKenal(mesin),nama=kenal?kenal.nama:mesin,wc=kenal?kenal.grup:((S.mwc.find(w=>w._id===d.wcbaru)||{}).nama||'');
+   const no=await nextDocNo('MTC',tgl);
+   const mulai=d.mulai?tgl+'T'+d.mulai+':00':'',selesai=d.selesai?tgl+'T'+d.selesai+':00':'';
+   if(mulai&&selesai&&selesai<=mulai)throw new Error('Jam selesai harus setelah jam mulai.');
+   const ket=('Maintenance '+d.jenis+': '+(masalah||tindakan)).slice(0,140);
+   const r=await addDoc('mtc',{kind:'catat',no,tgl,mesin:nama,wc,jenis:d.jenis,status:d.status,downtime:num0(d.downtime),teknisi:String(d.teknisi||'').trim(),aktif:true,masalah,tindakan,mulai,selesai,biaya:num0(d.biaya),parts:[],rutin:d.rutin||''});
+   const pk=await mtcKeluarkanParts({no,tgl,mesin:nama,wc,teknisi:d.teknisi,ket,parts});
+   if(pk.length&&r&&r.id)await updDoc('mtc',r.id,{parts:pk});
+   if(!kenal)await mtcDaftarMesin(nama,d.wcbaru);
+   toast(no+' tersimpan'+(pk.length?' · '+pk.length+' sparepart keluar dari Gudang Sparepart':''))},
+  {submit:'Simpan',done:' '});
+}
+function mtcSelesaiForm(id){
+ const c=byId('mtc',id);if(!c)return;if(!canMod('maintenance')){toast('Akses Anda lihat saja di Maintenance.');return}
+ openModal('Selesaikan '+esc(c.no||'maintenance')+' · '+esc(c.mesin||''),
+  `<div class="note full">${esc(c.masalah||'')}${c.tindakan?' · '+esc(c.tindakan):''}</div>`+
+  fld('Tindakan yang dikerjakan',inp('tindakan',c.tindakan||'','text','required'),true)+
+  fld('Jam selesai',inp('selesai','','time'))+fld('Lama mesin berhenti (menit)',inp('downtime',c.downtime||'','number','min="0" step="any" inputmode="decimal"'))+
+  mtcPartsHtml(3),
+  async d=>{
+   const parts=mtcPartsBaca(d,3);const tindakan=String(d.tindakan||'').trim();if(!tindakan)throw new Error('Isi tindakan yang dikerjakan.');
+   const tg=c.tgl||today();const selesai=d.selesai?tg+'T'+d.selesai+':00':(c.selesai||'');
+   const ket=('Maintenance '+c.jenis+': '+(c.masalah||tindakan)).slice(0,140);
+   const pk=await mtcKeluarkanParts({no:c.no,tgl:today(),mesin:c.mesin,wc:c.wc,teknisi:c.teknisi,ket,parts});
+   await updDoc('mtc',id,{status:'Selesai',tindakan,selesai,downtime:num0(d.downtime)||+c.downtime||0,parts:[...(c.parts||[]),...pk]});
+   toast((c.no||'Maintenance')+' selesai')},
+  {submit:'Tandai selesai',done:' '});
+}
+async function mtcBatal(id){
+ const c=byId('mtc',id);if(!c)return;
+ if(!canMod('maintenance')){toast('Akses Anda lihat saja di Maintenance.');return}
+ if((c.parts||[]).length){toast('Sparepart sudah keluar dari gudang: koreksi dulu mutasinya di Gudang Sparepart › Riwayat mutasi, baru batalkan catatan ini.');return}
+ if(!confirm('Batalkan '+(c.no||'catatan')+'?'))return;
+ try{await updDoc('mtc',id,{status:'Batal'});toast((c.no||'Catatan')+' dibatalkan')}catch(e){toast(e.message||String(e))}}
+function mtcRutinForm(){
+ if(!canMod('maintenance')){toast('Akses Anda lihat saja di Maintenance.');return}
+ openModal('Jadwal rutin baru',
+  fld('Mesin',`<input class="inp" id="m-mesin" name="mesin" list="dl-mtcm" placeholder="Pilih atau ketik nama mesin" required autocomplete="off">`+dl('dl-mtcm',mesinSemua().filter(m=>m.aktif).map(m=>m.nama)),true)+
+  fld('Tugas rutin',inp('tugas','','text','required placeholder="mis. Ganti oli hidrolik, Pelumasan, Ganti pisau"'),true)+
+  fld('Setiap berapa hari',inp('interval','30','number','min="1" step="1" required'))+
+  fld('Jatuh tempo pertama',inp('mulai',addDays(today(),30),'date','required'))+
+  fld('Catatan',inp('ket',''),true),
+  async d=>{
+   const mesin=cleanName(d.mesin),tugas=String(d.tugas||'').trim(),interval=Math.round(num0(d.interval));
+   if(!mesin)throw new Error('Isi nama mesin.');if(!tugas)throw new Error('Isi tugas rutin.');if(!(interval>=1))throw new Error('Interval minimal 1 hari.');
+   const kenal=mtcMesinKenal(mesin),nama=kenal?kenal.nama:mesin;
+   await addDoc('mtc',{kind:'rutin',mesin:nama,wc:kenal?kenal.grup:'',tugas,interval,mulai:d.mulai||addDays(today(),interval),aktif:true,jenis:'Preventif',ket:String(d.ket||'').trim(),downtime:0});
+   if(!kenal)await mtcDaftarMesin(nama,'');
+   toast('Jadwal rutin '+nama+' ditambahkan')},{submit:'Simpan',done:' '});
+}
+const mtcFmtDt=m=>m>0?(m>=60?n(Math.round(m/6)/10)+' jam':n(m)+' mnt'):'–';
+const mtcPartsTeks=c=>(c.parts||[]).map(p=>esc(p.nama||'')+' ×'+n(p.q)).join(', ');
+function mtcCatatRows(daftar){
+ return daftar.map(c=>`<tr><td class="mono"><b>${esc(c.no||'')}</b></td><td>${fd(c.tgl)}</td><td><b>${esc(c.mesin||'')}</b>${c.wc?`<div class="note">${esc(c.wc)}</div>`:''}</td><td>${chip(c.jenis||'','')}</td><td>${chip(c.status||'',MT_STATUS_CLS[c.status]||'plain')}</td><td>${esc(c.masalah||'')}${c.tindakan?`<div class="note">${esc(c.tindakan)}</div>`:''}</td><td class="num">${mtcFmtDt(MTM().downtimeMenit(c))}</td><td>${mtcPartsTeks(c)||'<span class="muted">–</span>'}</td><td>${esc(c.teknisi||'')}</td><td class="acts-r">${canMod('maintenance')&&c.status!=='Selesai'?`<button class="btn sm" data-act="mtcselesai" data-id="${c._id}">Selesaikan</button>`:''}${canMod('maintenance')&&!(c.parts||[]).length?`<button class="btn sm ghost" data-act="mtcbatal" data-id="${c._id}">Batal</button>`:''}</td></tr>`).join('')}
+const MT_HEAD='<thead><tr><th>No</th><th>Tanggal</th><th>Mesin</th><th>Jenis</th><th>Status</th><th>Masalah / tindakan</th><th class="num">Berhenti</th><th>Sparepart diganti</th><th>Teknisi</th><th></th></tr></thead>';
+function mtcCatatTab(per){
+ const f=F.maintenance,q=(f.q||'').toLowerCase();
+ const L=MTM().catatanSaja(mtcAll()).filter(c=>String(c.tgl).slice(0,10)>=per.dari&&String(c.tgl).slice(0,10)<=per.sampai&&(!q||((c.mesin||'')+' '+(c.masalah||'')+' '+(c.tindakan||'')+' '+(c.no||'')).toLowerCase().includes(q))).sort((a,b)=>(String(b.tgl)+(b.at||'')).localeCompare(String(a.tgl)+(a.at||'')));
+ return `<section class="panel"><div class="pbody"><input class="inp search" id="q-maintenance" placeholder="Cari mesin, masalah, nomor…" value="${esc(f.q||'')}" data-act="q" data-view="maintenance" style="max-width:360px"></div>${L.length?`<div class="tbl-wrap"><table>${MT_HEAD}<tbody>${mtcCatatRows(L)}</tbody></table></div>`:empty('Belum ada catatan pada '+per.label.toLowerCase(),'Klik Catat maintenance untuk mencatat perawatan atau perbaikan mesin.')}</section>`}
+function mtcRutinTab(){
+ const R=mtcRutinList();
+ const cls={Terlambat:'crit',Segera:'warn',Aman:'ok'};
+ return `<section class="panel"><div class="pbody note">Jadwal perawatan rutin per mesin. Jatuh tempo dihitung dari perawatan rutin terakhir yang <b>Selesai</b> ditambah interval; bila belum pernah, memakai tanggal jatuh tempo pertama. Tombol Kerjakan membuka catatan yang sudah terisi.</div>${R.length?`<div class="tbl-wrap"><table><thead><tr><th>Mesin</th><th>Tugas rutin</th><th class="num">Interval</th><th>Terakhir dikerjakan</th><th>Jatuh tempo</th><th class="num">Sisa hari</th><th>Status</th><th class="num">Sudah dikerjakan</th><th></th></tr></thead><tbody>${R.map(x=>`<tr><td><b>${esc(x.mesin)}</b></td><td>${esc(x.tugas)}</td><td class="num">${n(x.interval)} hari</td><td>${x.terakhir?fd(x.terakhir):'<span class="muted">belum pernah</span>'}</td><td>${fd(x.jatuhTempo)}</td><td class="num">${x.sisaHari<0?'terlambat '+n(-x.sisaHari):n(x.sisaHari)}</td><td>${chip(x.status,cls[x.status])}</td><td class="num">${x.kaliSelesai}×</td><td class="acts-r">${canMod('maintenance')?`<button class="btn sm primary" data-act="mtckerjakan" data-id="${x.rutin._id}">Kerjakan</button><button class="btn sm ghost" data-act="mtcrutinoff" data-id="${x.rutin._id}">Nonaktifkan</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:empty('Belum ada jadwal rutin','Klik Jadwal rutin untuk menambah perawatan berkala per mesin (mis. ganti oli tiap 90 hari).')}</section>`}
+function mtcMesinDetail(nm,semua){
+ const H=MTM().riwayatMesin(mtcAll(),nm);
+ const parts={};H.forEach(c=>(c.parts||[]).forEach(p=>{const k=p.nama||p.sp;const o=parts[k]||(parts[k]={q:0,n:0,terakhir:''});o.q+=+p.q||0;o.n++;if(String(c.tgl)>o.terakhir)o.terakhir=String(c.tgl).slice(0,10)}));
+ const mtbf=MTM().mtbfHari(mtcAll(),nm);
+ return `<section class="panel"><header><h2>Riwayat ${esc(nm)}</h2><span class="hint">seluruh waktu · ${H.length} catatan${mtbf!=null?' · rata-rata '+n(mtbf)+' hari antar kerusakan':''}</span></header>
+  <div class="pbody">${Object.keys(parts).length?`<div class="note" style="margin-bottom:6px"><b>Sudah diganti:</b> ${Object.entries(parts).sort((a,b)=>b[1].q-a[1].q).map(([k,o])=>esc(k)+' ×'+n(o.q)+' ('+o.n+' kali, terakhir '+fd(o.terakhir)+')').join(' · ')}</div>`:'<div class="note">Belum ada sparepart yang diganti pada mesin ini.</div>'}</div>
+  ${H.length?`<div class="tbl-wrap"><table>${MT_HEAD}<tbody>${mtcCatatRows(H)}</tbody></table></div>`:''}</section>`}
+function mtcMesinTab(per){
+ const f=F.maintenance;const nama=mesinSemua().filter(m=>m.aktif).map(m=>m.nama);
+ const R=MTM().perMesin(mtcAll(),per,nama);
+ return `<section class="panel"><div class="pbody note">Frekuensi dan akumulasi per mesin pada <b>${esc(per.label)}</b>, diurutkan dari yang paling sering dimaintenance. MTBF = rata-rata hari antar kerusakan (korektif) sepanjang riwayat. Klik baris untuk melihat riwayat dan sparepart yang pernah diganti.</div><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Mesin</th><th class="num">Maintenance</th><th class="num">Korektif</th><th class="num">Preventif</th><th class="num">Berhenti</th><th class="num">MTBF</th><th>Sparepart diganti</th><th>Terakhir</th></tr></thead><tbody>${R.map((x,i)=>`<tr class="click${f.mesin===x.mesin?' sel':''}" data-act="mtcmesin" data-m="${esc(x.mesin)}"><td class="muted">${i+1}</td><td><b>${esc(x.mesin)}</b>${x.wc?`<div class="note">${esc(x.wc)}</div>`:''}</td><td class="num"><b>${x.jumlah}</b></td><td class="num">${x.korektif||'·'}</td><td class="num">${x.preventif||'·'}</td><td class="num">${x.downtimeMenit?mtcFmtDt(x.downtimeMenit):'·'}</td><td class="num">${x.mtbfHari!=null?n(x.mtbfHari)+' hr':'·'}</td><td>${x.partsDaftar.slice(0,3).map(p=>esc(p.nama)+' ×'+n(p.q)).join(', ')||'<span class="muted">–</span>'}</td><td>${x.terakhir?fd(x.terakhir):'<span class="muted">belum pernah</span>'}</td></tr>`).join('')}</tbody></table></div></section>`+(f.mesin?mtcMesinDetail(f.mesin):'')}
+function mtcSparepartAgg(per){
+ const o={};MTM().catatanSaja(mtcAll()).filter(c=>String(c.tgl).slice(0,10)>=per.dari&&String(c.tgl).slice(0,10)<=per.sampai).forEach(c=>(c.parts||[]).forEach(p=>{const k=p.sp||p.nama;const a=o[k]||(o[k]={nama:p.nama||spLabel(byId('sp',p.sp)),q:0,kali:0,mesin:{}});a.q+=+p.q||0;a.kali++;a.mesin[c.mesin]=(a.mesin[c.mesin]||0)+(+p.q||0)}));
+ return Object.values(o).sort((a,b)=>b.q-a.q)}
+function mtcSparepartTab(per){
+ const A=mtcSparepartAgg(per);
+ return `<section class="panel"><div class="pbody note">Sparepart yang diganti lewat Maintenance pada <b>${esc(per.label)}</b>. Pergerakannya tercatat di Gudang Sparepart (tab Pemakaian mesin dan Riwayat mutasi), jadi stok dan rencana pembelian sparepart ikut. <button class="btn sm ghost" data-act="go" data-href="sparepart">Buka Gudang Sparepart</button></div>${A.length?`<div class="tbl-wrap"><table><thead><tr><th>Sparepart</th><th class="num">Qty diganti</th><th class="num">Kali</th><th>Dipakai di mesin</th></tr></thead><tbody>${A.map(a=>`<tr><td><b>${esc(a.nama)}</b></td><td class="num">${n(a.q)}</td><td class="num">${a.kali}</td><td>${Object.entries(a.mesin).sort((x,y)=>y[1]-x[1]).map(([m,q])=>esc(m)+' ×'+n(q)).join(', ')}</td></tr>`).join('')}</tbody></table></div>`:empty('Belum ada sparepart diganti pada '+per.label.toLowerCase(),'Pilih sparepart saat mencatat maintenance.')}</section>`}
+function mtcRingkasTab(per){
+ const M=MTM(),L=mtcAll(),rs=M.ringkas(L,per),R=mtcRutinList();
+ const kp=`<div class="kpi-row">${kpiA('info','Maintenance',n(rs.jumlah)+' kali',esc(per.label)+' · '+n(rs.mesin)+' mesin')}${kpiA(rs.jenis.Korektif>rs.jenis.Preventif?'warn':'ok','Preventif / korektif',n(rs.jenis.Preventif)+' / '+n(rs.jenis.Korektif),'inspeksi '+n(rs.jenis.Inspeksi)+' · kalibrasi '+n(rs.jenis.Kalibrasi))}${kpiA(rs.downtimeJam>0?'warn':'ok','Mesin berhenti',n(rs.downtimeJam)+' jam','akumulasi periode')}${kpiA('info','Sparepart diganti',n(rs.sparepartQty)+' unit',n(rs.sparepartJenis)+' jenis')}${kpiA(rs.terbuka?'crit':'ok','Belum selesai',n(rs.terbuka),'dikerjakan atau menunggu sparepart')}${rs.biaya>0?kpiA('info','Biaya luar',n(rs.biaya),'Rp, di luar sparepart gudang'):''}</div>`;
+ const tr=M.tren(L,per,M.butirOtomatis(per.dari,per.sampai));const mx=Math.max(1,...tr.map(x=>x.jumlah));
+ const chart=tr.length?barChart({bars:tr.map(x=>({label:butirLabel(M.butirOtomatis(per.dari,per.sampai),x.kunci),v:x.jumlah,tip:x.kunci+': '+x.jumlah+' maintenance ('+x.korektif+' korektif, '+x.preventif+' preventif), berhenti '+mtcFmtDt(x.downtimeMenit)})),fmt:v=>n(Math.round(v)),title:'Maintenance'}):empty('Belum ada catatan pada '+per.label.toLowerCase(),'Klik Catat maintenance.');
+ const perhat=[];
+ R.filter(x=>x.status!=='Aman').slice(0,6).forEach(x=>perhat.push(`<li>${chip(x.status,x.status==='Terlambat'?'crit':'warn')} <b>${esc(x.mesin)}</b>: ${esc(x.tugas)} · ${x.sisaHari<0?'terlambat '+n(-x.sisaHari)+' hari':'jatuh tempo '+fd(x.jatuhTempo)}</li>`));
+ M.seringRusak(L,today()).forEach(x=>perhat.push(`<li>${chip('Sering rusak','crit')} <b>${esc(x.mesin)}</b>: ${x.korektif} kali korektif dalam ${x.hari} hari terakhir</li>`));
+ M.catatanSaja(L).filter(c=>c.status==='Menunggu sparepart').forEach(c=>perhat.push(`<li>${chip('Menunggu sparepart','warn')} <b>${esc(c.mesin)}</b>: ${esc(c.masalah||c.tindakan||'')} · sejak ${fd(c.tgl)}</li>`));
+ const top=M.perMesin(L,per,[]).filter(x=>x.jumlah>0).slice(0,5);
+ return kp+`<div class="grid3"><section class="panel"><header><h2>Tren maintenance</h2><span class="hint">${esc(per.label)}</span></header><div class="pbody">${chart}</div></section><section class="panel"><header><h2>Perlu perhatian</h2></header><div class="pbody">${perhat.length?`<ul style="margin:0;padding-left:18px;line-height:1.8">${perhat.join('')}</ul>`:'<div class="note">Tidak ada jadwal rutin terlambat, mesin sering rusak, atau maintenance yang menunggu sparepart.</div>'}</div></section></div>
+  <section class="panel"><header><h2>Mesin paling sering dimaintenance</h2><span class="hint">${esc(per.label)}</span></header>${top.length?`<div class="tbl-wrap"><table><thead><tr><th>Mesin</th><th class="num">Maintenance</th><th class="num">Korektif</th><th class="num">Preventif</th><th class="num">Berhenti</th><th>Sparepart diganti</th></tr></thead><tbody>${top.map(x=>`<tr class="click" data-act="mtcmesin" data-m="${esc(x.mesin)}"><td><b>${esc(x.mesin)}</b></td><td class="num">${x.jumlah}</td><td class="num">${x.korektif||'·'}</td><td class="num">${x.preventif||'·'}</td><td class="num">${x.downtimeMenit?mtcFmtDt(x.downtimeMenit):'·'}</td><td>${x.partsDaftar.slice(0,3).map(p=>esc(p.nama)+' ×'+n(p.q)).join(', ')||'<span class="muted">–</span>'}</td></tr>`).join('')}</tbody></table></div>`:empty('Belum ada data','Catat maintenance untuk melihat peringkat mesin.')}</section>`}
+T['maintenance']=()=>{const f=F.maintenance;const R=mtcRutinList(),tl=R.filter(x=>x.status==='Terlambat').length;
+ return `${segBtns('maintenance','tab',[['ringkas','Ringkasan'],['catat','Catatan'],['mesin','Per mesin'],['rutin','Jadwal rutin'+(tl?' ('+tl+' terlambat)':'')],['sparepart','Sparepart diganti']])}${f.tab==='rutin'?'':segBtns('maintenance','p',LAP_PER)}<span class="grow"></span>${canMod('maintenance')?`<button class="btn primary" data-act="mtcnew">${ic('plus')} Catat maintenance</button><button class="btn ghost" data-act="mtcrutinnew">Jadwal rutin</button>`:''}<button class="btn ghost" data-act="mtcpdf">${ic('file')} PDF</button><button class="btn ghost" data-act="mtcxls">${ic('dl')} Excel</button>`};
+B['maintenance']=()=>{
+ const f=F.maintenance;if(!MTM()||!PXL())return empty('Maintenance belum siap','Muat ulang halaman.');
+ const per=mtcPer();
+ return ({ringkas:mtcRingkasTab,catat:mtcCatatTab,mesin:mtcMesinTab,rutin:mtcRutinTab,sparepart:mtcSparepartTab}[f.tab]||mtcRingkasTab)(per)};
+function mtcModel(){
+ const M=MTM(),L=mtcAll(),per=mtcPer(),rs=M.ringkas(L,per),r1=v=>Math.round((+v||0)*10)/10,tgl=d=>d?fdS(String(d).slice(0,10)):'';
+ const nama=mesinSemua().filter(m=>m.aktif).map(m=>m.nama);const pm=M.perMesin(L,per,nama);
+ const cat=M.catatanSaja(L).filter(c=>String(c.tgl).slice(0,10)>=per.dari&&String(c.tgl).slice(0,10)<=per.sampai).sort((a,b)=>String(a.tgl).localeCompare(String(b.tgl)));
+ const T=[
+  {title:'Ringkasan · '+per.label,cols:[['Ukuran',36,'l'],['Nilai',18,'r'],['Keterangan',46,'l']],rows:[['Jumlah maintenance',rs.jumlah,rs.mesin+' mesin'],['Preventif',rs.jenis.Preventif,''],['Korektif',rs.jenis.Korektif,''],['Inspeksi',rs.jenis.Inspeksi,''],['Kalibrasi',rs.jenis.Kalibrasi,''],['Mesin berhenti (jam)',rs.downtimeJam,'akumulasi periode'],['Sparepart diganti (unit)',rs.sparepartQty,rs.sparepartJenis+' jenis'],['Belum selesai',rs.terbuka,'dikerjakan atau menunggu sparepart'],['Biaya di luar sparepart (Rp)',rs.biaya,'']]},
+  {title:'Per mesin · '+per.label,cols:[['Mesin',26,'l'],['Work Centre',20,'l'],['Maintenance',13,'r'],['Korektif',10,'r'],['Preventif',10,'r'],['Berhenti (jam)',13,'r'],['MTBF (hari)',12,'r'],['Sparepart diganti',44,'l'],['Terakhir',13,'c']],rows:pm.map(x=>[x.mesin,x.wc,x.jumlah,x.korektif,x.preventif,x.downtimeJam,x.mtbfHari==null?'':x.mtbfHari,x.partsDaftar.map(p=>p.nama+' x'+p.q).join('; '),tgl(x.terakhir)])},
+  {title:'Jadwal rutin (saat ini)',cols:[['Mesin',26,'l'],['Tugas rutin',32,'l'],['Interval (hari)',13,'r'],['Terakhir',13,'c'],['Jatuh tempo',13,'c'],['Sisa hari',11,'r'],['Status',12,'l'],['Dikerjakan',11,'r'],['',10,'l']],rows:mtcRutinList().map(x=>[x.mesin,x.tugas,x.interval,tgl(x.terakhir),tgl(x.jatuhTempo),x.sisaHari,x.status,x.kaliSelesai,''])},
+  {title:'Catatan maintenance · '+per.label,cols:[['No',17,'l'],['Tanggal',12,'c'],['Mesin',22,'l'],['Jenis',11,'l'],['Status',16,'l'],['Masalah',32,'l'],['Tindakan',32,'l'],['Berhenti (menit)',14,'r'],['Sparepart diganti',34,'l'],['Teknisi',14,'l']],rows:cat.map(c=>[c.no||'',tgl(c.tgl),c.mesin||'',c.jenis||'',c.status||'',c.masalah||'',c.tindakan||'',M.downtimeMenit(c),(c.parts||[]).map(p=>(p.nama||'')+' x'+p.q).join('; '),c.teknisi||''])},
+  {title:'Sparepart diganti · '+per.label,cols:[['Sparepart',34,'l'],['Qty diganti',13,'r'],['Kali',9,'r'],['Dipakai di mesin',60,'l'],['',10,'l'],['',10,'l'],['',10,'l'],['',10,'l'],['',10,'l']],rows:mtcSparepartAgg(per).map(a=>[a.nama,a.q,a.kali,Object.entries(a.mesin).map(([m,q])=>m+' x'+q).join('; '),'','','','',''])}
+ ];
+ return {kind:'lpp',title:'Laporan Maintenance',no:'MTC-'+per.sampai.replace(/-/g,''),date:per.sampai,landscape:true,file:'Laporan-Maintenance-'+per.sampai,
+  meta:[['Periode',per.label],['Rentang',(per.dari==='0000-00-00'?'awal data':tgl(per.dari))+' s/d '+tgl(per.sampai)],['Maintenance',String(rs.jumlah)],['Mesin berhenti (jam)',String(rs.downtimeJam)]],
+  tables:T.map(x=>x.rows.length?x:{...x,rows:[['Tidak ada data pada periode atau kondisi ini',...Array(x.cols.length-1).fill('')]]})}}
+async function mtcUnduh(fmt){try{const m=mtcModel();await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
 /* T10: Dashboard menampilkan apa yang menunggu tindakan, satu tombol per pekerjaan, langsung ke layar atau tab yang tepat. Hanya yang boleh dilihat peran ini. */
 function tindakanHariIni(){const L=[];const c=calc();
  const add=(mod,href,tab,jml,label)=>{if(jml>0&&(!ME_P||myLevel(mod)))L.push({href,tab,jml,label})};
  add('bahan-baku','bahan-baku','plate',platAntrian().length,'SPK menunggu serah plate');
+ if(MTM()&&(S.mtc||[]).length)add('maintenance','maintenance','rutin',mtcRutinList().filter(x=>x.status==='Terlambat').length,'jadwal maintenance rutin terlambat');
  add('spk','mesin','',S.spk.filter(s=>s.status==='Terbit'&&c.spk[s._id]&&c.spk[s._id].st!=='Selesai'&&c.spk[s._id].pP<1).length,'SPK menunggu hasil produksi diisi');
  add('vendor','vendor','',siapVendorRows().length,'item siap dikirim ke vendor');
  add('pengiriman','barang-jadi','siap',fgSiapKirimList().length,'SPK siap kirim ke customer');
@@ -6410,7 +6587,7 @@ document.addEventListener('click',async e=>{
   case 'papanbuka':{F.mesin.wc=ds.wc;F.mesin.mesin='';lsSet('mni-wc',ds.wc);lsSet('mni-mesin','');location.hash='mesin';break}
   case 'mrstep':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){const mx=q.max===''?Infinity:+q.max;const v=Math.max(0,Math.min(mx,(+q.value||0)+(+ds.d)));q.value=String(Math.round(v*1000)/1000);mrLabel(q.closest('.mesin-run'))}break}
   case 'mesinsemua':{const q=document.querySelector(`.mesin-run[data-k="${CSS.escape(ds.k)}"] [data-mrq]`);if(q){q.value=ds.max;mrLabel(q.closest('.mesin-run'))}break}
-  case 'lapbag':await lapBagianUnduh(ds.bag,ds.fmt);break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
+  case 'lapbag':await lapBagianUnduh(ds.bag,ds.fmt);break;case 'mtcnew':mtcForm();break;case 'mtcrutinnew':mtcRutinForm();break;case 'mtcselesai':mtcSelesaiForm(ds.id);break;case 'mtcbatal':await mtcBatal(ds.id);break;case 'mtckerjakan':{const r=byId('mtc',ds.id);if(r)mtcForm({jenis:'Preventif',mesin:r.mesin,masalah:r.tugas,rutin:r._id,status:'Selesai'})}break;case 'mtcrutinoff':try{await updDoc('mtc',ds.id,{aktif:false});toast('Jadwal rutin dinonaktifkan')}catch(e){toast(e.message||String(e))}break;case 'mtcmesin':F.maintenance.mesin=ds.m;renderBody();break;case 'mtcpdf':await mtcUnduh('pdf');break;case 'mtcxls':await mtcUnduh('xlsx');break;case 'lapcsv':await lapCsv();break;case 'laprincsv':await lapRincianCsv();break;case 'laprinxls':await lapRincianXlsx();break;
   case 'progcsv':await progCsv();break;
   case 'lapacsv':await lapAnalisaCsv();break;
   case 'lapprint':lapPrint();break;

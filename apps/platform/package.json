@@ -20,7 +20,7 @@
     "db:types": "supabase gen types typescript --local > src/types/supabase.ts",
     "test:berat": "node tests/unit/berat.test.mjs && node tests/unit/berat-parser.test.mjs",
     "lint": "cd .. && eslint gudang-logistik/assets/js platform/src platform/scripts platform/tests --max-warnings=43",
-    "test:unit": "node tests/unit/analisa.test.mjs && node tests/unit/bentuk.test.mjs && node tests/unit/jadwal.test.mjs && node tests/unit/kapasitas.test.mjs && node tests/unit/kenali.test.mjs && node tests/unit/kinerja.test.mjs && node tests/unit/laporan.test.mjs && node tests/unit/material.test.mjs && node tests/unit/kebutuhan-plat.test.mjs && node tests/unit/rencana.test.mjs && node tests/unit/rute.test.mjs && node tests/unit/statistik.test.mjs && node tests/unit/section-spk.test.mjs"
+    "test:unit": "node tests/unit/analisa.test.mjs && node tests/unit/bentuk.test.mjs && node tests/unit/jadwal.test.mjs && node tests/unit/kapasitas.test.mjs && node tests/unit/kenali.test.mjs && node tests/unit/kinerja.test.mjs && node tests/unit/laporan.test.mjs && node tests/unit/material.test.mjs && node tests/unit/kebutuhan-plat.test.mjs && node tests/unit/rencana.test.mjs && node tests/unit/rute.test.mjs && node tests/unit/statistik.test.mjs && node tests/unit/section-spk.test.mjs && node tests/unit/maintenance.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

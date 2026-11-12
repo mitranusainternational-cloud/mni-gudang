@@ -144,8 +144,7 @@ export async function runProduksi(page, base) {
   const errV = await page.evaluate(() => (document.getElementById('merr') || { textContent: '' }).textContent);
   ok('M-19 kirim 10 melebihi hasil produksi ditolak', (await tab('vendor')).length === nv0 && /hasil produksi/.test(errV), errV);
   await page.fill('#m-ln_0', '8');
-  await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(800);
-  await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(1500); // vendor baru: klik kedua mendaftarkannya ke master
+  await page.evaluate(() => document.getElementById('msub').click()); await page.waitForTimeout(1500); // vendor baru langsung terdaftar ke master pada simpan pertama
   ok('M-19b kirim 8 diterima', (await tab('vendor')).length === nv0 + 1, await page.evaluate(() => (document.getElementById('merr') || { textContent: '' }).textContent));
   await go('produksi');
   const bodyV = await page.evaluate(() => document.getElementById('body').innerText);

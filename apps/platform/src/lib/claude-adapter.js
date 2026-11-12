@@ -62,7 +62,7 @@ async function toDbId(id) {
 // Kolom spk.no bertipe TEXT di database, tetapi app memperlakukannya sebagai angka
 // (parseInt, perbandingan !==). Tanpa konversi, mengedit SPK dianggap "ganti nomor".
 // Tabel yang boleh belum ada di database (migration draf belum diterapkan): dibaca sebagai kosong, bukan galat.
-const OPSIONAL = new Set(['produksi_log', 'sp']);
+const OPSIONAL = new Set(['produksi_log', 'sp', 'mtc']);
 const numericNo = (table, row) => {
   if (table === 'spk' && row && row.no !== undefined && row.no !== null && /^\d+$/.test(String(row.no))) row.no = Number(row.no);
   return row;
@@ -493,7 +493,7 @@ async function makeUserAdapter() {
     })),
     // Cadangan: semua tabel mentah (urutan aman untuk pemulihan). Hanya super admin yang membaca semuanya (RLS).
     exportAll: async () => {
-      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'sp'];
+      const tables = ['muser', 'role_modules', 'master', 'mwc', 'mvendor', 'mcustomer', 'msupplier', 'marmada', 'rm', 'fg', 'spk', 'rmhist', 'pr', 'opname', 'mutasi', 'vendor', 'kirim', 'bongkar', 'log', 'audit_log', 'sp', 'mtc'];
       const out = {};
       for (const t of tables) {
         const rows = [];
@@ -591,10 +591,12 @@ import * as _kinerja from './produksi/kinerja.js';
 import * as _laporan from './produksi/laporan.js';
 import * as _analisa from './produksi/analisa.js';
 import * as _statistik from './produksi/statistik.js';
+import * as _maint from './maintenance/hitung.js';
 import * as _jadwal from './produksi/jadwal.js';
 import * as _kapasitas from './produksi/kapasitas.js';
 import * as _rencana from './produksi/rencana.js';
 import * as _material from './erp/material.js';
+window.MNIMaint = { ..._maint };
 window.MNIProduksi = { ..._rute, ..._kinerja, ..._laporan, ..._analisa, ..._statistik, ..._jadwal, ..._kapasitas, ..._rencana };
 // Kebutuhan material (fungsi murni): plat, reservasi, usulan PR.
 window.MNIMaterial = { ..._material };
