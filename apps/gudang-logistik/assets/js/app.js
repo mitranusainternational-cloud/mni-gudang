@@ -156,7 +156,7 @@ async function boot(){
  cl.use('downloads').then(d=>{DLS=d}).catch(()=>{});
  for(const c of COLS){
   DB.collection(c).onSnapshot(snap=>{
-    S[c]=snap.docs.map(d=>({...d.data(),_id:d.id}));loaded.add(c);C=null;EVX=null;LAST=new Date();LIVE='on';if(c==='muser')refreshMe();schedule();
+    S[c]=snap.docs.map(d=>({...d.data(),_id:d.id}));loaded.add(c);C=null;EVX=null;LAST=new Date();LIVE='on';if(c==='muser')refreshMe();if(c==='bongkar'||c==='mtc')FOTO.siapkanSemua(c);schedule();
   },err=>{LIVE='off';renderLive();toast('Koneksi data terputus ('+err.code+'). Muat ulang halaman.')});
  }
 }
@@ -1375,7 +1375,7 @@ B['bongkar-muat']=()=>{
   <div class="bm-line"><b>${esc(b.muatan)}</b> · ${esc(b.pihak||'')}</div>
   <div class="note bm-line">${b.jamMasuk?'Masuk '+esc(b.jamMasuk):'Belum tiba'}${b.jamMulai?' · mulai '+esc(b.jamMulai):''}${b.jamSelesai?' · selesai '+esc(b.jamSelesai)+' ('+dur(b.jamMulai||b.jamMasuk,b.jamSelesai)+')':''}</div>
   <div class="bm-badges">${cs.n?chip('Cek '+cs.done+'/'+cs.n,cs.done===cs.n?'ok':cs.done?'warn':'plain'):''}${nf?chip(nf+' foto','info'):''}${ref?`<span class="mono note" title="Referensi">${esc(ref)}</span>`:''}</div>
-  ${st!=='Selesai'?`<div class="acts">${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Proses">Mulai ${b.jenis.toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Selesai">${ic('chk')}Selesai</button>`}<button class="btn sm ghost" data-act="void" data-c="bongkar" data-id="${b._id}">Batalkan</button></div>`:''}
+  ${st!=='Selesai'?`<div class="acts">${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Proses">Mulai ${String(b.jenis||'').toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${b._id}" data-to="Selesai">${ic('chk')}Selesai</button>`}<button class="btn sm ghost" data-act="void" data-c="bongkar" data-id="${b._id}">Batalkan</button></div>`:''}
  </div>`};
  const col=(st)=>{const xs=list.filter(b=>b.status===st);const lim=st==='Selesai'&&!f.all&&xs.length>CAP;const tampil=lim?xs.slice(0,CAP):xs;
   const more=st==='Selesai'&&xs.length>CAP?`<button class="btn sm ghost" data-act="filt" data-view="bongkar-muat" data-key="all" data-val="${f.all?'false':'true'}">${f.all?'Ringkas (tampilkan '+CAP+' terbaru)':'Tampilkan semua ('+xs.length+')'}</button>`:'';
@@ -1793,18 +1793,24 @@ const bmCekMap=b=>(b&&b.ceklis)||{};
 function bmCekStat(b){const m=bmCekMap(b),it=bmSrc(b).items;return {n:it.length,done:it.filter((_,i)=>m[i]&&m[i].ok).length}}
 /* Catatan bongkar muat yang terhubung ke satu surat jalan vendor ('vendor') atau customer ('kirim'). */
 function bmFor(c,doc){if(!doc)return null;return S.bongkar.find(b=>b.status!=='Batal'&&b.jenis==='Loading'&&b.link&&b.link.c===c&&((b.link.id&&b.link.id===doc._id)||(b.link.noSJ&&b.link.noSJ===doc.noSJ)))||null}
-const bmFotoCetak=b=>((b&&b.foto)||[]).filter(x=>x.data&&x.cetak!==false);
+const bmFotoCetak=b=>((b&&b.foto)||[]).filter(x=>(x.data||x.path)&&x.cetak!==false);
 function bmCekCatatan(b){const s=bmCekStat(b);return s.n?`Ceklis bongkar muat: ${s.done} dari ${s.n} item dicek digital (✓ di kolom Cek)`:''}
 /* Kolom Cek dan lampiran foto pada pratinjau surat jalan di layar. */
 function bmPrev(c,doc){
  const b=bmFor(c,doc);if(!b)return {th:'',td:()=>'',cs:2,foto:''};
  const m=bmCekMap(b),ft=bmFotoCetak(b);let off=0;for(const x of sjGrup(c,doc)){if(x._id===doc._id)break;off+=(x.items||[]).length}
  return {th:'<th style="width:8%">Cek</th>',td:i=>`<td style="text-align:center;font-weight:700;color:#1e783c">${m[off+i]&&m[off+i].ok?'✓':''}</td>`,cs:3,
-  foto:ft.length?`<div style="font-weight:700;margin:12px 0 4px;font-size:11px;letter-spacing:.03em">LAMPIRAN BUKTI BONGKAR MUAT</div><div class="bm-prev-foto">${ft.map((x,i)=>`<figure><img src="${x.data}" alt="Foto bukti ${i+1}"><figcaption>Foto ${i+1}${x.ket?' · '+esc(x.ket):''}</figcaption></figure>`).join('')}</div>`:''};
+  foto:ft.length?`<div style="font-weight:700;margin:12px 0 4px;font-size:11px;letter-spacing:.03em">LAMPIRAN BUKTI BONGKAR MUAT</div><div class="bm-prev-foto">${ft.map((x,i)=>`<figure><img src="${FOTO.src(x)}" alt="Foto bukti ${i+1}"><figcaption>Foto ${i+1}${x.ket?' · '+esc(x.ket):''}</figcaption></figure>`).join('')}</div>`:''};
 }
-/* Penyimpanan foto: sekarang disimpan langsung (data URL terkompres) di dokumen bongkar. Untuk Supabase disiapkan bucket privat
-   (lihat draft migration 23); sampai bucket dipasang dan diuji, mode tetap 'inline'. */
-const FOTO={mode:'inline',maks:1280,mutu:.72,batas:24,
+/* Penyimpanan foto. Dua mode yang bisa berdampingan:
+   - 'inline' (bawaan): data URL terkompres di dalam dokumen (bongkar.data.foto[].data).
+   - 'storage': berkas JPEG di bucket privat bongkar-foto; dokumen hanya menyimpan path (foto[].path).
+   Storage aktif hanya bila master/setting.fotoStorage=true DAN backend menyediakan DB.storage. Foto lama (inline) dan baru (storage) bisa bercampur:
+   tampilan dan ekspor menangani keduanya, jadi mematikan mode tidak membuat foto hilang. */
+const FOTO_PIXEL='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const FOTO={maks:1280,mutu:.72,batas:24,url:new Map(),
+ aktif(){const st=byId('master','setting');return !!(st&&st.fotoStorage===true&&DB&&DB.storage&&DB.storage.siap)},
+ get mode(){return FOTO.aktif()?'storage':'inline'},
  async baca(file){
   if(!/^image\//.test(file.type||''))throw new Error('Berkas "'+file.name+'" bukan gambar.');
   const url=await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=()=>rej(new Error('Gagal membaca foto.'));rd.readAsDataURL(file)});
@@ -1812,7 +1818,23 @@ const FOTO={mode:'inline',maks:1280,mutu:.72,batas:24,
   const k=Math.min(1,FOTO.maks/Math.max(img.naturalWidth,img.naturalHeight)),w=Math.max(1,Math.round(img.naturalWidth*k)),h=Math.max(1,Math.round(img.naturalHeight*k));
   const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0,w,h);
   return {data:cv.toDataURL('image/jpeg',FOTO.mutu),w,h};
- }};
+ },
+ dataKeBlob(d){const [h,b]=String(d).split(',');const mime=(h.match(/:(.*?);/)||[])[1]||'image/jpeg';const bin=atob(b),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new Blob([u],{type:mime})},
+ /* Simpan satu foto hasil baca; mengembalikan bagian dokumen: {data} (inline) atau {path} (storage). Galat upload dilempar, dokumen tidak disentuh. */
+ async simpan(awalan,id,x){if(!FOTO.aktif())return {data:x.data};const path=awalan+'/'+id+'.jpg';await DB.storage.upload(path,FOTO.dataKeBlob(x.data));return {path}},
+ src(x){if(x&&x.data)return x.data;const e=x&&x.path&&FOTO.url.get(x.path);return e&&e.exp>Date.now()?e.u:FOTO_PIXEL},
+ /* Siapkan tautan bertanda tangan (berlaku 1 jam, diperbarui otomatis) untuk foto storage dalam daftar. true bila ada yang baru. */
+ async siapkan(daftar){const now=Date.now();const perlu=[...new Set((daftar||[]).filter(x=>x&&x.path&&!x.data).map(x=>x.path))].filter(p=>{const e=FOTO.url.get(p);return !e||e.exp-now<300000});
+  if(!perlu.length||!(DB&&DB.storage))return false;
+  for(let i=0;i<perlu.length;i+=100){const peta=await DB.storage.signedUrls(perlu.slice(i,i+100),3600);for(const [p,u] of Object.entries(peta))FOTO.url.set(p,{u,exp:now+3540000})}
+  return true},
+ async siapkanSemua(c){try{const l=[];for(const d of (S[c]||[]))for(const x of (d.foto||[]))l.push(x);if(await FOTO.siapkan(l))schedule()}catch(e){/* gambar tampil pada pemuatan berikutnya */}},
+ /* Untuk PDF dan Excel: foto storage diunduh menjadi data URL pada salinan; dokumen sumber tidak diubah. */
+ async penuh(daftar){if(!daftar||!daftar.length)return daftar||[];await FOTO.siapkan(daftar);
+  return Promise.all(daftar.map(async x=>{if(!x||x.data||!x.path)return x;const e=FOTO.url.get(x.path);if(!e)throw new Error('Foto belum bisa diambil dari Storage.');const r=await fetch(e.u);if(!r.ok)throw new Error('Foto tidak bisa diunduh dari Storage ('+r.status+').');const b=await r.blob();
+   const d=await new Promise((res,rej)=>{const rd=new FileReader();rd.onload=()=>res(rd.result);rd.onerror=()=>rej(new Error('Gagal membaca foto.'));rd.readAsDataURL(b)});return {...x,data:d}}))},
+ /* Uji Storage sebelum diaktifkan: unggah gambar kecil, buat tautan, unduh. */
+ async coba(){const kecil=FOTO_PIXEL.replace('image/gif','image/jpeg');const path='bongkar/_tes-'+Date.now().toString(36)+'.jpg';await DB.storage.upload(path,FOTO.dataKeBlob(kecil));const peta=await DB.storage.signedUrls([path],120);const u=peta[path];if(!u)throw new Error('Tautan Storage tidak bisa dibuat.');const r=await fetch(u);if(!r.ok)throw new Error('Berkas uji tidak bisa dibaca ('+r.status+').')}};
 async function bmCek(id,idx,ok){
  const b=byId('bongkar',id);if(!b||b.status==='Batal')return;
  const m={...bmCekMap(b)};if(ok)m[idx]={ok:true,by:ME||null,at:new Date().toISOString()};else delete m[idx];
@@ -1828,7 +1850,7 @@ async function bmFotoAdd(id,files){
  if(lama.length+files.length>FOTO.batas){toast('Maksimal '+FOTO.batas+' foto per kendaraan.');return}
  toast('Memproses '+files.length+' foto…');
  const baru=[];
- try{for(const fl of files){const x=await FOTO.baca(fl);baru.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',cetak:true})}}
+ try{for(const fl of files){const x=await FOTO.baca(fl);const fid='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const ref=await FOTO.simpan('bongkar',fid,x);baru.push({id:fid,...ref,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',cetak:true})}}
  catch(e){toast(e.message||'Gagal memproses foto.');if(!baru.length)return}
  try{await updDoc('bongkar',id,{foto:[...lama,...baru]});toast(baru.length+' foto tersimpan')}catch(e){toast('Foto gagal disimpan (penyimpanan penuh?): '+(e.message||''))}
 }
@@ -2005,10 +2027,10 @@ function bmDrawer(id){openDrawer(()=>{const b=byId('bongkar',id);if(!b)return nu
   </div>`:''}
   <div>
    <div class="dw-section-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span>Foto bukti (${fotos.length})</span>${bisaUbah?`<span style="display:flex;gap:6px"><label class="btn sm primary" style="cursor:pointer">${ic('plus')} Ambil foto<input type="file" accept="image/*" capture="environment" class="bm-foto-in" data-id="${id}" hidden></label><label class="btn sm" style="cursor:pointer">${ic('inb')} Unggah foto<input type="file" accept="image/*" multiple class="bm-foto-in" data-id="${id}" hidden></label></span>`:''}</div>
-   ${fotos.length?`<div class="bm-foto-grid">${fotos.map((x,i)=>`<figure class="bm-foto"><img src="${x.data}" alt="Foto bukti ${i+1}" loading="lazy"><figcaption><input class="inp bm-foto-ket" placeholder="Keterangan foto…" value="${esc(x.ket||'')}" data-act="bmfotoket" data-id="${id}" data-fid="${x.id}" maxlength="80"><div class="bm-foto-bar"><label class="ck"><input type="checkbox" data-act="bmfotocetak" data-id="${id}" data-fid="${x.id}" ${x.cetak!==false?'checked':''}> Sertakan di surat jalan</label>${bisaUbah?`<button class="btn sm ghost" data-act="bmfotodel" data-id="${id}" data-fid="${x.id}">Hapus</button>`:''}</div></figcaption></figure>`).join('')}</div><div class="note">${fotos.filter(x=>x.cetak!==false).length} dari ${fotos.length} foto ikut dicetak sebagai lampiran surat jalan ${b.link&&b.link.c==='vendor'?'vendor':b.link&&b.link.c==='kirim'?'customer':''}. Foto dikompres otomatis (sisi terpanjang 1280 px).</div>`:`<div class="note">Belum ada foto. Ambil foto dengan kamera atau unggah dari galeri; jumlahnya bebas. Foto yang dicentang ikut dicetak di lampiran surat jalan.</div>`}
+   ${fotos.length?`<div class="bm-foto-grid">${fotos.map((x,i)=>`<figure class="bm-foto"><img src="${FOTO.src(x)}" alt="Foto bukti ${i+1}" loading="lazy"><figcaption><input class="inp bm-foto-ket" placeholder="Keterangan foto…" value="${esc(x.ket||'')}" data-act="bmfotoket" data-id="${id}" data-fid="${x.id}" maxlength="80"><div class="bm-foto-bar"><label class="ck"><input type="checkbox" data-act="bmfotocetak" data-id="${id}" data-fid="${x.id}" ${x.cetak!==false?'checked':''}> Sertakan di surat jalan</label>${bisaUbah?`<button class="btn sm ghost" data-act="bmfotodel" data-id="${id}" data-fid="${x.id}">Hapus</button>`:''}</div></figcaption></figure>`).join('')}</div><div class="note">${fotos.filter(x=>x.cetak!==false).length} dari ${fotos.length} foto ikut dicetak sebagai lampiran surat jalan ${b.link&&b.link.c==='vendor'?'vendor':b.link&&b.link.c==='kirim'?'customer':''}. Foto dikompres otomatis (sisi terpanjang 1280 px).</div>`:`<div class="note">Belum ada foto. Ambil foto dengan kamera atau unggah dari galeri; jumlahnya bebas. Foto yang dicentang ikut dicetak di lampiran surat jalan.</div>`}
   </div>
   <div><div class="dw-section-title">Aksi</div><div class="dw-btns">
-   ${st!=='Selesai'&&st!=='Batal'?`${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Proses">Mulai ${b.jenis.toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Selesai">${ic('chk')}Selesai</button>`}`:''}
+   ${st!=='Selesai'&&st!=='Batal'?`${st==='Antri'?`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Proses">Mulai ${String(b.jenis||'').toLowerCase()}</button>`:`<button class="btn sm primary" data-act="bmstep" data-id="${id}" data-to="Selesai">${ic('chk')}Selesai</button>`}`:''}
    <button class="btn sm ghost" data-act="bmkoreksi" data-id="${id}">${ic('edit')} Koreksi jam &amp; petugas</button>
    ${st!=='Batal'?`<button class="btn sm ghost" data-act="void" data-c="bongkar" data-id="${id}">Batalkan</button>`:''}
   </div></div>`;
@@ -5497,14 +5519,14 @@ async function mtcFotoBaca(form,lama){
  els.forEach(el=>[...(el.files||[])].forEach(f=>daftar.push({f,tahap:el.dataset.tahap})));
  if(!daftar.length)return [];
  if((lama||[]).length+daftar.length>MT_FOTO_MAKS)throw new Error('Maksimal '+MT_FOTO_MAKS+' foto per catatan.');
- const out=[];for(const {f,tahap} of daftar){const x=await FOTO.baca(f);out.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap})}
+ const out=[];for(const {f,tahap} of daftar){const x=await FOTO.baca(f);const fid='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const ref=await FOTO.simpan('mtc',fid,x);out.push({id:fid,...ref,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap})}
  return out}
 function mtcFotoModal(id){
  const c=byId('mtc',id);if(!c)return;const fotos=c.foto||[],bisa=canMod('maintenance');
  openModal('Foto dan dokumen · '+esc(c.no||'')+' · '+esc(c.mesin||''),
   '<div class="note full">'+esc(c.jenis||'')+' · '+esc(c.masalah||c.tindakan||'')+' · '+fd(c.tgl)+'</div>'+
   '<div class="full" style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0"><button type="button" class="btn sm" data-act="mtcdokpdf" data-id="'+id+'">'+ic('file')+' Dokumen PDF</button><button type="button" class="btn sm ghost" data-act="mtcdokxls" data-id="'+id+'">'+ic('dl')+' Excel</button></div>'+
-  (fotos.length?'<div class="full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">'+fotos.map((x,i)=>'<figure style="margin:0;border:1px solid var(--line);border-radius:8px;padding:6px"><img src="'+x.data+'" alt="Foto maintenance '+(i+1)+'" loading="lazy" style="width:100%;border-radius:6px;display:block"><figcaption style="font-size:11px;margin-top:4px">'+(bisa?'<select class="sel" data-act="mtcfototahap" data-id="'+id+'" data-fid="'+x.id+'" style="width:100%;margin-bottom:4px">'+MT_TAHAP.map(t=>'<option'+(t===(x.tahap||'Sesudah')?' selected':'')+'>'+t+'</option>').join('')+'</select><input class="inp" data-act="mtcfotoket" data-id="'+id+'" data-fid="'+x.id+'" placeholder="Keterangan" value="'+esc(x.ket||'')+'" style="width:100%"><button type="button" class="btn sm ghost" data-act="mtcfotodel" data-id="'+id+'" data-fid="'+x.id+'" style="margin-top:4px">Hapus</button>':'<b>'+esc(x.tahap||'')+'</b> '+esc(x.ket||''))+'<div class="muted">'+new Date(x.at).toLocaleString('id-ID')+'</div></figcaption></figure>').join('')+'</div>':'<div class="full note">Belum ada foto. Tambahkan foto sebelum dan sesudah perbaikan, serta nota atau bukti penggantian sparepart.</div>')+
+  (fotos.length?'<div class="full" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">'+fotos.map((x,i)=>'<figure style="margin:0;border:1px solid var(--line);border-radius:8px;padding:6px"><img src="'+FOTO.src(x)+'" alt="Foto maintenance '+(i+1)+'" loading="lazy" style="width:100%;border-radius:6px;display:block"><figcaption style="font-size:11px;margin-top:4px">'+(bisa?'<select class="sel" data-act="mtcfototahap" data-id="'+id+'" data-fid="'+x.id+'" style="width:100%;margin-bottom:4px">'+MT_TAHAP.map(t=>'<option'+(t===(x.tahap||'Sesudah')?' selected':'')+'>'+t+'</option>').join('')+'</select><input class="inp" data-act="mtcfotoket" data-id="'+id+'" data-fid="'+x.id+'" placeholder="Keterangan" value="'+esc(x.ket||'')+'" style="width:100%"><button type="button" class="btn sm ghost" data-act="mtcfotodel" data-id="'+id+'" data-fid="'+x.id+'" style="margin-top:4px">Hapus</button>':'<b>'+esc(x.tahap||'')+'</b> '+esc(x.ket||''))+'<div class="muted">'+new Date(x.at).toLocaleString('id-ID')+'</div></figcaption></figure>').join('')+'</div>':'<div class="full note">Belum ada foto. Tambahkan foto sebelum dan sesudah perbaikan, serta nota atau bukti penggantian sparepart.</div>')+
   (bisa?'<div class="fld full" style="margin-top:10px"><label>Tambah foto</label><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">'+MT_FOTO_BAGIAN.map(([th,nm,jd])=>'<div><div style="font-size:12px;font-weight:700;margin-bottom:4px">'+jd+'</div><input class="inp mtc-foto-in" type="file" accept="image/*" multiple data-id="'+id+'" data-tahap="'+th+'"></div>').join('')+'</div></div>':''),
   async()=>{},{submit:'Tutup',done:' '});
 }
@@ -5512,7 +5534,7 @@ async function mtcFotoTambah(id,files,tahap){
  const c=byId('mtc',id);if(!c)return;const lama=c.foto||[];
  if(lama.length+files.length>MT_FOTO_MAKS){toast('Maksimal '+MT_FOTO_MAKS+' foto per catatan.');return}
  toast('Memproses '+files.length+' foto…');const baru=[];
- try{for(const f of files){const x=await FOTO.baca(f);baru.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap:tahap||'Sesudah'})}}catch(e){toast(e.message||'Gagal memproses foto.');if(!baru.length)return}
+ try{for(const f of files){const x=await FOTO.baca(f);const fid='f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);const ref=await FOTO.simpan('mtc',fid,x);baru.push({id:fid,...ref,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',tahap:tahap||'Sesudah'})}}catch(e){toast(e.message||'Gagal memproses foto.');if(!baru.length)return}
  try{await updDoc('mtc',id,{foto:[...lama,...baru]});toast(baru.length+' foto tersimpan');mtcFotoModal(id)}catch(e){toast('Foto gagal disimpan: '+(e.message||''))}}
 async function mtcFotoUbah(id,fid,p){const c=byId('mtc',id);if(!c)return;await updDoc('mtc',id,{foto:(c.foto||[]).map(x=>x.id===fid?{...x,...p}:x)})}
 async function mtcFotoHapus(id,fid){const c=byId('mtc',id);if(!c)return;if(!confirm('Hapus foto ini?'))return;await updDoc('mtc',id,{foto:(c.foto||[]).filter(x=>x.id!==fid)});mtcFotoModal(id)}
@@ -5735,9 +5757,57 @@ B.pengguna=()=>{
  h+=`<section class="panel"><header><h2>Paket peran bawaan</h2><span class="hint">titik awal; hak tiap orang tetap bisa diatur satu per satu</span></header><div class="tbl-wrap"><table class="mx"><thead><tr><th rowspan="2">Peran</th>${MOD_GRUP.map(([g,ms])=>`<th class="c" colspan="${ms.length}" style="border-bottom:1px solid var(--line)">${g}</th>`).join('')}</tr><tr>${MODS.map(([,l])=>`<th class="c">${l}</th>`).join('')}</tr></thead><tbody>
   ${Object.entries(ROLES).filter(([k])=>k!=='sales').map(([k,r])=>{const p=presetModul(k);return `<tr><td><b>${r.l}</b><div class="note">${r.d}</div></td>${MODS.map(([m])=>`<td class="c">${k==='admin'?'<span class="yes">✓</span>':p[m]==='ubah'?'<span class="yes" title="Lihat dan ubah">✓</span>':p[m]==='lihat'?'<span class="part" title="Lihat saja">lihat</span>':'<span class="sn">–</span>'}</td>`).join('')}</tr>`}).join('')}</tbody></table></div>
   <div class="pbody note">✓ = lihat dan ubah · lihat = hanya melihat · – = modul tidak tampil. Aturan dijaga di database sehingga tidak bisa diakali dari browser. Data tetap satu dan terhubung: perubahan oleh satu pengguna terlihat oleh pengguna lain yang punya akses ke modul itu.</div></section>`;
- h+=auditPanel();
+ h+=fotoPanel();h+=auditPanel();
  return h;
 };
+/* ---- Penyimpanan foto (khusus super admin): pindahkan foto lama dari database ke Storage dan pilih mode ---- */
+let FOTO_JALAN=false;
+function fotoRingkas(){let inline=0,storage=0,kb=0;for(const c of ['bongkar','mtc'])for(const d of (S[c]||[]))for(const x of (d.foto||[])){if(x.data){inline++;kb+=Math.round(String(x.data).length*.75/1024)}else if(x.path)storage++}return {inline,storage,kb}}
+function fotoPanel(){
+ if(!canManage())return '';
+ const r=fotoRingkas(),siap=!!(DB&&DB.storage&&DB.storage.siap),on=FOTO.aktif();
+ const ukuran=r.kb>1024?(r.kb/1024).toFixed(1)+' MB':r.kb+' KB';
+ return `<section class="panel"><header><h2>Penyimpanan foto</h2><span class="hint">foto bongkar muat dan Maintenance</span></header><div class="pbody">
+  <div class="note">${r.inline} foto masih di dalam database (sekitar ${ukuran}), ${r.storage} sudah di Storage. Foto di dalam database membuat Bongkar Muat dan Maintenance lambat dimuat. Mode foto baru: <b>${on?'Storage (aktif)':'Database (bawaan)'}</b>${siap?'':' · Storage belum tersedia di backend ini'}.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+   <button type="button" class="btn" data-act="fotomigrasi"${siap&&r.inline?'':' disabled'}>Pindahkan ${r.inline} foto lama ke Storage</button>
+   <button type="button" class="btn ${on?'':'primary'}" data-act="fotomode" data-on="${on?0:1}"${siap?'':' disabled'}>${on?'Kembali ke mode Database':'Aktifkan Storage untuk foto baru'}</button></div>
+  <div class="note" style="margin-top:8px">Urutan aman: 1) Unduh cadangan, 2) Pindahkan foto lama (foto di dalam dokumen baru dihapus setelah file di Storage terbukti terbaca), 3) Aktifkan Storage. Bisa dibatalkan kapan saja: foto yang sudah di Storage tetap tampil.</div></div></section>`}
+async function fotoMigrasi(){
+ if(!canManage()||FOTO_JALAN)return;
+ if(!(DB&&DB.storage&&DB.storage.siap)){toast('Storage belum tersedia di backend ini.');return}
+ const r=fotoRingkas();if(!r.inline){toast('Tidak ada foto lama di database.');return}
+ if(!confirm('Pindahkan '+r.inline+' foto dari database ke Storage?\n\nFoto di dalam dokumen baru dihapus setelah file di Storage terbukti terbaca. Pastikan sudah Unduh cadangan.'))return;
+ FOTO_JALAN=true;let ok=0,gagal=0,doc=0;
+ try{
+  for(const c of ['bongkar','mtc']){
+   for(const d of (S[c]||[]).slice()){
+    const f=d.foto||[];if(!f.some(x=>x.data))continue;
+    try{
+     const baru=[];
+     for(const x of f){
+      if(!x.data){baru.push(x);continue}
+      const path=c+'/'+x.id+'.jpg';
+      try{await DB.storage.upload(path,FOTO.dataKeBlob(x.data))}catch(e){if(!/already exists|duplicate/i.test(String(e.message)))throw e}
+      const peta=await DB.storage.signedUrls([path],300);const u=peta[path];if(!u)throw new Error('Berkas belum terbaca di Storage.');
+      const rs=await fetch(u);if(!rs.ok)throw new Error('Berkas belum terbaca di Storage ('+rs.status+').');
+      const bl=await rs.blob();if(bl.size<100)throw new Error('Berkas di Storage terlalu kecil.');
+      const tanpa={...x};delete tanpa.data;baru.push({...tanpa,path});ok++;
+     }
+     await updDoc(c,d._id,{foto:baru});doc++;
+    }catch(e){gagal++;console.warn('foto '+c+' '+d._id+': '+e.message)}
+    toast('Memindahkan foto… '+ok+' berhasil'+(gagal?' · '+gagal+' dokumen dilewati':''));
+   }
+  }
+ }finally{FOTO_JALAN=false}
+ toast('Selesai: '+ok+' foto dipindah di '+doc+' dokumen'+(gagal?'; '+gagal+' dokumen dilewati (foto tetap di database)':'')+'.');renderBody();
+}
+async function fotoMode(on){
+ if(!canManage())return;
+ if(on){if(!(DB&&DB.storage&&DB.storage.siap)){toast('Storage belum tersedia di backend ini.');return}
+  try{await FOTO.coba()}catch(e){toast('Storage belum siap, tidak diaktifkan: '+(e.message||''));return}}
+ await saveSetting({fotoStorage:!!on});toast(on?'Foto baru kini disimpan di Storage.':'Foto baru kembali disimpan di database.');renderBody();
+}
 /* ---- Riwayat perubahan (audit database, khusus super admin) ---- */
 let AUDIT=null;
 async function loadAudit(){
@@ -6302,7 +6372,7 @@ async function docXlsx(m){
  if(m.signs){const per=Math.max(1,Math.floor(nc/m.signs.length));m.signs.forEach((sg,i)=>{const c0=1+i*per,c1=i===m.signs.length-1?nc:c0+per-1;const ls=String(sg).split('\n');
    mg(r,c0,r,c1);put(r,c0,ls[0],{b:true,h:'center'});mg(r+1,c0,r+1,c1);put(r+1,c0,ls.slice(1).join(' '),{sz:9,c:'FF6B7280',h:'center'});mg(r+2,c0,r+4,c1);mg(r+5,c0,r+5,c1);
    put(r+5,c0,m.names&&m.names[i]?`( ${m.names[i]} )`:'(                                        )',{h:'center'});bx(r,c0,r+5,c1)});r+=7}
- xlsxFoto(wb,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
+ m.foto=await FOTO.penuh(m.foto);xlsxFoto(wb,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  return new Uint8Array(await wb.xlsx.writeBuffer());
 }
 let PDFL=null,H2C=null;
@@ -6330,7 +6400,7 @@ async function docPdf(m){
  if(m.note){doc.setFont('helvetica','italic');doc.setFontSize(8.5);const ln=doc.splitTextToSize('Catatan: '+m.note,PW-2*M-8),h=ln.length*4+4;if(y+h>PH-60){doc.addPage();y=20}
   doc.setFillColor(255,248,230);doc.rect(M,y,PW-2*M,h,'F');doc.setFillColor(240,180,41);doc.rect(M,y,1.3,h,'F');doc.setTextColor(122,82,0);doc.text(ln,M+5,y+5);y+=h+6}
  if(m.signs){if(y>PH-56){doc.addPage();y=20}y=pdfSigns(doc,m.signs,m.names,y,th)}
- pdfFoto(doc,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
+ m.foto=await FOTO.penuh(m.foto);pdfFoto(doc,m.foto,m.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  pdfFooter(doc,m,th);
  return new Uint8Array(doc.output('arraybuffer'));
 }
@@ -6428,7 +6498,7 @@ async function sjPdf(d){
   doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...GR);if(org)doc.text(doc.splitTextToSize(sjFx(org),sw-8),cx,y+10.5,{align:'center'});
   doc.setDrawColor(120);doc.setLineWidth(.2);doc.line(cx-24,y+34,cx+24,y+34);doc.setTextColor(20);T('( '+(nm||'                                  ')+' )',cx,y+39,{align:'center'});
   if(i===2){doc.setFontSize(7.5);doc.setTextColor(...GR);T('Tanggal terima: ........................',cx,y+43.5,{align:'center'})}});
- pdfFoto(doc,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
+ d.foto=await FOTO.penuh(d.foto);pdfFoto(doc,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  pdfFooter(doc,{no:d.noSJ},th);
  return new Uint8Array(doc.output('arraybuffer'));
 }
@@ -6471,7 +6541,7 @@ async function sjXlsx(d){
  const sg=[[1,2,'Hormat kami,',KOP().nama,''],[3,6,'Pengemudi','',d.driver||''],[7,9,'Diterima oleh,',d.customer||'','']];
  sg.forEach(([c1,c2,lb,org,nm])=>{mg(r,c1,r,c2);put(r,c1,lb,{b:true,h:'center'});mg(r+1,c1,r+1,c2);put(r+1,c1,org,{sz:9,c:'FF666666',h:'center'});mg(r+2,c1,r+5,c2);mg(r+6,c1,r+6,c2);put(r+6,c1,'( '+(nm||'                              ')+' )',{h:'center'});bx(r,c1,r+6,c2)});
  mg(r+7,7,r+7,9);put(r+7,7,'Tanggal terima: ....................',{sz:8.5,c:'FF666666',h:'center'});
- xlsxFoto(wb,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
+ d.foto=await FOTO.penuh(d.foto);xlsxFoto(wb,d.foto,d.fotoJudul||'LAMPIRAN BUKTI BONGKAR MUAT');
  return new Uint8Array(await wb.xlsx.writeBuffer());
 }
 async function downloadDoc(kind,ref,fmt){
@@ -6648,6 +6718,8 @@ document.addEventListener('click',async e=>{
   case 'auditrefresh':AUDIT=null;renderBody();await loadAudit();break;
   case 'importcsv':importForm();break;
   case 'backup':closeModal();await backupData();break;
+  case 'fotomigrasi':await fotoMigrasi();break;
+  case 'fotomode':await fotoMode(ds.on==='1');break;
   case 'logout':closeModal();if(USER&&USER.signOut)await USER.signOut();break;
   case 'uedit':userForm(ds.uid);break;
   case 'upw':pwForm(ds.uid);break;

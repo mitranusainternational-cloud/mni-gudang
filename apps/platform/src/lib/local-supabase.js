@@ -192,6 +192,7 @@ export function createLocalClient() {
   if (new URLSearchParams(location.search).get('demo') === 'produksi' && !state.demoProduksi) { demoProduksi(state); state.demoProduksi = true; }
   save(state);
   const listeners = new Set(); // { table, cb }
+  const storageMem = {}; // bucket → Map(path → Blob), hanya di memori
   const pkOf = (t) => (t === 'master' ? 'key' : 'id');
   const emit = (table, eventType, row) => listeners.forEach((l) => { if (l.table === table) l.cb({ eventType, new: row, old: row, table }); });
 
@@ -358,6 +359,29 @@ export function createLocalClient() {
         }
         if (body.action === 'reset_password') return { data: { ok: true }, error: null };
         return { data: { error: 'Aksi tidak dikenal.' }, error: null };
+      },
+    },
+    // Storage tiruan di memori (bucket → path → Blob) untuk uji foto; galat bisa disuntik lewat window.__MOCK_STORAGE_FAIL.
+    storage: {
+      from(bucket) {
+        const gudang = (storageMem[bucket] ||= new Map());
+        return {
+          async upload(path, blob) {
+            if (typeof window !== 'undefined' && window.__MOCK_STORAGE_FAIL) return { data: null, error: { message: 'Storage gagal (simulasi)' } };
+            if (gudang.has(path)) return { data: null, error: { message: 'The resource already exists' } };
+            gudang.set(path, blob);
+            return { data: { path }, error: null };
+          },
+          async createSignedUrls(paths) {
+            return { data: paths.map((p) => (gudang.has(p) ? { path: p, signedUrl: URL.createObjectURL(gudang.get(p)) } : { path: p, signedUrl: null, error: 'Object not found' })), error: null };
+          },
+          async createSignedUrl(path) {
+            return gudang.has(path) ? { data: { signedUrl: URL.createObjectURL(gudang.get(path)) }, error: null } : { data: null, error: { message: 'Object not found' } };
+          },
+          async download(path) {
+            return gudang.has(path) ? { data: gudang.get(path), error: null } : { data: null, error: { message: 'Object not found' } };
+          },
+        };
       },
     },
     removeChannel(ch) { ch._l.forEach((l) => listeners.delete(l)); return Promise.resolve('ok'); },

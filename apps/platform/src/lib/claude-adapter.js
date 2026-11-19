@@ -474,6 +474,22 @@ function notifyWrite(table) {
 const DB_ADAPTER = {
   collection: (col) => makeCollection(col),
   doc: (path) => makeDoc(path),
+  // Foto di bucket privat bongkar-foto. Hanya dipakai bila super admin mengaktifkan mode Storage.
+  storage: {
+    siap: true,
+    async upload(path, blob) {
+      const { error } = await supabase.storage.from('bongkar-foto').upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+      if (error) throw new Error(error.message || 'Gagal mengunggah foto.');
+    },
+    async signedUrls(paths, ttl = 3600) {
+      const out = {};
+      if (!paths || !paths.length) return out;
+      const { data, error } = await supabase.storage.from('bongkar-foto').createSignedUrls(paths, ttl);
+      if (error) throw new Error(error.message || 'Gagal membuat tautan foto.');
+      for (const d of data || []) if (d && d.path && d.signedUrl) out[d.path] = d.signedUrl;
+      return out;
+    },
+  },
 };
 
 // ── User adapter (replaces window.claude.use('user')) ────────────────────────
