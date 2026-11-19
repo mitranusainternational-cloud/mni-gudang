@@ -3,8 +3,8 @@
 // Pemanggil harus login dan berstatus super admin aktif (public.is_admin()); selain itu ditolak.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 
-const ROLES = ['admin', 'ppic', 'gbb', 'gbj', 'logistik', 'produksi', 'viewer'];
-const MODULES = ['bahan-baku', 'barang-jadi', 'vendor', 'pengiriman', 'spk', 'bongkar-muat', 'master-data'];
+const ROLES = ['admin', 'ppic', 'produksi', 'gudang', 'gbb', 'gbj', 'logistik', 'maintenance', 'qc', 'viewer'];
+const MODULES = ['bahan-baku', 'barang-jadi', 'sparepart', 'bongkar-muat', 'vendor', 'pengiriman', 'spk', 'qc', 'maintenance', 'master-data'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CORS = {

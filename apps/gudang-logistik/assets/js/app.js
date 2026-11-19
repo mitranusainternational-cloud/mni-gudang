@@ -34,7 +34,8 @@ const I={
  'alert-circle':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
  info:'<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
  cart:'<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61l1.6-8.39H6"/>',
- tool:'<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
+ qc:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9z"/><path d="M9 14l2 2 4-4"/>',
+  tool:'<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>',
  clipboard:'<path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>',
  layers:'<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
  box:'<path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/>',
@@ -49,7 +50,7 @@ const I={
 const ic=(k,s=16)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" style="flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle">${I[k]||''}</svg>`;
 
 /* ---------- state ---------- */
-const COLS=['rm','fg','mutasi','spk','vendor','kirim','bongkar','master','mvendor','mcustomer','msupplier','marmada','rmhist','pr','opname','muser','ureq','log','uinv','mwc','produksi_log','sp','mtc'];
+const COLS=['rm','fg','mutasi','spk','vendor','kirim','bongkar','master','mvendor','mcustomer','msupplier','marmada','rmhist','pr','opname','muser','ureq','log','uinv','mwc','produksi_log','sp','mtc','qc'];
 const S={};COLS.forEach(c=>S[c]=[]);
 const loaded=new Set();
 let DB=null,USER=null,DLS=null,ME=null,CAN=true,LIVE='wait',LAST=null,C=null;
@@ -75,6 +76,8 @@ const VIEWS=[
  {id:'spk',t:'SPK',ic:'spk',sec:'SPK & Produksi'},
  {id:'mesin',t:'Produksi Hari Ini',ic:'dock'},
  {id:'produksi',t:'Analisa Produksi',ic:'chart'},
+ {id:'qc',t:'QC',ic:'qc'},
+ {id:'standar',t:'Standar & Panduan',ic:'file'},
  {id:'maintenance',t:'Maintenance',ic:'tool',sec:'Maintenance'},
  {id:'papan',t:'Papan Produksi',ic:'prod',hide:true},
  {id:'laporan-produksi',t:'Laporan Produksi',ic:'file',hide:true},
@@ -84,7 +87,7 @@ const VIEWS=[
  {id:'pengguna',t:'Pengguna & Akses',ic:'users'}
 ];
 /* modul yang menjadi dasar hak tiap tampilan; dashboard terbuka untuk semua pengguna terdaftar, tampilan tim khusus admin */
-const VIEW_MOD={'papan':'spk','mesin':'spk','laporan-produksi':'spk','bahan-baku':'bahan-baku','barang-jadi':'barang-jadi','bongkar-muat':'bongkar-muat','vendor':'vendor','pengiriman':'pengiriman','spk':'spk','produksi':'spk','sparepart':'sparepart','maintenance':'maintenance'};
+const VIEW_MOD={'qc':'qc','papan':'spk','mesin':'spk','laporan-produksi':'spk','bahan-baku':'bahan-baku','barang-jadi':'barang-jadi','bongkar-muat':'bongkar-muat','vendor':'vendor','pengiriman':'pengiriman','spk':'spk','produksi':'spk','sparepart':'sparepart','maintenance':'maintenance'};
 const ADMIN_VIEWS=['cek-data','kinerja','pengguna'];
 function viewOk(v){const id=v.id||v;
  if(!ME_P)return !['kinerja','pengguna'].includes(id);
@@ -206,6 +209,8 @@ function route(){
  $('#sub').textContent={dashboard:'Ringkasan realtime gudang, logistik, dan SPK',
   'bahan-baku':'Stok plat & material — penerimaan, pemakaian, stock opname',
   'laporan':'Ringkasan satu halaman: produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, dan kesehatan data; unduh CSV',
+  'standar':'Acuan standar cable tray dan cable ladder, toleransi, checklist QC, dan panduan per peran untuk seluruh tim',
+  'qc':'Daily Check Sheet: ukuran dan visual, hasil QC, laporan dan sertifikat untuk customer',
   'maintenance':'Perawatan dan perbaikan mesin: riwayat, jadwal rutin, frekuensi, dan sparepart yang diganti (terhubung ke Gudang Sparepart)',
   'sparepart':'Stok sparepart & consumable mesin — penerimaan, pengeluaran, stok minimum, stock opname',
   'barang-jadi':'Stok cable tray, ladder, cover & aksesoris siap kirim',
@@ -1511,6 +1516,7 @@ function spkDrawer(id){openDrawer(()=>{const s=byId('spk',id);if(!s)return null;
    <div class="dw-prog-card"><label>Progres Produksi</label><div class="dw-prog-bar"><i style="width:${pPct}%"></i></div><div class="dw-prog-pct">${pPct}%</div><div class="dw-prog-sub">${n(x.prod)} dari ${n(x.q)} item diproduksi</div></div>
    <div class="dw-prog-card"><label>${s.stokReq?'Masuk Gudang Barang Jadi':'Terkirim ke Customer'}</label><div class="dw-prog-bar${x.pK>=1?' ok':''}"><i style="width:${kPct}%"></i></div><div class="dw-prog-pct">${kPct}%</div><div class="dw-prog-sub">${n(x.kir)} dari ${n(x.q)} item ${s.stokReq?'masuk gudang':'dikirim'}</div></div>
   </div>
+  ${typeof qcSpkRingkas==='function'?qcSpkRingkas(id):''}
   ${s.alasan?`<div class="dw-note">${ic('info')} <b>Catatan:</b> ${esc(s.alasan)}</div>`:''}
   <div>
    <div class="dw-section-title">Aksi SPK</div>
@@ -1747,6 +1753,7 @@ function kirimForm(spk){
    const nopolK=getNopol(d);
    if(!nopolK&&d.status!=='Disiapkan')throw new Error('Pilih armada atau isi no polisi kendaraan.');
    const s=byId('spk',d.spk);const t=d.tgl||today();let noSJ=String(d.noSJ||'').trim();if(noSJ&&sjTaken(noSJ))throw new Error(`No SJ ${noSJ} sudah dipakai.`);if(!noSJ)noSJ=sjMniNext(t);
+   {const g=typeof qcGerbang==='function'?qcGerbang(d.spk):null;if(g&&g.wajib&&!g.ok)throw new Error(g.pesan)}
    const semua=[{spk:d.spk,s,items},...blok.map(b=>({spk:b.spk,s:byId('spk',b.spk),items:b.items}))];const stokX=semua.map(x=>({...x,dariStok:ambilUntukKirim(x.s,x.items)}));const dariStok=stokX.flatMap(x=>x.dariStok);if(dariStok.length&&!canMod('barang-jadi'))throw new Error('Surat jalan ini mengambil stok barang jadi. Akun Anda perlu hak Barang jadi untuk mencatat keluarnya stok; minta admin atau kirim tanpa stok.');
    const totFg={};for(const x of dariStok)totFg[x.fg]=(totFg[x.fg]||0)+x.q;for(const fgId of Object.keys(totFg)){const q=totFg[fgId],sisa=calc().stock.fg[fgId]||0;if(sisa<q)throw new Error('Stok fisik "'+fgLabel(byId('fg',fgId))+'" hanya '+n(sisa)+', kurang dari '+n(q)+' yang dibutuhkan semua SPK di surat jalan ini. Periksa Gudang Barang Jadi.')}
    for(const x of stokX)await addDoc('kirim',{spk:x.spk,customer:s.customer,tgl:t,noSJ,kendaraan:d.kendaraan||'',nopol:nopolK,driver:d.driver||'',status:d.status||'Disiapkan',tglTerima:d.status==='Diterima'?t:'',items:x.items,ket:d.ket||'',alamat:String(d.alamat||'').trim(),lebih:!!d.over});
@@ -3819,6 +3826,7 @@ function fgTerimaSemua(){
 }
 function fgTerimaSpk(id){
  const s=byId('spk',id);if(!s)return;
+ {const g=typeof qcGerbang==='function'?qcGerbang(id):null;if(g&&g.wajib&&!g.ok){toast(g.pesan);return}}
  if(s.status==='Draft'){toast('SPK stok ini masih Draft. Terbitkan SPK dan produksi dulu sebelum barang diterima di gudang.');return}
  if(!fgBarisTerima(s).length){toast(fgAlasanKosong(s));return}
  mvForm('fg','masuk');
@@ -5162,19 +5170,20 @@ let delArm=null;
    admin (super admin) selalu memiliki semua modul. mods = modul yang boleh DIUBAH, lihat = modul yang hanya boleh DILIHAT. */
 const ROLES={
  admin:{l:'Super Admin',d:'Semua modul dan kelola pengguna',mods:['*'],lihat:[]},
- ppic:{l:'PPIC',d:'SPK dan kirim ke vendor; melihat gudang, pengiriman, dan maintenance',mods:['spk','vendor'],lihat:['bahan-baku','barang-jadi','pengiriman','bongkar-muat','maintenance']},
- produksi:{l:'Produksi',d:'Progres produksi pada SPK; melihat vendor dan maintenance',mods:['spk'],lihat:['vendor','maintenance']},
- gudang:{l:'Gudang',d:'Semua gudang (bahan baku, barang jadi, sparepart); melihat SPK, logistik, dan maintenance',mods:['bahan-baku','barang-jadi','sparepart'],lihat:['spk','bongkar-muat','vendor','pengiriman','maintenance']},
+ ppic:{l:'PPIC',d:'SPK, kirim ke vendor, dan QC; melihat gudang, pengiriman, dan maintenance',mods:['spk','vendor','qc'],lihat:['bahan-baku','barang-jadi','pengiriman','bongkar-muat','maintenance']},
+ produksi:{l:'Produksi',d:'Progres produksi pada SPK; melihat vendor, QC, dan maintenance',mods:['spk'],lihat:['vendor','qc','maintenance']},
+ gudang:{l:'Gudang',d:'Semua gudang (bahan baku, barang jadi, sparepart); melihat SPK, logistik, dan maintenance',mods:['bahan-baku','barang-jadi','sparepart'],lihat:['spk','qc','bongkar-muat','vendor','pengiriman','maintenance']},
  gbb:{l:'Gudang Bahan Baku',d:'Khusus bahan baku dan sparepart: stok plat, terima material, pakai produksi, opname, PR; bongkar muat',mods:['bahan-baku','bongkar-muat','sparepart'],lihat:['spk','maintenance']},
- gbj:{l:'Gudang Barang Jadi',d:'Khusus barang jadi: stok, terima dari vendor, surat jalan, bongkar muat',mods:['barang-jadi','vendor','pengiriman','bongkar-muat'],lihat:['spk','maintenance']},
- logistik:{l:'Logistik',d:'Semua logistik: bongkar muat, kirim ke vendor, kirim ke customer, armada; melihat SPK dan gudang',mods:['bongkar-muat','vendor','pengiriman'],lihat:['spk','bahan-baku','barang-jadi','maintenance']},
+ gbj:{l:'Gudang Barang Jadi',d:'Khusus barang jadi: stok, terima dari vendor, surat jalan, bongkar muat',mods:['barang-jadi','vendor','pengiriman','bongkar-muat'],lihat:['spk','qc','maintenance']},
+ logistik:{l:'Logistik',d:'Semua logistik: bongkar muat, kirim ke vendor, kirim ke customer, armada; melihat SPK dan gudang',mods:['bongkar-muat','vendor','pengiriman'],lihat:['spk','qc','bahan-baku','barang-jadi','maintenance']},
  maintenance:{l:'Maintenance',d:'Catat maintenance, jadwal rutin, dan sparepart yang diganti; melihat SPK dan produksi',mods:['maintenance','sparepart'],lihat:['spk']},
+ qc:{l:'QC',d:'Pemeriksaan QC (DCS), hasil, laporan, dan sertifikat; melihat SPK, barang jadi, dan vendor',mods:['qc'],lihat:['spk','barang-jadi','vendor']},
  sales:{l:'Sales',d:'Peran lama (tidak dipakai lagi); hanya melihat SPK',mods:[],lihat:['spk']},
- viewer:{l:'Viewer',d:'Hanya melihat semua modul, tidak mencatat',mods:[],lihat:['bahan-baku','barang-jadi','sparepart','vendor','pengiriman','spk','bongkar-muat','maintenance']}
+ viewer:{l:'Viewer',d:'Hanya melihat semua modul, tidak mencatat',mods:[],lihat:['bahan-baku','barang-jadi','sparepart','vendor','pengiriman','spk','qc','bongkar-muat','maintenance']}
 };
-const MODS=[['bahan-baku','Bahan baku'],['barang-jadi','Barang jadi'],['sparepart','Sparepart'],['bongkar-muat','Bongkar muat'],['vendor','Kirim ke vendor'],['pengiriman','Kirim ke customer'],['spk','SPK & produksi'],['maintenance','Maintenance'],['master-data','Master data']];
+const MODS=[['bahan-baku','Bahan baku'],['barang-jadi','Barang jadi'],['sparepart','Sparepart'],['bongkar-muat','Bongkar muat'],['vendor','Kirim ke vendor'],['pengiriman','Kirim ke customer'],['spk','SPK & produksi'],['qc','QC'],['maintenance','Maintenance'],['master-data','Master data']];
 /* Kelompok modul (sama dengan bagian menu): Gudang, Logistik, SPK & Produksi, Maintenance, Data. Hak tetap diatur per modul; kelompok hanya merapikan tampilan dan memudahkan mengatur sekaligus. */
-const MOD_GRUP=[['Gudang',['bahan-baku','barang-jadi','sparepart']],['Logistik',['bongkar-muat','vendor','pengiriman']],['SPK & Produksi',['spk']],['Maintenance',['maintenance']],['Data',['master-data']]];
+const MOD_GRUP=[['Gudang',['bahan-baku','barang-jadi','sparepart']],['Logistik',['bongkar-muat','vendor','pengiriman']],['SPK & Produksi',['spk','qc']],['Maintenance',['maintenance']],['Data',['master-data']]];
 const MODL=Object.fromEntries(MODS);
 const presetModul=r=>{const p=ROLES[r];if(!p||p.mods[0]==='*')return {};const o={};p.lihat.forEach(m=>o[m]='lihat');p.mods.forEach(m=>o[m]='ubah');return o};
 let IS_OWNER=false,IS_EDITOR=false,ME_P=null;
@@ -5206,6 +5215,7 @@ function modOf(c,data,id,op){
  if(c==='fg')return 'barang-jadi';
  if(c==='sp')return 'sparepart';
  if(c==='mtc')return 'maintenance';
+ if(c==='qc')return 'qc';
  if(c==='mutasi'){const g=(data&&data.gudang)||(byId('mutasi',id)||{}).gudang;return g==='rm'?'bahan-baku':g==='sp'?'sparepart':'barang-jadi'}
  if(c==='spk'||c==='produksi_log')return 'spk';if(c==='vendor')return 'vendor';if(c==='kirim')return 'pengiriman';
  if(c==='bongkar')return op==='add'&&data&&data.auto?'*any':'bongkar-muat';
@@ -6238,6 +6248,321 @@ const kopFmt=k=>k.logo.indexOf('image/jpeg')>0?'JPEG':'PNG';
 /* Tiap jenis dokumen punya kode dan warna sendiri; kop (logo, nama, alamat, warna garis) sama untuk semua dan diatur di Master Data. */
 const DOCT={sjc:{k:'SJ',c:'1F3A6E',sub:'Delivery Order'},sjv:{k:'SJV',c:'C2410C',sub:'Subcontract Delivery Note'},btb:{k:'BTB',c:'0F766E',sub:'Goods Receipt Note'},lpp:{k:'LPP',c:'15803D',sub:'Production Progress Report'},kpi:{k:'KPI',c:'6D28D9',sub:'Operations KPI Report'},cek:{k:'CL',c:'B45309',sub:'Loading Checklist'},mvmasuk:{k:'IN',c:'047857',sub:'Goods Receipt'},mvkeluar:{k:'OUT',c:'B91C1C',sub:'Goods Issue'},mvopname:{k:'OPN',c:'4338CA',sub:'Stock Opname'},mvkoreksi:{k:'KOR',c:'A16207',sub:'Stock Correction'},pr:{k:'PR',c:'0369A1',sub:'Purchase Request'},ks:{k:'KS',c:'334155',sub:'Stock Card'}};
 function docTh(kind){const t=DOCT[kind]||{k:'DOK',c:rgbHex(hexRgb(KOP().warna)),sub:'Document'};return {...t,rgb:hexRgb(t.c),argb:'FF'+t.c}}
+/* ===== 21b-qc — QC (Daily Check Sheet): menunggu, inspeksi per item, hasil, laporan PDF/Excel, sertifikat lolos QC ===== */
+/* Format mengikuti DCS MNI: Standard dimension, Actual dimension before finishing (QC Proses), Actual dimension finishing dan Visual after finishing (QC Akhir),
+   Jointing fit to tray, Repaired, Judgment. Hitungan murni ada di src/lib/qc/hitung.js (window.MNIQC). Dokumen: documentation/PRD_QC.md. */
+const QCM=()=>window.MNIQC||null;
+F.qc=F.qc||{tab:'menunggu',q:'',cur:null};
+let QCW=null; /* salinan kerja dokumen yang sedang diperiksa: {spk,id,no,baris,catatan,ppic,inspector,kotor} */
+if(typeof DOCT!=='undefined'){DOCT.qc={k:'QC',c:'BE185D',sub:'Quality Control · Daily Check Sheet'};DOCT.qcs={k:'CERT',c:'65A30D',sub:'Quality Inspection Certificate'}}
+
+const qcSet=()=>(byId('master','setting')||{}).qcToleransi||{};
+const qcTol=()=>QCM().toleransiAktif(qcSet());
+const qcLap=b=>QCM().lapisanMin(b.g,(b.std||{}).t,qcSet());
+const qcTolItem=(b,k)=>QCM().tolUntuk(b,k,qcSet());
+const qcDoc=spkId=>(S.qc||[]).find(d=>d.spk===spkId)||null;
+const qcNum=v=>{if(v===''||v==null)return '';const x=Number(String(v).replace(',','.'));return Number.isFinite(x)?x:''};
+const qcFmt=v=>v===''||v==null?'':String(Math.round(Number(v)*1000)/1000).replace('.',',');
+const qcJgChip=j=>chip(j==='Belum'?'Belum diisi':j,j==='OK'?'ok':j==='NG'?'crit':j==='Belum'?'plain':'info');
+const qcStChip=s=>chip(s,s==='Selesai'?'ok':s==='Menunggu QC Akhir'?'info':s==='QC Proses berjalan'?'warn':'plain');
+const qcHasilChip=h=>chip(h,h==='Lulus'?'ok':h==='Belum lulus'?'crit':h==='Sebagian diperiksa'?'warn':'plain');
+const QC_CACAT=()=>QCM()?QCM().CACAT:[];
+
+/* Gerbang QC (bawaan MATI di versi ini supaya alur kirim yang berjalan tidak berubah; super admin menyalakannya di QC > Toleransi): bila setting qcWajib aktif, barang jadi hanya boleh masuk gudang atau dikirim setelah QC SPK itu berhasil Lulus. Setting mati = alur lama tidak berubah. */
+function qcGerbang(spkId){const wajib=(byId('master','setting')||{}).qcWajib===true&&window.__QC_WAJIB!==false;if(!wajib||!QCM())return {wajib:false,ok:true};
+ const d=qcDoc(spkId);if(!d)return {wajib:true,ok:false,hasil:'Belum diperiksa',pesan:'QC wajib: SPK ini belum diperiksa. Lakukan QC di menu QC sebelum barang jadi masuk gudang atau dikirim.'};
+ const rk=QCM().ringkasQC(d,qcSet());return rk.hasil==='Lulus'?{wajib:true,ok:true,hasil:rk.hasil}:{wajib:true,ok:false,hasil:rk.hasil,pesan:'QC wajib: hasil QC SPK ini "'+rk.hasil+'". Barang jadi hanya boleh masuk gudang atau dikirim setelah QC Lulus.'}}
+/* Ringkasan QC di rincian SPK */
+function qcSpkRingkas(spkId){if(!QCM())return '';const d=qcDoc(spkId);const g=qcGerbang(spkId);
+ if(!d)return `<div class="dw-note qc-dw">${ic('info')} <b>QC:</b> belum diperiksa${g.wajib?' · <b>QC wajib</b> sebelum barang jadi masuk gudang atau dikirim':''}. <button type="button" class="btn sm" data-act="qcbuka" data-spk="${spkId}">Buka QC</button></div>`;
+ const rk=QCM().ringkasQC(d,qcSet());return `<div class="dw-note qc-dw">${ic('info')} <b>QC ${esc(d.no||'')}:</b> ${qcHasilChip(rk.hasil)} ${rk.pctLulus==null?'':n(rk.pctLulus)+'% lulus · '}${n(rk.qtyLulus)}/${n(rk.qty)} pcs · ${esc(QCM().statusQC(d))}. <button type="button" class="btn sm" data-act="qcbuka" data-spk="${spkId}">Buka QC</button></div>`}
+
+/* SPK yang masuk daftar QC: sudah ada hasil produksi atau sudah punya dokumen QC */
+function qcSpkList(){const c=(typeof ready==='function'&&ready())?calc():null;if(!c||!QCM())return [];const tol=qcSet();
+ return S.spk.filter(s=>s.status!=='Draft'&&s.status!=='Batal').map(s=>{const x=c.spk[s._id],doc=qcDoc(s._id),prod=x?x.prod:0;
+  const baris=doc?doc.baris:QCM().barisDariSpk(s);const rk=QCM().ringkasQC({baris},tol);const st=doc?QCM().statusQC(doc):'Menunggu QC Proses';
+  return {s,doc,prod,q:x?x.q:0,rk,st}}).filter(r=>r.doc||r.prod>0).sort((a,b)=>(a.st==='Selesai')-(b.st==='Selesai')||String(a.s.due||'9').localeCompare(String(b.s.due||'9')))}
+
+function qcFilter(rows){const q=String(F.qc.q||'').trim().toLowerCase();
+ return rows.filter(r=>(F.qc.tab==='semua'||(F.qc.tab==='selesai')===(r.st==='Selesai'))&&(!q||`${r.s.no} ${r.s.customer} ${r.s.po||''}`.toLowerCase().includes(q)))}
+
+T.qc=()=>{if(F.qc.cur){const s=byId('spk',F.qc.cur);return `<button class="btn" data-act="qckembali">← Kembali</button><b class="qc-ttl">SPK ${esc(String(s?s.no:''))} · ${esc(s?s.customer:'')}</b><span class="grow"></span>${qcDoc(F.qc.cur)?`<button class="btn" data-act="qcpdf" data-spk="${F.qc.cur}">PDF</button><button class="btn" data-act="qcxlsx" data-spk="${F.qc.cur}">Excel</button>${(qcModel(F.qc.cur)||{rk:{}}).rk.sertifikat&&((qcDoc(F.qc.cur)||{}).foto||[]).length?`<button class="btn ok" data-act="qccert" data-spk="${F.qc.cur}">Sertifikat</button>`:''}`:''}${canMod('qc')?'<button class="btn primary" data-act="qcsimpan">Simpan hasil QC</button>':''}`}
+ return `${segBtns('qc','tab',[['menunggu','Menunggu'],['selesai','Selesai'],['semua','Semua']])}<input class="inp search" id="q-qc" placeholder="Cari SPK, customer, PO…" value="${esc(F.qc.q)}" data-act="q" data-view="qc"><span class="grow"></span>${canMod('qc')?'<button class="btn" data-act="qctol" title="Toleransi ukuran untuk judgment otomatis">Toleransi</button>':''}`};
+
+/* ---------- daftar dan ringkasan ---------- */
+B.qc=()=>{if(!QCM())return empty('Modul QC belum siap','Muat ulang halaman.');if(F.qc.cur)return qcInspeksiHtml();
+ const all=qcSpkList(),rows=qcFilter(all);const sel=all.filter(r=>r.st==='Selesai'),men=all.filter(r=>r.st!=='Selesai');
+ const qty=sel.reduce((a,r)=>a+r.rk.qty,0),lulus=sel.reduce((a,r)=>a+r.rk.qtyLulus,0),fpy=qty?Math.round(lulus/qty*1000)/10:null;
+ const cacat=Object.fromEntries(QC_CACAT().map(([k])=>[k,0]));all.forEach(r=>QC_CACAT().forEach(([k])=>{cacat[k]+=r.rk.perCacat[k]||0}));const cacatMaks=Math.max(1,...Object.values(cacat));
+ const ng=[];all.forEach(r=>r.rk.perBaris.forEach((h,i)=>{if(h.judgment==='NG'){const b=(r.doc?r.doc.baris:[])[i]||{};ng.push({r,b,h})}}));
+ const kpis=`<div class="kpi-row qc-kpis">${kpiA('','Menunggu QC',n(men.length),'SPK perlu diperiksa')}${kpiA('ok','Selesai diperiksa',n(sel.length),'SPK dengan hasil QC')}${kpiA(fpy==null?'':fpy>=95?'ok':fpy>=85?'warn':'crit','Persentase lulus',fpy==null?'–':n(fpy)+'%','qty lulus dari qty diperiksa (SPK selesai)')}${kpiA(ng.length?'crit':'','Item NG',n(ng.length),ng.length?'perlu rework dan periksa ulang':'tidak ada')}</div>`;
+ const kartu=rows.length?rows.map(r=>qcKartuSpk(r)).join(''):empty(F.qc.tab==='selesai'?'Belum ada hasil QC':'Tidak ada yang menunggu QC','SPK muncul di sini setelah ada hasil produksi.');
+ const ring=`<section class="panel g-card"><header><h2>Persentase lulus (FPY)</h2><span class="hint">SPK yang QC-nya selesai</span></header><div class="pbody">${fpy==null?`<div class="g-empty"><b>Belum ada data</b><span>Cincin muncul setelah ada SPK yang selesai diperiksa.</span></div>`:`<div class="g-ring-w"><div class="g-ring ${fpy>=95?'ok':fpy>=85?'warn':'crit'}" style="--p:${Math.max(0,Math.min(100,fpy))}"><b>${n(fpy)}%</b><small>lulus</small></div><div class="g-leg"><div><span>Qty diperiksa</span><b>${n(qty)}</b></div><div><span>Qty lulus</span><b>${n(lulus)}</b></div><div><span>Cacat tercatat</span><b>${n(Object.values(cacat).reduce((a,x)=>a+x,0))}</b></div></div></div>`}</div></section>`;
+ const par=`<section class="panel g-card"><header><h2>Jenis cacat</h2><span class="hint">pcs bercacat (Pareto)</span></header><div class="pbody">${Object.values(cacat).every(x=>!x)?`<div class="g-empty"><b>Tidak ada cacat tercatat</b><span>Grafik muncul bila ada cacat visual.</span></div>`:`<div class="qc-par">${QC_CACAT().map(([k,l])=>[k,l,cacat[k]]).sort((a,b)=>b[2]-a[2]).map(([k,l,v])=>`<div><span>${esc(l)}</span><i style="width:${Math.round(v/cacatMaks*100)}%"></i><b>${n(v)}</b></div>`).join('')}</div>`}</div></section>`;
+ const perhatian=ng.length?`<section class="panel g-card"><header><h2>Perlu perhatian</h2><span class="hint">item NG</span></header><div class="pbody"><div class="qc-ng">${ng.slice(0,6).map(x=>`<button type="button" data-act="qcperiksa" data-spk="${x.r.s._id}"><b>${esc(x.b.d||'')}</b><span>SPK ${esc(String(x.r.s.no))} · ${x.h.luar.length?'ukuran di luar toleransi ('+x.h.luar.map(l=>(l.k==='l'?'L/R':l.k.toUpperCase())+' '+(l.sel>0?'+':'')+l.sel).join(', ')+')':x.h.sisaCacat>0?'cacat belum diperbaiki ('+x.h.sisaCacat+')':'jointing tidak fit'}</span></button>`).join('')}</div></div></section>`:'';
+ return `<div class="qc">${kpis}<div class="qc-grid"><section class="qc-list">${kartu}</section><aside class="qc-side">${ring}${par}${perhatian}</aside></div></div>`};
+
+function qcKartuSpk(r){const {s,doc,rk,st}=r;const pct=rk.n?Math.round(rk.periksa/rk.n*100):0;
+ return `<article class="qc-card" data-spk="${s._id}"><header><div><b>SPK ${esc(String(s.no))}</b><span>${esc(s.customer||'')}${s.po?' · PO '+esc(s.po):''}</span></div>${qcStChip(st)}</header>
+  <div class="qc-meter" role="img" aria-label="${rk.periksa} dari ${rk.n} item diperiksa"><i style="width:${pct}%"></i></div>
+  <div class="qc-meta"><span>${rk.periksa}/${rk.n} item diperiksa</span><span>${n(rk.qtyLulus)} / ${n(rk.qty)} pcs lulus</span><span>${n(rk.tonaseLulus)} kg lulus</span>${doc?qcHasilChip(rk.hasil):''}</div>
+  <footer>${canMod('qc')?`<button class="btn primary" data-act="qcperiksa" data-spk="${s._id}">${doc?'Lanjut periksa':'Mulai periksa'}</button>`:`<button class="btn" data-act="qcperiksa" data-spk="${s._id}">Lihat</button>`}${doc?`<button class="btn" data-act="qcpdf" data-spk="${s._id}">PDF</button><button class="btn" data-act="qcxlsx" data-spk="${s._id}">Excel</button>${rk.sertifikat&&doc.foto&&doc.foto.length?`<button class="btn ok" data-act="qccert" data-spk="${s._id}">Sertifikat</button>`:''}`:''}</footer></article>`}
+
+/* ---------- inspeksi per item ---------- */
+function qcBuka(spkId){const s=byId('spk',spkId);if(!s||!QCM())return;const d=qcDoc(spkId);
+ const dasar=QCM().barisDariSpk(s);
+ const baris=d&&Array.isArray(d.baris)?dasar.map((b,i)=>{const o=(d.baris||[]).find(x=>x.ix===b.ix&&x.d===b.d)||(d.baris||[])[i]||{};return {...b,proses:{...(o.proses||{})},akhir:{...(o.akhir||{})},visual:{...(o.visual||{})},lapisan:o.lapisan==null?'':o.lapisan,jointing:o.jointing||'',repaired:o.repaired||0,sesuaiStandar:!!o.sesuaiStandar,ket:o.ket||''}}):dasar;
+ QCW={spk:spkId,id:d?d._id:null,no:d?d.no:'',baris,foto:d&&Array.isArray(d.foto)?d.foto.map(x=>({...x})):[],catatan:d?d.catatan||'':'',ppic:d?d.ppic||'':'',inspector:d?d.inspector||'':(uname(ME)||String(ME||'')),kotor:false};
+ F.qc.cur=spkId;renderTools();renderBody()}
+
+function qcInspeksiHtml(){const w=QCW;if(!w)return empty('Tidak ada pemeriksaan terbuka','Pilih SPK dari daftar.');const s=byId('spk',w.spk);if(!s)return empty('SPK tidak ditemukan','Kembali ke daftar.');
+ const bisa=canMod('qc');let g='';
+ const kartu=w.baris.map((b,i)=>{const sec=b.g!==g?`<h4 class="qc-sec">${esc(b.g||'Tanpa judul section')}</h4>`:'';g=b.g;return sec+qcKartuItem(b,i,bisa)}).join('');
+ const rk=QCM().ringkasQC({baris:w.baris},qcSet());
+ return `<div class="qc-ins"><section class="panel qc-head"><div class="pbody"><div class="qc-hg"><div><span>Customer</span><b>${esc(s.customer||'-')}</b></div><div><span>PO / SO</span><b>${esc(s.po||'-')}</b></div><div><span>SPK</span><b>${esc(String(s.no))}</b></div><div><span>Dokumen QC</span><b>${esc(w.no||'(dibuat saat disimpan)')}</b></div><div><span>Inspector</span><b>${esc(w.inspector||'-')}</b></div></div>
+  <div class="qc-note">Standar terisi dari SPK. Isi hanya angka terukur dan jumlah cacat bila ada. <b>Sesuai standar</b> dipakai bila pemeriksaan visual saja dan tercatat sebagai "tanpa angka ukur". Judgment dihitung otomatis dari toleransi (${esc(QCM().acuanToleransi(qcSet()).angka)}; acuan: ${esc(QCM().acuanToleransi(qcSet()).label)}).</div>
+  ${bisa?`<div class="qc-hact"><button type="button" class="btn" data-act="qcsemua">Semua item sesuai standar</button></div>`:''}</div></section>
+  <div class="qc-its">${kartu}</div>
+  <section class="panel qc-foot"><div class="pbody">${qcFotoBlok(-1,!bisa)}<div class="qc-fg"><label>Nama PPIC (tanda tangan)<input class="inp" data-qcf="ppic" value="${esc(w.ppic)}" ${bisa?'':'disabled'} placeholder="mis. nama PPIC"></label><label>Catatan<input class="inp" data-qcf="catatan" value="${esc(w.catatan)}" ${bisa?'':'disabled'} placeholder="opsional"></label></div></div></section>
+  <div class="qc-sum" id="qc-sum">${qcSumHtml(rk)}</div></div>`}
+
+function qcSumHtml(rk){const nf=QCW&&QCW.foto?QCW.foto.length:0;return `<div class="qc-sum-in"><div class="${nf?'':'warn'}"><b>${nf}</b><span>foto bukti</span></div><div><b>${rk.periksa}/${rk.n}</b><span>item diperiksa</span></div><div><b>${rk.ok+rk.repair}</b><span>OK</span></div><div class="${rk.ng?'bad':''}"><b>${rk.ng}</b><span>NG</span></div><div><b>${rk.pctLulus==null?'–':n(rk.pctLulus)+'%'}</b><span>lulus</span></div><div><b>${n(rk.tonaseLulus)}</b><span>kg lulus</span></div><div class="qc-sum-h">${qcHasilChip(rk.hasil)}</div></div>`}
+
+function qcInput(path,ix,val,dis){const [g,k]=path.split('.');const b=QCW.baris[ix];const v=k?(b[g]||{})[k]:b[g];
+ return `<input class="inp num" type="number" step="any" min="0" inputmode="decimal" data-qc="${path}" data-ix="${ix}" value="${v===''||v==null?'':esc(String(v))}" ${dis?'disabled':''} aria-label="${esc(val)}">`}
+
+function qcKartuItem(b,i,bisa){const dis=!bisa;const st=b.std||{};const tol=qcSet();const dim=(tahap,lb)=>`<div class="qc-grp"><h5>${lb}</h5><div class="qc-in4">${['t','w','h','l'].map(k=>`<label><span>${QCM().LABEL_UKUR[k]}</span>${qcInput(tahap+'.'+k,i,QCM().LABEL_UKUR[k]+' '+lb,dis)}<em class="dv" data-dv="${tahap}.${k}"></em></label>`).join('')}</div></div>`;
+ return `<article class="qc-it" data-ix="${i}"><header><div><b>${esc(b.d)}</b><span>${n(b.q)} ${esc(b.u||'')}${b.w?` · ${qcFmt(b.w)} kg/pcs`:''}</span></div><span class="qc-jg" data-jg>${qcJgChip(QCM().judgmentBaris(b,tol).judgment)}</span></header>
+  <div class="qc-std"><span>Standar</span>${['t','w','h','l'].map(k=>`<i>${QCM().LABEL_UKUR[k]} <b>${st[k]==null?'–':qcFmt(st[k])}</b></i>`).join('')}</div>
+  ${dim('proses','Sebelum finishing (QC Proses)')}${dim('akhir','Setelah finishing (QC Akhir)')}
+  <div class="qc-grp"><h5>Visual setelah finishing · jumlah pcs bercacat</h5><div class="qc-vis">${QC_CACAT().map(([k,l])=>`<label><span>${esc(l)}</span>${qcInput('visual.'+k,i,l,dis)}</label>`).join('')}</div></div>
+  ${qcLap(b)?`<div class="qc-grp"><h5>Tebal lapisan galvanis (mikron) · minimum rata-rata ${qcLap(b).min} mikron (${esc(qcLap(b).sumber)})</h5><div class="qc-in4"><label><span>Lapisan (µm)</span>${qcInput('lapisan',i,'Tebal lapisan mikron',dis)}<em class="dv" data-dv="lap"></em></label></div></div>`:''}
+  ${qcFotoBlok(i,dis)}
+  <div class="qc-row"><div class="qc-j"><span>Jointing fit to tray</span><div class="seg"><button type="button" data-act="qcjoint" data-ix="${i}" data-v="Ya" class="${b.jointing==='Ya'?'on':''}" ${dis?'disabled':''}>Ya</button><button type="button" data-act="qcjoint" data-ix="${i}" data-v="Tidak" class="${b.jointing==='Tidak'?'on':''}" ${dis?'disabled':''}>Tidak</button></div></div><label class="qc-rp"><span>Repaired (pcs)</span>${qcInput('repaired',i,'Repaired',dis)}</label><button type="button" class="btn sm ${b.sesuaiStandar?'on':''}" data-act="qcstd" data-ix="${i}" ${dis?'disabled':''} aria-pressed="${!!b.sesuaiStandar}">Sesuai standar</button></div></article>`}
+
+/* Foto bukti: tiap item (ix >= 0) dan foto umum (ix = -1). Disimpan terkompres di dokumen QC beserta waktu dan pengambilnya, dilampirkan pada laporan dan sertifikat. */
+const QC_FOTO={maks:960,mutu:.62,perItem:4,perDok:24};
+function qcFotoThumbs(ix){const list=(QCW&&QCW.foto||[]).filter(x=>x.ix===ix);const bisa=canMod('qc');
+ return list.map(x=>`<figure class="qc-th"><button type="button" class="qc-th-i" data-act="qcfotobuka" data-fid="${x.id}" aria-label="Lihat foto"><img src="${x.data}" alt="Foto bukti QC" loading="lazy"></button>${bisa?`<button type="button" class="qc-th-x" data-act="qcfotodel" data-fid="${x.id}" aria-label="Hapus foto">×</button>`:''}<figcaption>${esc(fdp2(String(x.at).slice(0,10)))} ${esc(String(x.at).slice(11,16))}</figcaption></figure>`).join('')}
+function qcFotoBlok(ix,dis){const judul=ix<0?'Foto umum (barang jadi, penandaan, lapisan, kemasan)':'Foto bukti item';const n0=(QCW&&QCW.foto||[]).filter(x=>x.ix===ix).length;
+ return `<div class="qc-grp qc-foto"><h5>${judul} · <span data-nfoto="${ix}">${n0}</span></h5><div class="qc-fotos" id="qc-fotos-${ix<0?'u':ix}">${qcFotoThumbs(ix)}</div>${dis?'':`<label class="btn sm qc-fbtn">Tambah foto<input type="file" accept="image/*" capture="environment" multiple hidden data-qcfoto="${ix}"></label>`}</div>`}
+function qcFotoRender(ix){const box=document.getElementById('qc-fotos-'+(ix<0?'u':ix));if(box)box.innerHTML=qcFotoThumbs(ix);const c=document.querySelector('[data-nfoto="'+ix+'"]');if(c)c.textContent=(QCW.foto||[]).filter(x=>x.ix===ix).length;
+ const sm=document.getElementById('qc-sum');if(sm)sm.innerHTML=qcSumHtml(QCM().ringkasQC({baris:QCW.baris},qcSet()))}
+async function qcFotoTambah(ix,files){if(!QCW)return;const ada=QCW.foto.filter(x=>x.ix===ix).length;
+ if(QCW.foto.length+files.length>QC_FOTO.perDok){toast('Maksimal '+QC_FOTO.perDok+' foto per dokumen QC.');return}
+ if(ix>=0&&ada+files.length>QC_FOTO.perItem){toast('Maksimal '+QC_FOTO.perItem+' foto per item.');return}
+ toast('Memproses '+files.length+' foto…');
+ try{for(const fl of files){const x=await FOTO.baca(fl,QC_FOTO.maks,QC_FOTO.mutu);QCW.foto.push({id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ix,data:x.data,w:x.w,h:x.h,at:new Date().toISOString(),by:ME||null,ket:'',cetak:true})}}catch(e){toast(e.message||'Gagal memproses foto.')}
+ QCW.kotor=true;qcFotoRender(ix);toast('Foto ditambahkan. Tekan Simpan hasil QC untuk menyimpan.')}
+const qcFotoCetak=d=>((d&&d.foto)||[]).filter(x=>x.data&&x.cetak!==false).map(x=>({...x,ket:(x.ix>=0?((d.baris||[])[x.ix]||{}).d:'Foto umum')+(x.ket?' · '+x.ket:'')}));
+
+function qcRefreshItem(ix){const b=QCW.baris[ix],h=QCM().judgmentBaris(b,qcSet()),card=document.querySelector(`.qc-it[data-ix="${ix}"]`);if(!card)return;
+ const j=card.querySelector('[data-jg]');if(j)j.innerHTML=qcJgChip(h.judgment);card.classList.toggle('ng',h.judgment==='NG');
+ const tol=qcSet();['proses','akhir'].forEach(t=>['t','w','h','l'].forEach(k=>{const e=card.querySelector(`[data-dv="${t}.${k}"]`),inp=card.querySelector(`[data-qc="${t}.${k}"]`);if(!e)return;const x=QCM().nilaiUkur(b[t][k],b.std[k],qcTolItem(b,k));e.textContent=x.sel==null?'':(x.sel>0?'+':'')+qcFmt(x.sel);e.className='dv'+(x.ok===false?' bad':x.ok?' ok':'');if(inp)inp.classList.toggle('bad',x.ok===false)}));
+ {const li=card.querySelector('[data-qc="lapisan"]');if(li)li.classList.toggle('bad',h.luar.some(x=>x.k==='lap'));const dl=card.querySelector('[data-dv="lap"]');if(dl){const x=h.luar.find(y=>y.k==='lap');dl.textContent=x?(x.sel>0?'+':'')+qcFmt(x.sel)+' dari min':(li&&li.value!==''?'sesuai':'');dl.className='dv'+(x?' bad':(li&&li.value!==''?' ok':''))}}
+ card.querySelectorAll('[data-act="qcjoint"]').forEach(x=>x.classList.toggle('on',x.dataset.v===b.jointing));const sb=card.querySelector('[data-act="qcstd"]');if(sb){sb.classList.toggle('on',!!b.sesuaiStandar);sb.setAttribute('aria-pressed',String(!!b.sesuaiStandar))}
+ const sm=document.getElementById('qc-sum');if(sm)sm.innerHTML=qcSumHtml(QCM().ringkasQC({baris:QCW.baris},tol))}
+
+async function qcSimpan(){const w=QCW;if(!w)return;const s=byId('spk',w.spk);if(!s)return;const tol=qcSet();
+ const rk=QCM().ringkasQC({baris:w.baris},tol),st=QCM().statusQC({baris:w.baris});
+ const data={spk:w.spk,baris:w.baris,status:st,hasil:rk.hasil,tgl:today(),inspector:w.inspector||uname(ME)||String(ME||''),ppic:w.ppic||'',catatan:w.catatan||'',foto:w.foto||[],ringkas:{pctLulus:rk.pctLulus,qtyLulus:rk.qtyLulus,qty:rk.qty,tonaseLulus:rk.tonaseLulus,ng:rk.ng}};
+ const ada=w.id||(qcDoc(w.spk)||{})._id;
+ try{if(ada){await updDoc('qc',ada,data)}else{data.no=QCM().nomorQC((S.qc||[]).map(d=>d.no),today());const r=await addDoc('qc',data);w.id=r&&r.id;w.no=data.no}
+  w.kotor=false;renderTools();toast(`Hasil QC tersimpan · ${rk.hasil}${rk.pctLulus!=null?' · '+n(rk.pctLulus)+'% lulus':''}`);renderBody()}catch(e){toast(e.message||'Gagal menyimpan hasil QC')}}
+
+function qcTolForm(){const t=qcTol(),pr=qcSet().profil||'mni',P=QCM().PROFIL_TOLERANSI;
+ openModal('Toleransi QC (mm)',fld('Acuan',`<select class="sel" name="profil" id="m-qcprofil">${Object.entries(P).map(([k,v])=>`<option value="${k}" ${k===pr?'selected':''}>${esc(v.label)}</option>`).join('')}</select>`,true)+
+  `<div class="note full" id="m-qcsumber">${esc((P[pr]||P.mni).sumber)}</div>`+
+  fld('Standar lapisan galvanis',`<select class="sel" name="stdlap"><option value="astm" ${qcSet().stdLapisan!=='iso'?'selected':''}>ASTM A123</option><option value="iso" ${qcSet().stdLapisan==='iso'?'selected':''}>EN ISO 1461:2022</option></select>`,true)+
+  fld('Tebal (Thickness) ±',inp('t',qcFmt(t.t),'text','inputmode="decimal"'))+fld('W ±',inp('w',qcFmt(t.w),'text','inputmode="decimal"'))+fld('H ±',inp('h',qcFmt(t.h),'text','inputmode="decimal"'))+fld('L / R ±',inp('l',qcFmt(t.l),'text','inputmode="decimal"'))+`<label class="ck full"><input type="checkbox" name="qcwajib" ${(byId('master','setting')||{}).qcWajib===true?'checked':''}> QC wajib: barang jadi hanya boleh masuk gudang atau dikirim setelah hasil QC Lulus</label>`+`<div class="note full">Dipakai untuk judgment otomatis dan dicetak di dokumen QC beserta acuannya. Angka di luar acuan tercatat perlu dikonfirmasi tim QC sesuai standar customer.</div>`,
+ async d=>{const v=k=>{const x=qcNum(d[k]);if(x===''||x<0)throw new Error('Isi angka toleransi yang valid.');return x};await saveSetting({qcToleransi:{profil:d.profil,stdLapisan:d.stdlap==='iso'?'iso':'astm',t:v('t'),w:v('w'),h:v('h'),l:v('l')},qcWajib:!!d.qcwajib});toast('Toleransi disimpan');renderBody()},
+ {submit:'Simpan',done:' ',mount:f=>{const s=f.querySelector('#m-qcprofil');s.addEventListener('change',()=>{const p=P[s.value];document.getElementById('m-qcsumber').textContent=p.sumber;if(p.w!=null){['t','w','h','l'].forEach(k=>{f[k].value=qcFmt(p[k])})}})}})}
+
+/* ---------- dokumen: Laporan Hasil QC (DCS) dan Sertifikat Lolos QC ---------- */
+function qcModel(spkId){const s=byId('spk',spkId),d=qcDoc(spkId);if(!s||!d)return null;return {s,d,rk:QCM().ringkasQC(d,qcSet()),tol:qcTol()}}
+const qcTeksTebal=b=>{const t=b.std&&b.std.t;return t!=null?' · t '+qcFmt(t)+' mm':''};
+const qcVal=(b,t,k)=>{const v=(b[t]||{})[k];return v===''||v==null?'':Number(v)};
+
+async function qcPdf(spkId,cert){const m=qcModel(spkId);if(!m)return null;const {s,d,rk}=m;const jsPDF=await loadPdf();
+ if(cert){const th=docTh('qcs');const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});const PW=doc.internal.pageSize.getWidth(),M=14;
+  let y=pdfKop(doc,th);y=pdfTitle(doc,{title:'SERTIFIKAT LOLOS QC',no:d.no,date:d.tgl},th,y);
+  doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(40);const para=doc.splitTextToSize(sjFx(`Dengan ini ${KOP().nama} menyatakan bahwa barang berikut telah melalui pemeriksaan mutu (Daily Check Sheet) dan dinyatakan LULUS QC. Hasil pemeriksaan ukuran dan visual tercatat pada Laporan Hasil QC nomor ${d.no||'-'}.`),PW-2*M);doc.text(para,M,y+2);y+=para.length*4.6+6;
+  y=pdfMeta(doc,[['Customer',s.customer||'-'],['No PO / SO',s.po||'-'],['No SPK',s.nomor||String(s.no)],['Tanggal QC',tglLong(d.tgl)],['Nomor Laporan QC',d.no||'-'],['Inspector',d.inspector||'-'],['Material',QCM().standarMaterial(s.material)||'-'],['Merek / pabrikan',KOP().nama+' (MNI Tray)'],['Acuan toleransi',QCM().acuanToleransi(qcSet()).label+' · '+QCM().acuanToleransi(qcSet()).angka]],th,y);
+  const body=(d.baris||[]).map((b,i)=>{const h=rk.perBaris[i];return [String(i+1),sjFx(b.d)+sjFx(qcTeksTebal(b)),String(b.q),sjFx(b.u||''),h.qtyLulus&&b.w?qcFmt(Math.round(h.qtyLulus*b.w*100)/100):'-',sjFx([QCM().penandaanItem(b.g,b.d).finishing,QCM().penandaanItem(b.g,b.d).ventilasi].filter(Boolean).join(' · ')||'-'),h.judgment==='Belum'?'-':sjFx(h.judgment)]});
+  doc.autoTable({startY:y,head:[['No','Nama Barang','Qty','Satuan','Tonase lulus (kg)','Penandaan (NEMA 6.1.2)','Hasil']],body,theme:'grid',styles:{fontSize:8.4,cellPadding:2,lineColor:[225,229,237],lineWidth:.15,textColor:[31,41,55]},headStyles:{fillColor:th.rgb,textColor:255,halign:'center'},columnStyles:{0:{cellWidth:9,halign:'center'},2:{cellWidth:13,halign:'right'},3:{cellWidth:16,halign:'center'},4:{cellWidth:26,halign:'right'},5:{cellWidth:52,halign:'left'},6:{cellWidth:22,halign:'center'}},margin:{left:M,right:M}});
+  y=doc.lastAutoTable.finalY+6;doc.setFillColor(...tint(th.rgb,.1));doc.setDrawColor(...tint(th.rgb,.45));doc.roundedRect(M,y,PW-2*M,16,2,2,'FD');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...th.rgb);
+  doc.text(sjFx(`HASIL: LULUS · ${n(rk.qtyLulus)} dari ${n(rk.qty)} pcs · ${rk.pctLulus==null?'-':n(rk.pctLulus)+'%'} lulus · tonase lulus ${n(rk.tonaseLulus)} kg`),M+4,y+9.7);y+=22;
+  if(y>250){doc.addPage();y=20}y=pdfSigns(doc,['Inspector QC','Disetujui oleh\nPPIC'],[d.inspector,d.ppic],y,th);pdfFoto(doc,qcFotoCetak(d),'LAMPIRAN FOTO QC · '+(d.no||'')+' · SPK '+s.no);pdfFooter(doc,{no:d.no},th);return new Uint8Array(doc.output('arraybuffer'))}
+ const th=docTh('qc');const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});const PW=doc.internal.pageSize.getWidth(),M=10;
+ let y=pdfKop(doc,th);y=pdfTitle(doc,{title:'LAPORAN HASIL QC (DCS)',no:d.no,date:d.tgl},th,y);
+ const ac=QCM().acuanToleransi(qcSet());y=pdfMeta(doc,[['Customer',s.customer||'-'],['No PO / SO',s.po||'-'],['No SPK',s.nomor||String(s.no)],['Hasil QC',rk.hasil+(rk.pctLulus!=null?' · '+n(rk.pctLulus)+'% lulus':'')],['Material',QCM().standarMaterial(s.material)||'-'],['Toleransi (acuan '+ac.label+')',ac.angka]],th,y);
+ doc.setFont('helvetica','normal');doc.setFontSize(7.2);doc.setTextColor(110);doc.text('Legend:  W = Wide (mm)   H = Height (mm)   L / R = Length / Radius (mm)   ·   angka merah = di luar toleransi   ·   "std" = dinyatakan sesuai standar tanpa angka ukur',M,y-2);
+ const L=['T','W','H','L/R'];const head=[[{content:'No',rowSpan:2},{content:'Description',rowSpan:2},{content:'Qty',rowSpan:2},{content:'Sat',rowSpan:2},{content:'STANDARD DIMENSION',colSpan:4},{content:'ACTUAL BEFORE FINISHING',colSpan:4},{content:'ACTUAL FINISHING',colSpan:4},{content:'VISUAL AFTER FINISHING (pcs)',colSpan:6},{content:'Lapisan (µm)',rowSpan:2},{content:'Jointing fit',rowSpan:2},{content:'Repaired',rowSpan:2},{content:'Judgment',rowSpan:2}],[...L,...L,...L,...QC_CACAT().map(c=>c[1])]];
+ const body=[];let g='';const salah=new Set();let nomor=0;
+ (d.baris||[]).forEach((b,i)=>{if(b.g!==g){g=b.g;body.push([{content:sjFx(g||'-'),colSpan:26,styles:{fontStyle:'bold',fillColor:tint(th.rgb,.12),textColor:th.rgb,halign:'left'}}])}
+  const h=rk.perBaris[i];const row=[String(++nomor),sjFx(b.d),String(b.q),sjFx(b.u||'')];['t','w','h','l'].forEach(k=>row.push(b.std&&b.std[k]!=null?qcFmt(b.std[k]):'-'));
+  ['proses','akhir'].forEach(t=>['t','w','h','l'].forEach(k=>{const v=qcVal(b,t,k);row.push(v===''?(b.sesuaiStandar?'std':''):qcFmt(v));if(h.luar.some(x=>x.tahap===t&&x.k===k))salah.add(body.length+':'+(row.length-1))}));
+  QC_CACAT().forEach(([k])=>{const v=(b.visual||{})[k];row.push(v===''||v==null?(b.sesuaiStandar?'std':''):String(v))});row.push(b.lapisan===''||b.lapisan==null?(qcLap(b)?'min '+qcLap(b).min:''):qcFmt(b.lapisan));if(h.luar.some(x=>x.k==='lap'))salah.add(body.length+':'+(row.length-1));row.push(b.jointing||(b.sesuaiStandar?'std':''),b.repaired?String(b.repaired):'',h.judgment==='Belum'?'':sjFx(h.judgment));body.push(row)});
+ const cw=[7,50,10,9,...Array(12).fill(8.6),...Array(6).fill(9.2),11,13,13,19];const tot=cw.reduce((a,x)=>a+x,0),av=PW-2*M;const cs={};cw.forEach((x,i)=>{cs[i]={cellWidth:x/tot*av,halign:i===1?'left':'center'}});
+ doc.autoTable({startY:y,head,body,theme:'grid',margin:{left:M,right:M},styles:{fontSize:6.8,cellPadding:{top:1.6,bottom:1.6,left:1,right:1},lineColor:[200,206,216],lineWidth:.15,textColor:[31,41,55],overflow:'linebreak',valign:'middle'},headStyles:{fillColor:th.rgb,textColor:255,halign:'center',fontStyle:'bold',fontSize:6.6},columnStyles:cs,
+  didParseCell:h=>{if(h.section==='body'&&salah.has(h.row.index+':'+h.column.index)){h.cell.styles.textColor=[185,28,28];h.cell.styles.fontStyle='bold'}if(h.section==='body'&&h.column.index===25){const v=String(h.cell.raw||'');if(v==='NG'){h.cell.styles.textColor=[185,28,28];h.cell.styles.fontStyle='bold'}else if(v){h.cell.styles.textColor=[21,128,61];h.cell.styles.fontStyle='bold'}}}});
+ y=doc.lastAutoTable.finalY+5;const PH=doc.internal.pageSize.getHeight();if(y>PH-70){doc.addPage();y=18}
+ doc.setFillColor(...tint(th.rgb,.08));doc.setDrawColor(...tint(th.rgb,.4));doc.roundedRect(M,y,PW-2*M,13,1.8,1.8,'FD');doc.setFont('helvetica','bold');doc.setFontSize(8.6);doc.setTextColor(...th.rgb);
+ doc.text(sjFx(`Ringkasan: ${rk.periksa}/${rk.n} item diperiksa · OK ${rk.ok+rk.repair} · NG ${rk.ng} · lulus ${n(rk.qtyLulus)}/${n(rk.qty)} pcs (${rk.pctLulus==null?'-':n(rk.pctLulus)+'%'}) · tonase lulus ${n(rk.tonaseLulus)} kg · cacat visual ${n(rk.cacatTotal)} pcs`),M+4,y+8);y+=17;
+ if(d.catatan){doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(110);doc.text(sjFx('Catatan: '+d.catatan),M,y);y+=5}
+ if(y>PH-52){doc.addPage();y=18}y=pdfSigns(doc,['Inspector','PPIC'],[d.inspector,d.ppic],y,th);pdfFoto(doc,qcFotoCetak(d),'LAMPIRAN FOTO QC · '+(d.no||'')+' · SPK '+s.no);pdfFooter(doc,{no:d.no},th);return new Uint8Array(doc.output('arraybuffer'))}
+
+async function qcXlsx(spkId){const m=qcModel(spkId);if(!m)return null;const {s,d,rk}=m;const X=await loadExcelJS();const wb=new X.Workbook();wb.creator='Warehouse Management System (WMS)';const th=docTh('qc');
+ const ws=wb.addWorksheet('DCS',{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:.3,right:.3,top:.4,bottom:.5,header:.2,footer:.25}},views:[{showGridLines:false}]});xlFoot(ws,{no:d.no},th);
+ const NC=26;[5,40,7,6,...Array(12).fill(7.5),...Array(6).fill(8),9,10,9,12].forEach((w,i)=>ws.getColumn(i+1).width=w);const {put,mg}=xlT(ws);let r=xlKop(wb,ws,NC,{title:'LAPORAN HASIL QC (DCS)',no:d.no,date:d.tgl},th);
+ [['Customer',s.customer||'-'],['No PO / SO',s.po||'-'],['No SPK',s.nomor||String(s.no)],['Hasil QC',rk.hasil+(rk.pctLulus!=null?' · '+rk.pctLulus+'% lulus':'')],['Material',QCM().standarMaterial(s.material)||'-'],['Acuan toleransi',QCM().acuanToleransi(qcSet()).label+' · '+QCM().acuanToleransi(qcSet()).angka]].forEach((kv,i)=>{const c0=i%2?14:1,c1=i%2?NC:13;if(!(i%2)&&i>0)r++;mg(r,c0,r,c0+2);put(r,c0,kv[0].toUpperCase(),{sz:7.5,c:'FF9CA3AF',fill:'FFF8F9FB'});mg(r,c0+3,r,c1);put(r,c0+3,kv[1],{b:true,fill:'FFF8F9FB'})});r+=2;
+ mg(r,1,r,NC);put(r,1,'Legend:  W = Wide (mm)   H = Height (mm)   L / R = Length / Radius (mm)   ·   sel merah = di luar toleransi   ·   "std" = dinyatakan sesuai standar tanpa angka ukur',{sz:8,i:true,c:'FF6B7280'});r+=1;
+ const h1=r,h2=r+1;[['No',1],['Description',2],['Qty',3],['Sat',4]].forEach(([t,c])=>{mg(h1,c,h2,c);put(h1,c,t,{b:true,c:'FFFFFFFF',fill:th.argb,h:'center',box:true})});
+ [['STANDARD DIMENSION',5],['ACTUAL BEFORE FINISHING',9],['ACTUAL FINISHING',13],['VISUAL AFTER FINISHING (pcs)',17]].forEach(([t,c],i)=>{const e=c+(i===3?5:3);mg(h1,c,h1,e);put(h1,c,t,{b:true,c:'FFFFFFFF',fill:th.argb,h:'center',box:true})});
+ [...['T','W','H','L/R'],...['T','W','H','L/R'],...['T','W','H','L/R'],...QC_CACAT().map(c=>c[1])].forEach((t,i)=>put(h2,5+i,t,{b:true,c:'FFFFFFFF',fill:th.argb,h:'center',box:true}));
+ [['Lapisan (µm)',23],['Jointing fit',24],['Repaired',25],['Judgment',26]].forEach(([t,c])=>{mg(h1,c,h2,c);put(h1,c,t,{b:true,c:'FFFFFFFF',fill:th.argb,h:'center',box:true})});ws.getRow(h2).height=18;r=h2+1;
+ let g='',no=0;(d.baris||[]).forEach((b,i)=>{if(b.g!==g){g=b.g;mg(r,1,r,NC);put(r,1,g||'-',{b:true,c:th.argb,fill:tintA(th.rgb,.12),box:true});r++}
+  const h=rk.perBaris[i];const cells=[++no,b.d,b.q,b.u||''];['t','w','h','l'].forEach(k=>cells.push(b.std&&b.std[k]!=null?b.std[k]:'-'));
+  ['proses','akhir'].forEach(t=>['t','w','h','l'].forEach(k=>{const v=qcVal(b,t,k);cells.push(v===''?(b.sesuaiStandar?'std':''):v)}));
+  QC_CACAT().forEach(([k])=>{const v=(b.visual||{})[k];cells.push(v===''||v==null?(b.sesuaiStandar?'std':''):Number(v))});cells.push(b.lapisan===''||b.lapisan==null?(qcLap(b)?'min '+qcLap(b).min:''):Number(b.lapisan),b.jointing||(b.sesuaiStandar?'std':''),b.repaired||'',h.judgment==='Belum'?'':h.judgment);
+  cells.forEach((v,ci)=>{const k=ci-8,tahap=k>=0&&k<4?'proses':k>=4&&k<8?'akhir':null;const luar=tahap&&h.luar.some(x=>x.tahap===tahap&&x.k===['t','w','h','l'][k%4]);const lapSalah=ci===22&&h.luar.some(x=>x.k==='lap');const ng=ci===25&&v==='NG';put(r,ci+1,v,{box:true,h:ci===1?'left':'center',b:luar||ng||lapSalah||ci===25,c:luar||ng||lapSalah?'FFB91C1C':ci===25&&v?'FF15803D':undefined,fill:luar||lapSalah?'FFFEE2E2':undefined})});r++});
+ r++;mg(r,1,r,NC);put(r,1,`Ringkasan: ${rk.periksa}/${rk.n} item diperiksa · OK ${rk.ok+rk.repair} · NG ${rk.ng} · lulus ${rk.qtyLulus}/${rk.qty} pcs (${rk.pctLulus==null?'-':rk.pctLulus+'%'}) · tonase lulus ${rk.tonaseLulus} kg · cacat visual ${rk.cacatTotal} pcs`,{b:true,c:th.argb,fill:tintA(th.rgb,.1)});ws.getRow(r).height=22;r+=2;
+ if(d.catatan){mg(r,1,r,NC);put(r,1,'Catatan: '+d.catatan,{i:true,c:'FF6B7280'});r+=2}
+ mg(r,17,r,20);put(r,17,'Inspector',{b:true,h:'center'});mg(r,21,r,26);put(r,21,'PPIC',{b:true,h:'center'});r+=4;mg(r,17,r,20);put(r,17,'( '+(d.inspector||'')+' )',{h:'center'});mg(r,21,r,26);put(r,21,'( '+(d.ppic||'')+' )',{h:'center'});
+ xlsxFoto(wb,qcFotoCetak(d),'LAMPIRAN FOTO QC · '+(d.no||'')+' · SPK '+s.no);
+ return new Uint8Array(await wb.xlsx.writeBuffer())}
+
+async function qcUnduh(spkId,fmt){const m=qcModel(spkId);if(!m){toast('Simpan hasil QC dulu sebelum mengunduh dokumen.');return}if(!DLS){toast('Unduhan tidak tersedia di tampilan ini.');return}
+ if(fmt==='cert'&&!m.rk.sertifikat){toast('Sertifikat hanya tersedia bila hasil QC Lulus untuk semua item.');return}
+ if(fmt==='cert'&&!((m.d.foto||[]).length)){toast('Sertifikat memerlukan minimal satu foto bukti QC. Tambahkan foto di halaman pemeriksaan lalu simpan.');return}
+ toast('Menyiapkan dokumen…');try{const data=fmt==='xlsx'?await qcXlsx(spkId):await qcPdf(spkId,fmt==='cert');const base=fnSafe((fmt==='cert'?'Sertifikat QC ':'Laporan QC DCS ')+(m.d.no||'')+' SPK '+m.s.no+' '+(m.s.customer||''));
+  await DLS.save({filename:base+(fmt==='xlsx'?'.xlsx':'.pdf'),data})}catch(e){if(e.code!=='declined')toast('Gagal membuat dokumen: '+(e.message||e.code))}}
+
+/* ---------- aksi ---------- */
+document.addEventListener('click',e=>{const el=e.target.closest&&e.target.closest('[data-act^="qc"]');if(!el||!el.dataset)return;const a=el.dataset.act;
+ if(a==='qcperiksa'){qcBuka(el.dataset.spk);return}
+ if(a==='qcbuka'){const id=el.dataset.spk;F.qc.tab='semua';try{closeDrawer&&closeDrawer()}catch(_){}location.hash='#qc';setTimeout(()=>qcBuka(id),350);return}
+ if(a==='qckembali'){if(QCW&&QCW.kotor&&!confirm('Ada isian yang belum disimpan. Kembali ke daftar tanpa menyimpan?'))return;F.qc.cur=null;QCW=null;renderTools();renderBody();return}
+ if(a==='qcsimpan'){qcSimpan();return}
+ if(a==='qctol'){qcTolForm();return}
+ if(a==='qcpdf'){qcUnduh(el.dataset.spk,'pdf');return}
+ if(a==='qcxlsx'){qcUnduh(el.dataset.spk,'xlsx');return}
+ if(a==='qccert'){qcUnduh(el.dataset.spk,'cert');return}
+ if(!QCW)return;
+ if(a==='qcfotodel'){const f=QCW.foto.find(x=>x.id===el.dataset.fid);if(f&&confirm('Hapus foto ini dari dokumen QC?')){QCW.foto=QCW.foto.filter(x=>x.id!==f.id);QCW.kotor=true;qcFotoRender(f.ix)}return}
+ if(a==='qcfotobuka'){const f=QCW.foto.find(x=>x.id===el.dataset.fid);if(f)openModal('Foto bukti QC',`<div class="full"><img src="${f.data}" alt="Foto bukti QC" style="max-width:100%;border-radius:12px"></div><div class="note full">${esc(String(f.at).slice(0,10))} ${esc(String(f.at).slice(11,16))} · ${esc(uname(f.by)||String(f.by||''))}</div>`,async()=>{},{submit:'Tutup',done:' '});return}
+ if(a==='qcjoint'){const b=QCW.baris[+el.dataset.ix];b.jointing=b.jointing===el.dataset.v?'':el.dataset.v;QCW.kotor=true;qcRefreshItem(+el.dataset.ix);return}
+ if(a==='qcstd'){const b=QCW.baris[+el.dataset.ix];b.sesuaiStandar=!b.sesuaiStandar;QCW.kotor=true;qcRefreshItem(+el.dataset.ix);return}
+ if(a==='qcsemua'){if(!confirm(`Nyatakan ${QCW.baris.length} item sesuai standar tanpa angka ukur? Ini tercatat di dokumen sebagai "std".`))return;QCW.baris.forEach(b=>{b.sesuaiStandar=true});QCW.kotor=true;QCW.baris.forEach((_,i)=>qcRefreshItem(i));return}
+});
+document.addEventListener('change',async e=>{const el=e.target;if(!el||!el.dataset||el.dataset.qcfoto===undefined||!QCW)return;const fl=[...(el.files||[])],ix=+el.dataset.qcfoto;el.value='';if(fl.length)await qcFotoTambah(ix,fl)});
+document.addEventListener('input',e=>{const el=e.target;if(!el||!el.dataset||!QCW)return;
+ if(el.dataset.qc){const ix=+el.dataset.ix,b=QCW.baris[ix];if(!b)return;const p=el.dataset.qc.split('.');const v=qcNum(el.value);if(p.length===2){b[p[0]]=b[p[0]]||{};b[p[0]][p[1]]=v}else b[p[0]]=v===''?(p[0]==='repaired'?0:''):v;QCW.kotor=true;qcRefreshItem(ix);return}
+ if(el.dataset.qcf){QCW[el.dataset.qcf]=el.value;QCW.kotor=true}});
+
+/* ===== 21c-standar — Standar & Panduan: dokumen acuan tim (cable tray dan cable ladder) =====
+   Isi bersumber dari dokumen documentation/STANDAR_QC_REFERENSI.md. Status tiap butir: "Terverifikasi" (dari teks resmi atau dokumen MNI),
+   "Sekunder" (ringkasan pihak ketiga, perlu dicek ke dokumen resmi), "Belum ada" (belum ada acuan). Angka toleransi yang dipakai QC
+   dibaca langsung dari pustaka QC supaya halaman ini dan penilaian QC tidak pernah berbeda. */
+F.standar=F.standar||{tab:'arah'};
+const STD_TAB=[['arah','Arah standar'],['ukuran','Ukuran & toleransi'],['material','Material & lapisan'],['qc','Checklist QC'],['tanda','Penandaan & dokumen'],['tim','Panduan per peran'],['sumber','Sumber']];
+const stBadge=s=>chip(s,{'Terverifikasi':'ok','Sekunder':'warn','Belum ada':'crit','Dimiliki':'info','Praktik MNI':'plain'}[s]||'plain');
+const stTbl=(head,rows)=>`<div class="tbl-wrap"><table class="std-t"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const stCard=(judul,isi,sub)=>`<section class="panel std-c"><header><h2>${judul}</h2>${sub?`<span class="hint">${sub}</span>`:''}</header><div class="pbody">${isi}</div></section>`;
+
+T.standar=()=>`${segBtns('standar','tab',STD_TAB)}<span class="grow"></span><button class="btn" data-act="stdprint" title="Cetak halaman ini atau simpan sebagai PDF">Cetak / PDF</button>`;
+document.addEventListener('click',e=>{const el=e.target.closest&&e.target.closest('[data-act="stdprint"]');if(el){window.print()}});
+
+function stdToleransiRows(){const P=window.MNIQC&&window.MNIQC.PROFIL_TOLERANSI;if(!P)return [];return [
+ ['Panjang tray lurus (tanpa konektor)','3 m dan 3,66 m: ±15 mm · 6 m dan 7,32 m: ±19 mm','—','±3 mm (gambar kerja: 1 sampai 3 mm)','NEMA VE 1 pasal 4.3.2',stBadge('Terverifikasi')],
+ ['Lebar dalam (tangga, dasar padat, palung)','±6 mm; lebar luar tidak lebih dari lebar dalam + 100 mm','—','±2 mm','NEMA VE 1 pasal 4.3.3.1',stBadge('Terverifikasi')],
+ ['Lebar dalam (channel)','±3 mm','—','±2 mm','NEMA VE 1 pasal 4.3.3.2',stBadge('Terverifikasi')],
+ ['Kedalaman (fill depth)','±10 mm; kedalaman luar tidak lebih dari dalam + 30 mm','—','±2 mm','NEMA VE 1 pasal 4.3.4',stBadge('Terverifikasi')],
+ ['Jarak anak tangga','tipikal 150, 225, 300 mm; tanpa toleransi','—','sesuai gambar','NEMA VE 1 pasal 4.3.5',stBadge('Terverifikasi')],
+ ['Radius dalam bagian lengkung','tipikal 75, 150, 300, 600, 900, 1200 mm; tanpa toleransi','—','±3 mm (L/R)','NEMA VE 1 pasal 4.3.6',stBadge('Terverifikasi')],
+ ['Sudut elbow','tipikal 15°, 30°, 45°, 60°, 90°','—','sesuai gambar','NEMA VE 1 pasal 4.3.7',stBadge('Terverifikasi')],
+ ['Fitting dan aksesoris','tidak diuji beban dan tidak diatur toleransinya','—','nilai MNI','NEMA VE 1 pasal 4.5',stBadge('Terverifikasi')],
+ ['Dimensi di luar nilai tipikal','tetap sah ("other dimensions shall also be acceptable")','—','—','NEMA VE 1 pasal 4.3.1',stBadge('Terverifikasi')]]}
+
+const STD_ISI={
+arah:()=>`${stCard('Arah standar MNI','<p>Produk MNI (cable tray dan cable ladder) diarahkan ke <b>NEMA VE 1-2017 / CSA C22.2 No. 126.1-17</b> untuk dimensi, toleransi, finishing, dan penandaan, dengan <b>IEC 61537 / BS EN 61537</b> sebagai acuan internasional yang dibandingkan, material pelat <b>SPHC JIS G 3131</b>, dan lapisan galvanis <b>ASTM A123</b> (atau <b>EN ISO 1461</b> bila customer meminta). Setiap pemeriksaan QC dicatat pada Daily Check Sheet (DCS) dan dapat dikirim ke customer sebagai laporan dan sertifikat.</p><p class="note">Prinsip sistem: angka yang dipakai untuk menilai hasil QC punya sumber tercatat. Bila belum ada acuan terverifikasi, sistem memakai nilai awal MNI dan menandainya "perlu konfirmasi", bukan menebak.</p>','Tujuan')}
+${stCard('Peta standar',stTbl(['Standar','Untuk apa','Peran bagi MNI','Status'],[
+ ['<b>NEMA VE 1-2017</b> / CSA C22.2 No. 126.1-17','Sistem cable tray logam: ukuran tipikal, toleransi, finishing, kualitas pekerjaan, penandaan, uji beban','Acuan utama dimensi, toleransi, dan penandaan (profil QC "NEMA VE 1-2017")',stBadge('Terverifikasi')],
+ ['<b>NEMA VE 2-2018</b>','Penanganan, penyimpanan, pemasangan, perawatan','Panduan untuk customer dan pemasang (sambungan, expansion splice, penyangga)',stBadge('Dimiliki')],
+ ['<b>IEC 61537:2023</b> (BS EN 61537)','Cable tray dan cable ladder: klasifikasi numerik, uji beban kerja aman (SWL, lalu 1,7 x SWL), penandaan, dokumentasi','Acuan internasional bila customer meminta; tidak dimiliki (berbayar)',stBadge('Sekunder')],
+ ['<b>JIS G 3131</b> (SPHC)','Pelat baja canai panas untuk bahan baku','Material baku pada gambar kerja MNI',stBadge('Terverifikasi')],
+ ['<b>JIS G 3193</b>','Toleransi dimensi pelat canai panas','Batas tebal pelat 1,6 mm ke atas (kutipan katalog Kobelco)',stBadge('Sekunder')],
+ ['<b>ASTM A123/A123M</b>','Hot-dip galvanized pasca fabrikasi (NEMA Tipe 1)','Minimum lapisan rata-rata per tebal baja (profil lapisan ASTM)',stBadge('Sekunder')],
+ ['<b>EN ISO 1461:2022</b>','Hot-dip galvanized pasca fabrikasi (Eropa)','Pilihan profil lapisan bila customer mengacu ke IEC atau EN',stBadge('Sekunder')],
+ ['<b>ASTM A653/A653M G90</b>','Pelat galvanis pabrik (NEMA Tipe 2)','Disebut di NEMA; MNI memakai bila bahan berlapis dari pabrik',stBadge('Terverifikasi')],
+ ['<b>ASTM B633 SC 2</b>','Elektro-zinc (NEMA Tipe 3, ELG)','Disebut di NEMA ("SC 2 minimum"); tebal lapisan belum diverifikasi',stBadge('Belum ada')],
+ ['<b>Gambar kerja MNI</b>','Toleransi dimensi 1 mm sampai 3 mm, SPHC JIS G3131, finishing natural, lubang 11 x 15 mm','Dasar profil "Gambar kerja MNI"',stBadge('Terverifikasi')],
+ ['<b>NEMA FG 1-1993</b>','Cable tray fiberglass (FRP)','Tidak dipakai (MNI: baja, stainless, aluminium)',stBadge('Dimiliki')]]))}
+${stCard('Bagaimana standar dipakai di WMS',stTbl(['Langkah','Yang dilakukan sistem'],[
+ ['SPK dan editor','Tebal, type, dan finishing dari judul section; ukuran W H L dari nama item; berat otomatis dari kalkulator'],
+ ['Kebutuhan plat dan serah terima','Plat dihitung dari tonase SPK; serah terima plat tercatat dengan dokumen'],
+ ['Produksi','Laporan Admin atau Operator per work centre; reject kembali ke antrian awal'],
+ ['QC Proses dan QC Akhir','Standar terisi dari SPK, selisih dan judgment otomatis terhadap acuan toleransi, kolom lapisan untuk HDG, foto bukti per item dan foto umum'],
+ ['Dokumen','Laporan Hasil QC (DCS) dan Sertifikat Lolos QC memuat acuan, material, dan hasil'],
+ ['Kirim','QC wajib (aktif bawaan): surat jalan customer dan penerimaan barang jadi hanya setelah QC Lulus; surat jalan memuat nama item dengan tebal']]))}`,
+
+ukuran:()=>`${stCard('Ukuran tipikal NEMA VE 1-2017',stTbl(['Besaran','Nilai tipikal (mm)'],[
+ ['Lebar tray tangga, dasar padat, palung','150, 225, 300, 450, 600, 750, 900 (6 sampai 36 in)'],
+ ['Lebar channel','75 sampai 600'],['Kedalaman','75, 100, 125, 150 (channel: 25, 50, 100, 150)'],
+ ['Panjang tray lurus','3000, 3660, 6000, 7320'],['Jarak anak tangga','150, 225, 300'],['Radius dalam lengkung','75, 150, 300, 600, 900, 1200'],['Sudut elbow','15°, 30°, 45°, 60°, 90°']]),'NEMA hanya menyebut ini "tipikal": ukuran lain tetap sah')}
+${stCard('Toleransi dan acuan yang dipakai QC',stTbl(['Besaran','NEMA VE 1-2017','IEC 61537','Profil MNI di sistem','Sumber','Status'],stdToleransiRows())+'<p class="note">IEC 61537 tidak dimiliki sehingga kolomnya kosong; sistem tidak mengisi angka yang belum terverifikasi. Pilih acuan di QC > Toleransi. Penilaian otomatis memakai profil yang dipilih.</p>','Satuan mm')}`,
+
+material:()=>`${stCard('Tebal pelat SPHC (JIS G 3131) dan toleransinya',stTbl(['Tebal pelat (mm)','Toleransi tebal (mm)','Sumber','Status'],[
+ ['1,60 sampai di bawah 2,00','±0,19','JIS G 3193 (2019) via katalog Kobelco',stBadge('Sekunder')],
+ ['2,00 sampai di bawah 2,50','±0,20','idem',stBadge('Sekunder')],
+ ['2,50 sampai di bawah 3,15','±0,22','idem',stBadge('Sekunder')],
+ ['3,15 sampai di bawah 4,00','±0,24','idem',stBadge('Sekunder')],
+ ['di bawah 1,60 (mis. 1,0; 1,2; 1,5)','nilai awal MNI ±0,15 (perlu konfirmasi)','belum ada acuan',stBadge('Belum ada')]]),'Bahan baku: tebal 1,0 sampai 3,0 mm pada editor SPK')}
+${stCard('Finishing baja karbon menurut NEMA VE 1-2017 (pasal 4.2.1)',stTbl(['Tipe','Proses','Standar','Padanan di MNI'],[
+ ['Tipe 1','Hot-dip galvanized setelah fabrikasi','ASTM A123/A123M','HOTDIP GALVANIZED (HDG)'],
+ ['Tipe 2','Hot-dip mill galvanized (pelat galvanis dari pabrik)','ASTM A653/A653M, kode G90','bila bahan berlapis dari pabrik'],
+ ['Tipe 3','Elektro-zinc (zinc plated)','ASTM B633, SC 2 minimum','ELECTRO GALVANIZED (ELG)'],
+ ['Lain-lain','Lapisan lain mengikuti standar nasional yang berlaku','—','Stainless 304 dan 316L, powder coating, aluminium, natural']]))}
+${stCard('Tebal lapisan hot-dip galvanized minimum',stTbl(['Tebal baja','ASTM A123 (rata-rata minimum, strip/bar/plate)','EN ISO 1461:2022 (lokal / rata-rata minimum)'],[
+ ['di bawah 1,5 mm','45 µm (di bawah 1,6 mm)','35 µm / 45 µm'],['1,5 sampai 3 mm','65 µm (1,6 sampai di bawah 3,2 mm)','45 µm / 55 µm'],['di atas 3 mm sampai 6 mm','75 µm (3,2 mm ke atas)','55 µm / 70 µm'],['di atas 6 mm','75 µm','70 µm / 85 µm']])+'<p class="note">Pita tebal baja kedua standar tidak sama persis (ASTM: batas 1,6 dan 3,2 mm; ISO: batas 1,5, 3, dan 6 mm). Angka ISO dari dua sumber galvanizer, perlu dicek ke teks standar. Di QC, kolom Lapisan (µm) dinilai terhadap profil ASTM.</p>','Mikron (µm)')}`,
+
+qc:()=>`${stCard('Daily Check Sheet (DCS): apa yang diperiksa',stTbl(['Tahap','Yang diukur atau dilihat','Acuan','Alat'],[
+ ['QC Proses (setelah fabrikasi, sebelum finishing)','Thickness, W, H, L atau R; posisi dan ukuran lubang; burr dan tepi tajam; kualitas las','Toleransi profil terpilih; NEMA 4.4 (bebas burr dan tonjolan tajam); gambar kerja','Jangka sorong atau micrometer, meteran, penggaris baja'],
+ ['QC Akhir (setelah finishing)','Thickness, W, H, L atau R setelah finishing; tebal lapisan (HDG); visual: Crack, Burry, Porosity, Rusty, Peel off, Scratch; Jointing fit to tray; Repaired','Toleransi profil; minimum lapisan ASTM A123; kolom DCS','Pengukur tebal lapisan magnetik, jangka sorong, uji pasang sambungan (jointing)'],
+ ['Keputusan','Judgment otomatis: OK, OK setelah repair, NG. Dokumen Lulus bila semua item OK atau OK setelah repair','Aturan judgment modul QC','—']]))}
+${stCard('Bila hasil NG',`<ol class="std-ol"><li>Catat angka sebenarnya dan jenis cacat (jangan dibulatkan atau diisi "sesuai standar" bila tidak diukur).</li><li>Reject mengikuti alur reject dan rework produksi: tidak lanjut ke langkah berikutnya dan muncul lagi di antrian awal.</li><li>Cacat visual yang bisa diperbaiki dicatat di kolom Repaired; item menjadi "OK setelah repair" hanya bila semua cacat sudah diperbaiki.</li><li>Setelah perbaikan, periksa ulang dan simpan; hasil terbaru yang tercatat pada dokumen.</li><li>Sertifikat Lolos QC hanya tersedia bila semua item Lulus.</li></ol>`)}
+${stCard('Catatan praktik MNI',`<p>${stBadge('Praktik MNI')} Frekuensi sampling, jumlah titik ukur per item, dan batas penerimaan (AQL) belum ada di standar yang dimiliki; ditetapkan oleh tim QC dan dicatat di dokumen. Contoh DCS MNI mengisi satu angka per item.</p>`)}`,
+
+tanda:()=>`${stCard('Penandaan produk menurut NEMA VE 1-2017 (pasal 6.1.2)',stTbl(['Yang harus tertanda permanen dan mudah terlihat','Padanan di MNI'],[
+ ['Nama atau merek pabrikan','PT Mitra Nusa Internasional (merek MNI Tray)'],
+ ['"Ventilated" atau "Nonventilated"','tray tangga dan berlubang: Ventilated; dasar padat dan duct: Nonventilated (konfirmasi per produk)'],
+ ['Beban terukur per bentang menurut pengujian','belum ada data uji beban MNI',],
+ ['Jenis material (dan Tipe 1, 2, atau 3 untuk baja karbon)','SPHC (JIS G3131) + HDG = Tipe 1; ELG = Tipe 3; SS 304 atau 316L; aluminium'],
+ ['Satuan SI wajib; inci-pound opsional','ukuran dalam mm']]))}
+${stCard('Dokumen sepanjang alur',stTbl(['Dokumen','Isi','Nomor'],[
+ ['SPK','Item, tebal, type, finishing, berat, rute','nomor SPK'],['Serah terima plat','Plat yang diserahkan dari gudang ke produksi','dokumen mutasi'],
+ ['Laporan produksi','Hasil per langkah, operator, reject','log produksi'],['Surat jalan vendor','Kirim ke vendor ELG, HDG, atau PWD','SJ-V/yyyy/mm/nnn'],
+ ['Laporan Hasil QC (DCS)','Standar, aktual, visual, judgment, tanda tangan Inspector dan PPIC','QC/yyyy/mm/nnn'],['Sertifikat Lolos QC','Ringkasan untuk customer, hanya bila Lulus','nomor QC'],['Surat jalan customer','Nama item dengan tebal','nomor SJ']]))}`,
+
+tim:()=>`${stCard('Operator produksi',`<ul class="std-ol"><li>Buka Produksi Hari Ini: hanya work centre Anda yang tampil.</li><li>Tekan <b>Mulai</b> pada item, isi jumlah dengan tombol + dan −, tekan <b>Selesai</b>. Bila ada reject, tekan <b>Catat reject</b>.</li><li>Tidak perlu mengisi nama; terisi dari akun Anda.</li></ul>`)}
+${stCard('Inspector QC',`<ul class="std-ol"><li>Buka menu <b>QC</b> > SPK yang menunggu > <b>Mulai periksa</b>. Standar sudah terisi dari SPK.</li><li>Ketik hanya angka terukur dan jumlah cacat. Warna merah berarti di luar toleransi.</li><li>Gunakan <b>Sesuai standar</b> hanya untuk pemeriksaan visual tanpa pengukuran (tercatat sebagai "std").</li><li>Ambil <b>foto bukti</b> pada tiap item (maks 4) dan foto umum (barang jadi, penandaan, lapisan, kemasan). Foto tersimpan dengan waktu dan nama pengambil, lalu dilampirkan di laporan.</li><li>Isi nama PPIC, simpan, lalu unduh Laporan (PDF atau Excel). Sertifikat hanya keluar bila semua item Lulus dan ada minimal satu foto.</li></ul>`)}
+${stCard('PPIC',`<ul class="std-ol"><li>Terbitkan SPK dengan tebal, type, dan finishing pada judul section; pastikan berat per item terisi (Wiremesh diisi manual).</li><li>Pantau SPK menunggu QC dan item NG di halaman QC.</li><li>Tandatangani Laporan QC sebagai PPIC.</li></ul>`)}
+${stCard('Gudang dan logistik',`<ul class="std-ol"><li>Serahkan plat sesuai kebutuhan SPK dan catat dokumennya.</li><li>Surat jalan: isi no polisi (Ubah kendaraan) sebelum Berangkat; tebal tampil di nama item.</li><li>Barang jadi masuk gudang atau dikirim setelah QC Akhir.</li></ul>`)}
+${stCard('Admin',`<ul class="std-ol"><li>Atur akses di Pengguna & Akses; operator hanya dapat work centre yang dipilih.</li><li>Pilih acuan toleransi, standar lapisan (ASTM A123 atau EN ISO 1461), dan atur QC wajib di QC > Toleransi.</li><li>Katalog berat harus terpasang agar tonase terisi otomatis (Master Data > Katalog berat).</li></ul>`)}`,
+
+sumber:()=>`${stCard('Sumber dan cara memperbarui',stTbl(['Sumber','Dipakai untuk','Catatan'],[
+ ['NEMA VE 1-2017 / CSA C22.2 No. 126.1-17 (berkas dari pemilik)','ukuran tipikal, toleransi, finishing, kualitas, penandaan','edisi 2017; ada informasi edisi lebih baru (NEMA BI 50015:2024) yang perlu dicek'],
+ ['NEMA VE 2-2018 (berkas dari pemilik)','panduan pemasangan','belum dipakai di sistem'],
+ ['<a href="https://galvanizeit.org/uploads/publications/Inspection-Guide-web1.pdf" target="_blank" rel="noopener">AGA Inspection Guide</a>','minimum lapisan ASTM A123','Tabel 1A'],
+ ['<a href="https://galvanizing.org.uk/galvanizing-standards/iso-1461/" target="_blank" rel="noopener">Galvanizers Association: ISO 1461</a>','minimum lapisan EN ISO 1461','ringkasan; cek teks standar'],
+ ['<a href="https://iteh.eu/catalog/standards/iec/d398d61f-acd5-4116-bd93-ecd3ad3a4f70/iec-61537-2023" target="_blank" rel="noopener">IEC 61537:2023 (katalog iTeh)</a>','gambaran IEC 61537','teks standar berbayar'],
+ ['<a href="https://www.obo-bettermann.com/en-xi/know-how/guide/kts-guide/load-values" target="_blank" rel="noopener">OBO Bettermann: load values IEC 61537</a>','gambaran beban kerja aman','ringkasan produsen'],
+ ['Katalog Kobelco (kutipan JIS G 3193:2019)','toleransi tebal pelat','bukan teks JIS'],
+ ['Gambar kerja MNI','toleransi 1 sampai 3 mm; material SPHC JIS G3131','dokumen internal']]))}
+<p class="note">Untuk menambah atau mengoreksi angka: ubah <code>documentation/STANDAR_QC_REFERENSI.md</code> dan pustaka <code>src/lib/qc/hitung.js</code>, lalu catat sumber dan nomor pasalnya. Halaman ini membaca profil toleransi dari pustaka yang sama dengan penilaian QC.</p>`};
+
+B.standar=()=>`<div class="std">${(STD_ISI[F.standar.tab]||STD_ISI.arah)()}</div>`;
+
 const dkStyle=kind=>'--dc:#'+docTh(kind).c+';--br:'+KOP().warna;
 function docHeadHtml(kind,m,kop){const k=kop||KOP(),th=docTh(kind);
  return `<div class="dk-head"><img class="dk-logo" src="${esc(k.logo)}" alt=""><div class="dk-co"><b>${esc(k.nama)}</b>${[k.a1,k.a2,k.kontak].filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join('')}</div></div>

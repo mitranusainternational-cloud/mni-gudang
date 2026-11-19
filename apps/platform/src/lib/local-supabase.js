@@ -13,7 +13,7 @@ import { TABLE_COLS, STRICT_COLS } from './schema-columns.js';
 
 const STORE_KEY = 'mni-local-mock-db';
 const SESSION_KEY = 'mni-local-mock-session';
-const VERSION = 11; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
+const VERSION = 12; // naikkan bila bentuk data seed berubah agar browser memuat seed baru
 // Kode masuk untuk pratinjau lokal. Bukan rahasia dan tidak berlaku di environment lain.
 export const LOCAL_OTP = '123456';
 
@@ -26,15 +26,16 @@ const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Math.random
 // Hak modul bawaan per peran (sama dengan paket peran di app: ubah = lihat dan ubah, lihat = hanya melihat; modul yang tidak ada = tidak tampil). Admin tanpa batas.
 const U = 'ubah', L = 'lihat';
 const MODUL_BAWAAN = {
-  ppic: { spk: U, vendor: U, 'bahan-baku': L, 'barang-jadi': L, pengiriman: L, 'bongkar-muat': L, maintenance: L },
-  gudang: { 'bahan-baku': U, 'barang-jadi': U, sparepart: U, spk: L, 'bongkar-muat': L, vendor: L, pengiriman: L, maintenance: L },
+  ppic: { spk: U, qc: U, vendor: U, 'bahan-baku': L, 'barang-jadi': L, pengiriman: L, 'bongkar-muat': L, maintenance: L },
+  gudang: { 'bahan-baku': U, 'barang-jadi': U, sparepart: U, spk: L, qc: L, 'bongkar-muat': L, vendor: L, pengiriman: L, maintenance: L },
   gbb: { 'bahan-baku': U, 'bongkar-muat': U, sparepart: U, spk: L, maintenance: L },
-  gbj: { 'barang-jadi': U, vendor: U, pengiriman: U, 'bongkar-muat': U, spk: L, maintenance: L },
-  logistik: { 'bongkar-muat': U, vendor: U, pengiriman: U, spk: L, 'bahan-baku': L, 'barang-jadi': L, maintenance: L },
-  produksi: { spk: U, vendor: L, maintenance: L },
+  gbj: { 'barang-jadi': U, vendor: U, pengiriman: U, 'bongkar-muat': U, spk: L, qc: L, maintenance: L },
+  logistik: { 'bongkar-muat': U, vendor: U, pengiriman: U, spk: L, qc: L, 'bahan-baku': L, 'barang-jadi': L, maintenance: L },
+  produksi: { spk: U, qc: L, vendor: L, maintenance: L },
+  qc: { qc: U, spk: L, 'barang-jadi': L, vendor: L },
   maintenance: { maintenance: U, sparepart: U, spk: L },
   sales: { spk: L },
-  viewer: { 'bahan-baku': L, 'barang-jadi': L, sparepart: L, vendor: L, pengiriman: L, spk: L, 'bongkar-muat': L, maintenance: L },
+  viewer: { 'bahan-baku': L, 'barang-jadi': L, sparepart: L, vendor: L, pengiriman: L, spk: L, qc: L, 'bongkar-muat': L, maintenance: L },
 };
 function seed() {
   const now = iso();
@@ -51,6 +52,7 @@ function seed() {
     ['maintenance@mni.local', 'Maintenance Lokal', 'maintenance'],
     ['viewer@mni.local', 'Viewer Lokal', 'viewer'],
     ['sales@mni.local', 'Sales Lokal', 'sales'],
+    ['qc@mni.local', 'QC Lokal', 'qc'],
   ].map(([email, nama, role]) => base({ email, nama, role, aktif: true, ...(MODUL_BAWAAN[role] ? { data: { modul: MODUL_BAWAAN[role] } } : {}) }));
   db.mwc = [['SHEARING', 'Shearing', 'Internal', 1], ['PUNCHING', 'Punching', 'Internal', 2], ['BENDING', 'Bending', 'Internal', 3], ['CNC', 'CNC Laser', 'Internal', 4], ['WELDING', 'Welding', 'Internal', 5],
     ['COATING', 'Coating / Painting', 'Internal', 5], ['QC', 'Quality Control', 'Internal', 6], ['PACKING', 'Packing', 'Internal', 7]]
@@ -83,7 +85,7 @@ function seed() {
       items: [{ d: 'Pipa Bulat 2in t1.2 ELG', g: 'Pipa', q: 3, u: 'Btg', w: 0, ket: '', catatan: '', prod: 0 }],
       prod_log: [], catatan: 'Data sintetis, sengaja lewat jatuh tempo', terbit_at: now, terbit_by: 'admin@mni.local' }),
   ];
-  for (const t of ['mutasi', 'rmhist', 'vendor', 'pr', 'kirim', 'bongkar', 'opname', 'log', 'ureq', 'uinv', 'sp', 'mtc']) db[t] = [];
+  for (const t of ['mutasi', 'rmhist', 'vendor', 'pr', 'kirim', 'bongkar', 'opname', 'log', 'ureq', 'uinv', 'sp', 'mtc', 'qc']) db[t] = [];
   db.master = [['app_name', 'MNI Gudang'], ['app_version', '1.0.0-lokal'], ['spk_counter', 1002], ['pr_counter', 1]]
     .map(([key, value]) => ({ id: uid(), key, value, ket: 'seed', updated_at: now }));
   return { v: VERSION, tables: db };
@@ -105,7 +107,7 @@ function save(state) {
 
 // Meniru fungsi SQL mod_level/can_view: hak per modul (muser.data.modul) atau, bila kosong, peta peran bawaan.
 const HAPUS_DITOLAK = new Set(['spk', 'vendor', 'kirim', 'bongkar', 'pr', 'mutasi', 'opname', 'rmhist', 'rm', 'fg']);
-const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', sp: 'sparepart', mtc: 'maintenance' };
+const MOD_OF = { rm: 'bahan-baku', rmhist: 'bahan-baku', pr: 'bahan-baku', opname: 'bahan-baku', fg: 'barang-jadi', spk: 'spk', vendor: 'vendor', kirim: 'pengiriman', bongkar: 'bongkar-muat', sp: 'sparepart', mtc: 'maintenance', qc: 'qc' };
 const levelOf = (u, m) => {
   if (!u || u.aktif === false) return null;
   if (u.role === 'admin') return 'ubah';
