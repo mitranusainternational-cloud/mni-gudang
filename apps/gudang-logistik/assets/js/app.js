@@ -1770,7 +1770,8 @@ function sjAlamatForm(id){const k=byId('kirim',id);if(!k)return;const cu=mList('
 /* Surat jalan dan dokumen terkait memakai nama barang seperti di SPK, ditambah tebal dari judul section SPK ("· t 1.2 mm") bila deskripsi belum memuatnya. */
 function sjNama(spkId,i){if(!i||i.hdr||!i.d)return i;const s=byId('spk',spkId);if(!s)return i;const it=(s.items||[]).find(x=>x.d===i.d);const tb=String((it&&thkOf(it.g))||thkOf(s.h)||'');if(!tb)return i;
  const kata=i.d.toLowerCase().split(/[\s·,x×()]+/);if(kata.some(w=>w===tb||w==='t'+tb||w===tb+'mm'||w==='t'+tb+'mm')||i.d.toLowerCase().includes(tb+' mm'))return i;return {...i,d:i.d+' · t '+tb+' mm'}}
-const spkRingkas=id=>{const s=byId('spk',id);return s?`SPK ${s.no} · ${s.customer}${s.po?' · PO '+s.po:''}`:'SPK ?'};
+/* tanpaCust: SJ Vendor hanya menampilkan nomor SPK (nama customer dan PO tidak ikut ke vendor). */
+const spkRingkas=(id,tanpaCust)=>{const s=byId('spk',id);return s?(tanpaCust?`SPK ${s.no}`:`SPK ${s.no} · ${s.customer}${s.po?' · PO '+s.po:''}`):'SPK ?'};
 function sjGrup(c,doc){
  if(!doc)return [];if(!doc.noSJ)return [doc];
  const g=(c==='vendor'?S.vendor:S.kirim).filter(x=>x.status!=='Batal'&&x.noSJ===doc.noSJ).sort((a,b)=>String(a.at||'').localeCompare(String(b.at||''))||String(a._id).localeCompare(String(b._id)));
@@ -1781,10 +1782,10 @@ function gxNote(c,doc){const g=sjGrup(c,doc);return g.length>1?`<div class="sj-p
    item diberi penanda _spk bila kelompok berisi lebih dari satu SPK. */
 function bmSrc(b){
  let items=[],label='',ref='',grup=false;const l=b&&b.link;
- const dari=docs=>{grup=docs.length>1;docs.forEach(d=>(d.items||[]).forEach(i=>items.push(grup?{...i,_spk:spkRingkas(d.spk)}:i)))};
+ const dari=(docs,tanpaCust)=>{grup=docs.length>1;docs.forEach(d=>(d.items||[]).forEach(i=>items.push(grup?{...i,_spk:spkRingkas(d.spk,tanpaCust)}:i)))};
  if(l){
   if(l.c==='mutasi'){items=S.mutasi.filter(x=>x.noDok===l.noDok&&x.gudang==='rm'&&x.jenis==='masuk').map(x=>{const r=byId('rm',x.item)||{};return {d:rmLabel(r),q:+x.delta||0,u:r.satuan||''}});label='Penerimaan Bahan Baku';ref=l.noDok||''}
-  else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);label='SJ Vendor';ref=l.noSJ||'';dari(v?(b.jenis==='Loading'?sjGrup('vendor',v):[v]):[])}
+  else if(l.c==='vendor'){const v=l.id?byId('vendor',l.id):S.vendor.find(x=>x.noSJ===l.noSJ);label='SJ Vendor';ref=l.noSJ||'';dari(v?(b.jenis==='Loading'?sjGrup('vendor',v):[v]):[],true)}
   else if(l.c==='kirim'){const k=S.kirim.find(x=>x.noSJ===l.noSJ);label='SJ Customer';ref=l.noSJ||'';dari(k?sjGrup('kirim',k):[])}
  }
  return {items,label,ref,grup};
@@ -6315,9 +6316,9 @@ function docModel0(kind,ref){
  if(kind==='sjv'){const v=byId('vendor',ref);if(!v)return null;const s=byId('spk',v.spk)||{};const tgt=v.target||addWorkdays(v.tgl,T[vKey(v.proses)]);
   const bm=bmFor('vendor',v),ck=bm?bmCekMap(bm):null;
   const G=sjGrup('vendor',v),gab=G.length>1,spkG=[...new Set(G.map(x=>byId('spk',x.spk)).filter(Boolean))];let nk=0;const brs=[],hdr=[];
-  G.forEach(d=>{if(gab){hdr.push(brs.length);brs.push(['',spkRingkas(d.spk),'','','',...(ck?['']:[])])}(d.items||[]).forEach(i=>{brs.push([brs.length-hdr.length+1,sjNama(d.spk,i).d,+i.q||0,i.u||'',d.rework?'Rework':'',...(ck?[ck[nk]&&ck[nk].ok?'✓':'']:[])]);nk++})});
+  G.forEach(d=>{if(gab){hdr.push(brs.length);brs.push(['',spkRingkas(d.spk,true),'','','',...(ck?['']:[])])}(d.items||[]).forEach(i=>{brs.push([brs.length-hdr.length+1,sjNama(d.spk,i).d,+i.q||0,i.u||'',d.rework?'Rework':'',...(ck?[ck[nk]&&ck[nk].ok?'✓':'']:[])]);nk++})});
   return {foto:bm?bmFotoCetak(bm):[],fotoJudul:'LAMPIRAN BUKTI BONGKAR MUAT · SJ '+(v.noSJ||''),file:`SJ Vendor ${v.noSJ||''} - ${v.vendor||''}`,title:'SURAT JALAN KE VENDOR',no:v.noSJ||'',date:v.tgl,
-   meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'-'))],['Customer akhir',gab?[...new Set(spkG.map(x=>x.customer))].join(', '):(s.customer||'-')],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
+   meta:[['Kepada',v.vendor||'-'],['Proses',v.proses||'-'],['Tanggal kirim',tglLong(v.tgl)],['Target kembali',tglLong(tgt)+(v.target?'':' (standar)')],['Ref SPK',gab?spkG.map(x=>x.nomor||String(x.no)).join(', '):(s.nomor||(s.no?String(s.no):'-'))],['Kendaraan',[v.kendaraan,v.nopol].filter(Boolean).join(' · ')||'-'],['Driver',v.driver||'-']],
    tables:[{cols:[['No',6,'c'],['Nama barang',70,'l'],['Qty',12,'r'],['Satuan',10,'c'],['Keterangan',30,'l'],...(ck?[['Cek',8,'c']]:[])],rows:brs,hdr,foot:['','TOTAL',sumBy(G.flatMap(d=>d.items||[]),i=>i.q),'','',...(ck?['']:[])]}],
    note:[v.ket,v.batal?'DIBATALKAN: '+v.batal.alasan:'',bm?bmCekCatatan(bm):'',gab?'Surat jalan gabungan '+G.length+' SPK dalam satu armada':''].filter(Boolean).join(' · '),signs:['Pengirim,\nGudang MNI','Pengemudi','Penerima,\n'+(v.vendor||'Vendor')]}}
  if(kind==='btb'){const [vid,k]=String(ref).split('|');const v=byId('vendor',vid);if(!v)return null;const R=vReturns(v);const r=R.find(x=>String(x.k)===String(k));if(!r)return null;const s=byId('spk',v.spk)||{};

@@ -65,16 +65,16 @@ export async function runGabungan(page, base) {
     const dr = await page.evaluate(() => ({ ck: document.querySelectorAll('.bm-ck').length, hdr: [...document.querySelectorAll('.bm-spk-h')].map((x) => x.innerText.trim()) }));
     await page.click('#bmck-0'); await wait(500); await page.click('#bmck-1'); await wait(600);
     const cm = await page.evaluate((id) => Object.keys(byId('bongkar', id).ceklis || {}).sort().join(','), bid);
-    ok('GB-02 drawer Bongkar Muat: 2 butir dikelompokkan dengan 2 judul SPK, kedua butir bisa dicentang dan tersimpan', dr.ck === 2 && dr.hdr.length === 2 && cm === '0,1' && dr.hdr.every((h) => /^SPK \d+ · Gab Vendor/.test(h)), JSON.stringify({ dr, cm }));
+    ok('GB-02 drawer Bongkar Muat (SJ Vendor): 2 butir dikelompokkan dengan 2 judul yang hanya memuat nomor SPK (tanpa customer), kedua butir bisa dicentang dan tersimpan', dr.ck === 2 && dr.hdr.length === 2 && cm === '0,1' && dr.hdr.every((h) => /^SPK \d+$/.test(h)), JSON.stringify({ dr, cm }));
 
     // GB-03 model cetak gabungan (dari dokumen SPK mana pun)
     const docs = await page.evaluate(([A, B]) => ({ a: S.vendor.find((x) => x.spk === A)._id, b: S.vendor.find((x) => x.spk === B)._id }), [A, B]);
     const m = await page.evaluate(async ([a, b]) => {
       const ma = docModel('sjv', a), mb = docModel('sjv', b), t = ma.tables[0];
       const pdf = await docPdf(ma), xl = await docXlsx(ma);
-      return { hdr: t.hdr.length, no: t.rows.filter((r, i) => !t.hdr.includes(i)).map((r) => r[0]).join(','), cek: t.rows.filter((r, i) => !t.hdr.includes(i)).map((r) => r[r.length - 1]).join(''), total: t.foot[2], sama: JSON.stringify(ma.tables[0].rows) === JSON.stringify(mb.tables[0].rows), ref: ma.meta.find((x) => x[0] === 'Ref SPK')[1], note: /gabungan 2 SPK/.test(ma.note), pdf: String.fromCharCode(...pdf.slice(0, 4)), xl: String.fromCharCode(...xl.slice(0, 2)) };
+      return { hdr: t.hdr.length, no: t.rows.filter((r, i) => !t.hdr.includes(i)).map((r) => r[0]).join(','), cek: t.rows.filter((r, i) => !t.hdr.includes(i)).map((r) => r[r.length - 1]).join(''), total: t.foot[2], sama: JSON.stringify(ma.tables[0].rows) === JSON.stringify(mb.tables[0].rows), ref: ma.meta.find((x) => x[0] === 'Ref SPK')[1], tanpaCust: !ma.meta.some((x) => /customer/i.test(x[0])) && t.hdr.every((i) => /^SPK \d+$/.test(t.rows[i][1])) && !/Gab Vendor/.test(JSON.stringify(ma.meta) + JSON.stringify(t.rows)), note: /gabungan 2 SPK/.test(ma.note), pdf: String.fromCharCode(...pdf.slice(0, 4)), xl: String.fromCharCode(...xl.slice(0, 2)) };
     }, [docs.a, docs.b]);
-    ok('GB-03 cetak surat jalan vendor gabungan: 2 baris judul SPK, nomor butir 1,2 berlanjut, ✓✓, total 16, sama dari dokumen SPK mana pun; PDF dan Excel jadi', m.hdr === 2 && m.no === '1,2' && m.cek === '✓✓' && m.total === 16 && m.sama && /,/.test(m.ref) && m.note && m.pdf === '%PDF' && m.xl === 'PK', JSON.stringify(m));
+    ok('GB-03 cetak surat jalan vendor gabungan: 2 baris judul hanya nomor SPK (tanpa customer dan tanpa baris Customer akhir), nomor butir 1,2 berlanjut, ✓✓, total 16, sama dari dokumen SPK mana pun; PDF dan Excel jadi', m.hdr === 2 && m.no === '1,2' && m.cek === '✓✓' && m.total === 16 && m.sama && m.tanpaCust && /,/.test(m.ref) && m.note && m.pdf === '%PDF' && m.xl === 'PK', JSON.stringify(m));
 
     // GB-04 pratinjau dokumen SPK kedua: ✓ pada butirnya sendiri dan catatan gabungan
     await go('#vendor'); await act('openvendor', { id: docs.b }); await wait(900);
