@@ -6,8 +6,8 @@ release: v1.2
 theme: Integrasi
 priority: P2
 status: active
-progress: 8
-tasks_total: 29
+progress: 7
+tasks_total: 30
 tasks_done: 4
 updated: 2026-11-19
 ---
@@ -56,5 +56,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-233-input-langsung-di-modul-uji-ujung-ke-ujung|T-233]] Input langsung di modul memunculkan Master Data otomatis; uji ujung ke ujung di Playwright; perbaikan rework · review · P1 · 1 hari
 - [ ] [[tasks/T-234-modul-maintenance-terhubung-gudang-sparepart|T-234]] Modul Maintenance terhubung Gudang Sparepart: catatan, jadwal rutin, akumulasi, per mesin · review · P1 · 2 hari
 - [ ] [[tasks/T-235-foto-ke-storage-bongkar-maintenance|T-235]] Foto Bongkar Muat dan Maintenance ke Supabase Storage (opsional, bawaan tetap di database) · review · P1 · 1 hari
+- [ ] [[tasks/T-236-sub-komponen-mesin-maintenance|T-236]] Sub-komponen mesin (mis. dies pada mesin Punching) untuk pelacakan Maintenance · review · P1 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

@@ -66,6 +66,25 @@ export function perMesin(daftar, { dari, sampai }, semuaMesin = []) {
   })).sort((a, b) => b.jumlah - a.jumlah || b.korektif - a.korektif || a.mesin.localeCompare(b.mesin));
 }
 
+/** Satu baris per sub-komponen sebuah mesin (catatan tanpa sub masuk "(umum)"); daftarSub memunculkan sub yang belum pernah dicatat. */
+export function perSub(daftar, mesin, { dari, sampai }, daftarSub = []) {
+  const L = catatanSaja(daftar).filter((c) => c.mesin === mesin); const peta = {};
+  const kunci = (c) => String(c.sub || '').trim() || '(umum)';
+  const ambil = (s) => peta[s] || (peta[s] = { sub: s, jumlah: 0, korektif: 0, preventif: 0, inspeksi: 0, kalibrasi: 0, downtimeMenit: 0, biaya: 0, sparepartQty: 0, parts: {}, terakhir: '' });
+  L.forEach((c) => { const o = ambil(kunci(c)); if (tgl10(c.tgl) > o.terakhir) o.terakhir = tgl10(c.tgl); });
+  L.filter((c) => dalam(c, dari, sampai)).forEach((c) => {
+    const o = ambil(kunci(c)); o.jumlah++;
+    if (c.jenis === 'Korektif') o.korektif++; else if (c.jenis === 'Preventif') o.preventif++; else if (c.jenis === 'Inspeksi') o.inspeksi++; else if (c.jenis === 'Kalibrasi') o.kalibrasi++;
+    o.downtimeMenit += downtimeMenit(c); o.biaya += Number(c.biaya) || 0;
+    (c.parts || []).forEach((p) => { const k = p.nama || p.sp; o.parts[k] = (o.parts[k] || 0) + (Number(p.q) || 0); o.sparepartQty += Number(p.q) || 0; });
+  });
+  (daftarSub || []).forEach((s) => { if (s) ambil(s); });
+  return Object.values(peta).map((o) => {
+    const t = L.filter((c) => kunci(c) === o.sub && c.jenis === 'Korektif').map((c) => tgl10(c.tgl)).sort();
+    return { ...o, downtimeJam: r1(o.downtimeMenit / 60), mtbfHari: t.length < 2 ? null : r1(selisihHari(t[0], t[t.length - 1]) / (t.length - 1)), partsDaftar: Object.entries(o.parts).sort((a, b) => b[1] - a[1]).map(([nama, q]) => ({ nama, q })) };
+  }).sort((a, b) => (a.sub === '(umum)') - (b.sub === '(umum)') || b.jumlah - a.jumlah || a.sub.localeCompare(b.sub));
+}
+
 /** Riwayat satu mesin, terbaru dulu. */
 export function riwayatMesin(daftar, mesin) {
   return catatanSaja(daftar).filter((c) => c.mesin === mesin).sort((a, b) => (tgl10(b.tgl) + (b.at || '')).localeCompare(tgl10(a.tgl) + (a.at || '')));
@@ -81,7 +100,7 @@ export function statusRutin(daftar, hariIni, { segeraHari = 7 } = {}) {
     const dasar = terakhir || tgl10(r.mulai || r.tgl || hariIni);
     const jatuhTempo = terakhir ? tambahHari(terakhir, interval) : (r.mulai ? tgl10(r.mulai) : tambahHari(dasar, interval));
     const sisa = selisihHari(hariIni, jatuhTempo);
-    return { rutin: r, mesin: r.mesin, tugas: r.tugas, interval, terakhir, jatuhTempo, sisaHari: sisa, status: sisa < 0 ? 'Terlambat' : sisa <= segeraHari ? 'Segera' : 'Aman', kaliSelesai: sel.length };
+    return { rutin: r, mesin: r.mesin, tugas: r.tugas, interval, terakhir, jatuhTempo, sisaHari: sisa, status: sisa < 0 ? 'Terlambat' : sisa <= segeraHari ? 'Segera' : 'Aman', kaliSelesai: sel.length, sub: r.sub || '' };
   }).sort((a, b) => a.sisaHari - b.sisaHari);
 }
 
