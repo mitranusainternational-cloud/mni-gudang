@@ -155,6 +155,40 @@ export async function runMaintenance(page, base) {
     });
     ok('MT-11 sparepart ditambah lewat tombol (bukan baris tetap) dan foto dokumentasi terpisah Sebelum, Sesudah, Bukti: unggah saat mencatat (dua Sebelum, satu Sesudah, terkompres JPEG), galeri dengan tahap dan keterangan, tambah foto bukti, batas 8 foto, dokumen PDF dan Excel per catatan memuat foto, KPI dan Cek Data memakai kelengkapan foto', r11.baris0 === 1 && r11.baris2 === 3 && r11.baris3 === 2 && r11.bagian && r11.n1 === 3 && r11.tahap === 'Sebelum,Sebelum,Sesudah' && r11.data && r11.galeri === 3 && r11.tambah3 === 3 && r11.tombol && r11.n2 === 4 && r11.tahap2 === 'Bukti / nota' && r11.ket === 'sebelum diganti' && r11.batas === 4 && r11.dok.foto === 4 && r11.dok.pdf > r11.dok.pdf0 && r11.dok.xlsx && r11.rs[0] >= 1 && r11.rs[1] === 4 && r11.cek.length === 1, JSON.stringify(r11));
 
+    langkah = 'MT-12';
+    // sub-komponen: didaftarkan di Master Data mesin, dipilih saat mencatat, sub baru otomatis terdaftar, dilacak per sub
+    await go('#master-data');
+    await page.evaluate(() => mesinForm('Bending Uji 1')); await wait(700);
+    await page.fill('#mform [name="sub"]', 'Dies Uji 1 | DU-01\nMotor utama'); await klikSimpan();
+    const m12a = await page.evaluate(() => { const m = mesinSemua().find((x) => x.nama === 'Bending Uji 1'); return { sub: m.sub.map((s) => s.nama + '|' + s.kode).join(','), tampil: true }; });
+    await go('#maintenance'); await page.click('[data-act="mtcnew"]'); await wait(800);
+    await page.fill('#mform [name="tgl"]', await page.evaluate(() => today())); await page.fill('#mform [name="mesin"]', 'Bending Uji 1'); await page.dispatchEvent('#m-mesin', 'input'); await wait(300);
+    const opsi = await page.evaluate(() => [...document.querySelectorAll('#dl-mtcs option')].map((o) => o.value).join(','));
+    await page.fill('#m-sub', 'Dies Uji 1'); await page.selectOption('#mform [name="jenis"]', 'Korektif'); await page.fill('#mform [name="masalah"]', 'Dies aus'); await page.fill('#mform [name="tindakan"]', 'Asah dies'); await page.fill('#mform [name="downtime"]', '45'); await wait(300);
+    await klikSimpan();
+    await go('#maintenance'); await page.click('[data-act="mtcnew"]'); await wait(800);
+    await page.fill('#mform [name="tgl"]', await page.evaluate(() => today())); await page.fill('#mform [name="mesin"]', 'Bending Uji 1'); await page.fill('#m-sub', 'Dies Baru 2');
+    await page.selectOption('#mform [name="jenis"]', 'Preventif'); await page.fill('#mform [name="masalah"]', 'Pelumasan dies'); await wait(300);
+    await klikSimpan(); await wait(800);
+    const m12b = await page.evaluate(() => ({ cat: S.mtc.filter((x) => x.kind === 'catat' && x.sub).map((x) => x.sub + ':' + x.jenis).sort().join(','), daftar: mesinSemua().find((x) => x.nama === 'Bending Uji 1').sub.map((s) => s.nama).join(',') }));
+    ok('MT-12 sub-komponen: diisi di Master Data mesin (nama dan kode), pilihan sub mengikuti mesin yang diketik, catatan menyimpan sub, sub baru yang diketik otomatis masuk Master Data', m12a.sub === 'Dies Uji 1|DU-01,Motor utama|' && opsi === 'Dies Uji 1,Motor utama' && m12b.cat === 'Dies Baru 2:Preventif,Dies Uji 1:Korektif' && /Dies Baru 2/.test(m12b.daftar), JSON.stringify({ m12a, opsi, m12b }));
+    langkah = 'MT-13';
+    await go('#maintenance'); await page.evaluate(() => { F.maintenance.tab = 'mesin'; F.maintenance.mesin = 'Bending Uji 1'; F.maintenance.sub = ''; renderBody(); }); await wait(700);
+    const t13a = await page.evaluate(() => ({ panel: /Per sub-komponen/.test(document.body.innerText), baris: [...document.querySelectorAll('[data-act="mtcsub"]')].map((r) => r.dataset.s).join(',') }));
+    await page.click('[data-act="mtcsub"][data-s="Dies Uji 1"]'); await wait(600);
+    const t13b = await page.evaluate(() => ({ riwayat: [...document.querySelectorAll('tbody tr')].filter((r) => /MTC\//.test(r.innerText) && /Dies aus|Pelumasan dies/.test(r.innerText)).map((r) => /Dies aus/.test(r.innerText) ? 'korektif' : 'preventif').join(','), judul: /Dies Uji 1/.test(document.body.innerText) }));
+    const t13c = await page.evaluate(async () => { const m = mtcModel(); const t = m.tables.find((x) => /Per sub-komponen/.test(x.title)); const pdf = await docPdf(m), xl = await docXlsx(m); return { ada: !!t, baris: t ? t.rows.map((r) => r[1]).join(',') : '', pdf: String.fromCharCode(...pdf.slice(0, 4)), xl: String.fromCharCode(...xl.slice(0, 2)) }; });
+    ok('MT-13 Per mesin: panel Per sub-komponen (Dies Uji 1, Dies Baru 2, Motor utama), klik sub menyaring riwayat; laporan PDF dan Excel memuat tabel Per sub-komponen', t13a.panel && /Dies Uji 1/.test(t13a.baris) && /Dies Baru 2/.test(t13a.baris) && /Motor utama/.test(t13a.baris) && t13b.riwayat === 'korektif' && t13c.ada && /Dies Uji 1/.test(t13c.baris) && t13c.pdf === '%PDF' && t13c.xl === 'PK', JSON.stringify({ t13a, t13b, t13c }));
+    langkah = 'MT-14';
+    await go('#maintenance'); await page.click('[data-act="mtcrutinnew"]'); await wait(800);
+    await page.fill('#mform [name="mesin"]', 'Bending Uji 1'); await page.dispatchEvent('#m-mesin', 'input'); await page.fill('#m-sub', 'Motor utama'); await page.fill('#mform [name="tugas"]', 'Cek bearing motor'); await page.fill('#mform [name="interval"]', '30'); await page.fill('#mform [name="mulai"]', '2020-01-01'); await wait(300);
+    await klikSimpan();
+    const t14 = await page.evaluate(() => { const r = mtcRutinList().find((x) => x.tugas === 'Cek bearing motor'); return { sub: r && r.sub, tampil: /Motor utama/.test(document.body.innerText) }; });
+    await page.evaluate(() => { F.maintenance.tab = 'rutin'; renderBody(); }); await wait(600);
+    await page.click('[data-act="mtckerjakan"]:near(:text("Cek bearing motor"))').catch(() => {});
+    const pre = await page.evaluate(() => { const r = S.mtc.find((x) => x.tugas === 'Cek bearing motor'); mtcForm({ jenis: 'Preventif', mesin: r.mesin, sub: r.sub || '', masalah: r.tugas, rutin: r._id, status: 'Selesai' }); return document.getElementById('m-sub') ? document.getElementById('m-sub').value : null; });
+    ok('MT-14 jadwal rutin per sub-komponen: tersimpan dengan sub, tampil di tabel, tombol Kerjakan membawa sub ke catatan', t14.sub === 'Motor utama' && pre === 'Motor utama', JSON.stringify({ t14, pre }));
+
     langkah = 'MG-02';
     const masuk = async (u) => {
       await page.evaluate(async () => { try { await USER.signOut(); } catch (e) { /* sudah keluar */ } }); await wait(1500);

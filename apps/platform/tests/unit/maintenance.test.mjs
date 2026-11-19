@@ -1,5 +1,5 @@
 // Uji hitungan Maintenance.  node tests/unit/maintenance.test.mjs
-import { ringkas, perMesin, riwayatMesin, statusRutin, seringRusak, mtbfHari, tren, butirOtomatis, downtimeMenit } from '../../src/lib/maintenance/hitung.js';
+import { ringkas, perSub, perMesin, riwayatMesin, statusRutin, seringRusak, mtbfHari, tren, butirOtomatis, downtimeMenit } from '../../src/lib/maintenance/hitung.js';
 import { periodeRentang } from '../../src/lib/produksi/statistik.js';
 
 const R = []; const ok = (id, pass, info = '') => R.push((pass ? 'PASS ' : 'FAIL ') + id + (info ? ' · ' + info : ''));
@@ -41,6 +41,19 @@ ok('M-09 tren per bulan dan butir otomatis', eq(tr.map((x) => x.kunci + ':' + x.
 const Df = [c({ tgl: '2026-11-02', mesin: 'A', foto: [{ id: 'f1' }, { id: 'f2' }] }), c({ tgl: '2026-11-03', mesin: 'A' }), c({ tgl: '2026-11-04', mesin: 'B', foto: [{ id: 'f3' }] })];
 const rf = ringkas(Df, { dari: '2026-11-01', sampai: '2026-11-30' });
 ok('M-10 ringkasan menghitung catatan berfoto dan jumlah foto (2 dari 3 catatan, 3 foto)', rf.denganFoto === 2 && rf.jumlahFoto === 3 && rf.jumlah === 3, JSON.stringify([rf.denganFoto, rf.jumlahFoto]));
+
+const Ds = [
+  c({ tgl: '2026-11-02', mesin: 'Punching 1', sub: 'Dies 1', jenis: 'Korektif', downtime: 60, parts: [{ sp: 'd', nama: 'Punch pin', q: 4 }] }),
+  c({ tgl: '2026-11-12', mesin: 'Punching 1', sub: 'Dies 1', jenis: 'Korektif', downtime: 30 }),
+  c({ tgl: '2026-11-05', mesin: 'Punching 1', sub: 'Dies 2', jenis: 'Preventif' }),
+  c({ tgl: '2026-11-06', mesin: 'Punching 1', jenis: 'Inspeksi' }),
+  c({ tgl: '2026-11-07', mesin: 'Punching 2', sub: 'Dies 1', jenis: 'Korektif' }),
+  c({ tgl: '2026-10-01', mesin: 'Punching 1', sub: 'Dies 1', jenis: 'Korektif', downtime: 10 }),
+];
+const sb = perSub(Ds, 'Punching 1', { dari: '2026-11-01', sampai: '2026-11-30' }, ['Dies 3']);
+const g = Object.fromEntries(sb.map((x) => [x.sub, x]));
+ok('M-11 per sub-komponen: Dies 1 = 2 korektif, 90 menit, Punch pin x4, MTBF 21 hari (1 Okt, 2 Nov, 12 Nov); mesin lain tidak ikut; catatan tanpa sub = (umum); sub terdaftar tanpa catatan tetap muncul', g['Dies 1'].jumlah === 2 && g['Dies 1'].korektif === 2 && g['Dies 1'].downtimeMenit === 90 && g['Dies 1'].partsDaftar[0].q === 4 && g['Dies 1'].mtbfHari === 21 && g['Dies 2'].preventif === 1 && g['(umum)'].jumlah === 1 && g['Dies 3'].jumlah === 0 && sb.length === 4 && sb[sb.length - 1].sub === '(umum)', JSON.stringify(sb.map((x) => [x.sub, x.jumlah, x.mtbfHari])));
+ok('M-12 jadwal rutin membawa sub-komponen', statusRutin([{ kind: 'rutin', _id: 'rx', mesin: 'Punching 1', sub: 'Dies 1', tugas: 'Asah', interval: 30, mulai: '2026-12-01', aktif: true }], '2026-11-12')[0].sub === 'Dies 1');
 
 R.forEach((l) => console.log(l));
 const n = R.filter((l) => l.startsWith('FAIL')).length; console.log(`${R.length - n} PASS, ${n} FAIL`); process.exit(n ? 1 : 0);
