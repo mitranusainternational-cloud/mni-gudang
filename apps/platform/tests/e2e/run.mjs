@@ -33,6 +33,7 @@ import { runMatriksRute } from './matriks-rute.mjs';
 import { runProduksiHuluHilir } from './produksi-hulu-hilir.mjs';
 import { runSerahPlate } from './serah-plate.mjs';
 import { runMaintenance } from './maintenance.mjs';
+import { runFotoStorage } from './foto-storage.mjs';
 import { runSpkRingkas } from './spk-ringkas.mjs';
 import { runGbjSiapKirim } from './gbj-siap-kirim.mjs';
 import { runMasterData } from './master-data.mjs';
@@ -44,7 +45,7 @@ const only = (process.env.ONLY || '').split(',').map((s) => s.trim()).filter(Boo
 
 const browser = await chromium.launch();
 let totalFail = 0;
-for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['spkaturan', runSpkAturan], ['mesinsparepart', runMesinSparepart], ['kebutuhanplat', runKebutuhanPlat], ['logistiksj', runLogistikSj], ['spkdimensi', runSpkDimensi], ['matriksrute', runMatriksRute], ['serahplate', runSerahPlate], ['masterdata', runMasterData], ['aturanproses', runAturanProses], ['gbjsiapkirim', runGbjSiapKirim], ['spkringkas', runSpkRingkas], ['produksihh', runProduksiHuluHilir], ['maintenance', runMaintenance], ['tampilan', runSweep]]) {
+for (const [name, run] of [['regresi', runRegression], ['role', runRoles], ['akses', runAccess], ['produksi', runProduksi], ['sparepart', runSparepart], ['fitur', runFitur], ['keamanan', runKeamanan], ['aksesibilitas', runAksesibilitas], ['menyeluruh', runMenyeluruh], ['editor', runEditor], ['alurlengkap', runAlurLengkap], ['spkstruktur', runSpkTerstruktur], ['keseimbangan', runKeseimbangan], ['auditflow', runAuditFlow], ['stokflow', runStokFlow], ['bongkarmuat', runBongkarMuat], ['ambilstok', runAmbilStok], ['gabungan', runGabungan], ['kopdokumen', runKop], ['spkaturan', runSpkAturan], ['mesinsparepart', runMesinSparepart], ['kebutuhanplat', runKebutuhanPlat], ['logistiksj', runLogistikSj], ['spkdimensi', runSpkDimensi], ['matriksrute', runMatriksRute], ['serahplate', runSerahPlate], ['masterdata', runMasterData], ['aturanproses', runAturanProses], ['gbjsiapkirim', runGbjSiapKirim], ['spkringkas', runSpkRingkas], ['produksihh', runProduksiHuluHilir], ['maintenance', runMaintenance], ['fotostorage', runFotoStorage], ['tampilan', runSweep]]) {
   if (only.length && !only.includes(name)) continue;
   const page = await browser.newPage({ acceptDownloads: true });
   await page.addInitScript(() => { window.__PRODUKSI_MESIN = true; }); // suite menguji Antrian Mesin per Work Centre; mode laporan produksi admin (bawaan aplikasi) dinyalakan di uji PH-23
