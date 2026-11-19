@@ -1111,7 +1111,7 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .tl-bar.dari{border-top-left-radius:4px;border-bottom-left-radius:4px}.tl-bar.ke{border-top-right-radius:4px;border-bottom-right-radius:4px}
 .tl-lt{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--crit) 65%,transparent),color-mix(in srgb,var(--crit) 65%,transparent) 5px,color-mix(in srgb,var(--crit) 30%,transparent) 5px,color-mix(in srgb,var(--crit) 30%,transparent) 10px);text-decoration:none}
 .tl-slack{position:absolute;top:37px;height:0;border-top:2px dashed var(--line-2);z-index:2}
-.tl-due{position:absolute;top:14px;height:48px;width:2px;background:var(--fg);opacity:.6;z-index:4;transform:translateX(-1px)}
+.tl-due{position:absolute;top:14px;height:48px;width:2px;background:var(--fg);opacity:.6;z-index:4;pointer-events:none;transform:translateX(-1px)}
 .tl-due.late{background:var(--crit);opacity:1}
 .tl-due span{position:absolute;top:-4px;left:2px;font-size:13px;font-style:normal;line-height:1;color:inherit}
 .tl-out{position:absolute;left:14px;top:30px;font-size:12px;color:var(--faint)}
@@ -1398,3 +1398,304 @@ html.rail-mini .qc-sum{left:88px}
 
 /* tab segmen banyak (mis. Standar & Panduan) bergulir ke samping di layar sempit, tanpa saling menimpa */
 @media (max-width:700px){#tools .seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}#tools .seg button{flex:none;white-space:nowrap}}
+
+/* Layar mesin ringkas (HP): satu kolom, sasaran sentuh besar, tombol Selesai selalu terlihat */
+.mc-komp{margin:2px 0 4px}
+.po.ringkas .po-main,.po.ringkas .po-main.has-run{display:block}
+.po.ringkas .mq-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.po.ringkas .mcard{padding:14px}
+.po.ringkas .mc-go,.po.ringkas .mc-cat,.po.ringkas .mr-go,.po.ringkas .mr-b{min-height:48px;font-size:16px}
+.po.ringkas .mr-q{min-height:52px;font-size:22px;text-align:center}
+.po.ringkas .mesin-run{position:sticky;top:0;z-index:5;margin-bottom:12px;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+@media (max-width:860px){.po .mq-grid{grid-template-columns:minmax(0,1fr)}.po .mc-act{display:flex;gap:8px}.po .mc-act .btn{flex:1}}
+
+.mdgs{flex:1 1 100%;display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.mdg{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mdg-l{min-width:112px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.mdg.lanj .seg button{font-size:12px}
+@media (max-width:860px){.mdg-l{min-width:100%}.mdgs,.mdg{min-width:0;max-width:100%}.mdg .seg{flex-wrap:wrap;max-width:100%}}
+
+/* ===== T-238 tampilan baru (2026-11-13): bersih, modern, setara aplikasi profesional. Hanya gaya; markup, field, dan aksi tidak berubah. ===== */
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --surface-2:#F7F9FB; --line:#E8ECF1; --line-2:#D9DFE6;
+  --fg:#101828; --muted:#475467; --faint:#5D6B82;
+  --rail:#FFFFFF; --rail-2:#F2F6FF; --rail-fg:#475467; --rail-active:#1D4ED8; --rail-line:#E8ECF1; --rail-cnt:#EEF1F5;
+  --accent:#2563EB; --accent-soft:#EDF3FF;
+  --ok:#067647; --ok-soft:#ECFDF3; --warn:#B54708; --warn-soft:#FFFAEB; --crit:#B42318; --crit-soft:#FEF3F2; --info:#1D4ED8; --info-soft:#EDF3FF;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);
+  --shadow-lg:0 12px 32px -8px rgba(16,24,40,.14),0 4px 8px -4px rgba(16,24,40,.06);
+  --f-display:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1117; --surface:#141A22; --surface-2:#18202A; --line:#232C37; --line-2:#2D3846;
+  --fg:#EEF2F6; --muted:#A9B4C2; --faint:#94A3B8;
+  --rail:#10161D; --rail-2:#17233D; --rail-fg:#A9B4C2; --rail-active:#A9C2FF; --rail-line:#232C37; --rail-cnt:rgba(255,255,255,.07);
+  --accent:#5B8CFF; --accent-soft:#17233D;
+  --ok:#6CE9A6; --ok-soft:#0F2A1E; --warn:#FEC84B; --warn-soft:#2E2210; --crit:#FDA29B; --crit-soft:#331815; --info:#A9C2FF; --info-soft:#17233D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px -10px rgba(0,0,0,.6)}}
+:root[data-theme="dark"]{
+  --bg:#0C1117; --surface:#141A22; --surface-2:#18202A; --line:#232C37; --line-2:#2D3846;
+  --fg:#EEF2F6; --muted:#A9B4C2; --faint:#94A3B8;
+  --rail:#10161D; --rail-2:#17233D; --rail-fg:#A9B4C2; --rail-active:#A9C2FF; --rail-line:#232C37; --rail-cnt:rgba(255,255,255,.07);
+  --accent:#5B8CFF; --accent-soft:#17233D;
+  --ok:#6CE9A6; --ok-soft:#0F2A1E; --warn:#FEC84B; --warn-soft:#2E2210; --crit:#FDA29B; --crit-soft:#331815; --info:#A9C2FF; --info-soft:#17233D;
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 16px 40px -10px rgba(0,0,0,.6)}
+body{-webkit-font-smoothing:antialiased}
+.mono,.num,td.num,th.num,.kpi .v,.kv{font-variant-numeric:tabular-nums}
+/* menu samping */
+.app{grid-template-columns:256px minmax(0,1fr)}
+.rail{padding-block:20px}
+.brand{padding:0 8px 18px}
+.brand .mark-img{border-radius:11px}
+.brand b{font-size:15.5px;letter-spacing:-.01em;font-weight:700}
+.brand small{font-size:11.5px;letter-spacing:0;text-transform:none;opacity:1;color:var(--faint)}
+.nav .sec{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:none;opacity:1;color:var(--faint);padding:16px 10px 6px}
+.nav a{border-radius:9px;padding:8px 10px;font-weight:500;position:relative;transition:background .12s,color .12s}
+.nav a:hover{background:var(--surface-2);color:var(--fg)}
+.nav a.on{background:var(--accent-soft);color:var(--rail-active);font-weight:600;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 16%,transparent)}
+.nav a.on::before{content:"";position:absolute;left:-14px;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--accent)}
+.nav a.on svg{color:var(--accent)}
+.nav .cnt{font-family:var(--f-body);font-weight:600;border-radius:10px;min-width:20px;text-align:center}
+.nav .cnt.hot{background:var(--crit-soft);color:var(--crit)}
+.rail .foot{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);opacity:1}
+/* baris atas */
+.top{padding-block:14px;border-bottom:1px solid var(--line)}
+.top h1{font-size:24px;font-weight:700;letter-spacing:-.025em}
+.top .sub{font-size:13.5px}
+.live{box-shadow:var(--shadow);font-weight:500}
+.seg{background:var(--rail-cnt);border:0;border-radius:12px;padding:4px;gap:2px}
+.seg button{border-radius:9px;font-weight:600;padding:6px 13px}
+.seg button.on{background:var(--surface);color:var(--fg);box-shadow:var(--shadow)}
+.content{gap:20px;padding-block:24px 56px}
+/* kartu dan panel */
+.panel,.kpi{border-radius:16px;box-shadow:var(--shadow);border-color:var(--line)}
+.panel>header{padding:16px 20px;border-bottom:0}
+.panel>header h2{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.panel>header .hint{font-size:12.5px;color:var(--faint)}
+.pbody{padding:6px 20px 18px}
+.kpi{padding:18px 20px;gap:8px;transition:transform .15s,box-shadow .15s}
+.kpi::before{display:none}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--line)}
+.kpi .lb{font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted)}
+.kpi .v{font-family:var(--f-display);font-size:clamp(26px,2.3vw,32px);font-weight:700;letter-spacing:-.03em}
+.kpi.crit .v{color:var(--crit)}.kpi.warn .v{color:var(--warn)}
+.kpi.crit{border-color:color-mix(in srgb,var(--crit) 28%,var(--line))}
+.kpi.warn{border-color:color-mix(in srgb,var(--warn) 28%,var(--line))}
+/* tabel */
+th{font-size:11.5px;font-weight:600;letter-spacing:.02em;text-transform:none;color:var(--faint);padding:10px 14px;background:var(--surface-2)}
+td{padding:12px 14px}
+tbody tr{transition:background .1s}
+tbody tr:hover td{background:var(--surface-2)}
+tr.click:hover td,tr.click:focus td{background:var(--accent-soft)}
+/* chip status */
+.chip{padding:3px 10px;font-size:12px;border-radius:999px}
+/* tombol dan isian */
+.btn{border-radius:11px;padding:8px 14px;font-weight:600;box-shadow:var(--shadow);border-color:var(--line-2)}
+.btn:hover{background:var(--surface-2);border-color:var(--line-2);color:var(--fg)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);box-shadow:0 1px 2px rgba(37,99,235,.3),inset 0 1px 0 rgba(255,255,255,.15)}
+.btn.primary:hover{background:color-mix(in srgb,var(--accent) 88%,#000);color:var(--accent-fg);filter:none}
+.btn.ghost{box-shadow:none;background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:5px 11px;border-radius:9px}
+.inp,.sel,textarea{border-radius:11px;padding:9px 12px;border-color:var(--line-2)}
+.inp:focus,.sel:focus,textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent)}
+.search{min-width:240px}
+/* tab */
+.tabs{gap:6px}
+.tabs button{padding:11px 10px;font-weight:600;border-bottom-width:2px}
+.tabs button.on{color:var(--rail-active);border-color:var(--accent)}
+/* panel samping dan modal */
+.drawer,#drawer,.modal,#modal>*{box-shadow:var(--shadow-lg)}
+@media (max-width:900px){.app{grid-template-columns:minmax(0,1fr)}.content{padding-block:18px 48px}.top h1{font-size:21px}}
+@media (prefers-reduced-motion:reduce){.kpi{transition:none}.kpi:hover{transform:none}}
+@media (max-width:860px){.nav a.on::before{display:none}.rail{min-width:0;max-width:100%}.nav{max-width:100%;min-width:0}.nav .sec{padding:8px 4px 0}.rail .foot{display:none}}
+.tb-group{min-width:0;max-width:100%}.seg{max-width:100%;overflow-x:auto;scrollbar-width:none}
+/* T-238 dashboard: panel perhatian, tindakan hari ini, kartu angka dengan ikon */
+.brief{padding:16px 20px;border-radius:16px;box-shadow:var(--shadow);gap:16px}
+.brief .dot{width:40px;height:40px;border-radius:12px;box-shadow:none;background:var(--ok-soft);position:relative}
+.brief .dot::after{content:"";position:absolute;inset:0;margin:auto;width:10px;height:10px;border-radius:50%;background:var(--ok)}
+.brief.warn .dot{background:var(--warn-soft);box-shadow:none}.brief.warn .dot::after{background:var(--warn)}
+.brief.crit .dot{background:var(--crit-soft);box-shadow:none}.brief.crit .dot::after{background:var(--crit)}
+.brief.crit{border-color:color-mix(in srgb,var(--crit) 26%,var(--line))}
+.brief .bt b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.brief .qa a,.brief .qa button{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:11px;border:1px solid var(--line-2);background:var(--surface);color:var(--fg);font-weight:600;font-size:13px;text-decoration:none;box-shadow:var(--shadow);cursor:pointer}
+.brief .qa a:hover,.brief .qa button:hover{background:var(--surface-2)}
+.brief .qa>:first-child{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.brief .qa>:first-child:hover{background:color-mix(in srgb,var(--accent) 88%,#000)}
+.sect-t{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--faint);font-weight:600;margin:8px 2px 10px}
+#tindakan .btn{display:inline-flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;border-radius:12px;font-weight:600}
+#tindakan .btn b{min-width:28px;height:28px;padding:0 8px;border-radius:9px;display:inline-grid;place-items:center;background:var(--accent-soft);color:var(--rail-active);font-size:13.5px}
+#tindakan .btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.kpi .kh{display:flex;align-items:center;gap:10px}
+.kpi .ki{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--rail-active);flex:none}
+.kpi .ki svg{width:18px;height:18px}
+.kpi.ok .ki{background:var(--ok-soft);color:var(--ok)}
+.kpi.warn .ki{background:var(--warn-soft);color:var(--warn)}
+.kpi.crit .ki{background:var(--crit-soft);color:var(--crit)}
+.kpi .lb{font-size:13px;font-weight:600;color:var(--muted)}
+.kpis.sm .kpi{padding:14px 18px}
+/* T-238 grafik dashboard */
+.g-row{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:4px}
+.g-main,.g-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.g-card .pbody{padding:4px 20px 18px}
+.g-svg{width:100%;height:auto;display:block}
+.g-t{font-family:var(--f-body);font-size:11px;fill:var(--faint)}
+.g-v{font-family:var(--f-body);font-size:11px;font-weight:600;fill:var(--muted)}
+.g-grid{stroke:var(--line);stroke-width:1}.g-grid.d{stroke-dasharray:3 4}
+.g-svg rect[fill="transparent"]:hover{fill:color-mix(in srgb,var(--accent) 8%,transparent)}
+.g-empty{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;text-align:center;padding:34px 16px;color:var(--muted);min-height:150px}
+.g-empty b{color:var(--fg);font-size:14px}.g-empty span{font-size:12.5px;max-width:34ch}
+.g-ring-w{display:flex;align-items:center;gap:22px;flex-wrap:wrap;padding:6px 0}
+.g-ring{--p:0;--c:var(--accent);width:128px;height:128px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--rail-cnt) 0);display:grid;place-items:center;flex:none;position:relative}
+.g-ring.ok{--c:var(--ok)}.g-ring.warn{--c:var(--warn)}.g-ring.crit{--c:var(--crit)}
+.g-ring::before{content:"";position:absolute;inset:14px;border-radius:50%;background:var(--surface)}
+.g-ring b,.g-ring small{position:relative;z-index:1;text-align:center;display:block}
+.g-ring b{font-family:var(--f-display);font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.g-ring small{font-size:11px;color:var(--faint);margin-top:2px}
+.g-ring{align-content:center}
+.g-leg{flex:1;min-width:140px}
+.g-leg>div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:13px}
+.g-leg>div+div{border-top:1px dashed var(--line)}
+.g-leg span{color:var(--muted)}.g-leg b{font-variant-numeric:tabular-nums}.g-leg b.bad{color:var(--crit)}
+@media (max-width:1000px){.g-row{grid-template-columns:minmax(0,1fr)}}
+/* T-238 kerangka: baris atas, pencarian Ctrl K, judul halaman (sesuai prototipe) */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:10px;padding-block:12px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.appbar .grow{flex:1}
+.ib{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted);box-shadow:var(--shadow);cursor:pointer;flex:none}
+.ib:hover{background:var(--surface-2);color:var(--fg)}
+.ib svg{width:18px;height:18px}
+.crumb{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:13px;white-space:nowrap}
+.crumb i{font-style:normal;opacity:.7}.crumb b{color:var(--fg);font-weight:600}
+.srch{display:flex;align-items:center;gap:9px;height:40px;width:340px;max-width:100%;padding:0 12px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--faint);box-shadow:var(--shadow);cursor:pointer;font-size:13.5px;text-align:left}
+.srch:hover{border-color:var(--line-2)}
+.srch svg{width:17px;height:17px;flex:none}
+.srch span{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.srch kbd,.cmdk-in kbd{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
+.appbar .topr{margin-left:0;display:flex;gap:10px;align-items:center;flex-wrap:nowrap}
+.appbar .live{height:40px;border-radius:11px;padding:0 12px;font-weight:500}
+.appbar .seg.theme{height:40px;align-items:center}
+.top{position:static;background:none;backdrop-filter:none;border:0;max-width:1328px;width:100%;margin-inline:auto;padding-block:26px 0;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px));display:block}
+.top h1{font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.top .sub{margin-top:6px;font-size:14px;color:var(--muted)}
+.content{max-width:1328px;width:100%;margin-inline:auto;padding-block:20px 56px}
+.brand .mark-img{width:36px;height:36px;border-radius:11px;padding:0}
+.rail-tg{border-color:transparent;font-size:12.5px;color:var(--faint)}
+/* pencarian cepat */
+#cmdk{position:fixed;inset:0;z-index:60}
+.cmdk-scrim{position:absolute;inset:0;background:rgba(16,24,40,.38);backdrop-filter:blur(2px)}
+.cmdk-box{position:absolute;left:50%;top:12vh;transform:translateX(-50%);width:min(620px,calc(100% - 32px));background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden}
+.cmdk-in{display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:1px solid var(--line)}
+.cmdk-in svg{width:19px;height:19px;color:var(--faint);flex:none}
+.cmdk-in input{flex:1;border:0;background:none;padding:18px 0;font-size:16px;outline:none;min-width:0}
+.cmdk-list{max-height:56vh;overflow-y:auto;padding-bottom:8px}
+.cmdk-g{font-size:11.5px;font-weight:600;color:var(--faint);padding:10px 18px 4px}
+.cmdk-it{display:flex;align-items:center;gap:12px;padding:10px 18px;cursor:pointer}
+.cmdk-it.on,.cmdk-it:hover{background:var(--accent-soft)}
+.cmdk-it small{margin-left:auto;color:var(--faint);white-space:nowrap}
+@media (max-width:860px){
+ .appbar{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));flex-wrap:wrap;row-gap:8px}
+ .hide-m,.crumb,.appbar .grow{display:none}
+ .srch{flex:1;width:auto}.appbar .topr{flex-wrap:wrap}
+ .top{padding-block:18px 0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+ .top h1{font-size:23px}
+ .content{padding-block:16px 48px}
+}
+@media print{.appbar{display:none}}
+
+/* T-238 tahap 4-7: ramah sentuh (ponsel dan tablet) */
+@media (pointer:coarse),(max-width:700px){
+ .btn,button.btn,a.btn,.seg button,.tabs button,.tb-group button,.mechip,.ib,.linkbtn,.nav a{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+ .nav a{justify-content:flex-start;flex:none;white-space:nowrap}
+ input:not([type=checkbox]):not([type=radio]):not([type=hidden]),select,textarea{min-height:44px;font-size:16px}
+ input[type=checkbox],input[type=radio]{width:22px;height:22px}
+ td .btn,td button,.btn.sm,button.btn.sm,.chip{min-height:40px}
+ input[type=range],input[type=file]{min-height:0}
+}
+@supports(padding:max(0px)){.content{padding-bottom:max(48px,env(safe-area-inset-bottom,0px))}}
+
+/* T-238 layar operator ponsel: kepala halaman satu baris supaya antrian dan tombol Mulai/Catat langsung terlihat */
+@media (max-width:700px){
+ .appbar{flex-wrap:nowrap;gap:8px;row-gap:0;padding-block:8px}
+ .appbar .srch{min-width:0;flex:1}.appbar .srch kbd,.appbar .srch .kbd{display:none}
+ .appbar .topr{flex-wrap:nowrap;gap:6px;flex:none}
+ .appbar #live{display:none}
+ .appbar .seg button{padding-inline:8px}
+ .top{padding-block:12px 0}.top h1{font-size:20px}.top .sub{font-size:12.5px}
+ .po .tools,.tools{gap:8px}
+}
+@media (max-width:700px){.rail .brand{padding-block:6px}.rail .brand small,.rail .brand .sub,.rail .brand>div:last-child>div:last-child{display:none}}
+
+/* Perbaikan: tag auto/manual di kolom Kg/pcs editor SPK tidak lagi meluber ke kolom Kg est */
+.edt .c-w .wtag{display:block;width:max-content;margin:3px 0 0}
+
+/* ===== Produksi Hari Ini — layar operator (konsep UI artifact): pilih mesin satu sentuh, kartu kerja besar, antrian ringkas ===== */
+.mchips{display:flex;gap:8px;flex:1 1 100%;max-width:100%;min-width:0;overflow-x:auto;padding:2px 0 6px;scrollbar-width:thin}
+.mchip{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--text);font:inherit;font-weight:600;white-space:nowrap;cursor:pointer}
+.mchip:hover{border-color:var(--accent)}
+.mchip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.mchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mdot{width:9px;height:9px;border-radius:50%;background:var(--faint)}.mdot.run{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.sr1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.po-main2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.9fr);gap:20px;align-items:start;margin-top:6px}
+.po-left,.po-side{min-width:0;display:flex;flex-direction:column;gap:14px}
+@media (max-width:1000px){.po-main2{grid-template-columns:minmax(0,1fr)}}
+/* kartu kerja yang berjalan */
+.po.ringkas .po-left .po-run{position:static;gap:14px}
+.po.ringkas .po-left .mesin-run{position:static;margin:0;border:1px solid var(--line);border-left:1px solid var(--line);border-radius:22px;background:var(--surface);box-shadow:var(--shadow-sm,0 1px 2px rgba(15,23,42,.06))}
+.po.ringkas .po-left .mesin-run .pbody{padding:22px 22px 18px}
+.po.ringkas .mr-top{margin-bottom:2px}
+.po.ringkas .mr-time{font-size:24px;color:var(--muted)}
+.po.ringkas .mr-item{font-size:24px;line-height:1.25;margin:10px 0 4px}
+.po.ringkas .mr-meta,.po.ringkas .po-left .mesin-run .note{font-size:13px}
+.po.ringkas .mr-lbl{text-align:center;margin:22px 0 8px}
+.po.ringkas .mr-step{justify-content:center;align-items:center;gap:22px}
+.po.ringkas .mr-step .mr-q{flex:0 1 220px;height:104px;font-size:76px;line-height:1;border:0;background:transparent;text-align:center;font-family:var(--f-display);font-variant-numeric:tabular-nums}
+.po.ringkas .mr-step .mr-q::placeholder{color:var(--text);opacity:.9}
+.po.ringkas .mr-step .mr-b{width:84px;height:84px;min-height:84px;border-radius:50%;font-size:40px;line-height:1;padding:0;justify-content:center}
+.po.ringkas .mr-quick{justify-content:center;gap:8px}.po.ringkas .mr-quick .btn{flex:0 1 auto;min-height:44px;padding:0 18px;border-radius:999px}
+.po.ringkas .mr-rej{justify-content:center;gap:12px;margin-top:14px}
+.po.ringkas .mr-go{min-height:76px;font-size:22px;border-radius:18px;margin-top:16px}
+.po.ringkas .mr-sec{margin-top:10px}.po.ringkas .mr-sec .btn{min-height:52px;border-radius:14px;flex:1 1 160px}
+.po.ringkas .mr-sec .danger{flex:1 1 100%;min-height:40px}
+/* mesin kosong */
+.po.ringkas .po-left .po-idle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;min-height:260px;padding:32px 24px;border:2px dashed var(--line);border-radius:22px;background:var(--surface);color:var(--muted);font-size:17px;line-height:1.5}
+.po.ringkas .po-left .po-idle>b:first-child{color:var(--text);font-size:22px}.po.ringkas .po-left .po-idle b{color:var(--text)}
+/* sisi kanan: ringkasan hari ini dan antrian */
+.po-hari{border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:16px 18px}
+.po-hari h4{margin:0 0 10px;font-size:14px;font-weight:600;color:var(--muted)}
+.ph-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.ph-g b{display:block;font-family:var(--f-display);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}.ph-g span{font-size:12px;color:var(--muted)}
+.po.ringkas .po-side .po-qh{margin:2px 2px 8px}.po.ringkas .po-side .po-qh h3{font-size:15px}
+.po.ringkas .po-side .mq-grid{gap:8px}
+.po.ringkas .po-side .mcard{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"item act" "head act" "siap act";column-gap:12px;row-gap:2px;align-items:center;padding:12px 14px;border-radius:16px}
+.po.ringkas .po-side .mcard>.mc-item{grid-area:item;font-size:15px;font-weight:700;line-height:1.3;margin:0}
+.po.ringkas .po-side .mcard>.mc-h{grid-area:head;gap:6px;font-size:12px}
+.po.ringkas .po-side .mcard>.mc-siap{grid-area:siap;gap:6px}.po.ringkas .po-side .mq-siap{font-size:14px;font-weight:700}.po.ringkas .po-side .mc-u{font-size:12px}
+.po.ringkas .po-side .mcard>.mc-act{grid-area:act;margin:0;flex-direction:row;gap:8px}
+.po.ringkas .po-side .mcard>.mc-komp{grid-column:1/-1}
+.po.ringkas .po-side .mcard>.jb,.po.ringkas .po-side .mcard>.note:not(.mc-lain){display:none}
+.po.ringkas .po-side .mcard>.mc-lain{grid-column:1/-1}
+.po.ringkas .po-side .mc-go{min-height:48px;padding:0 20px;font-size:16px;border-radius:12px}.po.ringkas .po-side .mc-cat{min-height:48px;border-radius:12px}
+.po.ringkas .po-side .po-akan{margin:0}
+@media (max-width:560px){.po.ringkas .po-left .mesin-run .pbody{padding:18px 14px}.po.ringkas .mr-step .mr-q{font-size:60px;flex-basis:150px}.po.ringkas .mr-step .mr-b{width:72px;height:72px;min-height:72px}.po.ringkas .po-side .mcard{grid-template-columns:minmax(0,1fr);grid-template-areas:"item" "head" "siap" "act"}.po.ringkas .po-side .mcard>.mc-act>*{flex:1}}
+.mchips{flex-wrap:wrap;overflow-x:visible}
+@media (max-width:700px){.mchips{flex-wrap:nowrap;overflow-x:auto}}
+.po.ringkas .po-left .po-idle{display:block}
+.po.ringkas .po-left .po-idle>b:first-child{display:block;margin-bottom:6px}
+.po.ringkas .po-side .mcard>.mc-h{justify-content:flex-start;flex-wrap:wrap}
+.po.ringkas .mr-q::-webkit-inner-spin-button,.po.ringkas .mr-q::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.po.ringkas .mr-q{-moz-appearance:textfield;appearance:textfield}
+/* reject disembunyikan sampai "Catat reject" ditekan: operator tidak perlu memikirkannya bila tidak ada reject */
+.po.ringkas .mesin-run:not(.rej-on) .mr-rej,.po.ringkas .mesin-run:not(.rej-on) .mr-alasan{display:none}
+.po.ringkas .mesin-run.rej-on .mr-rejb{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+
+/* Dashboard: kolom grafik sama tinggi supaya tidak ada ruang kosong di bawah panel kiri */
+.g-row{align-items:stretch}
+.g-main>.panel,.g-main>section{flex:1}
+.g-main>.panel .pbody{height:100%}
+
+/* Peran Operator Produksi: hanya layar Produksi Hari Ini; pencarian, menu, dan elemen non-operator disembunyikan */
+html[data-role="operator"] .srch,html[data-role="operator"] #cmdkbtn,html[data-role="operator"] #barmini,html[data-role="operator"] .rail-tg{display:none!important}
+.wcpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 12px}
+
+

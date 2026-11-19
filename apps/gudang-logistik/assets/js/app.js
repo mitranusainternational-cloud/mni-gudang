@@ -206,6 +206,7 @@ function renderLive(){
 function route(){
  const h=(location.hash||'').slice(1);VIEW=VIEWS.some(v=>v.id===h&&viewOk(v))?h:'dashboard';
  const v=VIEWS.find(x=>x.id===VIEW);$('#ttl').textContent=v.t;
+ {const ix=VIEWS.findIndex(x=>x.id===VIEW);let grup='';for(let i=ix;i>=0;i--){if(VIEWS[i].sec){grup=VIEWS[i].sec;break}}const cr=$('#crumb');if(cr)cr.innerHTML=(grup?'<span>'+esc(grup)+'</span><i aria-hidden="true">›</i>':'')+'<b>'+esc(v.t)+'</b>'}
  $('#sub').textContent={dashboard:'Ringkasan realtime gudang, logistik, dan SPK',
   'bahan-baku':'Stok plat & material — penerimaan, pemakaian, stock opname',
   'laporan':'Ringkasan satu halaman: produksi, pengiriman, bahan baku, barang jadi, vendor, sparepart, dan kesehatan data; unduh CSV',
@@ -5722,6 +5723,36 @@ function mtcModel(){
   meta:[['Periode',per.label],['Rentang',(per.dari==='0000-00-00'?'awal data':tgl(per.dari))+' s/d '+tgl(per.sampai)],['Maintenance',String(rs.jumlah)],['Mesin berhenti (jam)',String(rs.downtimeJam)]],
   tables:T.map(x=>x.rows.length?x:{...x,rows:[['Tidak ada data pada periode atau kondisi ini',...Array(x.cols.length-1).fill('')]]})}}
 async function mtcUnduh(fmt){try{const m=mtcModel();await saveDocModel(m,fmt,m.file)}catch(e){if(e.code!=='declined')toast('Gagal membuat '+(fmt==='pdf'?'PDF':'Excel')+': '+(e.message||e.code))}}
+/* ---- Pencarian cepat (Ctrl K): hanya navigasi. Membuka layar, SPK, atau surat jalan; tidak mengubah data. ---- */
+const cmdkTgl=d=>String(fd(d)).replace(/&nbsp;/g,' ');
+let CMDK=null;
+function cmdkItems(){
+ const out=[];
+ VIEWS.filter(v=>viewOk(v)&&!v.hide).forEach(v=>out.push({g:'Layar',t:v.t,s:'Buka layar',go:v.id}));
+ if(!ME_P||myLevel('spk'))S.spk.slice().sort((a,b)=>(+b.no||0)-(+a.no||0)).forEach(s=>out.push({g:'SPK',t:'SPK '+s.no+' · '+(s.customer||''),s:(s.status||'')+(s.due?' · due '+cmdkTgl(s.due):''),spk:s._id,k:String(s.no)+' '+(s.customer||'')+' '+(s.po||'')}));
+ if(!ME_P||myLevel('pengiriman')||myLevel('vendor'))S.kirim.slice().sort((a,b)=>String(b.tgl||'').localeCompare(String(a.tgl||''))).slice(0,80).forEach(k=>out.push({g:'Surat jalan',t:(k.noSJ||'SJ')+' · '+(k.customer||k.vendor||''),s:(k.status||'')+(k.tgl?' · '+cmdkTgl(k.tgl):''),sj:k._id,k:String(k.noSJ||'')+' '+(k.customer||'')}));
+ return out;
+}
+function cmdkBuka(){
+ if(CMDK)return;
+ const wrap=document.createElement('div');wrap.id='cmdk';
+ wrap.innerHTML='<div class="cmdk-scrim" data-cmdk="x"></div><div class="cmdk-box" role="dialog" aria-modal="true" aria-label="Pencarian cepat"><div class="cmdk-in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="cmdk-q" placeholder="Ketik nomor SPK, customer, nomor surat jalan, atau nama layar" autocomplete="off" aria-label="Cari"><kbd>Esc</kbd></div><div class="cmdk-list" id="cmdk-r" role="listbox"></div></div>';
+ document.body.appendChild(wrap);CMDK={sel:0,r:[],all:cmdkItems()};
+ const q=$('#cmdk-q'),box=$('#cmdk-r');
+ const draw=()=>{const k=q.value.trim().toLowerCase();let r=CMDK.all.filter(c=>!k||(c.t+' '+(c.s||'')+' '+(c.k||'')).toLowerCase().includes(k));if(!k)r=r.filter(c=>c.g==='Layar').concat(r.filter(c=>c.g!=='Layar').slice(0,4));r=r.slice(0,10);CMDK.r=r;CMDK.sel=Math.min(CMDK.sel,Math.max(0,r.length-1));
+  let g='';box.innerHTML=r.map((c,i)=>{const h=c.g!==g?'<div class="cmdk-g">'+esc(c.g)+'</div>':'';g=c.g;return h+'<div class="cmdk-it'+(i===CMDK.sel?' on':'')+'" role="option" data-i="'+i+'"><span>'+esc(c.t)+'</span><small>'+esc(c.s||'')+'</small></div>'}).join('')||'<div class="cmdk-it"><span>Tidak ada hasil</span></div>'};
+ q.addEventListener('input',()=>{CMDK.sel=0;draw()});
+ q.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){CMDK.sel=Math.min(CMDK.r.length-1,CMDK.sel+1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){CMDK.sel=Math.max(0,CMDK.sel-1);draw();e.preventDefault()}else if(e.key==='Enter'&&CMDK.r[CMDK.sel])cmdkPilih(CMDK.r[CMDK.sel]);else if(e.key==='Escape')cmdkTutup()});
+ wrap.addEventListener('click',e=>{if(e.target.dataset.cmdk==='x')return cmdkTutup();const it=e.target.closest('[data-i]');if(it&&CMDK.r[+it.dataset.i])cmdkPilih(CMDK.r[+it.dataset.i])});
+ draw();q.focus();
+}
+function cmdkTutup(){const w=$('#cmdk');if(w)w.remove();CMDK=null}
+function cmdkPilih(c){cmdkTutup();
+ if(c.go){location.hash=c.go}
+ else if(c.spk){if(typeof spkDrawer==='function')spkDrawer(c.spk)}
+ else if(c.sj){if(typeof kirimDrawer==='function')kirimDrawer(c.sj)}}
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();CMDK?cmdkTutup():cmdkBuka()}else if(e.key==='Escape'&&CMDK)cmdkTutup()});
+
 /* T10: Dashboard menampilkan apa yang menunggu tindakan, satu tombol per pekerjaan, langsung ke layar atau tab yang tepat. Hanya yang boleh dilihat peran ini. */
 function tindakanHariIni(){const L=[];const c=calc();
  const add=(mod,href,tab,jml,label)=>{if(jml>0&&(!ME_P||myLevel(mod)))L.push({href,tab,jml,label})};
@@ -6940,6 +6971,7 @@ document.addEventListener('click',async e=>{
   case 'prod':prodForm(ds.id);break;
   case 'prodcatat':{const c=mesinCtx(ds.k);if(!c)break;const aq=PXL().antrianPerLangkah(c.st.rute,c.st.kum,c.st.qty);const w0=c.st.rute[aq.findIndex((a,ii)=>a.antri>0&&!PXL().langkahVendor(c.st.rute[ii]))];const w=ds.wc&&c.st.rute.includes(ds.wc)&&!PXL().langkahVendor(ds.wc)?ds.wc:w0;if(!w)break;F.mesin.wc=w;F.mesin.mesin='';lsSet('mni-wc',w);lsSet('mni-mesin','');mesinCatatForm(ds.k);break}
   case 'prodall':document.querySelectorAll('#mform [name^="p_"]').forEach(inpEl=>{const q=parseFloat(inpEl.max);if(q>0)inpEl.value=q});break; /* B-006: sebelumnya membaca sel tabel (closest('tr')) yang tidak ada di form kartu, sehingga melempar galat */
+  case 'cmdk':cmdkBuka();break;
   case 'railtg':railToggle();break;
   case 'void':voidForm(ds.c,ds.id);break;
   case 'spkreopen':{const s=byId('spk',ds.id);if(!s||s.status!=='Batal')break;if(!confirm(`Aktifkan kembali SPK ${s.no}?`))break;await updDoc('spk',ds.id,{status:'Terbit',batal:null});toast(`SPK ${s.no} aktif kembali`);break}
