@@ -327,6 +327,8 @@ B.dashboard=()=>{
   ${isAdm?kpi('cek-data',crit?'crit':DI.length?'warn':'ok','Temuan cek data',DI.filter(i=>i.sev>=2).length,'perlu aksi',`${crit} kritis · ${DI.filter(i=>i.sev===1).length} info`):''}
  </section>`:''}`;
 
+ if(vis('spk')||isAdm)h+=trendPanels(K90);
+
  // === Pipeline SPK per stage ===
  const pipeStages=[{k:'Produksi',cls:'info'},{k:'Siap ke vendor',cls:'warn'},{k:'Di vendor',cls:'warn'},{k:'Siap kirim',cls:'info'},{k:'Kirim sebagian',cls:'info'},{k:'Terkirim',cls:'ok'}];
  const pipeTotal=pipeStages.reduce((a,s)=>a+(stageCnt[s.k]||0),0)||1;
@@ -5752,6 +5754,69 @@ function cmdkPilih(c){cmdkTutup();
  else if(c.spk){if(typeof spkDrawer==='function')spkDrawer(c.spk)}
  else if(c.sj){if(typeof kirimDrawer==='function')kirimDrawer(c.sj)}}
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();CMDK?cmdkTutup():cmdkBuka()}else if(e.key==='Escape'&&CMDK)cmdkTutup()});
+
+function evAkhirList(evs){const P=PXL();if(!P)return evs;const cache={};
+ const akhir=e=>{if((e.jenis||'hasil')!=='hasil')return true;if(!e.spk_id||!e.wc)return true;const s=byId('spk',e.spk_id),ix=+e.item_idx;if(!s||!((s.items||[])[ix]))return true;
+  const k=e.spk_id+'|'+ix;let a=cache[k];if(a===undefined){const st=itemState(s,s.items[ix],ix);if(!st)a=null;else{const intern=st.rute.filter(w=>!P.langkahVendor(w));a={st,i:st.rute.indexOf(intern[intern.length-1])}}cache[k]=a}
+  if(!a||a.i<0)return true;return P.indeksLangkah(a.st.rute,a.st.alt,e.wc)===a.i};
+ return evs.filter(akhir)}
+
+
+/* ---- Dashboard: grafik tren (output produksi harian, pengiriman per minggu, ketepatan kirim). Hanya tampilan: membaca data yang sama dengan layar lain, tidak menulis apa pun. ---- */
+const gDay=(t,k)=>{const d=new Date(t+'T00:00:00');d.setDate(d.getDate()+k);const p=x=>String(x).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())};
+const gTgl=s=>new Date(s+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short'});
+
+/* Output produksi per hari (30 hari): hasil di langkah akhir saja supaya tidak dihitung ganda lintas Work Centre. */
+function gOutputHarian(hari){
+ const t=today();const dari=gDay(t,-(hari-1));const per={};
+ for(let i=0;i<hari;i++)per[gDay(t,-(hari-1)+i)]={kg:0,q:0};
+ try{const evs=evAkhirList(lapEv().filter(e=>(e.jenis||'hasil')==='hasil'));
+  evs.forEach(e=>{const d=String(e.tgl||e.at||'').slice(0,10);if(per[d]){per[d].q+=+e.qty||0;per[d].kg+=+e.tonase||0}})}catch(_){}
+ return {dari,t,rows:Object.entries(per).map(([d,v])=>({d,...v}))};
+}
+function gArea(rows,{key='kg',unit='t',div=1000,w=640,h=230}={}){
+ const pl=40,pr=10,pt=12,pb=26;const val=r=>(r[key]||0)/div;const mx0=Math.max(...rows.map(val),0);
+ if(!(mx0>0))return '<div class="g-empty"><b>Belum ada hasil produksi</b><span>Grafik muncul setelah ada hasil yang dicatat dalam 30 hari terakhir.</span></div>';
+ const step=(()=>{const raw=mx0/4,m=Math.pow(10,Math.floor(Math.log10(raw)));const f=raw/m;return (f<=1?1:f<=2?2:f<=5?5:10)*m})();const top=step*Math.ceil(mx0/step);
+ const sx=(w-pl-pr)/Math.max(1,rows.length-1),y=v=>h-pb-(v/top)*(h-pb-pt);
+ const pts=rows.map((r,i)=>[pl+i*sx,y(val(r))]);
+ const path=pts.map((p,i)=>{if(!i)return 'M'+p[0].toFixed(1)+' '+p[1].toFixed(1);const q=pts[i-1],c=(q[0]+p[0])/2;return 'C'+c.toFixed(1)+' '+q[1].toFixed(1)+' '+c.toFixed(1)+' '+p[1].toFixed(1)+' '+p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(' ');
+ let g='';for(let v=0;v<=top+1e-9;v+=step){g+=`<line x1="${pl}" x2="${w-pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="g-grid${v?' d':''}"/><text x="${pl-8}" y="${(y(v)+4).toFixed(1)}" text-anchor="end" class="g-t">${n(Math.round(v*100)/100)}</text>`}
+ [0,Math.round((rows.length-1)/3),Math.round((rows.length-1)*2/3),rows.length-1].forEach((i,k)=>{g+=`<text x="${(pl+i*sx).toFixed(1)}" y="${h-7}" text-anchor="${k===0?'start':k===3?'end':'middle'}" class="g-t">${gTgl(rows[i].d)}</text>`});
+ const l=pts[pts.length-1],id='ga'+Math.floor(Math.random()*1e6);
+ const hit=rows.map((r,i)=>`<rect x="${(pl+i*sx-sx/2).toFixed(1)}" y="${pt}" width="${sx.toFixed(1)}" height="${h-pb-pt}" fill="transparent"><title>${gTgl(r.d)}: ${n(Math.round(val(r)*100)/100)} ${unit} · ${n(r.q)} pcs</title></rect>`).join('');
+ return `<svg class="g-svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="Output produksi harian 30 hari"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".26"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>${g}<path d="${path} L${l[0].toFixed(1)} ${h-pb} L${pl} ${h-pb}Z" fill="url(#${id})"/><path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${l[0].toFixed(1)}" cy="${l[1].toFixed(1)}" r="4.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.4"/>${hit}</svg>`;
+}
+
+/* Surat jalan customer per minggu (8 minggu terakhir). */
+function gKirimMingguan(){
+ const t=today();const dow=(new Date(t+'T00:00:00').getDay()+6)%7;const sen=gDay(t,-dow);const mg=[];
+ for(let i=7;i>=0;i--){const a=gDay(sen,-7*i),b=gDay(a,6);mg.push({a,b,n:0})}
+ S.kirim.forEach(k=>{if(k.status==='Batal')return;const d=String(k.tgl||'').slice(0,10);const m=mg.find(x=>d>=x.a&&d<=x.b);if(m)m.n++});
+ const mx=Math.max(...mg.map(m=>m.n),0);
+ if(!mx)return '<div class="g-empty"><b>Belum ada pengiriman</b><span>Batang muncul setelah ada surat jalan dalam 8 minggu terakhir.</span></div>';
+ const w=420,h=190,pl=26,pb=24,pt=18,bw=(w-pl-8)/mg.length;const y=v=>h-pb-(v/mx)*(h-pb-pt);
+ return `<svg class="g-svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="Surat jalan per minggu">`+
+  [0,.5,1].map(f=>`<line x1="${pl}" x2="${w-6}" y1="${y(mx*f).toFixed(1)}" y2="${y(mx*f).toFixed(1)}" class="g-grid${f?' d':''}"/><text x="${pl-6}" y="${(y(mx*f)+4).toFixed(1)}" text-anchor="end" class="g-t">${Math.round(mx*f*10)/10}</text>`).join('')+
+  mg.map((m,i)=>{const x=pl+i*bw+bw*.2,bh=h-pb-y(m.n);const last=i===mg.length-1;return `<rect x="${x.toFixed(1)}" y="${y(m.n).toFixed(1)}" width="${(bw*.6).toFixed(1)}" height="${Math.max(0,bh).toFixed(1)}" rx="5" fill="${last?'var(--accent)':'color-mix(in srgb,var(--accent) 38%,var(--surface))'}"><title>${gTgl(m.a)} – ${gTgl(m.b)}: ${m.n} SJ</title></rect><text x="${(x+bw*.3).toFixed(1)}" y="${h-7}" text-anchor="middle" class="g-t">${gTgl(m.a).replace(' ',' ')}</text>${m.n?`<text x="${(x+bw*.3).toFixed(1)}" y="${(y(m.n)-5).toFixed(1)}" text-anchor="middle" class="g-v">${m.n}</text>`:''}`}).join('')+`</svg>`;
+}
+
+/* Cincin ketepatan kirim (OTD 90 hari). */
+function gCincin(K){
+ const kir=K.kir.length,tepat=K.otd.length;
+ if(!kir)return '<div class="g-empty"><b>Belum ada SPK terkirim</b><span>Cincin muncul setelah ada SPK yang selesai terkirim dalam 90 hari.</span></div>';
+ const p=Math.round(tepat/kir*100),cls=p>=90?'ok':p>=75?'warn':'crit';
+ return `<div class="g-ring-w"><div class="g-ring ${cls}" style="--p:${p}"><b>${p}%</b><small>tepat waktu</small></div><div class="g-leg"><div><span>Tepat waktu</span><b>${n(tepat)} SPK</b></div><div><span>Terlambat</span><b class="${kir-tepat?'bad':''}">${n(kir-tepat)} SPK</b></div><div><span>Target</span><b>90%</b></div></div></div>`;
+}
+
+function trendPanels(K){
+ const o=gOutputHarian(30);const tot=o.rows.reduce((a,r)=>({kg:a.kg+r.kg,q:a.q+r.q}),{kg:0,q:0});
+ const ada=tot.q>0||tot.kg>0;
+ const a=`<section class="panel g-card"><header><h2>Output produksi harian</h2><span class="hint">ton, 30 hari terakhir${ada?` · total ${n(Math.round(tot.kg/10)/100)} t · ${n(tot.q)} pcs`:''}</span></header><div class="pbody">${gArea(o.rows)}</div></section>`;
+ const b=`<section class="panel g-card"><header><h2>Ketepatan kirim</h2><span class="hint">90 hari</span></header><div class="pbody">${gCincin(K)}</div></section>`;
+ const c=`<section class="panel g-card"><header><h2>Pengiriman per minggu</h2><span class="hint">surat jalan customer, 8 minggu</span></header><div class="pbody">${gKirimMingguan()}</div></section>`;
+ return `<div class="g-row"><div class="g-main">${a}</div><div class="g-side">${b}${c}</div></div>`;
+}
 
 /* T10: Dashboard menampilkan apa yang menunggu tindakan, satu tombol per pekerjaan, langsung ke layar atau tab yang tepat. Hanya yang boleh dilihat peran ini. */
 function tindakanHariIni(){const L=[];const c=calc();

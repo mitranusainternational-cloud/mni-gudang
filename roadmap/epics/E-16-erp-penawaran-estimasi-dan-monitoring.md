@@ -7,7 +7,7 @@ theme: Integrasi
 priority: P2
 status: active
 progress: 7
-tasks_total: 31
+tasks_total: 32
 tasks_done: 4
 updated: 2026-11-19
 ---
@@ -58,5 +58,6 @@ Bukan jalur pilot; tidak boleh menahan tugas go-live (T-030 dan seterusnya). Rum
 - [ ] [[tasks/T-235-foto-ke-storage-bongkar-maintenance|T-235]] Foto Bongkar Muat dan Maintenance ke Supabase Storage (opsional, bawaan tetap di database) · review · P1 · 1 hari
 - [ ] [[tasks/T-237-qc-dcs-dan-standar-ke-versi-live|T-237]] QC (Daily Check Sheet, sertifikat) dan Standar & Panduan dibawa ke versi live · review · P1 · 1 hari
 - [ ] [[tasks/T-238-tampilan-baru-ui-v2-dan-ctrl-k|T-238]] Tampilan baru (UI v2): bilah atas, breadcrumb, pencarian cepat Ctrl K, gaya modern · review · P2 · 1 hari
+- [ ] [[tasks/T-239-grafik-tren-dashboard|T-239]] Dashboard: grafik tren (output produksi harian, ketepatan kirim, pengiriman per minggu) · review · P2 · 1 hari
 
 > Properti status, progress, dan jumlah tugas serta daftar ini dibuat otomatis oleh `node scripts/progress-report.mjs`. Jangan ubah manual. Tampilan interaktif: [[PROGRESS_DASHBOARD]].

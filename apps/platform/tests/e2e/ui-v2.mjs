@@ -32,6 +32,12 @@ export async function runUiV2(page, base) {
     const c4 = await page.evaluate(() => !document.getElementById('cmdk'));
     ok('UI-02 Ctrl K membuka pencarian cepat berisi layar; mengetik QC menemukan layar QC, Enter membukanya dan menutup dialog; Esc menutup', c1.buka && c1.layar > 3 && /QC/.test(c2) && c3.tutup && c3.hash === '#qc' && c4, JSON.stringify({ c1, c2, c3, c4 }));
 
+    langkah = 'UI-03';
+    await page.evaluate(() => { location.hash = '#dashboard'; }); await wait(1200);
+    const g1 = await page.evaluate(() => ({ baris: !!document.querySelector('.g-row'), judul: [...document.querySelectorAll('.g-card header h2')].map((h) => h.innerText).join('|'), kosong: document.querySelectorAll('.g-empty').length }));
+    const g2 = await page.evaluate(() => { const rows = Array.from({ length: 30 }, (_, i) => ({ d: gDay(today(), -(29 - i)), kg: i % 3 ? 1200 + i * 40 : 0, q: 10 + i })); const a = gArea(rows); const k = gKirimMingguan(); return { svg: /<svg class="g-svg"/.test(a), path: /<path/.test(a), kirim: /g-svg|g-empty/.test(k), akhir: typeof evAkhirList === 'function' && evAkhirList([{ jenis: 'hasil', qty: 1 }]).length === 1 }; });
+    ok('UI-03 Dashboard memuat tiga panel grafik (output harian, ketepatan kirim, pengiriman per minggu) dengan keadaan kosong yang rapi; gambar area dan batang dibuat dari data', g1.baris && /Output produksi harian|Ketepatan kirim|Pengiriman per minggu/.test(g1.judul) && g2.svg && g2.path && g2.kirim && g2.akhir, JSON.stringify({ g1, g2 }));
+
     ok('UI-99 tanpa pageerror', errs.length === 0, errs.slice(0, 2).join(' | '));
   } catch (e) {
     ok('UI-ERR ' + langkah, false, String(e.message).replace(/\u001b\[[0-9;]*m/g, '').slice(0, 800));
