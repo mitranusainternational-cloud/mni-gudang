@@ -7,7 +7,7 @@ updated: 2026-11-14
 # PRD Modul QC — Daily Check Sheet (DCS) dan Sertifikat QC
 
 Status: **dalam pembangunan** (2026-11-14), mengikuti format DCS yang dipakai MNI saat ini (benchmark dari berkas DCS SPK 512-513 dan DCS SPK 635-640 yang diberikan pemilik).
-Tugas: [[tasks/T-239-alur-lengkap-tonase-plate-qc]]. Prinsip pemilik: **input sesedikit mungkin, laporan sebanyak mungkin, dapat dipertanggungjawabkan**; laporan dapat dikirim ke customer dan berfungsi sebagai **sertifikat lolos QC**.
+Tugas: [[tasks/T-237-qc-dcs-dan-standar-ke-versi-live]]. Prinsip pemilik: **input sesedikit mungkin, laporan sebanyak mungkin, dapat dipertanggungjawabkan**; laporan dapat dikirim ke customer dan berfungsi sebagai **sertifikat lolos QC**.
 
 ## Format DCS yang ada (hasil membaca berkas contoh)
 

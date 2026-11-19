@@ -6,7 +6,7 @@ updated: 2026-11-15
 
 # Acuan standar untuk QC dan standar di sistem (cable tray)
 
-Dipakai oleh modul QC ([[documentation/PRD_QC]], [[tasks/T-239-alur-lengkap-tonase-plate-qc]]). Prinsip: hanya angka yang punya dasar tercatat yang dijadikan aturan; sisanya ditandai nilai awal MNI yang perlu dikonfirmasi tim QC. Teks standar berhak cipta tidak disalin ke vault; hanya angka dan nomor pasal yang dirujuk.
+Dipakai oleh modul QC ([[documentation/PRD_QC]], [[tasks/T-237-qc-dcs-dan-standar-ke-versi-live]]). Prinsip: hanya angka yang punya dasar tercatat yang dijadikan aturan; sisanya ditandai nilai awal MNI yang perlu dikonfirmasi tim QC. Teks standar berhak cipta tidak disalin ke vault; hanya angka dan nomor pasal yang dirujuk.
 
 ## Berkas dari pemilik (zip Drive, 2026-11-15)
 
