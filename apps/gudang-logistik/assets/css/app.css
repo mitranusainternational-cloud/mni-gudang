@@ -1331,3 +1331,8 @@ html.rail-mini .rail-tg svg{transform:rotate(180deg)}
 .eds.e{border-color:var(--accent)}.eds.e b{color:var(--accent)}
 .eds.r{border-color:var(--ok,#15803d)}.eds.r b{color:var(--ok,#15803d)}
 .eds.w{border-color:var(--warn)}.eds.w b{color:var(--warn)}
+
+/* Perbaikan HP (audit 2026-11-19): pembungkus tabel dan deret filter tidak boleh melebarkan halaman.
+   .tablewrap dipakai di markup tetapi sebelumnya tidak punya aturan (Produksi Hari Ini melebar 1034 px di layar 390 px); .tb-group (Cek Data) selebar isinya. */
+.tablewrap{overflow-x:auto;max-width:100%}
+.tb-group{min-width:0;max-width:100%}
