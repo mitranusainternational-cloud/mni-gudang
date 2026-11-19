@@ -200,27 +200,40 @@ function makeCollection(col) {
 
     // Firestore: collection(col).onSnapshot(cb) → Realtime subscription
     onSnapshot(cb, errCb) {
-      // Initial load
-      const load = async () => {
+      // Satu kali muat. Mengembalikan false bila gagal (akan diulang dengan jeda bertambah, lihat load di bawah).
+      const loadOnce = async () => {
         // Sebelum login tidak ada sesi: jangan minta data (menghindari 401 di konsol); halaman dimuat ulang setelah login.
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) { if (lastSig === '') { lastSig = '[]'; cb({ docs: [] }); } return; }
+        if (!session) { if (lastSig === '') { lastSig = '[]'; cb({ docs: [] }); } return true; }
         // Kolom pengurut berbeda per tabel: master hanya punya updated_at, log hanya punya tgl.
         const orderCol = ['created_at', 'updated_at', 'tgl'].find((c) => (TABLE_COLS[table] || ['created_at']).includes(c));
-        let q = supabase.from(table).select('*');
+        let q = batasWaktu(supabase.from(table).select('*'));
         if (orderCol) q = q.order(orderCol, { ascending: false });
         const { data, error } = await q;
-        if (error && OPSIONAL.has(table) && new RegExp(table + '|schema cache|does not exist', 'i').test(error.message || '')) { if (lastSig !== '[]') { lastSig = '[]'; cb({ docs: [] }); } return; }
-        if (error) { errCb && errCb(error); return; }
+        if (error && OPSIONAL.has(table) && new RegExp(table + '|schema cache|does not exist', 'i').test(error.message || '')) { if (lastSig !== '[]') { lastSig = '[]'; cb({ docs: [] }); } return true; }
+        if (error) { errCb && errCb(error); return false; }
         const docs = (data || []).map((r) => (table === 'master' ? masterToDoc(r) : rowToDoc(numericNo(table, r))));
         // Lewati bila isi sama dengan pemuatan sebelumnya agar polling tidak merender ulang UI tanpa perubahan.
         const sig = JSON.stringify(docs);
-        if (sig === lastSig) return;
+        if (sig === lastSig) return true;
         lastSig = sig;
         // Emulate Firestore snapshot shape
         cb({ docs: docs.map(d => ({ data: () => d, id: d._id })) });
+        return true;
       };
       let lastSig = '';
+      // Muat lewat antrean (maks. LOADQ.max serentak, tabel berat paling akhir). Permintaan yang datang saat satu muat berjalan digabung
+      // jadi satu muat ulang. Gagal (mis. database sibuk) diulang dengan jeda 6, 12, 24, 30 detik, bukan memuat ulang semua tabel berkala.
+      let inflight = false, again = false, retryT = null, fails = 0;
+      const load = async () => {
+        if (inflight) { again = true; return; }
+        inflight = true;
+        try {
+          const ok = await enqueue(loadOnce, HEAVY.has(table));
+          clearTimeout(retryT);
+          if (ok === false) { fails++; retryT = setTimeout(load, Math.min(30000, 3000 * 2 ** Math.min(fails, 4))); } else { fails = 0; STAMP.lastOk = Date.now(); }
+        } finally { inflight = false; if (again) { again = false; load(); } }
+      };
 
       load();
       // Muat ulang segera setelah tulis dari tab ini, tanpa menunggu event Realtime (B-014).
@@ -230,8 +243,14 @@ function makeCollection(col) {
       // Cek sidik perubahan (satu panggilan kecil bersama) tiap beberapa detik; bila fungsinya belum ada, kembali ke muat ulang berkala per tabel.
       startStampPoll();
       const pollMs = Number(window.__ENV?.POLL_MS) || 15000;
-      const timer = setInterval(() => { if (!document.hidden && (!STAMP.ok || !(STAMP.last && table in STAMP.last))) load(); }, pollMs);
-      const onVis = () => { if (!document.hidden) { load(); checkStamps(); } };
+      // Muat berkala hanya bila perlu: fungsi sidik tidak ada, tabel ini tidak tercakup sidik (mis. ureq), atau sidik gagal terus dan
+      // sudah lebih dari semenit tanpa muat berhasil. Gagal sesaat TIDAK lagi memicu muat ulang semua tabel (itu memperparah beban).
+      const timer = setInterval(() => {
+        if (document.hidden) return;
+        if (STAMP.unsupported || (STAMP.last && !(table in STAMP.last)) || (STAMP.fail >= 3 && Date.now() - STAMP.lastOk > 60000)) load();
+      }, pollMs);
+      // Tab kembali fokus: cukup periksa sidik (tabel yang berubah dimuat ulang oleh checkStamps), tanpa memuat ulang semua tabel.
+      const onVis = () => { if (!document.hidden) { if (STAMP.unsupported || !STAMP.last) load(); checkStamps(); } };
       document.addEventListener('visibilitychange', onVis);
 
       // Realtime
@@ -391,23 +410,49 @@ function makeDoc(path) {
 
 // ── Sinkron antar pengguna: penanda perubahan tabel (migration 12) ───────────
 // Satu panggilan rpc('table_stamps') tiap STAMP_MS; hanya tabel yang sidiknya berubah yang dimuat ulang.
-const STAMP = { ok: false, last: null, timer: null, busy: false };
+const STAMP = { ok: false, unsupported: false, fail: 0, next: 0, lastOk: Date.now(), last: null, timer: null, busy: false };
+// Antrean muat: permintaan baca tabel dibatasi serentak agar tidak menghabiskan antrean koneksi database (dulu 23 sekaligus per pengguna).
+const LOAD_TIMEOUT_MS = 60000;
+// Batas waktu permintaan: permintaan yang menggantung (antrean koneksi database penuh) dibatalkan lalu diulang, bukan menahan slot selamanya.
+// Klien tiruan lokal tidak punya abortSignal: dibiarkan apa adanya.
+const batasWaktu = (b) => (b && typeof b.abortSignal === 'function' && typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? b.abortSignal(AbortSignal.timeout(LOAD_TIMEOUT_MS)) : b);
+const HEAVY = new Set(['bongkar', 'mtc']); // memuat foto di kolom data: dimuat paling akhir
+const LOADQ = { max: 6, run: 0, hi: [], lo: [] };
+function enqueue(fn, low) {
+  return new Promise((resolve) => {
+    (low ? LOADQ.lo : LOADQ.hi).push(() => fn().then(resolve, () => resolve(false)));
+    pumpQ();
+  });
+}
+function pumpQ() {
+  while (LOADQ.run < LOADQ.max) {
+    const job = LOADQ.hi.shift() || LOADQ.lo.shift();
+    if (!job) return;
+    LOADQ.run++;
+    job().finally(() => { LOADQ.run--; pumpQ(); });
+  }
+}
+// Gagal sesaat: jeda bertambah 8, 16, 30 detik; tidak mengubah status "fungsi ada". Hanya galat "fungsi tidak ada" menandai tidak didukung.
+const stampGagal = (error) => {
+  STAMP.fail++; STAMP.next = Date.now() + Math.min(30000, 4000 * 2 ** Math.min(STAMP.fail, 3));
+  if (error && /table_stamps|schema cache|does not exist|PGRST202|42883/i.test(String(error.message || '') + String(error.code || ''))) STAMP.unsupported = true;
+};
 async function checkStamps() {
-  if (STAMP.busy) return;
+  if (STAMP.busy || Date.now() < STAMP.next) return;
   STAMP.busy = true;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
-    const { data, error } = await supabase.rpc('table_stamps');
-    if (error || !data) { STAMP.ok = false; return; }
-    STAMP.ok = true;
+    const { data, error } = await batasWaktu(supabase.rpc('table_stamps'));
+    if (error || !data) { stampGagal(error); return; }
+    STAMP.ok = true; STAMP.unsupported = false; STAMP.fail = 0; STAMP.next = 0;
     const prev = STAMP.last;
     STAMP.last = data;
     if (!prev) return;
     for (const [tbl, sig] of Object.entries(data)) {
       if (prev[tbl] !== sig) REFRESH.get(tbl)?.forEach((fn) => { try { fn(); } catch { /* abaikan */ } });
     }
-  } catch { STAMP.ok = false; } finally { STAMP.busy = false; }
+  } catch { stampGagal(null); } finally { STAMP.busy = false; }
 }
 function startStampPoll() {
   if (STAMP.timer) return;
