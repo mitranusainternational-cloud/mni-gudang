@@ -1,7 +1,7 @@
 ---
 type: vault-health
 status: active
-updated: 2026-11-12
+updated: 2026-11-19
 ---
 
 # Kesehatan vault
@@ -12,9 +12,10 @@ updated: 2026-11-12
 
 - Tidak ada
 
-## Wikilink ambigu (tulis dengan path) (0)
+## Wikilink ambigu (tulis dengan path) (2)
 
-- Tidak ada
+- documentation/MIGRASI_KE_VPS.md: [[DECISIONS]] cocok dengan apps/gudang-logistik/docs/DECISIONS.md, documentation/DECISIONS.md
+- documentation/PROJECT_PROGRESS.md: [[DECISIONS]] cocok dengan apps/gudang-logistik/docs/DECISIONS.md, documentation/DECISIONS.md
 
 ## Properti wajib hilang (0)
 
